@@ -75,6 +75,7 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
   const tempoRampRef = useRef(tempoRamp);
   const runningRef = useRef(false);
   const startingRef = useRef(false);
+  const startAttemptRef = useRef(0);
   const mountedRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const nextBeatTimeRef = useRef(0);
@@ -279,8 +280,19 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     };
   }, [isRunning, scheduleNextBeats]);
 
+  const suspendAfterCancelledStart = useCallback((context: AudioContext) => {
+    if (startingRef.current || runningRef.current) return;
+
+    void suspendMetronomeAudioContext(context).catch((error: unknown) => {
+      if (mountedRef.current) {
+        setAudioError(`No se pudo detener el audio: ${getErrorMessage(error)}`);
+      }
+    });
+  }, []);
+
   const start = useCallback(async () => {
     if (runningRef.current || startingRef.current) return;
+    const startAttempt = ++startAttemptRef.current;
 
     const AudioContextConstructor = window.AudioContext;
     if (!AudioContextConstructor) {
@@ -301,7 +313,14 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
       audioContextRef.current = context;
       await resumeMetronomeAudioContext(context);
     } catch (error) {
-      if (mountedRef.current) {
+      const isCurrentAttempt = startAttemptRef.current === startAttempt;
+      if (!isCurrentAttempt) {
+        if (audioContextRef.current) {
+          suspendAfterCancelledStart(audioContextRef.current);
+        }
+        return;
+      }
+      if (mountedRef.current && isCurrentAttempt) {
         setAudioError(`No se pudo activar el audio: ${getErrorMessage(error)}`);
       }
       startingRef.current = false;
@@ -309,9 +328,16 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
       return;
     }
 
+    if (startAttemptRef.current !== startAttempt) {
+      suspendAfterCancelledStart(context);
+      return;
+    }
+    if (!mountedRef.current) {
+      startingRef.current = false;
+      return;
+    }
     startingRef.current = false;
-    if (mountedRef.current) setIsStarting(false);
-    if (!mountedRef.current) return;
+    setIsStarting(false);
     if (context.state !== "running") {
       setAudioError("El navegador mantuvo el contexto de audio suspendido.");
       return;
@@ -324,9 +350,10 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     resetTempoRampSchedule(tempoRampRef.current, 0);
     runningRef.current = true;
     setIsRunning(true);
-  }, [resetTempoRampSchedule]);
+  }, [resetTempoRampSchedule, suspendAfterCancelledStart]);
 
   const stop = useCallback(() => {
+    startAttemptRef.current += 1;
     startingRef.current = false;
     runningRef.current = false;
     setIsStarting(false);

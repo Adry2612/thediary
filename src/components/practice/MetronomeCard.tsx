@@ -13,11 +13,13 @@ import { getMetronomeMeter } from "@/lib/metronome-meter";
 type MetronomeCardProps = {
   variant?: "default" | "large";
   onBpmChange?: (bpm: number) => void;
+  stopOnUnmount?: boolean;
 };
 
 export function MetronomeCard({
   variant = "default",
   onBpmChange,
+  stopOnUnmount = true,
 }: MetronomeCardProps) {
   const isLarge = variant === "large";
   const {
@@ -47,6 +49,11 @@ export function MetronomeCard({
   useEffect(() => {
     onBpmChange?.(bpm);
   }, [bpm, onBpmChange]);
+
+  useEffect(() => {
+    if (!stopOnUnmount) return;
+    return () => stop();
+  }, [stop, stopOnUnmount]);
 
   return (
     <Card

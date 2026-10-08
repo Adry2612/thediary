@@ -70,6 +70,7 @@ export interface MetronomeSubdivisionOption {
   value: number;
   label: string;
   shortLabel: string;
+  isTuplet: boolean;
 }
 
 export function getMetronomeMeter(
@@ -88,10 +89,30 @@ export function getMetronomeSubdivisionOptions(
 ): MetronomeSubdivisionOption[] {
   if (meter.signature === "4/4") {
     return [
-      { value: 1, label: "Negras · 1/4", shortLabel: "Negras" },
-      { value: 2, label: "Corcheas · 1/8", shortLabel: "Corcheas" },
-      { value: 3, label: "Tresillos · 1/8T", shortLabel: "Tresillos" },
-      { value: 4, label: "Semicorcheas · 1/16", shortLabel: "Semicorcheas" },
+      {
+        value: 1,
+        label: "Negras · 1/4",
+        shortLabel: "Negras",
+        isTuplet: false,
+      },
+      {
+        value: 2,
+        label: "Corcheas · 1/8",
+        shortLabel: "Corcheas",
+        isTuplet: false,
+      },
+      {
+        value: 3,
+        label: "Tresillos · 1/8T",
+        shortLabel: "Tresillos",
+        isTuplet: true,
+      },
+      {
+        value: 4,
+        label: "Semicorcheas · 1/16",
+        shortLabel: "Semicorcheas",
+        isTuplet: false,
+      },
     ];
   }
 
@@ -100,21 +121,25 @@ export function getMetronomeSubdivisionOptions(
       value: 1,
       label: `${meter.beatUnitLabel} · pulso`,
       shortLabel: "Pulso",
+      isTuplet: false,
     },
     {
       value: 2,
       label: "2 subdivisiones por pulso",
       shortLabel: "2 por pulso",
+      isTuplet: false,
     },
     {
       value: 3,
       label: `${meter.subdivisionUnitLabel} · 3 por pulso`,
       shortLabel: meter.subdivisionUnitLabel,
+      isTuplet: false,
     },
     {
       value: 4,
       label: "4 subdivisiones por pulso",
       shortLabel: "4 por pulso",
+      isTuplet: false,
     },
   ];
 }

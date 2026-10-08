@@ -51,10 +51,12 @@ function SubdivisionNotation({
   subdivision,
   isDotted,
   isHalfNote,
+  isTuplet,
 }: {
   subdivision: number;
   isDotted: boolean;
   isHalfNote: boolean;
+  isTuplet: boolean;
 }) {
   const notePositions = SUBDIVISION_NOTE_POSITIONS[subdivision];
   const firstNote = notePositions[0];
@@ -102,7 +104,7 @@ function SubdivisionNotation({
           strokeWidth="2"
         />
       )}
-      {subdivision === 3 && (
+      {isTuplet && (
         <text
           x="26"
           y="8"
@@ -112,7 +114,9 @@ function SubdivisionNotation({
           3
         </text>
       )}
-      {isDotted && <circle cx={firstNote + 12} cy="25" r="1.5" fill="currentColor" />}
+      {isDotted && (
+        <circle cx={firstNote + 12} cy="25" r="1.5" fill="currentColor" />
+      )}
     </svg>
   );
 }
@@ -250,8 +254,15 @@ export function MetronomeSettings({
                     <span className="flex min-h-24 flex-col items-center justify-center gap-1 border border-line px-1 py-2 text-center text-xs text-muted transition-colors hover:bg-white/[0.04] peer-checked:border-accent-green-fg/60 peer-checked:bg-accent-green-bg/30 peer-checked:text-ink peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-accent-green-fg">
                       <SubdivisionNotation
                         subdivision={option.value}
-                        isDotted={meter.beatDurationQuarterNotes !== 1 && option.value === 1}
-                        isHalfNote={meter.beatDurationQuarterNotes === 3 && option.value === 1}
+                        isDotted={
+                          meter.beatDurationQuarterNotes !== 1 &&
+                          option.value === 1
+                        }
+                        isHalfNote={
+                          meter.beatDurationQuarterNotes === 3 &&
+                          option.value === 1
+                        }
+                        isTuplet={option.isTuplet}
                       />
                       <span className="leading-tight">{option.shortLabel}</span>
                     </span>

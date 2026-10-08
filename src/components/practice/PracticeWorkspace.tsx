@@ -39,6 +39,7 @@ export function PracticeWorkspace({
     null,
   );
   const activePlan = activeSession;
+  const WorkspaceContainer = activePlan ? 'div' : 'main';
   const launchedTemplateId = useRef<string | null>(null);
   const launchedSessionId = useRef<string | null>(null);
 
@@ -101,7 +102,7 @@ export function PracticeWorkspace({
   }, [activeSession, hasHydrated, history, requestedSessionId, setActiveSession]);
 
   return (
-    <main
+    <WorkspaceContainer
       className={`mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 pt-16 sm:pt-24 ${activePlan ? '' : 'min-h-screen pb-16 sm:pb-24'}`}
     >
       <header className='enter mb-4'>
@@ -160,6 +161,6 @@ export function PracticeWorkspace({
           />
         </>
       )}
-    </main>
+    </WorkspaceContainer>
   );
 }

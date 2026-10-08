@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { PracticeCompletionDialog } from "@/components/practice/PracticeCompletionDialog";
@@ -8,9 +8,11 @@ import { MetronomeCard } from "@/components/practice/MetronomeCard";
 import { PracticeAudioRecorder } from "@/components/practice/PracticeAudioRecorder";
 import { PracticeMaterials } from "@/components/practice/PracticeMaterials";
 import { TimerCard } from "@/components/practice/TimerCard";
+import { useMetronome } from "@/hooks/useMetronome";
 import { usePracticeTimer } from "@/hooks/usePracticeTimer";
 import { getLocalDateKey } from "@/lib/local-date";
 import { formatClock } from "@/lib/format";
+import { getTimeWeightedAverageBpm } from "@/lib/metronome-bpm";
 import { createPracticeSessionRecord } from "@/lib/practice-session-record";
 import {
   useActivePracticeSessionStore,
@@ -27,7 +29,6 @@ function getSessionStatus(isCompleted: boolean, isRunning: boolean): string {
 
 export function PracticeSession({ session }: { session: ActivePracticeSession }) {
   const { id: sessionId, name, phases } = session;
-  const [bpm, setBpm] = useState(80);
   const [isCompleted, setIsCompleted] = useState(false);
   const [pendingResult, setPendingResult] =
     useState<PracticeTimerResult | null>(null);
@@ -40,7 +41,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const pathname = usePathname();
   const isPracticeRoute = pathname === "/practice";
   const router = useRouter();
-
+  const { bpm: metronomeBpm, stop: stopMetronome } = useMetronome();
   const completeSession = useCallback(
     (result: PracticeTimerResult) => {
       if (completionHandledRef.current) return;
@@ -51,6 +52,36 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     },
     [],
   );
+  const timer = usePracticeTimer(phases, undefined, completeSession);
+  const timerElapsedSecondsRef = useRef(timer.elapsedSeconds);
+  timerElapsedSecondsRef.current = timer.elapsedSeconds;
+  const previousTimerStartedAtRef = useRef(timer.startedAt);
+  const bpmSamplesRef = useRef([
+    { elapsedSeconds: 0, bpm: metronomeBpm },
+  ]);
+  useEffect(() => {
+    if (previousTimerStartedAtRef.current && !timer.startedAt) {
+      bpmSamplesRef.current = [{ elapsedSeconds: 0, bpm: metronomeBpm }];
+    }
+    previousTimerStartedAtRef.current = timer.startedAt;
+  }, [metronomeBpm, timer.startedAt]);
+  const recordBpmChange = useCallback(
+    (bpm: number) => {
+      const elapsedSeconds = timerElapsedSecondsRef.current;
+      const previousSample = bpmSamplesRef.current.at(-1);
+      if (previousSample?.elapsedSeconds === elapsedSeconds) {
+        bpmSamplesRef.current[bpmSamplesRef.current.length - 1] = {
+          elapsedSeconds,
+          bpm,
+        };
+        return;
+      }
+
+      bpmSamplesRef.current.push({ elapsedSeconds, bpm });
+    },
+    [],
+  );
+  useEffect(() => () => stopMetronome(), [stopMetronome]);
 
   function saveCompletedSession(
     sessionNotes: string,
@@ -63,7 +94,10 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
       createPracticeSessionRecord({
         id: sessionId,
         title: name,
-        averageBpm: bpm,
+        averageBpm: getTimeWeightedAverageBpm(
+          bpmSamplesRef.current,
+          pendingResult.elapsedSeconds,
+        ),
         result: pendingResult,
         phases,
         notes: sessionNotes,
@@ -76,7 +110,6 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     );
   }
 
-  const timer = usePracticeTimer(phases, undefined, completeSession);
   const nextPhase = phases[timer.currentPhaseIndex + 1];
   const currentPhase = phases[timer.currentPhaseIndex];
 
@@ -87,7 +120,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         isVisible={isPracticeRoute}
         onSave={saveCompletedSession}
       />
-      <div
+      <main
         className={
           isPracticeRoute
             ? "mx-auto w-full max-w-5xl space-y-6 px-6 pb-16 pt-6 sm:pb-24"
@@ -101,7 +134,10 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
             isCompleted={isCompleted}
             isPracticeRoute={isPracticeRoute}
           />
-          <MetronomeCard onBpmChange={setBpm} />
+          <MetronomeCard
+            onBpmChange={recordBpmChange}
+            stopOnUnmount={false}
+          />
         </div>
         {!isCompleted && (
           <section
@@ -157,40 +193,42 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
           }
           shouldStop={isCompleted}
         />
-      </div>
+      </main>
       {!isPracticeRoute && (
-        <Link
-          href="/practice"
-          aria-label={`Volver a la práctica en curso: ${name}`}
-          className="fixed inset-x-3 bottom-3 z-40 mx-auto flex w-[calc(100%-1.5rem)] max-w-2xl items-center gap-3 rounded-xl border border-line bg-surface p-3 transition-colors hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green-fg sm:bottom-5 sm:gap-4 sm:p-4"
-        >
-          <span
-            aria-hidden="true"
-            className={`size-2.5 shrink-0 rounded-full ${
-              timer.isRunning
-                ? "bg-accent-green-fg"
-                : "border border-muted bg-transparent"
-            }`}
-          />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[10px] uppercase tracking-[0.05em] text-muted sm:text-xs">
-              {getSessionStatus(isCompleted, timer.isRunning)}
+        <nav aria-label="Práctica en curso">
+          <Link
+            href="/practice"
+            aria-label={`Volver a la práctica en curso: ${name}`}
+            className="fixed inset-x-3 bottom-3 z-40 mx-auto flex w-[calc(100%-1.5rem)] max-w-2xl items-center gap-3 rounded-xl border border-line bg-surface p-3 transition-colors hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green-fg sm:bottom-5 sm:gap-4 sm:p-4"
+          >
+            <span
+              aria-hidden="true"
+              className={`size-2.5 shrink-0 rounded-full ${
+                timer.isRunning
+                  ? "bg-accent-green-fg"
+                  : "border border-muted bg-transparent"
+              }`}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[10px] uppercase tracking-[0.05em] text-muted sm:text-xs">
+                {getSessionStatus(isCompleted, timer.isRunning)}
+              </span>
+              <span className="block truncate text-sm font-medium text-ink sm:text-base">
+                {name}
+                {timer.currentPhase ? ` · ${timer.currentPhase.name}` : ""}
+              </span>
             </span>
-            <span className="block truncate text-sm font-medium text-ink sm:text-base">
-              {name}
-              {timer.currentPhase ? ` · ${timer.currentPhase.name}` : ""}
+            {timer.currentPhase && !isCompleted && (
+              <span className="shrink-0 font-mono text-sm tabular-nums text-ink sm:text-base">
+                {formatClock(timer.remainingSeconds)}
+              </span>
+            )}
+            <span className="shrink-0 border border-line bg-white/[0.06] px-3 py-2 text-xs font-medium text-ink sm:px-4 sm:text-sm">
+              <span className="sm:hidden">Volver</span>
+              <span className="hidden sm:inline">Volver a la práctica</span>
             </span>
-          </span>
-          {timer.currentPhase && !isCompleted && (
-            <span className="shrink-0 font-mono text-sm tabular-nums text-ink sm:text-base">
-              {formatClock(timer.remainingSeconds)}
-            </span>
-          )}
-          <span className="shrink-0 border border-line bg-white/[0.06] px-3 py-2 text-xs font-medium text-ink sm:px-4 sm:text-sm">
-            <span className="sm:hidden">Volver</span>
-            <span className="hidden sm:inline">Volver a la práctica</span>
-          </span>
-        </Link>
+          </Link>
+        </nav>
       )}
     </>
   );

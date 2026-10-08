@@ -35,8 +35,28 @@ test("names compound-meter subdivisions by the note value in its denominator", (
   const eighthNoteOptions = getMetronomeSubdivisionOptions(getMetronomeMeter("6/8"));
   const quarterNoteOptions = getMetronomeSubdivisionOptions(getMetronomeMeter("6/4"));
 
-  assert.match(eighthNoteOptions.find(({ value }) => value === 3).label, /corcheas/i);
-  assert.match(quarterNoteOptions.find(({ value }) => value === 3).label, /negras/i);
+  assert.match(
+    eighthNoteOptions.find(({ value }) => value === 3).label,
+    /corcheas/i,
+  );
+  assert.match(
+    quarterNoteOptions.find(({ value }) => value === 3).label,
+    /negras/i,
+  );
+  assert.equal(
+    getMetronomeSubdivisionOptions(getMetronomeMeter("4/4")).find(
+      ({ value }) => value === 3,
+    ).isTuplet,
+    true,
+  );
+  assert.equal(
+    eighthNoteOptions.find(({ value }) => value === 3).isTuplet,
+    false,
+  );
+  assert.equal(
+    quarterNoteOptions.find(({ value }) => value === 3).isTuplet,
+    false,
+  );
   assert.deepEqual(
     eighthNoteOptions.map(({ shortLabel }) => shortLabel),
     ["Pulso", "2 por pulso", "Corcheas", "4 por pulso"],
