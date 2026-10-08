@@ -25,7 +25,7 @@ export function SkillBalance({ totals }: { totals: SkillTotals }) {
       <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
         Reparto del tiempo
       </p>
-      <h2 className="mt-2 font-serif text-3xl tracking-[-0.02em] text-zinc-100">
+      <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
         Balance de habilidades
       </h2>
 
@@ -66,7 +66,7 @@ export function SkillBalance({ totals }: { totals: SkillTotals }) {
           })}
         </svg>
         <div className="pointer-events-none -ml-44 flex size-44 flex-col items-center justify-center">
-          <span className="font-mono text-2xl text-zinc-100">
+          <span className="font-mono text-xs leading-6 tracking-normal text-zinc-100 sm:text-sm sm:leading-7">
             {formatPracticeDuration(totalMinutes)}
           </span>
           <span className="mt-1 text-xs text-zinc-500">este mes</span>

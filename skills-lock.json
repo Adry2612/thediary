@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "animation-systems": {
+      "source": "MengTo/Skills",
+      "sourceType": "github",
+      "skillPath": "agent-skills/web-design/animation-systems/SKILL.md",
+      "computedHash": "f6923a92d7d3f6e8465543ca9cbf2384d787d8d3a63d286a8dff013bbd131a36"
+    },
+    "better-interface": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-interface/SKILL.md",
+      "computedHash": "9c73b05d59b188147335eb71308ec7f37237272202fe2298f54c322e6c318b3f"
+    },
+    "minimalist-ui": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/minimalist-skill/SKILL.md",
+      "computedHash": "08873a3131d3be27bef9bf3304b310b16b44ca6e3561aebe532797be3443f6bd"
+    },
+    "solid": {
+      "source": "ramziddin/solid-skills",
+      "sourceType": "github",
+      "skillPath": "skills/solid/SKILL.md",
+      "computedHash": "6949aa4c74cf68a489297307515f1e769c3510b68045cbf16f6479403cf0b883"
+    }
+  }
+}

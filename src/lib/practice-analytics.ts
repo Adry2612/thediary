@@ -1,4 +1,9 @@
-import type { PracticeSkill, SessionRecord } from "../types/practice";
+import type {
+  DailyStats,
+  PracticeSkill,
+  SessionRecord,
+  SkillDistribution,
+} from "../types/practice";
 
 const PRACTICE_SKILLS: PracticeSkill[] = [
   "technique",
@@ -8,6 +13,10 @@ const PRACTICE_SKILLS: PracticeSkill[] = [
 ];
 
 export type PracticeChartPeriod = "week" | "month" | "year";
+export type PracticeTimeRange = {
+  startDate: string;
+  endDate: string;
+};
 
 export type PracticeTimeBucket = {
   label: string;
@@ -37,6 +46,141 @@ function startOfWeek(date: Date) {
   const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
   return monday;
+}
+
+function getSessionDateKey(session: SessionRecord) {
+  return toDateKey(new Date(session.startedAt));
+}
+
+function emptySkillValues(): Record<PracticeSkill, number> {
+  return { technique: 0, theory: 0, repertoire: 0, improvisation: 0 };
+}
+
+export function getStreakCount(
+  history: SessionRecord[],
+  today = new Date(),
+): number {
+  const practicedDates = new Set(history.map(getSessionDateKey));
+  const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (!practicedDates.has(toDateKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  let streak = 0;
+  while (practicedDates.has(toDateKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
+}
+
+export function getMonthlyHeatmapData(
+  year: number,
+  month: number,
+  history: SessionRecord[],
+): DailyStats[] {
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    throw new RangeError("El mes debe ser un entero entre 1 y 12.");
+  }
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, (_, index) => ({
+    dateKey: toDateKey(new Date(year, month - 1, index + 1)),
+    sessionCount: 0,
+    totalMinutes: 0,
+    averageBpm: 0,
+    skillMinutes: emptySkillValues(),
+    bpmTotal: 0,
+    bpmSessionCount: 0,
+  }));
+  const statsByDate = new Map(days.map((day) => [day.dateKey, day]));
+
+  for (const session of history) {
+    const dailyStats = statsByDate.get(getSessionDateKey(session));
+    if (!dailyStats) continue;
+
+    dailyStats.sessionCount += 1;
+    dailyStats.totalMinutes += session.durationSeconds / 60;
+    if (session.averageBpm > 0) {
+      dailyStats.bpmTotal += session.averageBpm;
+      dailyStats.bpmSessionCount += 1;
+    }
+    for (const skill of PRACTICE_SKILLS) {
+      dailyStats.skillMinutes[skill] += session.skillSeconds[skill] / 60;
+    }
+  }
+
+  return days.map(({ bpmTotal, bpmSessionCount, ...day }) => ({
+    ...day,
+    averageBpm: bpmSessionCount
+      ? Math.round(bpmTotal / bpmSessionCount)
+      : 0,
+  }));
+}
+
+export function getSkillDistribution(
+  history: SessionRecord[],
+  timeRange: PracticeTimeRange,
+): SkillDistribution {
+  const skillSeconds = emptySkillValues();
+
+  for (const session of history) {
+    const sessionDate = getSessionDateKey(session);
+    if (sessionDate < timeRange.startDate || sessionDate > timeRange.endDate) {
+      continue;
+    }
+
+    for (const skill of PRACTICE_SKILLS) {
+      skillSeconds[skill] += session.skillSeconds[skill];
+    }
+  }
+
+  const totalSeconds = Object.values(skillSeconds).reduce(
+    (total, seconds) => total + seconds,
+    0,
+  );
+  const percentages = PRACTICE_SKILLS.map((skill) => {
+    const exactPercentage = totalSeconds
+      ? (skillSeconds[skill] / totalSeconds) * 100
+      : 0;
+    return {
+      skill,
+      percentage: Math.floor(exactPercentage),
+      remainder: exactPercentage % 1,
+    };
+  });
+  const remainder =
+    (totalSeconds ? 100 : 0) -
+    percentages.reduce((total, item) => total + item.percentage, 0);
+
+  percentages
+    .slice()
+    .sort((left, right) => right.remainder - left.remainder)
+    .slice(0, remainder)
+    .forEach(({ skill }) => {
+      const item = percentages.find((candidate) => candidate.skill === skill);
+      if (item) item.percentage += 1;
+    });
+
+  const categories = PRACTICE_SKILLS.reduce<SkillDistribution["categories"]>(
+    (result, skill) => {
+      result[skill] = {
+        minutes: skillSeconds[skill] / 60,
+        percentage:
+          percentages.find((item) => item.skill === skill)?.percentage ?? 0,
+      };
+      return result;
+    },
+    {
+      technique: { minutes: 0, percentage: 0 },
+      theory: { minutes: 0, percentage: 0 },
+      repertoire: { minutes: 0, percentage: 0 },
+      improvisation: { minutes: 0, percentage: 0 },
+    },
+  );
+
+  return { totalMinutes: totalSeconds / 60, categories };
 }
 
 function getDailyPracticeSeconds(history: SessionRecord[]) {

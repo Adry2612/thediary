@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { formatPracticeDuration } from "@/lib/dashboard-data";
 import { getPracticeTimeBuckets } from "@/lib/practice-analytics";
+import { getContainedTooltipPosition } from "@/lib/practice-chart-tooltip";
 import type { PracticeChartPeriod } from "@/lib/practice-analytics";
+import { SelectField } from "@/components/ui/SelectField";
 import type { SessionRecord } from "@/types/practice";
 
 const PERIOD_OPTIONS: { value: PracticeChartPeriod; label: string }[] = [
@@ -16,6 +18,19 @@ function formatTotal(seconds: number) {
   return formatPracticeDuration(seconds / 60);
 }
 
+function formatExactDuration(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes} min ${remainingSeconds} s`;
+}
+
+type ChartTooltip = {
+  label: string;
+  duration: string;
+  left: number;
+  top: number;
+};
+
 export function PracticeTimeChart({
   history,
   today,
@@ -24,6 +39,8 @@ export function PracticeTimeChart({
   today: Date;
 }) {
   const [period, setPeriod] = useState<PracticeChartPeriod>("week");
+  const [tooltip, setTooltip] = useState<ChartTooltip | null>(null);
+  const chartContainerRef = useRef<HTMLElement>(null);
   const buckets = useMemo(
     () => getPracticeTimeBuckets(history, period, today),
     [history, period, today],
@@ -37,14 +54,42 @@ export function PracticeTimeChart({
     0,
   );
 
+  function showTooltip(
+    element: HTMLElement,
+    label: string,
+    totalSeconds: number,
+    pointerPosition?: { x: number; y: number },
+  ) {
+    const containerBounds = chartContainerRef.current?.getBoundingClientRect();
+    if (!containerBounds) return;
+
+    const bounds = element.getBoundingClientRect();
+    const centerX = pointerPosition?.x ?? bounds.left + bounds.width / 2;
+    const anchorY = pointerPosition?.y ?? bounds.top;
+    const position = getContainedTooltipPosition(
+      centerX - containerBounds.left,
+      anchorY - containerBounds.top,
+      containerBounds.width,
+      containerBounds.height,
+    );
+    setTooltip({
+      label,
+      duration: formatExactDuration(totalSeconds),
+      ...position,
+    });
+  }
+
   return (
-    <section className="enter flex h-full min-h-[27rem] flex-col rounded-xl border border-zinc-800 bg-zinc-900 p-5 sm:min-h-[32rem] sm:p-8">
+    <section
+      ref={chartContainerRef}
+      className="enter relative isolate flex h-full min-h-[27rem] flex-col rounded-xl border border-zinc-800 bg-zinc-900 p-5 sm:min-h-[32rem] sm:p-8"
+    >
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
             Tiempo registrado
           </p>
-          <h2 className="mt-2 font-serif text-3xl tracking-[-0.02em] text-zinc-100">
+          <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
             Ritmo de práctica
           </h2>
           <p className="mt-2 text-sm text-zinc-500">
@@ -55,30 +100,22 @@ export function PracticeTimeChart({
                 : "Tiempo por mes este año"}
           </p>
         </div>
-        <label className="text-xs text-zinc-500">
+        <div className="min-w-32 text-xs text-zinc-500">
           Periodo
-          <select
+          <SelectField
+            className="mt-1"
             value={period}
-            onChange={(event) => {
-              const selected = PERIOD_OPTIONS.find(
-                (option) => option.value === event.target.value,
-              );
-              if (selected) setPeriod(selected.value);
-            }}
-            aria-label="Periodo del gráfico de práctica"
-            className="mt-1 block h-10 min-w-32 border border-zinc-700 bg-zinc-950 px-3 text-sm text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-300"
-          >
-            {PERIOD_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            ariaLabel="Periodo del gráfico de práctica"
+            onChange={(selectedPeriod) =>
+              setPeriod(selectedPeriod as PracticeChartPeriod)
+            }
+            options={PERIOD_OPTIONS}
+          />
+        </div>
       </div>
 
       <div className="mt-6 flex items-baseline gap-2">
-        <span className="font-mono text-2xl tabular-nums text-zinc-100">
+        <span className="font-mono text-base leading-6 font-medium tabular-nums tracking-normal text-zinc-100 sm:text-lg sm:leading-7">
           {formatTotal(totalSeconds)}
         </span>
         <span className="text-xs text-zinc-500">en el periodo</span>
@@ -87,7 +124,7 @@ export function PracticeTimeChart({
       <div className="mt-5 min-h-0 flex-1 overflow-x-auto">
         <ul
           aria-label="Tiempo practicado por intervalo"
-          className="grid h-56 min-w-full items-end gap-2 border-b border-zinc-800 pb-2 sm:gap-3"
+          className="grid h-full min-h-56 min-w-full items-end gap-2 border-b border-zinc-800 pb-2 sm:gap-3"
           style={{
             gridTemplateColumns: `repeat(${buckets.length}, minmax(0, 1fr))`,
             minWidth:
@@ -105,9 +142,35 @@ export function PracticeTimeChart({
             return (
               <li
                 key={`${bucket.startDate}-${bucket.endDate}`}
-                title={accessibleLabel}
+                tabIndex={hasPractice ? 0 : undefined}
+                title={hasPractice ? accessibleLabel : undefined}
                 aria-label={accessibleLabel}
-                className="flex h-full min-w-0 flex-col items-center justify-end gap-2"
+                onPointerEnter={(event) => {
+                  if (event.pointerType === "touch" || !hasPractice) return;
+                  showTooltip(
+                    event.currentTarget,
+                    bucket.label,
+                    bucket.totalSeconds,
+                    { x: event.clientX, y: event.clientY },
+                  );
+                }}
+                onFocus={
+                  hasPractice
+                    ? (event) =>
+                        showTooltip(
+                          event.currentTarget,
+                          bucket.label,
+                          bucket.totalSeconds,
+                        )
+                    : undefined
+                }
+                onPointerLeave={(event) => {
+                  if (document.activeElement !== event.currentTarget) {
+                    setTooltip(null);
+                  }
+                }}
+                onBlur={() => setTooltip(null)}
+                className="flex h-full min-w-0 flex-col items-center justify-end gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-300"
               >
                 <div className="flex min-h-0 w-full flex-1 items-end justify-center">
                   <span
@@ -126,6 +189,18 @@ export function PracticeTimeChart({
           })}
         </ul>
       </div>
+      {tooltip && (
+        <div
+          role="tooltip"
+          className="pointer-events-none absolute z-50 w-44 border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-300 shadow-lg"
+          style={{ left: tooltip.left, top: tooltip.top }}
+        >
+          <span className="block text-zinc-500">{tooltip.label}</span>
+          <span className="mt-1 block font-mono text-sm tabular-nums text-zinc-100">
+            {tooltip.duration}
+          </span>
+        </div>
+      )}
       {maximumSeconds === 0 && (
         <p className="mt-4 text-center text-sm text-zinc-500">
           Completa una sesión para ver tu tiempo aquí.

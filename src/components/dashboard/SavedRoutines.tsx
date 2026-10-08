@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatPracticeDuration } from "@/lib/dashboard-data";
+import { getPracticePlanDuration } from "@/lib/practice-plan";
 import type { PracticeTemplate } from "@/types/practice";
 
 type SavedRoutinesProps = {
@@ -15,7 +16,7 @@ export function SavedRoutines({ routines, hasHydrated }: SavedRoutinesProps) {
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
             Inicio rápido
           </p>
-          <h2 className="mt-2 font-serif text-3xl tracking-[-0.02em] text-zinc-100">
+          <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
             Tus rutinas
           </h2>
           <p className="mt-2 text-sm text-zinc-500">
@@ -39,10 +40,7 @@ export function SavedRoutines({ routines, hasHydrated }: SavedRoutinesProps) {
       ) : (
         <ul className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {routines.map((routine) => {
-            const durationMinutes = routine.phases.reduce(
-              (total, phase) => total + phase.durationMinutes,
-              0,
-            );
+            const durationMinutes = getPracticePlanDuration(routine.phases);
             const sessionUrl = `/practice?template=${encodeURIComponent(routine.id)}&start=1`;
 
             return (

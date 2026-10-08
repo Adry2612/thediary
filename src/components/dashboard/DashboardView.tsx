@@ -2,8 +2,8 @@
 
 import { useMemo } from "react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { ManualPracticeEntry } from "@/components/dashboard/ManualPracticeEntry";
 import { PracticeTimeChart } from "@/components/dashboard/PracticeTimeChart";
-import { SavedRoutines } from "@/components/dashboard/SavedRoutines";
 import { SkillBalance } from "@/components/dashboard/SkillBalance";
 import { SuggestedPractice } from "@/components/dashboard/SuggestedPractice";
 import { WeeklyPracticeSummary } from "@/components/dashboard/WeeklyPracticeSummary";
@@ -13,18 +13,18 @@ import {
   makeDateKey,
   PRACTICE_SKILL_LABELS,
 } from "@/lib/dashboard-data";
-import { getPracticeStatistics } from "@/lib/practice-analytics";
+import {
+  getMonthlyHeatmapData,
+  getPracticeStatistics,
+  getSkillDistribution,
+  getStreakCount,
+} from "@/lib/practice-analytics";
 import {
   getPracticeWeekDays,
   getSessionsForWeek,
   getYearlyHeatmapData,
 } from "@/lib/practice-calendar";
-import {
-  getMonthlyHeatmapData,
-  getSkillDistribution,
-  getStreakCount,
-  usePracticeStore,
-} from "@/stores/usePracticeStore";
+import { usePracticeStore } from "@/stores/usePracticeStore";
 
 function parseDateKey(dateKey: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
@@ -37,7 +37,7 @@ type DashboardViewProps = {
 
 export function DashboardView({ todayKey }: DashboardViewProps) {
   const history = usePracticeStore((state) => state.history);
-  const templates = usePracticeStore((state) => state.templates);
+  const practiceGoals = usePracticeStore((state) => state.practiceGoals);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const persistenceError = usePracticeStore((state) => state.persistenceError);
   const today = useMemo(() => parseDateKey(todayKey), [todayKey]);
@@ -90,12 +90,15 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     (total, day) => total + day.totalMinutes,
     0,
   );
-  const averageBpm = currentMonthSessions.length
+  const sessionsWithBpm = currentMonthSessions.filter(
+    (session) => session.averageBpm > 0,
+  );
+  const averageBpm = sessionsWithBpm.length
     ? Math.round(
-        currentMonthSessions.reduce(
+        sessionsWithBpm.reduce(
           (total, session) => total + session.averageBpm,
           0,
-        ) / currentMonthSessions.length,
+        ) / sessionsWithBpm.length,
       )
     : 0;
   const skillTotals = {
@@ -125,8 +128,10 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     },
     {
       label: "BPM promedio",
-      value: `${averageBpm} bpm`,
-      description: "tempo medio de tus sesiones",
+      value: averageBpm ? `${averageBpm} bpm` : "—",
+      description: averageBpm
+        ? "tempo medio de tus sesiones con BPM"
+        : "sin BPM registrado este mes",
     },
     {
       label: "Sesiones registradas",
@@ -156,28 +161,29 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
           <p className="font-mono text-xs uppercase tracking-[0.14em] text-zinc-500">
             Diario de guitarra · resumen
           </p>
-          <h1 className="mt-3 font-serif text-5xl leading-[1.05] tracking-[-0.03em] text-zinc-100 sm:text-6xl">
+          <h1 className="mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight text-zinc-100 sm:text-4xl">
             Tu práctica, en contexto.
           </h1>
-          <p className="mt-4 max-w-xl text-sm text-zinc-400 sm:text-base">
+          <p className="mt-4 max-w-xl text-base font-medium text-zinc-400 sm:text-lg">
             Una vista clara de la constancia, el tiempo y las habilidades que
             estás trabajando.
           </p>
         </div>
-        <p className="rounded-full border border-zinc-800 px-3 py-1.5 text-xs uppercase tracking-[0.08em] text-zinc-500">
-          {hasHydrated ? "Historial local" : "Cargando historial"}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <ManualPracticeEntry />
+          <p className="rounded-full border border-zinc-800 px-3 py-1.5 text-xs uppercase tracking-[0.08em] text-zinc-500">
+            {hasHydrated ? "Historial local" : "Cargando historial"}
+          </p>
+        </div>
       </header>
 
       <div className="mb-5">
         <WeeklyPracticeSummary
           sessions={weeklySessions}
           days={practiceWeekDays}
+          dailyGoalMinutes={practiceGoals.dailyMinutes}
+          weeklyGoalDays={practiceGoals.weeklyDays}
         />
-      </div>
-
-      <div className="mt-5">
-        <SavedRoutines routines={templates} hasHydrated={hasHydrated} />
       </div>
 
       <div className="mt-5">
@@ -186,6 +192,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
           history={history}
           todayKey={todayKey}
           year={todayYear}
+          dailyGoalMinutes={practiceGoals.dailyMinutes}
         />
       </div>
 

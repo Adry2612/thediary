@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getRepertoirePracticeStats } from "../src/lib/repertoire-analytics.ts";
+import {
+  getRepertoireOverview,
+  getRepertoirePracticeStats,
+} from "../src/lib/repertoire-analytics.ts";
 
 const emptySkills = {
   technique: 0,
@@ -68,4 +71,60 @@ test("attributes only linked phase time to its repertoire part", () => {
   });
   assert.equal(stats.get("song-1")?.has("bridge-1"), true);
   assert.equal(stats.get("song-1")?.has("missing-part"), false);
+});
+
+test("does not count untouched linked phases as repertoire practice", () => {
+  const history = [
+    createSession("session-1", [
+      {
+        id: "phase-1",
+        name: "Solo",
+        skill: "repertoire",
+        elapsedSeconds: 0,
+        repertoireItemId: "song-1",
+        repertoirePartId: "solo-1",
+      },
+    ]),
+  ];
+
+  const stats = getRepertoirePracticeStats(history);
+
+  assert.equal(stats.has("song-1"), false);
+});
+
+test("summarizes repertoire items, learned parts, and linked practice time", () => {
+  const items = [
+    {
+      id: "song-1",
+      kind: "song",
+      title: "Canción",
+      parts: [
+        { id: "intro", name: "Intro", learned: true },
+        { id: "solo", name: "Solo", learned: false },
+      ],
+    },
+    {
+      id: "lick-1",
+      kind: "lick",
+      title: "Lick",
+      parts: [{ id: "main", name: "Principal", learned: false }],
+    },
+  ];
+  const practiceStats = new Map([
+    [
+      "song-1",
+      new Map([
+        ["intro", { practiceSeconds: 120, sessionCount: 1 }],
+        ["solo", { practiceSeconds: 180, sessionCount: 2 }],
+      ]),
+    ],
+  ]);
+
+  assert.deepEqual(getRepertoireOverview(items, practiceStats), {
+    songCount: 1,
+    lickCount: 1,
+    learnedCount: 1,
+    partCount: 3,
+    totalSeconds: 300,
+  });
 });

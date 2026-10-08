@@ -51,6 +51,24 @@ test("builds a complete leap-year calendar and aggregates session detail", () =>
   });
 });
 
+test("calculates BPM averages only from sessions that recorded a tempo", () => {
+  const history = [
+    createSession("with-bpm", "2024-02-29T12:00:00.000Z", {
+      averageBpm: 100,
+    }),
+    createSession("manual", "2024-02-29T15:00:00.000Z", {
+      averageBpm: 0,
+    }),
+  ];
+
+  const leapDay = getYearlyHeatmapData(2024, history).find(
+    (day) => day.dateKey === "2024-02-29",
+  );
+
+  assert.equal(leapDay.sessionCount, 2);
+  assert.equal(leapDay.averageBpm, 100);
+});
+
 test("returns this calendar week's sessions without including adjacent weeks", () => {
   const history = [
     createSession("previous", "2026-10-04T12:00:00.000Z"),

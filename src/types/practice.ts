@@ -7,7 +7,7 @@ export const PRACTICE_SKILLS = [
 
 export type PracticeSkill = (typeof PRACTICE_SKILLS)[number];
 
-export type PracticeResourceKind = "songsterr" | "guitarpro" | "pdf";
+export type PracticeResourceKind = "songsterr" | "guitarpro" | "pdf" | "audio";
 
 export interface PracticeResource {
   id: string;
@@ -62,6 +62,7 @@ export interface SessionRecord {
   startedAt: string;
   durationSeconds: number;
   averageBpm: number;
+  completed?: boolean;
   skillSeconds: Record<PracticeSkill, number>;
   notes?: string;
   phases?: SessionPhaseRecord[];
@@ -72,7 +73,9 @@ export interface SessionPhaseRecord {
   name: string;
   skill: PracticeSkill;
   elapsedSeconds: number;
+  durationMinutes?: number;
   exercises?: string[];
+  resources?: PracticeResource[];
   notes?: string;
   repertoireItemId?: string;
   repertoirePartId?: string;
@@ -101,6 +104,7 @@ export interface SkillDistribution {
 export interface PracticeTimerResult {
   elapsedSeconds: number;
   startedAt: string;
+  completed: boolean;
   skillSeconds: Record<PracticeSkill, number>;
   phases: PracticeTimerPhaseResult[];
 }

@@ -50,6 +50,7 @@ export function getYearlyHeatmapData(
       averageBpm: 0,
       skillMinutes: emptySkillMinutes(),
       bpmTotal: 0,
+      bpmSessionCount: 0,
     };
   });
   const statsByDate = new Map(days.map((day) => [day.dateKey, day]));
@@ -61,16 +62,19 @@ export function getYearlyHeatmapData(
 
     stats.sessionCount += 1;
     stats.totalMinutes += session.durationSeconds / 60;
-    stats.bpmTotal += session.averageBpm;
+    if (session.averageBpm > 0) {
+      stats.bpmTotal += session.averageBpm;
+      stats.bpmSessionCount += 1;
+    }
     for (const skill of PRACTICE_SKILLS) {
       stats.skillMinutes[skill] += session.skillSeconds[skill] / 60;
     }
   }
 
-  return days.map(({ bpmTotal, ...day }) => ({
+  return days.map(({ bpmTotal, bpmSessionCount, ...day }) => ({
     ...day,
-    averageBpm: day.sessionCount
-      ? Math.round(bpmTotal / day.sessionCount)
+    averageBpm: bpmSessionCount
+      ? Math.round(bpmTotal / bpmSessionCount)
       : 0,
   }));
 }

@@ -1,30 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import type { CSSProperties } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
+import { RangeSlider } from "@/components/ui/RangeSlider";
+import { MetronomeSettings } from "@/components/practice/MetronomeSettings";
 import { MAX_BPM, MIN_BPM, useMetronome } from "@/hooks/useMetronome";
 
-const SUBDIVISIONS = [
-  { value: 1, label: "Negras", notation: "1/4" },
-  { value: 2, label: "Corcheas", notation: "1/8" },
-  { value: 3, label: "Tresillos", notation: "1/8T" },
-  { value: 4, label: "Semicorcheas", notation: "1/16" },
-];
-
 type MetronomeCardProps = {
+  variant?: "default" | "large";
   initialBpm?: number;
   onBpmChange?: (bpm: number) => void;
 };
 
 export function MetronomeCard({
+  variant = "default",
   initialBpm = 80,
   onBpmChange,
 }: MetronomeCardProps) {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const settingsButtonRef = useRef<HTMLButtonElement>(null);
-  const settingsDialogRef = useRef<HTMLDialogElement>(null);
+  const isLarge = variant === "large";
   const {
     audioError,
     activeBeat,
@@ -48,15 +44,11 @@ export function MetronomeCard({
     onBpmChange?.(bpm);
   }, [bpm, onBpmChange]);
 
-  useEffect(() => {
-    const dialog = settingsDialogRef.current;
-    if (!dialog) return;
-    if (isSettingsOpen && !dialog.open) dialog.showModal();
-    if (!isSettingsOpen && dialog.open) dialog.close();
-  }, [isSettingsOpen]);
-
   return (
-    <Card className="enter" style={{ "--index": 1 } as CSSProperties}>
+    <Card
+      className={`enter ${isLarge ? "mx-auto w-full max-w-3xl p-8 sm:p-12" : ""}`}
+      style={{ "--index": 1 } as CSSProperties}
+    >
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm uppercase tracking-[0.05em] text-muted">
@@ -72,39 +64,17 @@ export function MetronomeCard({
             <span>{isRunning ? "Activo" : "4/4"}</span>
           </div>
         </div>
-        <button
-          ref={settingsButtonRef}
-          type="button"
-          onClick={() => setIsSettingsOpen(true)}
-          aria-label="Ajustes del metrónomo"
-          aria-haspopup="dialog"
-          aria-expanded={isSettingsOpen}
-          className="flex size-11 items-center justify-center border border-line text-muted transition hover:bg-white/5 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink/60"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M12 8.75a3.25 3.25 0 1 0 0 6.5 3.25 3.25 0 0 0 0-6.5Z"
-              stroke="currentColor"
-              strokeWidth="1.6"
-            />
-            <path
-              d="m19.4 15 .05.05a1.85 1.85 0 1 1-2.62 2.62l-.05-.05a1.83 1.83 0 0 0-3.12 1.3v.15a1.85 1.85 0 1 1-3.7 0v-.08a1.83 1.83 0 0 0-3.12-1.3l-.05.05a1.85 1.85 0 1 1-2.62-2.62l.05-.05a1.83 1.83 0 0 0-1.3-3.12h-.15a1.85 1.85 0 1 1 0-3.7h.08a1.83 1.83 0 0 0 1.3-3.12l-.05-.05a1.85 1.85 0 1 1 2.62-2.62l.05.05a1.83 1.83 0 0 0 3.12-1.3v-.15a1.85 1.85 0 1 1 3.7 0v.08a1.83 1.83 0 0 0 3.12 1.3l.05-.05a1.85 1.85 0 1 1 2.62 2.62l-.05.05a1.83 1.83 0 0 0 1.3 3.12h.15a1.85 1.85 0 1 1 0 3.7h-.08a1.83 1.83 0 0 0-1.3 3.12Z"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+        <MetronomeSettings
+          subdivision={subdivision}
+          volume={volume}
+          setSubdivision={setSubdivision}
+          setVolume={setVolume}
+        />
       </div>
 
-      <div className="mt-8 flex items-center justify-between gap-4">
+      <div
+        className={`${isLarge ? "mt-10 sm:mt-14" : "mt-8"} flex items-center justify-between gap-4`}
+      >
         <Button
           onClick={() => setBpm(bpm - 1)}
           aria-label="Bajar un BPM"
@@ -116,7 +86,18 @@ export function MetronomeCard({
         </Button>
 
         <div className="text-center">
-          <p className="font-mono text-6xl tabular-nums">{bpm}</p>
+          <AdjustableNumber
+            value={bpm}
+            min={MIN_BPM}
+            max={MAX_BPM}
+            ariaLabel="Tempo en BPM"
+            onChange={setBpm}
+            className={`w-full text-ink ${
+              isLarge
+                ? "text-7xl leading-none sm:text-8xl"
+                : "text-4xl leading-[1.5] sm:text-5xl"
+            }`}
+          />
           <p className="font-mono text-xs uppercase tracking-[0.05em] text-muted">
             bpm
           </p>
@@ -169,14 +150,14 @@ export function MetronomeCard({
         ))}
       </div>
 
-      <input
-        type="range"
+      <RangeSlider
         min={MIN_BPM}
         max={MAX_BPM}
         value={bpm}
-        onChange={(event) => setBpm(Number(event.target.value))}
-        aria-label="Tempo en BPM"
-        className="mt-8 w-full accent-ink"
+        ariaLabel="Tempo en BPM"
+        ariaValueText={`${bpm} BPM`}
+        onChange={setBpm}
+        className="mt-5"
       />
 
       <Button
@@ -197,7 +178,11 @@ export function MetronomeCard({
         variant={isRunning ? "ghost" : "primary"}
         onClick={() => void (isRunning ? stop() : start())}
         disabled={isStarting}
-        className="mt-5 w-full"
+        className={`mt-5 w-full ${
+          isRunning
+            ? "border-red-500/50 bg-red-950/50 text-red-300 hover:bg-red-950/80 hover:text-red-200 focus-visible:outline-red-400"
+            : ""
+        }`}
       >
         {isStarting
           ? "Activando audio…"
@@ -210,89 +195,6 @@ export function MetronomeCard({
           {audioError}
         </p>
       )}
-      <dialog
-        ref={settingsDialogRef}
-        aria-labelledby="metronome-settings-title"
-        onCancel={(event) => {
-          event.preventDefault();
-          setIsSettingsOpen(false);
-        }}
-        onClose={() => {
-          setIsSettingsOpen(false);
-          settingsButtonRef.current?.focus();
-        }}
-        onClick={(event) => {
-          if (event.target === settingsDialogRef.current) {
-            setIsSettingsOpen(false);
-          }
-        }}
-        className="fixed inset-0 m-auto max-h-[90vh] w-[min(100%-2rem,28rem)] overflow-y-auto border border-line bg-surface p-0 text-ink backdrop:bg-black/70"
-      >
-        <div className="p-6 sm:p-8">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.05em] text-muted">
-                Metrónomo
-              </p>
-              <h2
-                id="metronome-settings-title"
-                className="mt-2 font-serif text-3xl"
-              >
-                Ajustes
-              </h2>
-            </div>
-            <button
-              type="button"
-              autoFocus
-              onClick={() => setIsSettingsOpen(false)}
-              aria-label="Cerrar ajustes"
-              className="flex size-11 items-center justify-center border border-line text-muted hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink/60"
-            >
-              <span aria-hidden="true">×</span>
-            </button>
-          </div>
-
-          <div className="mt-8">
-            <label htmlFor="metronome-subdivision" className="text-sm text-muted">
-              Subdivisión
-            </label>
-            <select
-              id="metronome-subdivision"
-              value={subdivision}
-              onChange={(event) => setSubdivision(Number(event.target.value))}
-              className="mt-2 h-12 w-full border border-line bg-canvas px-4 text-sm text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
-            >
-              {SUBDIVISIONS.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label} · {item.notation}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mt-7">
-            <div className="flex items-center justify-between text-sm">
-              <label htmlFor="metronome-volume" className="text-muted">
-                Volumen
-              </label>
-              <span className="font-mono text-xs text-muted">
-                {Math.round(volume * 100)}%
-              </span>
-            </div>
-            <input
-              id="metronome-volume"
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={volume}
-              onChange={(event) => setVolume(Number(event.target.value))}
-              aria-label="Volumen del metrónomo"
-              className="mt-3 w-full accent-ink"
-            />
-          </div>
-        </div>
-      </dialog>
     </Card>
   );
 }

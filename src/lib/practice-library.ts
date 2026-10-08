@@ -1,4 +1,4 @@
-import type { PracticeResourceKind } from "@/types/practice";
+import type { PracticeResourceKind, PracticeSkill } from "@/types/practice";
 
 const DATABASE_NAME = "guitar-practice-library";
 const DATABASE_VERSION = 1;
@@ -9,7 +9,7 @@ let databasePromise: Promise<IDBDatabase> | null = null;
 export interface PracticeAsset {
   id: string;
   fileName: string;
-  kind: Extract<PracticeResourceKind, "guitarpro" | "pdf">;
+  kind: Exclude<PracticeResourceKind, "songsterr">;
   blob: Blob;
 }
 
@@ -17,7 +17,14 @@ export interface PracticeAudioRecording {
   id: string;
   title: string;
   sessionName: string;
+  sessionId?: string;
+  practiceDate?: string;
+  phaseId?: string | number;
+  phaseOrder?: number;
+  phaseName?: string;
+  practiceSkill?: PracticeSkill;
   createdAt: string;
+  durationSeconds?: number;
   mimeType: string;
   blob: Blob;
 }

@@ -8,12 +8,14 @@ const sharedFieldClasses =
 
 export function TextField({
   className = "",
+  type,
   ...props
 }: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`h-12 min-w-0 ${sharedFieldClasses} ${className}`}
+      type={type}
+      className={`h-12 min-w-0 ${sharedFieldClasses} ${type === "number" ? "font-mono" : ""} ${className}`}
     />
   );
 }

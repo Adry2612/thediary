@@ -7,6 +7,8 @@ const NAVIGATION = [
   { href: "/", label: "Inicio" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/practice", label: "Práctica" },
+  { href: "/metronome", label: "Metrónomo" },
+  { href: "/recordings", label: "Grabaciones" },
   { href: "/repertoire", label: "Mi repertorio" },
 ];
 
@@ -19,12 +21,9 @@ export function SiteNavigation() {
         aria-label="Navegación principal"
         className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-6 px-5 sm:px-8"
       >
-        <Link
-          href="/"
-          className="shrink-0 font-serif text-xl tracking-[-0.02em] text-ink"
-        >
+        <div className="shrink-0 font-sans text-xl font-semibold tracking-[-0.02em] text-ink">
           Diario de práctica
-        </Link>
+        </div>
         <ul className="flex max-w-full items-center gap-1 overflow-x-auto">
           {NAVIGATION.map((item) => {
             const isCurrent =

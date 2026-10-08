@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import {
   getPracticeTooltipPosition,
   PracticeDayTooltip,
@@ -8,16 +9,22 @@ import {
 import type { SessionRecord } from "@/types/practice";
 import { formatPracticeDuration } from "@/lib/dashboard-data";
 import type { PracticeWeekDay } from "@/lib/practice-calendar";
+import { getPracticeIntensityClass } from "@/lib/practice-goals";
 
 type WeeklyPracticeSummaryProps = {
   sessions: SessionRecord[];
   days: PracticeWeekDay[];
+  dailyGoalMinutes: number;
+  weeklyGoalDays: number;
 };
 
 export function WeeklyPracticeSummary({
   sessions,
   days,
+  dailyGoalMinutes,
+  weeklyGoalDays,
 }: WeeklyPracticeSummaryProps) {
+  const router = useRouter();
   const [hoveredDay, setHoveredDay] = useState<PracticeTooltipDay | null>(null);
   const sessionsByDate = useMemo(() => {
     const grouped = new Map<string, SessionRecord[]>();
@@ -31,6 +38,16 @@ export function WeeklyPracticeSummary({
   const totalSeconds = sessions.reduce(
     (total, session) => total + session.durationSeconds,
     0,
+  );
+  const totalMinutes = totalSeconds / 60;
+  const practicedDays = days.filter((day) => day.hasPractice).length;
+  const weeklyProgress = Math.min(
+    (practicedDays / weeklyGoalDays) * 100,
+    100,
+  );
+  const weeklyProgressClass = getPracticeIntensityClass(
+    practicedDays,
+    weeklyGoalDays,
   );
 
   function showTooltip(
@@ -55,22 +72,43 @@ export function WeeklyPracticeSummary({
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
             Lunes a domingo
           </p>
-          <h2 className="mt-2 font-serif text-3xl tracking-[-0.02em] text-zinc-100">
+          <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
             Esta semana
           </h2>
         </div>
-        <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-          <p className="flex items-baseline gap-2">
-            <span className="font-mono text-4xl leading-none tracking-tight text-zinc-100 sm:text-5xl">
-              {sessions.length}
-            </span>
-            <span className="text-sm text-zinc-400">
-              {sessions.length === 1 ? "sesión" : "sesiones"}
+        <div className="min-w-48">
+          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+            <p className="flex items-baseline gap-2">
+              <span className="font-mono text-xl leading-8 tracking-normal text-zinc-100 sm:text-2xl sm:leading-9">
+                {sessions.length}
+              </span>
+              <span className="text-sm text-zinc-400">
+                {sessions.length === 1 ? "sesión" : "sesiones"}
+              </span>
+            </p>
+            <p className="font-mono text-[10px] leading-5 tracking-normal text-zinc-300 sm:text-xs sm:leading-6">
+              {formatPracticeDuration(totalMinutes)} practicados
+            </p>
+          </div>
+          <p className="mt-2 text-xs text-zinc-500">
+            Objetivo semanal ·{" "}
+            <span className="font-mono text-zinc-300">
+              {practicedDays}/{weeklyGoalDays} días
             </span>
           </p>
-          <p className="font-mono text-sm text-zinc-300 sm:text-base">
-            {formatPracticeDuration(totalSeconds / 60)} practicados
-          </p>
+          <div
+            className="mt-2 h-1.5 overflow-hidden bg-zinc-800"
+            role="progressbar"
+            aria-label="Progreso del objetivo semanal de días"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(weeklyProgress)}
+          >
+            <div
+              className={`h-full transition-[width] duration-300 ${weeklyProgressClass}`}
+              style={{ width: `${weeklyProgress}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -86,28 +124,33 @@ export function WeeklyPracticeSummary({
             >
               <button
                 type="button"
-                aria-label={`${day.dayLabel} ${day.dayOfMonth}: ${day.sessionCount} ${day.sessionCount === 1 ? "sesión" : "sesiones"}${day.hasPractice ? `, ${formatPracticeDuration(day.totalMinutes)} practicados` : ""}`}
+                aria-label={`${day.dayLabel} ${day.dayOfMonth}: ${day.sessionCount} ${day.sessionCount === 1 ? "sesión" : "sesiones"}${day.hasPractice ? `, ${formatPracticeDuration(day.totalMinutes)} practicados. Ver detalle de práctica` : ""}`}
                 aria-describedby={
                   hoveredDay?.dateKey === day.dateKey
                     ? "practice-day-tooltip"
                     : undefined
                 }
+                onClick={() => {
+                  if (day.hasPractice) {
+                    router.push(`/dashboard/practice/${day.dateKey}`);
+                  }
+                }}
                 onMouseEnter={(event) => showTooltip(event.currentTarget, day)}
                 onMouseLeave={() => setHoveredDay(null)}
                 onFocus={(event) => showTooltip(event.currentTarget, day)}
                 onBlur={() => setHoveredDay(null)}
-                className={`flex min-h-20 w-full flex-col justify-between rounded-lg border p-1.5 text-left transition sm:min-h-28 sm:p-3 ${day.hasPractice ? "border-[#526e57] bg-[#26372b]/80 hover:border-[#89a78b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-200" : "border-zinc-800 bg-zinc-950/40"}`}
+                className={`flex min-h-20 w-full flex-col justify-between rounded-lg p-1.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-200 sm:min-h-28 sm:p-3 ${day.hasPractice ? `${getPracticeIntensityClass(day.totalMinutes, dailyGoalMinutes)} hover:brightness-110` : "bg-zinc-950/40 hover:bg-zinc-900/70"}`}
               >
                 <span className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                   <span className="truncate font-mono text-[10px] uppercase tracking-[0.04em] text-zinc-400 sm:text-xs sm:tracking-[0.08em]">
                     {day.dayLabel.replace(/\.$/, "")}
                   </span>
-                  <span className="font-mono text-lg tabular-nums text-zinc-100 sm:text-2xl">
+                  <span className="font-mono text-sm leading-6 tabular-nums tracking-normal text-zinc-100 sm:text-base sm:leading-7">
                     {day.dayOfMonth}
                   </span>
                 </span>
                 <span
-                  className={`truncate font-mono text-[10px] sm:text-xs ${day.hasPractice ? "text-[#c1d2c2]" : "text-zinc-500"}`}
+                  className={`truncate font-mono text-[9px] leading-4 tracking-normal sm:text-[10px] sm:leading-5 ${day.hasPractice ? "text-[#c1d2c2]" : "text-zinc-500"}`}
                 >
                   {day.sessionCount} ses.
                 </span>

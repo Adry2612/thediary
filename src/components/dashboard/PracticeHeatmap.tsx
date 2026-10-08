@@ -77,7 +77,7 @@ export function PracticeHeatmap({
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
             Constancia
           </p>
-          <h2 className="mt-2 font-serif text-3xl tracking-[-0.02em] text-zinc-100">
+          <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
             Mapa de práctica
           </h2>
         </div>
@@ -195,11 +195,11 @@ export function PracticeHeatmap({
           <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-2 sm:mt-0 sm:grid-cols-3">
             <p className="font-mono text-sm text-zinc-200">
               {formatPracticeDuration(selectedDay.minutes)}{" "}
-              <span className="font-sans text-xs text-zinc-500">total</span>
+              <span className="font-mono text-xs text-zinc-500">total</span>
             </p>
             <p className="font-mono text-sm text-zinc-200">
-              {selectedDay.averageBpm}{" "}
-              <span className="font-sans text-xs text-zinc-500">BPM</span>
+              {selectedDay.averageBpm || "—"}{" "}
+              <span className="font-mono text-xs text-zinc-500">BPM</span>
             </p>
             <p className="col-span-2 text-xs text-zinc-500 sm:col-span-1 sm:text-right">
               {PRACTICE_SKILLS.map((skill) => (

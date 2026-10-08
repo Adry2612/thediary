@@ -46,12 +46,14 @@ export default async function PracticePage({
   searchParams: Promise<{
     minutes?: string;
     template?: string;
+    repeatSessionId?: string;
     start?: string;
   }>;
 }) {
   const {
     minutes: requestedMinutes,
     template: requestedTemplateId,
+    repeatSessionId,
     start,
   } = await searchParams;
   const requestedDuration = Number(requestedMinutes);
@@ -63,6 +65,7 @@ export default async function PracticePage({
     <PracticeWorkspace
       initialPhases={phasesForSession}
       requestedTemplateId={requestedTemplateId}
+      requestedSessionId={repeatSessionId}
       autoStartTemplate={start === "1"}
     />
   );

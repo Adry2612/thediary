@@ -4,10 +4,12 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/Field";
+import { SelectField } from "@/components/ui/SelectField";
 import { getPracticeFileKind } from "@/lib/practice-templates";
 import { savePracticeAsset } from "@/lib/practice-library";
+import { createRepertoireItem } from "@/lib/repertoire-item";
 import { usePracticeStore } from "@/stores/usePracticeStore";
-import type { RepertoireItemKind } from "@/types/practice";
+import type { RepertoireItem, RepertoireItemKind } from "@/types/practice";
 
 function createId() {
   return crypto.randomUUID();
@@ -39,15 +41,7 @@ export function RepertoireItemForm() {
     setIsSaving(true);
     setError(null);
     const itemId = createId();
-    let guitarPro:
-      | {
-          id: string;
-          title: string;
-          kind: "guitarpro";
-          fileName: string;
-          assetId: string;
-        }
-      | undefined;
+    let guitarPro: RepertoireItem["guitarPro"];
     try {
       if (kind === "lick" && guitarProFile) {
         const assetId = createId();
@@ -66,26 +60,17 @@ export function RepertoireItemForm() {
         };
       }
 
-      const initialPartId = createId();
-      saveRepertoireItem({
-        id: itemId,
-        kind,
-        title: cleanTitle,
-        ...(kind === "song" && artist.trim()
-          ? { artist: artist.trim() }
-          : {}),
-        parts: [
-          {
-            id: initialPartId,
-            name: kind === "song" ? "Canción completa" : "Lick principal",
-            learned: false,
-            masteredBpm: null,
-            targetBpm: null,
-          },
-        ],
-        guitarPro,
-        updatedAt: new Date().toISOString(),
-      });
+      saveRepertoireItem(
+        createRepertoireItem({
+          id: itemId,
+          initialPartId: createId(),
+          kind,
+          title: cleanTitle,
+          artist,
+          guitarPro,
+          updatedAt: new Date().toISOString(),
+        }),
+      );
       setTitle("");
       setArtist("");
       setGuitarProFile(null);
@@ -110,7 +95,7 @@ export function RepertoireItemForm() {
         <p className="text-xs uppercase tracking-[0.12em] text-muted">
           Biblioteca personal
         </p>
-        <h2 className="mt-2 font-serif text-3xl tracking-[-0.02em]">
+        <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8">
           Añadir al repertorio
         </h2>
       </div>
@@ -119,19 +104,19 @@ export function RepertoireItemForm() {
         onSubmit={(event) => void addItem(event)}
         className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end"
       >
-        <label className="block text-xs text-muted">
+        <div className="block text-xs text-muted">
           Tipo
-          <select
+          <SelectField
+            className="mt-1"
             value={kind}
-            onChange={(event) =>
-              setKind(event.target.value as RepertoireItemKind)
-            }
-            className="mt-1 h-12 w-full rounded-md border border-line bg-canvas px-4 text-sm text-ink transition-colors hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg"
-          >
-            <option value="song">Canción</option>
-            <option value="lick">Lick</option>
-          </select>
-        </label>
+            ariaLabel="Tipo de elemento del repertorio"
+            onChange={(value) => setKind(value as RepertoireItemKind)}
+            options={[
+              { value: "song", label: "Canción" },
+              { value: "lick", label: "Lick" },
+            ]}
+          />
+        </div>
 
         <label className="block text-xs text-muted">
           {kind === "song" ? "Nombre de la canción" : "Nombre del lick"}

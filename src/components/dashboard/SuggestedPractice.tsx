@@ -18,7 +18,7 @@ export function SuggestedPractice() {
         <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
           Acceso directo
         </p>
-        <h2 className="mt-2 font-serif text-3xl tracking-[-0.02em] text-zinc-100">
+        <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
           ¿Cuánto tiempo tienes hoy?
         </h2>
         <p className="mt-2 text-sm text-zinc-400">

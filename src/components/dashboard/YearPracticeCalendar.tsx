@@ -2,18 +2,24 @@
 
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import {
   getPracticeTooltipPosition,
   PracticeDayTooltip,
   type PracticeTooltipDay,
 } from "@/components/dashboard/PracticeDayTooltip";
 import type { DailyStats, SessionRecord } from "@/types/practice";
+import {
+  getPracticeIntensityClass,
+  PRACTICE_INTENSITY_CLASSES,
+} from "@/lib/practice-goals";
 
 type YearPracticeCalendarProps = {
   days: DailyStats[];
   history: SessionRecord[];
   todayKey: string;
   year: number;
+  dailyGoalMinutes: number;
 };
 
 type CalendarCell = {
@@ -40,14 +46,6 @@ function formatDate(dateKey: string, includeYear = false) {
     month: "long",
     ...(includeYear ? { year: "numeric" } : {}),
   }).format(parseDateKey(dateKey));
-}
-
-function getIntensity(minutes: number) {
-  if (minutes === 0) return "bg-zinc-800/70";
-  if (minutes < 20) return "bg-[#26372b]";
-  if (minutes < 40) return "bg-[#3c5943]";
-  if (minutes < 60) return "bg-[#5c8064]";
-  return "bg-[#89a78b]";
 }
 
 function getMonthMarkers(year: number, weekCount: number, firstWeekday: number) {
@@ -97,7 +95,9 @@ export function YearPracticeCalendar({
   history,
   todayKey,
   year,
+  dailyGoalMinutes,
 }: YearPracticeCalendarProps) {
+  const router = useRouter();
   const [hoveredDay, setHoveredDay] = useState<PracticeTooltipDay | null>(null);
   const statsByDate = useMemo(
     () => new Map(days.map((day) => [day.dateKey, day])),
@@ -148,21 +148,35 @@ export function YearPracticeCalendar({
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
             Constancia
           </p>
-          <h2 className="mt-2 font-serif text-3xl tracking-[-0.02em] text-zinc-100">
+          <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
             Mapa de práctica · {yearLabel}
           </h2>
           <p className="mt-2 text-sm text-zinc-500">
-            El año completo en una sola cuadrícula. Pasa por un día para ver las
-            sesiones.
+            El tono compara los minutos registrados con tu objetivo diario de{" "}
+            {dailyGoalMinutes} min. Pasa por un día para ver las sesiones.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
+        <div
+          className="flex items-center gap-2 text-xs text-zinc-500"
+          aria-label="Intensidad según el objetivo diario"
+        >
           <span>Menos</span>
-          {[0, 10, 30, 50, 70].map((minutes) => (
+          {PRACTICE_INTENSITY_CLASSES.map((intensityClass, index) => (
             <span
-              key={minutes}
+              key={intensityClass}
               aria-hidden="true"
-              className={`size-3 rounded-[2px] ${getIntensity(minutes)}`}
+              title={
+                index === 0
+                  ? "Sin práctica"
+                  : index === 1
+                    ? "Menos del 25% del objetivo"
+                    : index === 2
+                      ? "Del 25% al 49% del objetivo"
+                      : index === 3
+                        ? "Del 50% al 99% del objetivo"
+                        : "100% o más del objetivo"
+              }
+              className={`size-3 rounded-[2px] ${intensityClass}`}
             />
           ))}
           <span>Más</span>
@@ -220,7 +234,7 @@ export function YearPracticeCalendar({
                     key={cell.dateKey}
                     type="button"
                     disabled={isFuture}
-                    aria-label={`${formatDate(cell.dateKey, true)}: ${minutes ? `${Math.round(minutes)} minutos, ${cell.sessions.length} ${cell.sessions.length === 1 ? "sesión" : "sesiones"}` : "sin práctica registrada"}`}
+                    aria-label={`${formatDate(cell.dateKey, true)}: ${minutes ? `${Math.round(minutes)} minutos, ${cell.sessions.length} ${cell.sessions.length === 1 ? "sesión" : "sesiones"}. Ver detalle de práctica` : "sin práctica registrada"}`}
                     aria-describedby={
                       hoveredDay?.dateKey === cell.dateKey
                         ? "practice-day-tooltip"
@@ -232,7 +246,12 @@ export function YearPracticeCalendar({
                     onMouseLeave={() => setHoveredDay(null)}
                     onFocus={(event) => showTooltip(event.currentTarget, cell)}
                     onBlur={() => setHoveredDay(null)}
-                    className={`size-4 rounded-[3px] ${getIntensity(minutes)} transition hover:outline hover:outline-1 hover:outline-zinc-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-200 disabled:cursor-default disabled:opacity-30`}
+                    onClick={() => {
+                      if (cell.sessions.length > 0) {
+                        router.push(`/dashboard/practice/${cell.dateKey}`);
+                      }
+                    }}
+                    className={`size-4 rounded-[3px] ${getPracticeIntensityClass(minutes, dailyGoalMinutes)} transition hover:outline hover:outline-1 hover:outline-zinc-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-200 disabled:cursor-default disabled:opacity-30 ${cell.sessions.length > 0 ? "cursor-pointer" : ""}`}
                   />
                 );
               })}

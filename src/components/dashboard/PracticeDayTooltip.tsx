@@ -70,7 +70,7 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
         <p className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
           Resumen de práctica
         </p>
-        <h3 className="mt-1 font-serif text-lg capitalize leading-tight text-zinc-100">
+        <h3 className="mt-1 font-sans text-lg font-semibold capitalize leading-tight text-zinc-100">
           {formatDate(day.dateKey)}
         </h3>
       </div>
@@ -101,8 +101,8 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
                   </span>
                 </div>
                 <p className="mt-1 font-mono text-xs text-zinc-500">
-                  {formatPracticeDuration(session.durationSeconds / 60)} ·{" "}
-                  {session.averageBpm} BPM
+                  {formatPracticeDuration(session.durationSeconds / 60)}
+                  {session.averageBpm > 0 && ` · ${session.averageBpm} BPM`}
                 </p>
                 {session.phases && session.phases.length > 0 && (
                   <ul className="mt-2 space-y-1">

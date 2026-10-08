@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
+import { PracticeAudioPlayer } from "@/components/practice/PracticeAudioPlayer";
 import { getPracticeAsset } from "@/lib/practice-library";
 import { normalizeSongsterrUrl } from "@/lib/practice-templates";
 import type { PracticePhase, PracticeResource } from "@/types/practice";
@@ -135,6 +136,17 @@ function ResourcePreview({ resource }: { resource: PracticeResource }) {
 
   if (error) return <p className="p-6 text-sm text-red-300">{error}</p>;
   if (!url) return <p className="p-6 text-sm text-muted">Cargando archivo…</p>;
+  if (resource.kind === "audio") {
+    return (
+      <div className="p-5">
+        <PracticeAudioPlayer
+          src={url}
+          title={resource.title}
+          showVolumeControl
+        />
+      </div>
+    );
+  }
   if (resource.kind === "pdf") {
     return (
       <iframe
@@ -180,7 +192,9 @@ export function PracticeMaterials({ phases }: { phases: PracticePhase[] }) {
         <p className="text-xs uppercase tracking-[0.05em] text-muted">
           Material de estudio
         </p>
-        <h2 className="mt-2 font-serif text-2xl">Tablaturas y partituras</h2>
+        <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8">
+        Material y backing tracks
+        </h2>
       </div>
       <div className="grid gap-5 md:grid-cols-[12rem_minmax(0,1fr)]">
         <nav aria-label="Materiales de práctica" className="space-y-2">

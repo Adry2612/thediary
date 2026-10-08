@@ -29,10 +29,10 @@ export function LandingPage() {
           <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted">
             Tu espacio de práctica musical
           </p>
-          <h1 className="mt-5 max-w-3xl font-serif text-5xl leading-[0.98] tracking-[-0.04em] sm:text-7xl">
+          <h1 className="mt-5 max-w-3xl font-sans text-4xl leading-tight font-semibold tracking-tight sm:text-5xl">
             Practica con intención. Recuerda lo que avanzas.
           </h1>
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
+          <p className="mt-6 max-w-xl text-base font-medium leading-relaxed text-muted sm:text-lg">
             Organiza cada sesión, sigue tu constancia y construye un repertorio
             que muestre lo que ya sabes tocar y lo que quieres dominar.
           </p>
@@ -92,7 +92,7 @@ export function LandingPage() {
             className="enter rounded-lg border border-line bg-surface p-6 sm:p-7"
           >
             <p className="font-mono text-xs text-muted">{feature.number}</p>
-            <h2 className="mt-8 font-serif text-2xl tracking-[-0.02em]">
+            <h2 className="mt-8 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8">
               {feature.title}
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-muted">

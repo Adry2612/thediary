@@ -3,19 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import { PracticePlanBuilder } from "@/components/practice/PracticePlanBuilder";
 import { PracticeSession } from "@/components/practice/PracticeSession";
+import { createPracticePlanFromSession } from "@/lib/practice-launch";
+import { getPracticePlanDuration } from "@/lib/practice-plan";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import type { PracticePhase } from "@/types/practice";
 
 export function PracticeWorkspace({
   initialPhases,
   requestedTemplateId,
+  requestedSessionId,
   autoStartTemplate = false,
 }: {
   initialPhases: PracticePhase[];
   requestedTemplateId?: string;
+  requestedSessionId?: string;
   autoStartTemplate?: boolean;
 }) {
   const templates = usePracticeStore((state) => state.templates);
+  const history = usePracticeStore((state) => state.history);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const [draftPlan, setDraftPlan] = useState({
     name: "Mi sesión",
@@ -29,9 +34,17 @@ export function PracticeWorkspace({
     phases: PracticePhase[];
   } | null>(null);
   const launchedTemplateId = useRef<string | null>(null);
+  const launchedSessionId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!autoStartTemplate || !requestedTemplateId || !hasHydrated) return;
+    if (
+      requestedSessionId ||
+      !autoStartTemplate ||
+      !requestedTemplateId ||
+      !hasHydrated
+    ) {
+      return;
+    }
     if (launchedTemplateId.current === requestedTemplateId) return;
 
     launchedTemplateId.current = requestedTemplateId;
@@ -49,7 +62,34 @@ export function PracticeWorkspace({
     setDraftPlan(plan);
     setActivePlan(plan);
     setTemplateLaunchError(null);
-  }, [autoStartTemplate, hasHydrated, requestedTemplateId, templates]);
+  }, [
+    autoStartTemplate,
+    hasHydrated,
+    requestedSessionId,
+    requestedTemplateId,
+    templates,
+  ]);
+
+  useEffect(() => {
+    if (!requestedSessionId || !hasHydrated) return;
+    if (launchedSessionId.current === requestedSessionId) return;
+
+    launchedSessionId.current = requestedSessionId;
+    const session = history.find(
+      (candidate) => candidate.id === requestedSessionId,
+    );
+    const plan = session ? createPracticePlanFromSession(session) : null;
+    if (!plan) {
+      setTemplateLaunchError(
+        "No se encontró una sesión con bloques que se pueda repetir.",
+      );
+      return;
+    }
+
+    setDraftPlan(plan);
+    setActivePlan(plan);
+    setTemplateLaunchError(null);
+  }, [hasHydrated, history, requestedSessionId]);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-16 sm:py-24">
@@ -57,16 +97,13 @@ export function PracticeWorkspace({
         <p className="font-mono text-xs uppercase tracking-[0.05em] text-muted">
           Diario de práctica
         </p>
-        <h1 className="mt-3 font-serif text-5xl tracking-[-0.03em]">
+        <h1 className="mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
           {activePlan?.name ?? "Tu práctica"}
         </h1>
         {activePlan ? (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="font-mono text-xs uppercase tracking-[0.05em] text-muted">
-              {activePlan.phases.reduce(
-                (total, phase) => total + phase.durationMinutes,
-                0,
-              )}{" "}
+              {getPracticePlanDuration(activePlan.phases)}{" "}
               min · sesión personal
             </p>
             <button

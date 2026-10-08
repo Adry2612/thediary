@@ -1,26 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  clampMetronomeBpm,
+  clampMetronomeVolume,
+  getTapTempoUpdate,
+  MAX_BPM,
+  MIN_BPM,
+  type TapTempoState,
+} from "@/lib/metronome-tempo";
+import { getScheduledMetronomeBeats } from "@/lib/metronome-scheduler";
+import { scheduleMetronomeClick } from "@/lib/metronome-audio";
+import {
+  closeMetronomeAudioContext,
+  getOrCreateMetronomeAudioContext,
+  resumeMetronomeAudioContext,
+  suspendMetronomeAudioContext,
+} from "@/lib/metronome-audio-context";
 
-export const MIN_BPM = 40;
-export const MAX_BPM = 240;
+export { MAX_BPM, MIN_BPM };
 
 const SCHEDULER_INTERVAL_MS = 25;
-const SCHEDULE_AHEAD_SECONDS = 0.1;
-const CLICK_DURATION_SECONDS = 0.075;
 const VISUAL_PULSE_MS = 90;
-const BEATS_PER_BAR = 4;
-const TAP_RESET_MS = 2_000;
-const MIN_TAP_INTERVAL_MS = 250;
-const MAX_TAP_INTERVALS = 4;
-
-function clampBpm(value: number) {
-  return Math.min(MAX_BPM, Math.max(MIN_BPM, Math.round(value)));
-}
-
-function clampVolume(value: number) {
-  return Math.min(1, Math.max(0, value));
-}
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error
@@ -28,47 +29,11 @@ function getErrorMessage(error: unknown) {
     : "El navegador no pudo activar el audio.";
 }
 
-function scheduleClick(
-  context: AudioContext,
-  scheduledAt: number,
-  volume: number,
-  isDownbeat: boolean,
-  activeOscillators: Set<OscillatorNode>,
-) {
-  if (volume === 0) return;
-
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
-  const peakVolume = isDownbeat ? volume : volume * 0.78;
-
-  oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(isDownbeat ? 1_000 : 760, scheduledAt);
-  gain.gain.setValueAtTime(0.0001, scheduledAt);
-  gain.gain.linearRampToValueAtTime(peakVolume, scheduledAt + 0.004);
-  gain.gain.exponentialRampToValueAtTime(
-    0.0001,
-    scheduledAt + CLICK_DURATION_SECONDS,
-  );
-
-  oscillator.connect(gain);
-  gain.connect(context.destination);
-  activeOscillators.add(oscillator);
-  oscillator.addEventListener(
-    "ended",
-    () => {
-      activeOscillators.delete(oscillator);
-      oscillator.disconnect();
-      gain.disconnect();
-    },
-    { once: true },
-  );
-  oscillator.start(scheduledAt);
-  oscillator.stop(scheduledAt + CLICK_DURATION_SECONDS);
-}
-
 export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
-  const [bpm, setBpmState] = useState(() => clampBpm(initialBpm));
-  const [volume, setVolumeState] = useState(() => clampVolume(initialVolume));
+  const [bpm, setBpmState] = useState(() => clampMetronomeBpm(initialBpm));
+  const [volume, setVolumeState] = useState(() =>
+    clampMetronomeVolume(initialVolume),
+  );
   const [subdivision, setSubdivisionState] = useState(1);
   const [isRunning, setIsRunning] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
@@ -91,18 +56,21 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
   const schedulerRef = useRef<number | null>(null);
   const activeOscillatorsRef = useRef(new Set<OscillatorNode>());
   const pulseTimeoutsRef = useRef(new Set<number>());
-  const lastTapTimeRef = useRef<number | null>(null);
-  const tapIntervalsRef = useRef<number[]>([]);
+  const tapTempoStateRef = useRef<TapTempoState>({
+    lastTapTime: null,
+    intervals: [],
+    tapCount: 0,
+  });
   const pulseReleaseTimeoutRef = useRef<number | null>(null);
 
   const setBpm = useCallback((value: number) => {
-    const nextBpm = clampBpm(value);
+    const nextBpm = clampMetronomeBpm(value);
     bpmRef.current = nextBpm;
     setBpmState(nextBpm);
   }, []);
 
   const setVolume = useCallback((value: number) => {
-    const nextVolume = clampVolume(value);
+    const nextVolume = clampMetronomeVolume(value);
     volumeRef.current = nextVolume;
     setVolumeState(nextVolume);
   }, []);
@@ -165,31 +133,36 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
     const context = audioContextRef.current;
     if (!context || !runningRef.current) return;
 
-    const schedulingLimit = context.currentTime + SCHEDULE_AHEAD_SECONDS;
-    while (nextBeatTimeRef.current < schedulingLimit) {
-      const beatNumber = beatNumberRef.current;
-      const subdivisionNumber = subdivisionNumberRef.current;
-      scheduleClick(
+    const schedule = getScheduledMetronomeBeats({
+      state: {
+        nextBeatTime: nextBeatTimeRef.current,
+        beatNumber: beatNumberRef.current,
+        subdivisionNumber: subdivisionNumberRef.current,
+      },
+      currentTime: context.currentTime,
+      bpm: bpmRef.current,
+      subdivision: subdivisionRef.current,
+    });
+
+    for (const beat of schedule.beats) {
+      scheduleMetronomeClick({
         context,
-        nextBeatTimeRef.current,
-        volumeRef.current,
-        beatNumber === 0 && subdivisionNumber === 0,
-        activeOscillatorsRef.current,
-      );
+        scheduledAt: beat.scheduledAt,
+        volume: volumeRef.current,
+        isDownbeat: beat.isDownbeat,
+        activeOscillators: activeOscillatorsRef.current,
+      });
       scheduleVisualPulse(
         context,
-        nextBeatTimeRef.current,
-        beatNumber,
-        subdivisionNumber,
+        beat.scheduledAt,
+        beat.beat,
+        beat.subdivision,
       );
-
-      nextBeatTimeRef.current += 60 / bpmRef.current / subdivisionRef.current;
-      subdivisionNumberRef.current += 1;
-      if (subdivisionNumberRef.current >= subdivisionRef.current) {
-        subdivisionNumberRef.current = 0;
-        beatNumberRef.current = (beatNumberRef.current + 1) % BEATS_PER_BAR;
-      }
     }
+
+    nextBeatTimeRef.current = schedule.state.nextBeatTime;
+    beatNumberRef.current = schedule.state.beatNumber;
+    subdivisionNumberRef.current = schedule.state.subdivisionNumber;
   }, [scheduleVisualPulse]);
 
   useEffect(() => {
@@ -206,7 +179,7 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
 
       const context = audioContextRef.current;
       if (context && context.state !== "closed") {
-        void context.close();
+        closeMetronomeAudioContext(context);
       }
     };
   }, [clearPulseTimeouts, stopActiveOscillators]);
@@ -240,14 +213,14 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
     setIsStarting(true);
     setAudioError(null);
 
-    let context = audioContextRef.current;
+    let context: AudioContext;
     try {
-      if (!context || context.state === "closed") {
-        context = new AudioContextConstructor();
-        audioContextRef.current = context;
-      }
-
-      await context.resume();
+      context = getOrCreateMetronomeAudioContext(
+        audioContextRef.current,
+        AudioContextConstructor,
+      );
+      audioContextRef.current = context;
+      await resumeMetronomeAudioContext(context);
     } catch (error) {
       if (mountedRef.current) {
         setAudioError(`No se pudo activar el audio: ${getErrorMessage(error)}`);
@@ -284,40 +257,25 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
     stopActiveOscillators();
 
     const context = audioContextRef.current;
-    if (context && context.state === "running") {
-      void context.suspend().catch((error: unknown) => {
-        if (mountedRef.current) {
-          setAudioError(`No se pudo detener el audio: ${getErrorMessage(error)}`);
-        }
-      });
-    }
+    if (!context) return;
+
+    void suspendMetronomeAudioContext(context).catch((error: unknown) => {
+      if (mountedRef.current) {
+        setAudioError(`No se pudo detener el audio: ${getErrorMessage(error)}`);
+      }
+    });
   }, [clearPulseTimeouts, stopActiveOscillators]);
 
   const tapTempo = useCallback(() => {
-    const now = performance.now();
-    const previousTap = lastTapTimeRef.current;
+    const update = getTapTempoUpdate(
+      tapTempoStateRef.current,
+      performance.now(),
+    );
+    if (!update.accepted) return;
 
-    if (previousTap === null || now - previousTap > TAP_RESET_MS) {
-      lastTapTimeRef.current = now;
-      tapIntervalsRef.current = [];
-      setTapCount(1);
-      return;
-    }
-
-    const interval = now - previousTap;
-    if (interval < MIN_TAP_INTERVAL_MS) return;
-
-    lastTapTimeRef.current = now;
-    tapIntervalsRef.current = [
-      ...tapIntervalsRef.current,
-      interval,
-    ].slice(-MAX_TAP_INTERVALS);
-    setTapCount(tapIntervalsRef.current.length + 1);
-
-    const averageInterval =
-      tapIntervalsRef.current.reduce((total, value) => total + value, 0) /
-      tapIntervalsRef.current.length;
-    setBpm(60_000 / averageInterval);
+    tapTempoStateRef.current = update.state;
+    setTapCount(update.state.tapCount);
+    if (update.bpm !== null) setBpm(update.bpm);
   }, [setBpm]);
 
   return {

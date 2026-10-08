@@ -4,11 +4,15 @@ import type {
   RepertoireItem,
   SessionRecord,
 } from "@/types/practice";
+import type { WeeklyRoutineSchedule } from "@/lib/weekly-routine-schedule";
+import type { PracticeGoals } from "@/lib/practice-goals";
 
 export type PersistedPracticeState = {
   history: SessionRecord[];
   templates: PracticeTemplate[];
   repertoireItems?: RepertoireItem[];
+  weeklySchedule?: WeeklyRoutineSchedule;
+  practiceGoals?: PracticeGoals;
 };
 
 export type PracticeStorageAdapter = PersistStorage<PersistedPracticeState>;

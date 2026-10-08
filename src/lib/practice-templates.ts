@@ -55,11 +55,36 @@ export function normalizeSongsterrUrl(value: string): string | null {
 
 export function getPracticeFileKind(
   fileName: string,
-): "guitarpro" | "pdf" | null {
+  mimeType = "",
+): "audio" | "guitarpro" | "pdf" | null {
   const extension = fileName.split(".").at(-1)?.toLowerCase();
   if (extension === "pdf") return "pdf";
   if (["gp", "gpx", "gp3", "gp4", "gp5"].includes(extension ?? "")) {
     return "guitarpro";
   }
+  if (isSupportedPracticeAudio(fileName, mimeType)) return "audio";
   return null;
+}
+
+const PRACTICE_AUDIO_EXTENSIONS = new Set([
+  "aac",
+  "flac",
+  "m4a",
+  "mp3",
+  "oga",
+  "ogg",
+  "opus",
+  "wav",
+  "webm",
+]);
+
+export function isSupportedPracticeAudio(
+  fileName: string,
+  mimeType: string,
+): boolean {
+  const extension = fileName.split(".").at(-1)?.toLowerCase();
+  return (
+    mimeType.startsWith("audio/") ||
+    PRACTICE_AUDIO_EXTENSIONS.has(extension ?? "")
+  );
 }
