@@ -107,7 +107,9 @@ export function AccountView() {
   return (
     <main className='mx-auto max-w-3xl px-5 py-12 sm:px-8'>
       <p className='text-xs uppercase tracking-[0.12em] text-muted'>Cuenta</p>
-      <h1 className='mt-2 font-sans text-3xl font-semibold tracking-tight'>
+      <h1
+        className='mt-2 font-sans text-3xl font-semibold tracking-tight'
+      >
         Tus datos y sincronización
       </h1>
 

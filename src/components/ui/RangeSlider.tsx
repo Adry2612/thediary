@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 type RangeSliderProps = {
   min: number;
@@ -13,6 +13,7 @@ type RangeSliderProps = {
   ariaValueText?: string;
   disabled?: boolean;
   className?: string;
+  renderVisuals?: (progress: number) => ReactNode;
 };
 
 export function RangeSlider({
@@ -25,6 +26,7 @@ export function RangeSlider({
   ariaValueText,
   disabled = false,
   className = "",
+  renderVisuals,
 }: RangeSliderProps) {
   const sliderRef = useRef<HTMLDivElement>(null);
   const range = max - min;
@@ -87,17 +89,23 @@ export function RangeSlider({
       onKeyDown={handleKeyDown}
       className={`group relative flex h-10 w-full touch-none items-center focus-visible:outline-none ${disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"} ${className}`}
     >
-      <span className="h-1.5 w-full overflow-hidden bg-white/10">
-        <span
-          className="block h-full bg-accent-green-fg transition-[width] duration-75"
-          style={{ width: `${progress}%` }}
-        />
-      </span>
-      <span
-        aria-hidden="true"
-        className="absolute size-4 -translate-x-1/2 border-2 border-canvas bg-accent-green-fg ring-1 ring-accent-green-fg transition-transform group-focus-visible:scale-125 group-focus-visible:ring-2"
-        style={{ left: `${progress}%` }}
-      />
+      {renderVisuals ? (
+        renderVisuals(progress)
+      ) : (
+        <>
+          <span className="h-1.5 w-full overflow-hidden bg-white/10">
+            <span
+              className="block h-full bg-accent-green-fg transition-[width] duration-75"
+              style={{ width: `${progress}%` }}
+            />
+          </span>
+          <span
+            aria-hidden="true"
+            className="absolute size-4 -translate-x-1/2 border-2 border-canvas bg-accent-green-fg ring-1 ring-accent-green-fg transition-transform group-focus-visible:scale-125 group-focus-visible:ring-2"
+            style={{ left: `${progress}%` }}
+          />
+        </>
+      )}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -outline-offset-2 group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-accent-green-fg"

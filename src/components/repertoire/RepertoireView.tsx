@@ -103,7 +103,9 @@ export function RepertoireView() {
           <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted">
             Biblioteca musical
           </p>
-          <h1 className="mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
+          <h1
+            className="mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight sm:text-4xl"
+          >
             Mi repertorio
           </h1>
           <p className="mt-4 max-w-2xl text-base font-medium text-muted sm:text-lg">

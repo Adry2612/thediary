@@ -21,7 +21,10 @@ export function SiteNavigation() {
         aria-label='Navegación principal'
         className='mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-6 px-5 sm:px-8'
       >
-        <div className='shrink-0 font-sans text-xl font-semibold tracking-[-0.02em] text-ink'>
+        <div
+          data-tour-target='brand'
+          className='shrink-0 font-sans text-xl font-semibold tracking-[-0.02em] text-ink'
+        >
           thediary
         </div>
         <ul className='flex min-w-0 flex-1 items-center gap-1 overflow-x-auto'>

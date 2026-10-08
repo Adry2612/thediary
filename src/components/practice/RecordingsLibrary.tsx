@@ -122,7 +122,9 @@ export function RecordingsLibrary() {
         <p className="font-mono text-xs uppercase tracking-[0.12em] text-muted">
           Archivo personal
         </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+        <h1
+          className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl"
+        >
           Grabaciones
         </h1>
         <p className="mt-3 max-w-2xl text-base text-muted">
