@@ -25,7 +25,7 @@ export function SiteNavigation() {
           data-tour-target='brand'
           className='shrink-0 font-sans text-xl font-semibold tracking-[-0.02em] text-ink'
         >
-          thediary
+          thediary.
         </div>
         <ul className='flex min-w-0 flex-1 items-center gap-1 overflow-x-auto'>
           {NAVIGATION.map((item) => {
@@ -54,9 +54,9 @@ export function SiteNavigation() {
           href='/settings'
           aria-label='Configuración'
           aria-current={
-            pathname === '/settings' || pathname.startsWith('/settings/')
-              ? 'page'
-              : undefined
+            pathname === '/settings' || pathname.startsWith('/settings/') ?
+              'page'
+            : undefined
           }
           className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-md border border-line px-3 text-sm text-ink transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60 ${pathname === '/settings' || pathname.startsWith('/settings/') ? 'bg-white/5' : ''}`}
         >

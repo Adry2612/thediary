@@ -8,6 +8,7 @@ import type { PracticeTimerResult } from "@/types/practice";
 
 interface PracticeCompletionDialogProps {
   result: PracticeTimerResult | null;
+  isVisible: boolean;
   onSave: (
     sessionNotes: string,
     phaseNotes: Record<number, string>,
@@ -16,6 +17,7 @@ interface PracticeCompletionDialogProps {
 
 export function PracticeCompletionDialog({
   result,
+  isVisible,
   onSave,
 }: PracticeCompletionDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -26,9 +28,9 @@ export function PracticeCompletionDialog({
     const dialog = dialogRef.current;
     if (!dialog) return;
 
-    if (result && !dialog.open) dialog.showModal();
-    if (!result && dialog.open) dialog.close();
-  }, [result]);
+    if (result && isVisible && !dialog.open) dialog.showModal();
+    if ((!result || !isVisible) && dialog.open) dialog.close();
+  }, [isVisible, result]);
 
   return (
     <dialog

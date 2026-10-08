@@ -1,6 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   clampMetronomeBpm,
   clampMetronomeVolume,
@@ -9,7 +18,17 @@ import {
   MIN_BPM,
   type TapTempoState,
 } from "@/lib/metronome-tempo";
+import {
+  getMetronomeMeter,
+  type MetronomeMeterSignature,
+} from "@/lib/metronome-meter";
 import { getScheduledMetronomeBeats } from "@/lib/metronome-scheduler";
+import {
+  DEFAULT_TEMPO_RAMP_SETTINGS,
+  getTempoRampIntervalSeconds,
+  normalizeTempoRampSettings,
+  type TempoRampSettings,
+} from "@/lib/metronome-tempo-ramp";
 import { scheduleMetronomeClick } from "@/lib/metronome-audio";
 import {
   closeMetronomeAudioContext,
@@ -22,6 +41,7 @@ export { MAX_BPM, MIN_BPM };
 
 const SCHEDULER_INTERVAL_MS = 25;
 const VISUAL_PULSE_MS = 90;
+const DEFAULT_METRONOME_METER = getMetronomeMeter("4/4");
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error
@@ -29,12 +49,17 @@ function getErrorMessage(error: unknown) {
     : "El navegador no pudo activar el audio.";
 }
 
-export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
+function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
   const [bpm, setBpmState] = useState(() => clampMetronomeBpm(initialBpm));
   const [volume, setVolumeState] = useState(() =>
     clampMetronomeVolume(initialVolume),
   );
   const [subdivision, setSubdivisionState] = useState(1);
+  const [meterSignature, setMeterSignatureState] =
+    useState<MetronomeMeterSignature>(DEFAULT_METRONOME_METER.signature);
+  const [tempoRamp, setTempoRampState] = useState(
+    DEFAULT_TEMPO_RAMP_SETTINGS,
+  );
   const [isRunning, setIsRunning] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [isPulsing, setIsPulsing] = useState(false);
@@ -46,13 +71,19 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
   const bpmRef = useRef(bpm);
   const volumeRef = useRef(volume);
   const subdivisionRef = useRef(subdivision);
+  const meterRef = useRef(DEFAULT_METRONOME_METER);
+  const tempoRampRef = useRef(tempoRamp);
   const runningRef = useRef(false);
   const startingRef = useRef(false);
+  const startAttemptRef = useRef(0);
   const mountedRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const nextBeatTimeRef = useRef(0);
   const beatNumberRef = useRef(0);
   const subdivisionNumberRef = useRef(0);
+  const completedBarsRef = useRef(0);
+  const nextTempoIncreaseAtRef = useRef<number | null>(null);
+  const nextTempoIncreaseBarRef = useRef<number | null>(null);
   const schedulerRef = useRef<number | null>(null);
   const activeOscillatorsRef = useRef(new Set<OscillatorNode>());
   const pulseTimeoutsRef = useRef(new Set<number>());
@@ -81,6 +112,45 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
     setSubdivisionState(value);
     subdivisionNumberRef.current = 0;
   }, []);
+
+  const resetTempoRampSchedule = useCallback(
+    (settings: TempoRampSettings, completedBars: number) => {
+      const currentTime = audioContextRef.current?.currentTime ?? 0;
+      const intervalSeconds = getTempoRampIntervalSeconds(settings);
+
+      nextTempoIncreaseAtRef.current =
+        settings.enabled && intervalSeconds !== null
+          ? currentTime + intervalSeconds
+          : null;
+      nextTempoIncreaseBarRef.current =
+        settings.enabled && settings.intervalUnit === "bars"
+          ? completedBars + settings.intervalValue
+          : null;
+    },
+    [],
+  );
+
+  const setMeterSignature = useCallback(
+    (signature: MetronomeMeterSignature) => {
+      meterRef.current = getMetronomeMeter(signature);
+      setMeterSignatureState(signature);
+      beatNumberRef.current = 0;
+      subdivisionNumberRef.current = 0;
+      completedBarsRef.current = 0;
+      resetTempoRampSchedule(tempoRampRef.current, 0);
+    },
+    [resetTempoRampSchedule],
+  );
+
+  const setTempoRamp = useCallback(
+    (settings: TempoRampSettings) => {
+      const normalizedSettings = normalizeTempoRampSettings(settings);
+      tempoRampRef.current = normalizedSettings;
+      setTempoRampState(normalizedSettings);
+      resetTempoRampSchedule(normalizedSettings, completedBarsRef.current);
+    },
+    [resetTempoRampSchedule],
+  );
 
   const clearPulseTimeouts = useCallback(() => {
     for (const timeoutId of pulseTimeoutsRef.current) {
@@ -138,10 +208,15 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
         nextBeatTime: nextBeatTimeRef.current,
         beatNumber: beatNumberRef.current,
         subdivisionNumber: subdivisionNumberRef.current,
+        completedBars: completedBarsRef.current,
+        nextTempoIncreaseAt: nextTempoIncreaseAtRef.current,
+        nextTempoIncreaseBar: nextTempoIncreaseBarRef.current,
       },
       currentTime: context.currentTime,
       bpm: bpmRef.current,
       subdivision: subdivisionRef.current,
+      beatsPerMeasure: meterRef.current.beatsPerMeasure,
+      tempoRamp: tempoRampRef.current,
     });
 
     for (const beat of schedule.beats) {
@@ -163,6 +238,11 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
     nextBeatTimeRef.current = schedule.state.nextBeatTime;
     beatNumberRef.current = schedule.state.beatNumber;
     subdivisionNumberRef.current = schedule.state.subdivisionNumber;
+    completedBarsRef.current = schedule.state.completedBars;
+    nextTempoIncreaseAtRef.current = schedule.state.nextTempoIncreaseAt;
+    nextTempoIncreaseBarRef.current = schedule.state.nextTempoIncreaseBar;
+    bpmRef.current = schedule.bpm;
+    setBpmState(schedule.bpm);
   }, [scheduleVisualPulse]);
 
   useEffect(() => {
@@ -200,8 +280,19 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
     };
   }, [isRunning, scheduleNextBeats]);
 
+  const suspendAfterCancelledStart = useCallback((context: AudioContext) => {
+    if (startingRef.current || runningRef.current) return;
+
+    void suspendMetronomeAudioContext(context).catch((error: unknown) => {
+      if (mountedRef.current) {
+        setAudioError(`No se pudo detener el audio: ${getErrorMessage(error)}`);
+      }
+    });
+  }, []);
+
   const start = useCallback(async () => {
     if (runningRef.current || startingRef.current) return;
+    const startAttempt = ++startAttemptRef.current;
 
     const AudioContextConstructor = window.AudioContext;
     if (!AudioContextConstructor) {
@@ -222,7 +313,14 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
       audioContextRef.current = context;
       await resumeMetronomeAudioContext(context);
     } catch (error) {
-      if (mountedRef.current) {
+      const isCurrentAttempt = startAttemptRef.current === startAttempt;
+      if (!isCurrentAttempt) {
+        if (audioContextRef.current) {
+          suspendAfterCancelledStart(audioContextRef.current);
+        }
+        return;
+      }
+      if (mountedRef.current && isCurrentAttempt) {
         setAudioError(`No se pudo activar el audio: ${getErrorMessage(error)}`);
       }
       startingRef.current = false;
@@ -230,9 +328,16 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
       return;
     }
 
+    if (startAttemptRef.current !== startAttempt) {
+      suspendAfterCancelledStart(context);
+      return;
+    }
+    if (!mountedRef.current) {
+      startingRef.current = false;
+      return;
+    }
     startingRef.current = false;
-    if (mountedRef.current) setIsStarting(false);
-    if (!mountedRef.current) return;
+    setIsStarting(false);
     if (context.state !== "running") {
       setAudioError("El navegador mantuvo el contexto de audio suspendido.");
       return;
@@ -241,11 +346,14 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
     nextBeatTimeRef.current = context.currentTime + 0.05;
     beatNumberRef.current = 0;
     subdivisionNumberRef.current = 0;
+    completedBarsRef.current = 0;
+    resetTempoRampSchedule(tempoRampRef.current, 0);
     runningRef.current = true;
     setIsRunning(true);
-  }, []);
+  }, [resetTempoRampSchedule, suspendAfterCancelledStart]);
 
   const stop = useCallback(() => {
+    startAttemptRef.current += 1;
     startingRef.current = false;
     runningRef.current = false;
     setIsStarting(false);
@@ -293,7 +401,30 @@ export function useMetronome(initialBpm = 80, initialVolume = 0.3) {
     tapTempo,
     volume,
     subdivision,
+    meterSignature,
+    setMeterSignature,
+    tempoRamp,
+    setTempoRamp,
     activeBeat,
     activeSubdivision,
   };
+}
+
+type MetronomeController = ReturnType<typeof useMetronomeController>;
+
+const MetronomeContext = createContext<MetronomeController | null>(null);
+
+export function MetronomeProvider({ children }: { children: ReactNode }) {
+  const metronome = useMetronomeController();
+
+  return createElement(MetronomeContext.Provider, { value: metronome }, children);
+}
+
+export function useMetronome() {
+  const metronome = useContext(MetronomeContext);
+  if (!metronome) {
+    throw new Error("useMetronome must be used within a MetronomeProvider.");
+  }
+
+  return metronome;
 }

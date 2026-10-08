@@ -1,32 +1,142 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
 import { RangeSlider } from "@/components/ui/RangeSlider";
 import { SelectField } from "@/components/ui/SelectField";
-
-const SUBDIVISIONS = [
-  { value: 1, label: "Negras", notation: "1/4" },
-  { value: 2, label: "Corcheas", notation: "1/8" },
-  { value: 3, label: "Tresillos", notation: "1/8T" },
-  { value: 4, label: "Semicorcheas", notation: "1/16" },
-];
+import { MAX_BPM, MIN_BPM } from "@/lib/metronome-tempo";
+import {
+  getMetronomeMeter,
+  getMetronomeSubdivisionOptions,
+  isMetronomeMeterSignature,
+  METRONOME_METERS,
+  type MetronomeMeterSignature,
+} from "@/lib/metronome-meter";
+import {
+  isTempoRampIntervalUnit,
+  type TempoRampSettings,
+  type TempoRampIntervalUnit,
+} from "@/lib/metronome-tempo-ramp";
 
 interface MetronomeSettingsProps {
   subdivision: number;
   volume: number;
+  meterSignature: MetronomeMeterSignature;
+  tempoRamp: TempoRampSettings;
   setSubdivision: (subdivision: number) => void;
   setVolume: (volume: number) => void;
+  setMeterSignature: (signature: MetronomeMeterSignature) => void;
+  setTempoRamp: (settings: TempoRampSettings) => void;
+}
+
+const TEMPO_RAMP_INTERVAL_OPTIONS = [
+  { value: "bars", label: "Compás" },
+  { value: "seconds", label: "Seg." },
+  { value: "minutes", label: "Min." },
+];
+const TEMPO_RAMP_INTERVAL_MAX_VALUES: Record<TempoRampIntervalUnit, number> = {
+  bars: 64,
+  seconds: 3_600,
+  minutes: 60,
+};
+
+const SUBDIVISION_NOTE_POSITIONS: Record<number, number[]> = {
+  1: [25],
+  2: [19, 33],
+  3: [14, 26, 38],
+  4: [12, 22, 32, 42],
+};
+
+function SubdivisionNotation({
+  subdivision,
+  isDotted,
+  isHalfNote,
+  isTuplet,
+}: {
+  subdivision: number;
+  isDotted: boolean;
+  isHalfNote: boolean;
+  isTuplet: boolean;
+}) {
+  const notePositions = SUBDIVISION_NOTE_POSITIONS[subdivision];
+  const firstNote = notePositions[0];
+  const lastNote = notePositions[notePositions.length - 1];
+
+  return (
+    <svg
+      viewBox="0 0 56 38"
+      aria-hidden="true"
+      className="size-10 text-inherit"
+    >
+      {notePositions.map((position) => (
+        <g key={position}>
+          <ellipse
+            cx={position}
+            cy="26"
+            rx="4.5"
+            ry="3"
+            transform={`rotate(-20 ${position} 26)`}
+            fill={isHalfNote ? "none" : "currentColor"}
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <path
+            d={`M ${position + 4} 24 V 7`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+        </g>
+      ))}
+      {subdivision > 1 && (
+        <path
+          d={`M ${firstNote + 4} 7 L ${lastNote + 4} 11`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+      )}
+      {subdivision === 4 && (
+        <path
+          d={`M ${firstNote + 4} 11 L ${lastNote + 4} 15`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+      )}
+      {isTuplet && (
+        <text
+          x="26"
+          y="8"
+          textAnchor="middle"
+          className="fill-current font-mono text-[8px]"
+        >
+          3
+        </text>
+      )}
+      {isDotted && (
+        <circle cx={firstNote + 12} cy="25" r="1.5" fill="currentColor" />
+      )}
+    </svg>
+  );
 }
 
 export function MetronomeSettings({
   subdivision,
   volume,
+  meterSignature,
+  tempoRamp,
   setSubdivision,
   setVolume,
+  setMeterSignature,
+  setTempoRamp,
 }: MetronomeSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const settingsDialogRef = useRef<HTMLDialogElement>(null);
+  const subdivisionGroupId = useId();
+  const meter = getMetronomeMeter(meterSignature);
+  const subdivisionOptions = getMetronomeSubdivisionOptions(meter);
 
   useEffect(() => {
     const dialog = settingsDialogRef.current;
@@ -84,7 +194,7 @@ export function MetronomeSettings({
             setIsOpen(false);
           }
         }}
-        className="fixed inset-0 m-auto max-h-[90vh] w-[min(100%-2rem,28rem)] overflow-y-auto border border-line bg-surface p-0 text-ink backdrop:bg-black/70"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[min(100%-2rem,36rem)] overflow-x-hidden overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70"
       >
         <div className="p-6 sm:p-8">
           <div className="flex items-start justify-between gap-4">
@@ -111,20 +221,58 @@ export function MetronomeSettings({
           </div>
 
           <div className="mt-8">
-            <div className="text-sm text-muted">Subdivisión</div>
+            <div className="text-sm text-muted">Compás</div>
             <SelectField
               className="mt-2"
-              ariaLabel="Subdivisión del metrónomo"
-              value={String(subdivision)}
-              onChange={(value) => setSubdivision(Number(value))}
-              options={SUBDIVISIONS.map((item) => ({
-                value: String(item.value),
-                label: `${item.label} · ${item.notation}`,
+              ariaLabel="Compás del metrónomo"
+              value={meterSignature}
+              onChange={(value) => {
+                if (isMetronomeMeterSignature(value)) setMeterSignature(value);
+              }}
+              options={METRONOME_METERS.map(({ signature }) => ({
+                value: signature,
+                label: signature,
               }))}
             />
           </div>
 
-          <div className="mt-7">
+          <div className="mt-6">
+            <fieldset>
+              <legend className="text-sm text-muted">Subdivisión</legend>
+              <div className="mt-2 grid grid-cols-4 gap-2" role="group">
+                {subdivisionOptions.map((option) => (
+                  <label key={option.value} className="group min-w-0">
+                    <input
+                      type="radio"
+                      name={`subdivision-${subdivisionGroupId}`}
+                      value={option.value}
+                      checked={subdivision === option.value}
+                      onChange={() => setSubdivision(option.value)}
+                      aria-label={option.label}
+                      className="peer sr-only"
+                    />
+                    <span className="flex min-h-24 flex-col items-center justify-center gap-1 border border-line px-1 py-2 text-center text-xs text-muted transition-colors hover:bg-white/[0.04] peer-checked:border-accent-green-fg/60 peer-checked:bg-accent-green-bg/30 peer-checked:text-ink peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-accent-green-fg">
+                      <SubdivisionNotation
+                        subdivision={option.value}
+                        isDotted={
+                          meter.beatDurationQuarterNotes !== 1 &&
+                          option.value === 1
+                        }
+                        isHalfNote={
+                          meter.beatDurationQuarterNotes === 3 &&
+                          option.value === 1
+                        }
+                        isTuplet={option.isTuplet}
+                      />
+                      <span className="leading-tight">{option.shortLabel}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+
+          <div className="mt-6">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted">Volumen</span>
               <span className="font-mono text-xs text-muted">
@@ -141,6 +289,96 @@ export function MetronomeSettings({
               onChange={setVolume}
               className="mt-2"
             />
+          </div>
+
+          <div className="mt-8 border-t border-line pt-6">
+            <label className="flex min-h-11 items-center gap-3 text-sm text-ink">
+              <input
+                type="checkbox"
+                checked={tempoRamp.enabled}
+                onChange={(event) =>
+                  setTempoRamp({
+                    ...tempoRamp,
+                    enabled: event.target.checked,
+                  })
+                }
+                className="size-4 accent-accent-green-fg"
+              />
+              <span>Activar tempo incremental</span>
+            </label>
+            <p className="mt-1 text-xs leading-5 text-muted">
+              Aumenta el tempo automáticamente hasta el límite configurado.
+            </p>
+
+            {tempoRamp.enabled && (
+              <div className="mt-5">
+                <div className="grid grid-cols-[minmax(0,0.7fr)_minmax(0,1.2fr)_minmax(0,0.7fr)_minmax(0,0.7fr)] items-end gap-2">
+                  <div className="min-w-0">
+                    <span className="block text-[10px] uppercase tracking-wide text-muted">
+                      Cada
+                    </span>
+                    <AdjustableNumber
+                      value={tempoRamp.intervalValue}
+                      min={1}
+                      max={TEMPO_RAMP_INTERVAL_MAX_VALUES[tempoRamp.intervalUnit]}
+                      ariaLabel="Intervalo del tempo incremental"
+                      className="mt-1 text-lg text-ink"
+                      onChange={(intervalValue) =>
+                        setTempoRamp({ ...tempoRamp, intervalValue })
+                      }
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[10px] uppercase tracking-wide text-muted">
+                      Unidad
+                    </span>
+                    <SelectField
+                      className="mt-1"
+                      ariaLabel="Unidad del intervalo de incremento"
+                      value={tempoRamp.intervalUnit}
+                      onChange={(value) => {
+                        if (!isTempoRampIntervalUnit(value)) return;
+                        setTempoRamp({
+                          ...tempoRamp,
+                          intervalUnit: value,
+                        });
+                      }}
+                      options={TEMPO_RAMP_INTERVAL_OPTIONS}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[10px] uppercase tracking-wide text-muted">
+                      Sube BPM
+                    </span>
+                    <AdjustableNumber
+                      value={tempoRamp.incrementBpm}
+                      min={1}
+                      max={20}
+                      ariaLabel="Aumento de tempo por intervalo en BPM"
+                      className="mt-1 text-lg text-ink"
+                      onChange={(incrementBpm) =>
+                        setTempoRamp({ ...tempoRamp, incrementBpm })
+                      }
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[10px] uppercase tracking-wide text-muted">
+                      Tope BPM
+                    </span>
+                    <AdjustableNumber
+                      value={tempoRamp.maximumBpm}
+                      min={MIN_BPM}
+                      max={MAX_BPM}
+                      ariaLabel="Tempo máximo incremental en BPM"
+                      className="mt-1 text-lg text-ink"
+                      onChange={(maximumBpm) =>
+                        setTempoRamp({ ...tempoRamp, maximumBpm })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </dialog>

@@ -9,9 +9,14 @@ import { formatClock } from "@/lib/format";
 type TimerCardProps = {
   timer: PracticeTimerController;
   isCompleted: boolean;
+  isPracticeRoute: boolean;
 };
 
-export function TimerCard({ timer, isCompleted }: TimerCardProps) {
+export function TimerCard({
+  timer,
+  isCompleted,
+  isPracticeRoute,
+}: TimerCardProps) {
   const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
   const finishDialogRef = useRef<HTMLDialogElement>(null);
   const {
@@ -31,13 +36,13 @@ export function TimerCard({ timer, isCompleted }: TimerCardProps) {
     const dialog = finishDialogRef.current;
     if (!dialog) return;
 
-    if (isCompleted || !isFinishDialogOpen) {
+    if (!isPracticeRoute || isCompleted || !isFinishDialogOpen) {
       if (dialog.open) dialog.close();
       return;
     }
 
     if (!dialog.open) dialog.showModal();
-  }, [isCompleted, isFinishDialogOpen]);
+  }, [isCompleted, isFinishDialogOpen, isPracticeRoute]);
 
   return (
     <>
