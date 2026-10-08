@@ -10,8 +10,14 @@ import {
   savePracticeRecording,
   type PracticeAudioRecording,
 } from "@/lib/practice-library";
+import {
+  deleteCloudPracticeRecording,
+  listCloudPracticeRecordings,
+  saveCloudPracticeRecording,
+} from "@/lib/supabase/practice-files";
 import { getSessionPracticeRecordings } from "@/lib/practice-recording-filtering";
 import type { PracticeSkill } from "@/types/practice";
+import { useAppData } from "@/components/providers/AppDataProvider";
 
 interface PracticeRecordingPhase {
   id: string | number;
@@ -35,6 +41,7 @@ export function usePracticeAudioRecorder({
   phase,
   shouldStop,
 }: UsePracticeAudioRecorderOptions) {
+  const { user, isReady } = useAppData();
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -51,8 +58,11 @@ export function usePracticeAudioRecorder({
   const [storageError, setStorageError] = useState<string | null>(null);
 
   const refreshRecordings = useCallback(async () => {
+    if (!isReady) return;
     try {
-      const savedRecordings = await listPracticeRecordings();
+      const savedRecordings = user
+        ? await listCloudPracticeRecordings(user.id)
+        : await listPracticeRecordings();
       setRecordings(getSessionPracticeRecordings(savedRecordings, sessionId));
       setStorageError(null);
     } catch (loadError) {
@@ -62,7 +72,7 @@ export function usePracticeAudioRecorder({
           : "No se pudieron cargar las grabaciones guardadas.",
       );
     }
-  }, [sessionId]);
+  }, [isReady, sessionId, user]);
 
   const handleWaveformError = useCallback((message: string) => {
     setError(
@@ -100,7 +110,12 @@ export function usePracticeAudioRecorder({
       sessionName,
       practiceDate: practiceDate ?? getLocalDateKey(new Date()),
       phase,
+      userId: user?.id,
     };
+    if (!isReady) {
+      setError("Espera a que se carguen tus datos antes de grabar.");
+      return;
+    }
     if (
       !navigator.mediaDevices?.getUserMedia ||
       typeof MediaRecorder === "undefined"
@@ -174,7 +189,10 @@ export function usePracticeAudioRecorder({
                   ),
             blob,
           });
-          void savePracticeRecording(recording)
+          const saveOperation = recordingContext.userId
+            ? saveCloudPracticeRecording(recordingContext.userId, recording)
+            : savePracticeRecording(recording);
+          void saveOperation
             .then(refreshRecordings)
             .catch((saveError: unknown) => {
               setStorageError(
@@ -214,7 +232,11 @@ export function usePracticeAudioRecorder({
 
   async function removeRecording(recordingId: string) {
     try {
-      await deletePracticeRecording(recordingId);
+      if (user) {
+        await deleteCloudPracticeRecording(user.id, recordingId);
+      } else {
+        await deletePracticeRecording(recordingId);
+      }
       setRecordings((current) =>
         current.filter((recording) => recording.id !== recordingId),
       );
@@ -231,6 +253,7 @@ export function usePracticeAudioRecorder({
   return {
     recordingStream,
     recordings,
+    isReady,
     recordingTitle,
     setRecordingTitle,
     isRecording,

@@ -28,6 +28,7 @@ export function PracticeAudioRecorder({
   const {
     recordingStream,
     recordings,
+    isReady,
     recordingTitle,
     setRecordingTitle,
     isRecording,
@@ -96,7 +97,7 @@ export function PracticeAudioRecorder({
           type="button"
           variant={isRecording ? "ghost" : "primary"}
           onClick={isRecording ? stopRecording : () => void startRecording()}
-          disabled={isSaving || shouldStop}
+          disabled={!isReady || isSaving || shouldStop}
           className="w-full sm:w-auto"
         >
           {shouldStop

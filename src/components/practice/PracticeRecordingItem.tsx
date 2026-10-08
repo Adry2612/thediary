@@ -10,14 +10,22 @@ interface PracticeRecordingItemProps {
   onDelete: (recordingId: string) => void;
 }
 
-function useRecordingUrl(blob: Blob) {
+function useRecordingUrl(recording: PracticeAudioRecording) {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const objectUrl = URL.createObjectURL(blob);
+    if (recording.playbackUrl) {
+      setUrl(recording.playbackUrl);
+      return;
+    }
+    if (!recording.blob) {
+      setUrl(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(recording.blob);
     setUrl(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
-  }, [blob]);
+  }, [recording.blob, recording.playbackUrl]);
 
   return url;
 }
@@ -26,7 +34,7 @@ export function PracticeRecordingItem({
   recording,
   onDelete,
 }: PracticeRecordingItemProps) {
-  const audioUrl = useRecordingUrl(recording.blob);
+  const audioUrl = useRecordingUrl(recording);
   const date = new Date(recording.createdAt).toLocaleString("es-ES", {
     dateStyle: "medium",
     timeStyle: "short",

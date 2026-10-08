@@ -22,7 +22,7 @@ export function MetricCard({
     >
       <p className="text-sm text-zinc-400">{label}</p>
       <p
-        className={`mt-5 whitespace-nowrap text-[clamp(0.75rem,1.4vw,1rem)] leading-relaxed tracking-normal text-zinc-100 ${valueHasNumber ? "font-mono tabular-nums" : "font-sans"}`}
+        className={`mt-4 min-h-[2.25rem] break-words leading-tight tracking-normal text-zinc-100 ${valueHasNumber ? "font-mono text-2xl font-medium tabular-nums sm:text-3xl" : "font-sans text-base"}`}
       >
         {value}
       </p>

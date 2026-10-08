@@ -26,7 +26,8 @@ export interface PracticeAudioRecording {
   createdAt: string;
   durationSeconds?: number;
   mimeType: string;
-  blob: Blob;
+  blob?: Blob;
+  playbackUrl?: string;
 }
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -99,6 +100,17 @@ export function getPracticeAsset(
   assetId: string,
 ): Promise<PracticeAsset | undefined> {
   return runRequest(ASSETS_STORE, "readonly", (store) => store.get(assetId));
+}
+
+export function listPracticeAssets(): Promise<PracticeAsset[]> {
+  return runRequest(ASSETS_STORE, "readonly", (store) => store.getAll());
+}
+
+export async function clearLocalPracticeLibrary(): Promise<void> {
+  await Promise.all([
+    runRequest(ASSETS_STORE, "readwrite", (store) => store.clear()),
+    runRequest(RECORDINGS_STORE, "readwrite", (store) => store.clear()),
+  ]);
 }
 
 export function savePracticeRecording(

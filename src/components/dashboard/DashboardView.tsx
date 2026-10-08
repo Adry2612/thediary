@@ -25,6 +25,7 @@ import {
   getYearlyHeatmapData,
 } from "@/lib/practice-calendar";
 import { usePracticeStore } from "@/stores/usePracticeStore";
+import { useAppData } from "@/components/providers/AppDataProvider";
 
 function parseDateKey(dateKey: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
@@ -36,6 +37,7 @@ type DashboardViewProps = {
 };
 
 export function DashboardView({ todayKey }: DashboardViewProps) {
+  const { user } = useAppData();
   const history = usePracticeStore((state) => state.history);
   const practiceGoals = usePracticeStore((state) => state.practiceGoals);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
@@ -172,7 +174,11 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         <div className="flex flex-wrap items-center gap-3">
           <ManualPracticeEntry />
           <p className="rounded-full border border-zinc-800 px-3 py-1.5 text-xs uppercase tracking-[0.08em] text-zinc-500">
-            {hasHydrated ? "Historial local" : "Cargando historial"}
+            {hasHydrated
+              ? user
+                ? "Historial sincronizado"
+                : "Historial local"
+              : "Cargando historial"}
           </p>
         </div>
       </header>

@@ -153,3 +153,34 @@ export const usePracticeStore = create<PracticeStoreState>()(
     },
   ),
 );
+
+export function getPersistedPracticeState(): PersistedPracticeState {
+  const {
+    history,
+    templates,
+    repertoireItems,
+    weeklySchedule,
+    practiceGoals,
+  } = usePracticeStore.getState();
+  return {
+    history,
+    templates,
+    repertoireItems,
+    weeklySchedule,
+    practiceGoals,
+  };
+}
+
+export function replacePracticeState(
+  practiceState: PersistedPracticeState,
+): void {
+  const normalized = normalizePracticeStorageState({
+    state: practiceState,
+    normalizeGoals: normalizePracticeGoals,
+    normalizeSchedule: normalizeWeeklyRoutineSchedule,
+  });
+  usePracticeStore.setState({
+    ...normalized,
+    persistenceError: null,
+  });
+}

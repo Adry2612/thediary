@@ -7,15 +7,19 @@ import { TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { getPracticeFileKind } from "@/lib/practice-templates";
 import { savePracticeAsset } from "@/lib/practice-library";
+import type { PracticeAsset } from "@/lib/practice-library";
+import { saveCloudPracticeAsset } from "@/lib/supabase/practice-files";
 import { createRepertoireItem } from "@/lib/repertoire-item";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import type { RepertoireItem, RepertoireItemKind } from "@/types/practice";
+import { useAppData } from "@/components/providers/AppDataProvider";
 
 function createId() {
   return crypto.randomUUID();
 }
 
 export function RepertoireItemForm() {
+  const { user, isReady } = useAppData();
   const saveRepertoireItem = usePracticeStore(
     (state) => state.saveRepertoireItem,
   );
@@ -44,13 +48,21 @@ export function RepertoireItemForm() {
     let guitarPro: RepertoireItem["guitarPro"];
     try {
       if (kind === "lick" && guitarProFile) {
+        if (!isReady) {
+          throw new Error("Espera a que se carguen tus datos antes de subir archivos.");
+        }
         const assetId = createId();
-        await savePracticeAsset({
+        const asset: PracticeAsset = {
           id: assetId,
           fileName: guitarProFile.name,
           kind: "guitarpro",
           blob: guitarProFile,
-        });
+        };
+        if (user) {
+          await saveCloudPracticeAsset(user.id, asset);
+        } else {
+          await savePracticeAsset(asset);
+        }
         guitarPro = {
           id: createId(),
           title: cleanTitle,

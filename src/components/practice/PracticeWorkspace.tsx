@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { PracticePlanBuilder } from "@/components/practice/PracticePlanBuilder";
-import { PracticeSession } from "@/components/practice/PracticeSession";
-import { createPracticePlanFromSession } from "@/lib/practice-launch";
-import { getPracticePlanDuration } from "@/lib/practice-plan";
-import { usePracticeStore } from "@/stores/usePracticeStore";
-import type { PracticePhase } from "@/types/practice";
+import { useEffect, useRef, useState } from 'react';
+import { PracticePlanBuilder } from '@/components/practice/PracticePlanBuilder';
+import { PracticeSession } from '@/components/practice/PracticeSession';
+import { createPracticePlanFromSession } from '@/lib/practice-launch';
+import { getPracticePlanDuration } from '@/lib/practice-plan';
+import { usePracticeStore } from '@/stores/usePracticeStore';
+import type { PracticePhase } from '@/types/practice';
 
 export function PracticeWorkspace({
   initialPhases,
@@ -23,7 +23,7 @@ export function PracticeWorkspace({
   const history = usePracticeStore((state) => state.history);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const [draftPlan, setDraftPlan] = useState({
-    name: "Mi sesión",
+    name: 'Mi sesión',
     phases: initialPhases,
   });
   const [templateLaunchError, setTemplateLaunchError] = useState<string | null>(
@@ -53,7 +53,7 @@ export function PracticeWorkspace({
     );
     if (!template) {
       setTemplateLaunchError(
-        "No se encontró esa rutina guardada en este navegador.",
+        'No se encontró esa rutina guardada en este navegador.',
       );
       return;
     }
@@ -81,7 +81,7 @@ export function PracticeWorkspace({
     const plan = session ? createPracticePlanFromSession(session) : null;
     if (!plan) {
       setTemplateLaunchError(
-        "No se encontró una sesión con bloques que se pueda repetir.",
+        'No se encontró una sesión con bloques que se pueda repetir.',
       );
       return;
     }
@@ -92,50 +92,53 @@ export function PracticeWorkspace({
   }, [hasHydrated, history, requestedSessionId]);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-16 sm:py-24">
-      <header className="enter mb-4">
-        <p className="font-mono text-xs uppercase tracking-[0.05em] text-muted">
+    <main className='mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-16 sm:py-24'>
+      <header className='enter mb-4'>
+        <p className='font-mono text-xs uppercase tracking-[0.05em] text-muted'>
           Diario de práctica
         </p>
-        <h1 className="mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
-          {activePlan?.name ?? "Tu práctica"}
+        <h1 className='mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight sm:text-4xl'>
+          {activePlan?.name ?? 'Tu práctica'}
         </h1>
-        {activePlan ? (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <p className="font-mono text-xs uppercase tracking-[0.05em] text-muted">
-              {getPracticePlanDuration(activePlan.phases)}{" "}
-              min · sesión personal
+        {activePlan ?
+          <div className='mt-3 flex flex-wrap items-center justify-between gap-3'>
+            <p className='font-mono text-xs uppercase tracking-[0.05em] text-muted'>
+              {getPracticePlanDuration(activePlan.phases)} min · sesión personal
             </p>
             <button
-              type="button"
+              type='button'
               onClick={() => {
                 if (
                   window.confirm(
-                    "Al cambiar, el temporizador se reiniciará y la sesión incompleta no se registrará. ¿Continuar?",
+                    'Al cambiar, el temporizador se reiniciará y la sesión incompleta no se registrará. ¿Continuar?',
                   )
                 ) {
                   setActivePlan(null);
                 }
               }}
-              className="text-sm text-muted underline underline-offset-4 hover:text-ink"
+              className='text-sm text-muted underline underline-offset-4 hover:text-ink'
             >
               Cambiar sesión
             </button>
           </div>
-        ) : (
-          <p className="mt-3 max-w-xl text-sm text-muted">
+        : <p className='mt-3 max-w-xl text-sm text-muted'>
             Organiza tus bloques, ejercicios y material de estudio antes de
             empezar. Las sesiones completadas se guardan en tu historial.
           </p>
-        )}
+        }
       </header>
 
-      {activePlan ? (
-        <PracticeSession name={activePlan.name} phases={activePlan.phases} />
-      ) : (
-        <>
+      {activePlan ?
+        <PracticeSession
+          name={activePlan.name}
+          phases={activePlan.phases}
+        />
+      : <>
           {templateLaunchError && (
-            <p className="text-sm text-red-300" role="alert">
+            <p
+              className='text-sm text-red-300'
+              role='alert'
+            >
               {templateLaunchError}
             </p>
           )}
@@ -149,7 +152,7 @@ export function PracticeWorkspace({
             }}
           />
         </>
-      )}
+      }
     </main>
   );
 }

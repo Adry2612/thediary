@@ -9,7 +9,9 @@ import {
   normalizeSongsterrUrl,
 } from "@/lib/practice-templates";
 import { savePracticeAsset } from "@/lib/practice-library";
+import { saveCloudPracticeAsset } from "@/lib/supabase/practice-files";
 import type { PracticePhase, PracticeResource } from "@/types/practice";
+import { useAppData } from "@/components/providers/AppDataProvider";
 
 interface PracticeResourceEditorProps {
   phaseId: PracticePhase["id"];
@@ -29,6 +31,7 @@ export function PracticeResourceEditor({
   resources,
   onChange,
 }: PracticeResourceEditorProps) {
+  const { user, isReady } = useAppData();
   const [songsterrUrl, setSongsterrUrl] = useState("");
   const [songsterrTitle, setSongsterrTitle] = useState("");
   const [resourceError, setResourceError] = useState<string | null>(null);
@@ -76,13 +79,21 @@ export function PracticeResourceEditor({
     setIsSavingFile(true);
     setResourceError(null);
     try {
+      if (!isReady) {
+        throw new Error("Espera a que se carguen tus datos antes de subir archivos.");
+      }
       const assetId = createId();
-      await savePracticeAsset({
+      const asset = {
         id: assetId,
         fileName: file.name,
         kind,
         blob: file,
-      });
+      };
+      if (user) {
+        await saveCloudPracticeAsset(user.id, asset);
+      } else {
+        await savePracticeAsset(asset);
+      }
       addResource({
         id: createId(),
         title: file.name,

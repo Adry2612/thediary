@@ -115,7 +115,7 @@ export function PracticeTimeChart({
       </div>
 
       <div className="mt-6 flex items-baseline gap-2">
-        <span className="font-mono text-base leading-6 font-medium tabular-nums tracking-normal text-zinc-100 sm:text-lg sm:leading-7">
+        <span className="font-mono text-2xl leading-tight font-medium tabular-nums tracking-normal text-zinc-100 sm:text-3xl">
           {formatTotal(totalSeconds)}
         </span>
         <span className="text-xs text-zinc-500">en el periodo</span>

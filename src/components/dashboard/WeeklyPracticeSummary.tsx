@@ -79,20 +79,20 @@ export function WeeklyPracticeSummary({
         <div className="min-w-48">
           <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
             <p className="flex items-baseline gap-2">
-              <span className="font-mono text-xl leading-8 tracking-normal text-zinc-100 sm:text-2xl sm:leading-9">
+              <span className="font-mono text-2xl leading-8 tracking-normal text-zinc-100 sm:text-3xl sm:leading-9">
                 {sessions.length}
               </span>
               <span className="text-sm text-zinc-400">
                 {sessions.length === 1 ? "sesión" : "sesiones"}
               </span>
             </p>
-            <p className="font-mono text-[10px] leading-5 tracking-normal text-zinc-300 sm:text-xs sm:leading-6">
+            <p className="font-mono text-sm leading-6 tracking-normal text-zinc-300 sm:text-base sm:leading-7">
               {formatPracticeDuration(totalMinutes)} practicados
             </p>
           </div>
           <p className="mt-2 text-xs text-zinc-500">
             Objetivo semanal ·{" "}
-            <span className="font-mono text-zinc-300">
+            <span             className="font-mono text-sm text-zinc-300 sm:text-base">
               {practicedDays}/{weeklyGoalDays} días
             </span>
           </p>

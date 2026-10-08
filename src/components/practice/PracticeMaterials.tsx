@@ -4,10 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { PracticeAudioPlayer } from "@/components/practice/PracticeAudioPlayer";
 import { getPracticeAsset } from "@/lib/practice-library";
+import { getCloudPracticeAsset } from "@/lib/supabase/practice-files";
 import { normalizeSongsterrUrl } from "@/lib/practice-templates";
 import type { PracticePhase, PracticeResource } from "@/types/practice";
+import { useAppData } from "@/components/providers/AppDataProvider";
 
-function GuitarProViewer({ resource }: { resource: PracticeResource }) {
+function GuitarProViewer({
+  resource,
+  userId,
+}: {
+  resource: PracticeResource;
+  userId?: string;
+}) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,8 +27,12 @@ function GuitarProViewer({ resource }: { resource: PracticeResource }) {
     let destroyViewer = () => {};
 
     async function renderScore() {
-      const asset = await getPracticeAsset(resource.assetId!);
-      if (!asset) throw new Error("No se encontró el archivo Guitar Pro local.");
+      setError(null);
+      setIsLoading(true);
+      const asset = userId
+        ? await getCloudPracticeAsset(userId, resource.assetId!)
+        : await getPracticeAsset(resource.assetId!);
+      if (!asset) throw new Error("No se encontró el archivo Guitar Pro.");
       if (!isMounted) return;
 
       const alphaTab = await import("@coderline/alphatab");
@@ -55,7 +67,7 @@ function GuitarProViewer({ resource }: { resource: PracticeResource }) {
       destroyViewer();
       target.replaceChildren();
     };
-  }, [container, resource.assetId]);
+  }, [container, resource.assetId, userId]);
 
   return (
     <div className="min-h-64 overflow-auto bg-white p-4 text-zinc-900">
@@ -68,7 +80,7 @@ function GuitarProViewer({ resource }: { resource: PracticeResource }) {
   );
 }
 
-function useAssetUrl(resource: PracticeResource | null) {
+function useAssetUrl(resource: PracticeResource | null, userId?: string) {
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,9 +91,12 @@ function useAssetUrl(resource: PracticeResource | null) {
     setError(null);
     if (!resource?.assetId || resource.kind === "songsterr") return;
 
-    void getPracticeAsset(resource.assetId)
+    const assetRequest = userId
+      ? getCloudPracticeAsset(userId, resource.assetId)
+      : getPracticeAsset(resource.assetId);
+    void assetRequest
       .then((asset) => {
-        if (!asset) throw new Error("No se encontró el archivo en este dispositivo.");
+        if (!asset) throw new Error("No se encontró el archivo.");
         if (!isMounted) return;
         objectUrl = URL.createObjectURL(asset.blob);
         setUrl(objectUrl);
@@ -99,13 +114,19 @@ function useAssetUrl(resource: PracticeResource | null) {
       isMounted = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [resource]);
+  }, [resource, userId]);
 
   return { url, error };
 }
 
-function ResourcePreview({ resource }: { resource: PracticeResource }) {
-  const { url, error } = useAssetUrl(resource);
+function ResourcePreview({
+  resource,
+  userId,
+}: {
+  resource: PracticeResource;
+  userId?: string;
+}) {
+  const { url, error } = useAssetUrl(resource, userId);
 
   if (resource.kind === "songsterr") {
     const safeUrl = normalizeSongsterrUrl(resource.url ?? "");
@@ -157,10 +178,11 @@ function ResourcePreview({ resource }: { resource: PracticeResource }) {
     );
   }
 
-  return <GuitarProViewer resource={resource} />;
+  return   <GuitarProViewer resource={resource} userId={userId} />;
 }
 
 export function PracticeMaterials({ phases }: { phases: PracticePhase[] }) {
+  const { user } = useAppData();
   const resources = useMemo(
     () =>
       phases.flatMap((phase) =>
@@ -224,6 +246,7 @@ export function PracticeMaterials({ phases }: { phases: PracticePhase[] }) {
               <ResourcePreview
                 key={activeResource.id}
                 resource={activeResource}
+                userId={user?.id}
               />
             </div>
           </div>
