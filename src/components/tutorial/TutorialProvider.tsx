@@ -39,6 +39,7 @@ interface PendingTutorialTransition {
   stepIndex: number;
   resolve: () => void;
   timeoutId: number;
+  visualTransition: boolean;
 }
 
 const SPOTLIGHT_PADDING = { top: 28, horizontal: 24, bottom: 24 };
@@ -85,9 +86,11 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     try {
       saveTutorialProgress(window.localStorage, progress);
       setStorageError(null);
-      setIsOpen(false);
     } catch (error) {
       setStorageError(getErrorMessage(error));
+      console.error("No se pudo guardar el progreso del tutorial.", error);
+    } finally {
+      setIsOpen(false);
     }
   }, []);
 
@@ -110,6 +113,9 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         return;
       }
       completePendingTransition();
+      if (!pendingTransition.visualTransition) {
+        setIsTransitioning(false);
+      }
     },
     [completePendingTransition, pathname],
   );
@@ -127,13 +133,9 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         }
       };
 
-      if (
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-        typeof document.startViewTransition !== "function"
-      ) {
-        startTransition(updateStep);
-        return;
-      }
+      const visualTransition =
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+        typeof document.startViewTransition === "function";
 
       let resolveUpdate: () => void = () => {};
       const updateCompleted = new Promise<void>((resolve) => {
@@ -148,8 +150,14 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         stepIndex: nextIndex,
         resolve: resolveUpdate,
         timeoutId,
+        visualTransition,
       };
       setIsTransitioning(true);
+
+      if (!visualTransition) {
+        startTransition(updateStep);
+        return;
+      }
 
       const transition = document.startViewTransition(() => {
         startTransition(updateStep);
@@ -255,20 +263,38 @@ function TutorialDialog({
         return;
       }
 
-      if (event.key !== "Tab" || !dialogRef.current) return;
+      const dialog = dialogRef.current;
+      if (event.key !== "Tab" || !dialog) return;
 
-      const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
+      const focusableElements = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
         'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+        ),
       );
-      const firstElement = focusableElements.item(0);
-      const lastElement = focusableElements.item(focusableElements.length - 1);
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
 
-      if (event.shiftKey && document.activeElement === firstElement) {
+      const activeIndex = focusableElements.findIndex(
+        (element) => element === document.activeElement,
+      );
+      if (activeIndex === -1) {
         event.preventDefault();
-        lastElement?.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        const boundary = event.shiftKey
+          ? focusableElements[focusableElements.length - 1]
+          : focusableElements[0];
+        boundary.focus();
+        return;
+      }
+
+      if (event.shiftKey && activeIndex === 0) {
         event.preventDefault();
-        firstElement?.focus();
+        focusableElements[focusableElements.length - 1].focus();
+      } else if (!event.shiftKey && activeIndex === focusableElements.length - 1) {
+        event.preventDefault();
+        focusableElements[0].focus();
       }
     }
 
@@ -287,7 +313,11 @@ function TutorialDialog({
   }, []);
 
   useEffect(() => {
-    if (step.href && pathname !== step.href) return;
+    if (step.href && pathname !== step.href) {
+      setTargetBounds(null);
+      setReadyStepIndex(null);
+      return;
+    }
 
     let currentTarget: HTMLElement | null = null;
     let hasScrolledToTarget = false;
@@ -307,7 +337,11 @@ function TutorialDialog({
         }
       }
 
-      if (!currentTarget) return;
+      if (!currentTarget) {
+        setTargetBounds(null);
+        setReadyStepIndex(null);
+        return;
+      }
 
       if (!hasScrolledToTarget) {
         hasScrolledToTarget = true;
@@ -503,6 +537,7 @@ function TutorialDialog({
         aria-describedby="tutorial-description"
         aria-modal="true"
         role="dialog"
+        tabIndex={-1}
         className="fixed z-[102] w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-line bg-surface p-5 sm:p-6"
         style={{
           top: "50%",
