@@ -8,16 +8,15 @@ import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
 import { MetronomeSettings } from "@/components/practice/MetronomeSettings";
 import { MetronomeTempoSlider } from "@/components/practice/MetronomeTempoSlider";
 import { MAX_BPM, MIN_BPM, useMetronome } from "@/hooks/useMetronome";
+import { getMetronomeMeter } from "@/lib/metronome-meter";
 
 type MetronomeCardProps = {
   variant?: "default" | "large";
-  initialBpm?: number;
   onBpmChange?: (bpm: number) => void;
 };
 
 export function MetronomeCard({
   variant = "default",
-  initialBpm = 80,
   onBpmChange,
 }: MetronomeCardProps) {
   const isLarge = variant === "large";
@@ -30,7 +29,9 @@ export function MetronomeCard({
     isRunning,
     isStarting,
     setBpm,
+    setMeterSignature,
     setSubdivision,
+    setTempoRamp,
     setVolume,
     start,
     stop,
@@ -38,7 +39,10 @@ export function MetronomeCard({
     tapTempo,
     volume,
     subdivision,
-  } = useMetronome(initialBpm);
+    meterSignature,
+    tempoRamp,
+  } = useMetronome();
+  const meter = getMetronomeMeter(meterSignature);
 
   useEffect(() => {
     onBpmChange?.(bpm);
@@ -61,14 +65,18 @@ export function MetronomeCard({
                 isPulsing ? "scale-100 opacity-100" : "scale-75 opacity-35"
               }`}
             />
-            <span>{isRunning ? "Activo" : "4/4"}</span>
+            <span>{isRunning ? `Activo · ${meterSignature}` : meterSignature}</span>
           </div>
         </div>
         <MetronomeSettings
           subdivision={subdivision}
           volume={volume}
+          meterSignature={meterSignature}
+          tempoRamp={tempoRamp}
           setSubdivision={setSubdivision}
           setVolume={setVolume}
+          setMeterSignature={setMeterSignature}
+          setTempoRamp={setTempoRamp}
         />
       </div>
 
@@ -122,10 +130,10 @@ export function MetronomeCard({
 
         <div
           className="mt-6 grid grid-cols-4 gap-2"
-          aria-label="Pulsos del compás 4/4"
+          aria-label={`Pulsos del compás ${meterSignature}`}
           role="group"
         >
-          {Array.from({ length: 4 }, (_, beat) => (
+          {Array.from({ length: meter.beatsPerMeasure }, (_, beat) => (
             <div key={beat} className="flex flex-col items-center gap-2">
               <span
                 aria-label={`Pulso ${beat + 1}${activeBeat === beat ? ", activo" : ""}`}
@@ -158,24 +166,10 @@ export function MetronomeCard({
       </div>
 
       <Button
-        onClick={tapTempo}
-        className="mt-7 w-full"
-      >
-        Tap tempo
-      </Button>
-      <p className="mt-2 text-center text-xs text-muted" aria-live="polite">
-        {tapCount === 0
-          ? "Toca al pulso para ajustar el tempo"
-          : tapCount === 1
-            ? "Un toque registrado; continúa tocando"
-            : `${tapCount} toques · tempo actualizado`}
-      </p>
-
-      <Button
         variant={isRunning ? "ghost" : "primary"}
         onClick={() => void (isRunning ? stop() : start())}
         disabled={isStarting}
-        className={`mt-5 w-full ${
+        className={`mt-7 w-full ${
           isRunning
             ? "border-red-500/50 bg-red-950/50 text-red-300 hover:bg-red-950/80 hover:text-red-200 focus-visible:outline-red-400"
             : ""
@@ -188,10 +182,21 @@ export function MetronomeCard({
             : "Iniciar metrónomo"}
       </Button>
       {audioError && (
-        <p className="mt-3 text-sm text-red-300" role="alert">
+        <p className="mt-2 text-sm text-red-300" role="alert">
           {audioError}
         </p>
       )}
+
+      <Button onClick={tapTempo} className="mt-5 w-full">
+        Tap tempo
+      </Button>
+      <p className="mt-2 text-center text-xs text-muted" aria-live="polite">
+        {tapCount === 0
+          ? "Toca al pulso para ajustar el tempo"
+          : tapCount === 1
+            ? "Un toque registrado; continúa tocando"
+            : `${tapCount} toques · tempo actualizado`}
+      </p>
     </Card>
   );
 }

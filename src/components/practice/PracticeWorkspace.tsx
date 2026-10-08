@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { PracticePlanBuilder } from '@/components/practice/PracticePlanBuilder';
-import { PracticeSession } from '@/components/practice/PracticeSession';
 import { createPracticePlanFromSession } from '@/lib/practice-launch';
 import { getPracticePlanDuration } from '@/lib/practice-plan';
+import { useActivePracticeSessionStore } from '@/stores/useActivePracticeSessionStore';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import type { PracticePhase } from '@/types/practice';
 
@@ -22,6 +22,15 @@ export function PracticeWorkspace({
   const templates = usePracticeStore((state) => state.templates);
   const history = usePracticeStore((state) => state.history);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
+  const activeSession = useActivePracticeSessionStore(
+    (state) => state.activeSession,
+  );
+  const setActiveSession = useActivePracticeSessionStore(
+    (state) => state.setActiveSession,
+  );
+  const clearActiveSession = useActivePracticeSessionStore(
+    (state) => state.clearActiveSession,
+  );
   const [draftPlan, setDraftPlan] = useState({
     name: 'Mi sesión',
     phases: initialPhases,
@@ -29,10 +38,7 @@ export function PracticeWorkspace({
   const [templateLaunchError, setTemplateLaunchError] = useState<string | null>(
     null,
   );
-  const [activePlan, setActivePlan] = useState<{
-    name: string;
-    phases: PracticePhase[];
-  } | null>(null);
+  const activePlan = activeSession;
   const launchedTemplateId = useRef<string | null>(null);
   const launchedSessionId = useRef<string | null>(null);
 
@@ -41,7 +47,8 @@ export function PracticeWorkspace({
       requestedSessionId ||
       !autoStartTemplate ||
       !requestedTemplateId ||
-      !hasHydrated
+      !hasHydrated ||
+      activeSession
     ) {
       return;
     }
@@ -60,18 +67,20 @@ export function PracticeWorkspace({
 
     const plan = { name: template.name, phases: template.phases };
     setDraftPlan(plan);
-    setActivePlan(plan);
+    setActiveSession({ id: crypto.randomUUID(), ...plan });
     setTemplateLaunchError(null);
   }, [
     autoStartTemplate,
     hasHydrated,
+    activeSession,
     requestedSessionId,
     requestedTemplateId,
+    setActiveSession,
     templates,
   ]);
 
   useEffect(() => {
-    if (!requestedSessionId || !hasHydrated) return;
+    if (!requestedSessionId || !hasHydrated || activeSession) return;
     if (launchedSessionId.current === requestedSessionId) return;
 
     launchedSessionId.current = requestedSessionId;
@@ -87,12 +96,14 @@ export function PracticeWorkspace({
     }
 
     setDraftPlan(plan);
-    setActivePlan(plan);
+    setActiveSession({ id: crypto.randomUUID(), ...plan });
     setTemplateLaunchError(null);
-  }, [hasHydrated, history, requestedSessionId]);
+  }, [activeSession, hasHydrated, history, requestedSessionId, setActiveSession]);
 
   return (
-    <main className='mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-16 sm:py-24'>
+    <main
+      className={`mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 pt-16 sm:pt-24 ${activePlan ? '' : 'min-h-screen pb-16 sm:pb-24'}`}
+    >
       <header className='enter mb-4'>
         <p className='font-mono text-xs uppercase tracking-[0.05em] text-muted'>
           Diario de práctica
@@ -113,7 +124,7 @@ export function PracticeWorkspace({
                     'Al cambiar, el temporizador se reiniciará y la sesión incompleta no se registrará. ¿Continuar?',
                   )
                 ) {
-                  setActivePlan(null);
+                  clearActiveSession();
                 }
               }}
               className='text-sm text-muted underline underline-offset-4 hover:text-ink'
@@ -128,12 +139,8 @@ export function PracticeWorkspace({
         }
       </header>
 
-      {activePlan ?
-        <PracticeSession
-          name={activePlan.name}
-          phases={activePlan.phases}
-        />
-      : <>
+      {!activePlan && (
+        <>
           {templateLaunchError && (
             <p
               className='text-sm text-red-300'
@@ -148,11 +155,11 @@ export function PracticeWorkspace({
             onStart={(name, phases) => {
               const nextPlan = { name, phases };
               setDraftPlan(nextPlan);
-              setActivePlan(nextPlan);
+              setActiveSession({ id: crypto.randomUUID(), ...nextPlan });
             }}
           />
         </>
-      }
+      )}
     </main>
   );
 }
