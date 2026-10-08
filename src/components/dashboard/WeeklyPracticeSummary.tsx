@@ -66,7 +66,10 @@ export function WeeklyPracticeSummary({
   }
 
   return (
-    <section className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
+    <section
+      data-tour-target="dashboard-summary"
+      className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8"
+    >
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">

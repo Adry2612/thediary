@@ -5,8 +5,8 @@ import type { CSSProperties } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
-import { RangeSlider } from "@/components/ui/RangeSlider";
 import { MetronomeSettings } from "@/components/practice/MetronomeSettings";
+import { MetronomeTempoSlider } from "@/components/practice/MetronomeTempoSlider";
 import { MAX_BPM, MIN_BPM, useMetronome } from "@/hooks/useMetronome";
 
 type MetronomeCardProps = {
@@ -73,92 +73,89 @@ export function MetronomeCard({
       </div>
 
       <div
-        className={`${isLarge ? "mt-10 sm:mt-14" : "mt-8"} flex items-center justify-between gap-4`}
+        data-tour-target={isLarge ? "metronome-controls" : undefined}
+        className={isLarge ? "mt-10 sm:mt-14" : "mt-8"}
       >
-        <Button
-          onClick={() => setBpm(bpm - 1)}
-          aria-label="Bajar un BPM"
-          disabled={bpm <= MIN_BPM}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M3 8h10" stroke="currentColor" strokeWidth="1.75" />
-          </svg>
-        </Button>
+        <div className="flex items-center justify-between gap-4">
+          <Button
+            onClick={() => setBpm(bpm - 1)}
+            aria-label="Bajar un BPM"
+            disabled={bpm <= MIN_BPM}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M3 8h10" stroke="currentColor" strokeWidth="1.75" />
+            </svg>
+          </Button>
 
-        <div className="text-center">
-          <AdjustableNumber
-            value={bpm}
-            min={MIN_BPM}
-            max={MAX_BPM}
-            ariaLabel="Tempo en BPM"
-            onChange={setBpm}
-            className={`w-full text-ink ${
-              isLarge
-                ? "text-7xl leading-none sm:text-8xl"
-                : "text-4xl leading-[1.5] sm:text-5xl"
-            }`}
-          />
-          <p className="font-mono text-xs uppercase tracking-[0.05em] text-muted">
-            bpm
-          </p>
+          <div className="text-center">
+            <AdjustableNumber
+              value={bpm}
+              min={MIN_BPM}
+              max={MAX_BPM}
+              ariaLabel="Tempo en BPM"
+              onChange={setBpm}
+              className={`w-full text-ink ${
+                isLarge
+                  ? "text-7xl leading-none sm:text-8xl"
+                  : "text-4xl leading-[1.5] sm:text-5xl"
+              }`}
+            />
+            <p className="font-mono text-xs uppercase tracking-[0.05em] text-muted">
+              bpm
+            </p>
+          </div>
+
+          <Button
+            onClick={() => setBpm(bpm + 1)}
+            aria-label="Subir un BPM"
+            disabled={bpm >= MAX_BPM}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M3 8h10M8 3v10"
+                stroke="currentColor"
+                strokeWidth="1.75"
+              />
+            </svg>
+          </Button>
         </div>
 
-        <Button
-          onClick={() => setBpm(bpm + 1)}
-          aria-label="Subir un BPM"
-          disabled={bpm >= MAX_BPM}
+        <div
+          className="mt-6 grid grid-cols-4 gap-2"
+          aria-label="Pulsos del compás 4/4"
+          role="group"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-            <path
-              d="M3 8h10M8 3v10"
-              stroke="currentColor"
-              strokeWidth="1.75"
-            />
-          </svg>
-        </Button>
-      </div>
+          {Array.from({ length: 4 }, (_, beat) => (
+            <div key={beat} className="flex flex-col items-center gap-2">
+              <span
+                aria-label={`Pulso ${beat + 1}${activeBeat === beat ? ", activo" : ""}`}
+                className={`size-3 rounded-full transition duration-100 ${
+                  activeBeat === beat
+                    ? "scale-110 bg-accent-green-fg opacity-100"
+                    : "bg-white/15 opacity-70"
+                } ${isPulsing && activeBeat === beat ? "ring-4 ring-accent-green-bg" : ""}`}
+              />
+              <span className="flex h-2.5 items-center gap-1" aria-hidden="true">
+                {Array.from({ length: subdivision }, (_, subBeat) => (
+                  <span
+                    key={subBeat}
+                    className={`size-1 rounded-full transition-colors ${
+                      activeBeat === beat && activeSubdivision === subBeat
+                        ? "bg-accent-green-fg"
+                        : "bg-white/15"
+                    }`}
+                  />
+                ))}
+              </span>
+              <span className="font-mono text-[10px] text-muted">
+                {beat + 1}
+              </span>
+            </div>
+          ))}
+        </div>
 
-      <div
-        className="mt-6 grid grid-cols-4 gap-2"
-        aria-label="Pulsos del compás 4/4"
-        role="group"
-      >
-        {Array.from({ length: 4 }, (_, beat) => (
-          <div key={beat} className="flex flex-col items-center gap-2">
-            <span
-              aria-label={`Pulso ${beat + 1}${activeBeat === beat ? ", activo" : ""}`}
-              className={`size-3 rounded-full transition duration-100 ${
-                activeBeat === beat
-                  ? "scale-110 bg-accent-green-fg opacity-100"
-                  : "bg-white/15 opacity-70"
-              } ${isPulsing && activeBeat === beat ? "ring-4 ring-accent-green-bg" : ""}`}
-            />
-            <span className="flex h-2.5 items-center gap-1" aria-hidden="true">
-              {Array.from({ length: subdivision }, (_, subBeat) => (
-                <span
-                  key={subBeat}
-                  className={`size-1 rounded-full transition-colors ${
-                    activeBeat === beat && activeSubdivision === subBeat
-                      ? "bg-accent-green-fg"
-                      : "bg-white/15"
-                  }`}
-                />
-              ))}
-            </span>
-            <span className="font-mono text-[10px] text-muted">{beat + 1}</span>
-          </div>
-        ))}
+        <MetronomeTempoSlider value={bpm} onChange={setBpm} />
       </div>
-
-      <RangeSlider
-        min={MIN_BPM}
-        max={MAX_BPM}
-        value={bpm}
-        ariaLabel="Tempo en BPM"
-        ariaValueText={`${bpm} BPM`}
-        onChange={setBpm}
-        className="mt-5"
-      />
 
       <Button
         onClick={tapTempo}

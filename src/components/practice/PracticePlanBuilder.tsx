@@ -118,53 +118,55 @@ export function PracticePlanBuilder({
 
   return (
     <Card className="enter">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.05em] text-muted">
-            Preparar práctica
-          </p>
-          <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8">
-            Diseña tus bloques
-          </h2>
-        </div>
-        {templates.length > 0 && (
-          <div className="min-w-52 flex-1 text-xs text-muted sm:max-w-64">
-            Plantilla guardada
-            <SelectField
-              className="mt-1"
-              value={selectedTemplateId}
-              ariaLabel="Plantilla guardada"
-              onChange={(templateId) => {
-                const template = templates.find(
-                  (candidate) => candidate.id === templateId,
-                );
-                if (template) {
-                  selectTemplate(template);
-                  return;
-                }
-                setSelectedTemplateId("");
-              }}
-              options={[
-                { value: "", label: "Plan nuevo" },
-                ...templates.map((template) => ({
-                  value: template.id,
-                  label: template.name,
-                })),
-              ]}
-            />
+      <div data-tour-target="practice-plan">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.05em] text-muted">
+              Preparar práctica
+            </p>
+            <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8">
+              Diseña tus bloques
+            </h2>
           </div>
-        )}
-      </div>
+          {templates.length > 0 && (
+            <div className="min-w-52 flex-1 text-xs text-muted sm:max-w-64">
+              Plantilla guardada
+              <SelectField
+                className="mt-1"
+                value={selectedTemplateId}
+                ariaLabel="Plantilla guardada"
+                onChange={(templateId) => {
+                  const template = templates.find(
+                    (candidate) => candidate.id === templateId,
+                  );
+                  if (template) {
+                    selectTemplate(template);
+                    return;
+                  }
+                  setSelectedTemplateId("");
+                }}
+                options={[
+                  { value: "", label: "Plan nuevo" },
+                  ...templates.map((template) => ({
+                    value: template.id,
+                    label: template.name,
+                  })),
+                ]}
+              />
+            </div>
+          )}
+        </div>
 
-      <label className="mt-6 block text-xs text-muted">
-        Nombre de la sesión
-        <TextField
-          value={name}
-          maxLength={80}
-          onChange={(event) => setName(event.target.value)}
-          className="mt-1"
-        />
-      </label>
+        <label className="mt-6 block text-xs text-muted">
+          Nombre de la sesión
+          <TextField
+            value={name}
+            maxLength={80}
+            onChange={(event) => setName(event.target.value)}
+            className="mt-1"
+          />
+        </label>
+      </div>
 
       <div className="mt-6 space-y-4">
         {phases.map((phase, index) => (

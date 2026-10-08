@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { AppDataProvider } from '@/components/providers/AppDataProvider';
 import { GuestModeNotice } from '@/components/account/GuestModeNotice';
 import { SiteNavigation } from '@/components/layout/SiteNavigation';
+import { TutorialProvider } from '@/components/tutorial/TutorialProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -19,9 +20,11 @@ export default function RootLayout({
     >
       <body className='min-h-screen bg-canvas text-ink antialiased'>
         <AppDataProvider>
-          <SiteNavigation />
-          <GuestModeNotice />
-          {children}
+          <TutorialProvider>
+            <SiteNavigation />
+            <GuestModeNotice />
+            {children}
+          </TutorialProvider>
         </AppDataProvider>
       </body>
     </html>

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppData } from "@/components/providers/AppDataProvider";
+import { useTutorial } from "@/components/tutorial/TutorialProvider";
 
 type DialogName = "password" | "delete" | null;
 
@@ -14,6 +15,7 @@ function describeError(error: unknown, fallback: string): string {
 
 export function SettingsView() {
   const { user, signOut, updatePassword, deleteAllPracticeData } = useAppData();
+  const { openTutorial } = useTutorial();
   const router = useRouter();
   const [dialog, setDialog] = useState<DialogName>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -46,6 +48,7 @@ export function SettingsView() {
 
       <div className="mt-8 space-y-4">
         <section
+          data-tour-target="settings-account"
           aria-labelledby="settings-account-title"
           className="rounded-xl border border-line bg-surface p-5 sm:p-6"
         >
@@ -98,6 +101,33 @@ export function SettingsView() {
               className="min-h-11 cursor-not-allowed rounded-md border border-line px-4 text-sm text-muted opacity-70"
             >
               Próximamente
+            </button>
+          </div>
+        </section>
+
+        <section
+          aria-labelledby="settings-tutorial-title"
+          className="rounded-xl border border-line bg-surface p-5 sm:p-6"
+        >
+          <p className="text-xs uppercase tracking-[0.08em] text-muted">
+            Ayuda
+          </p>
+          <h2
+            id="settings-tutorial-title"
+            className="mt-2 text-lg font-medium text-ink"
+          >
+            Tutorial de thediary
+          </h2>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-muted">
+              Vuelve a recorrer las secciones y descubre cómo usar la app.
+            </p>
+            <button
+              type="button"
+              onClick={openTutorial}
+              className="min-h-11 shrink-0 rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5"
+            >
+              Ver tutorial
             </button>
           </div>
         </section>
