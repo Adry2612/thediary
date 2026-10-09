@@ -2,6 +2,7 @@ import type { RepertoirePartPracticeStats } from "@/lib/repertoire-analytics";
 import type {
   RepertoireItem,
   RepertoireItemKind,
+  GuitarType,
 } from "@/types/practice";
 
 export type RepertoireProgressFilter = "all" | "learning" | "learned";
@@ -11,6 +12,9 @@ export type RepertoireSortOrder =
   | "title"
   | "artist"
   | "practice";
+
+export type GuitarTypeFilter = "all" | GuitarType;
+export type FutureLearnFilter = "all" | "future" | "current";
 
 const REPERTOIRE_PROGRESS_FILTERS: RepertoireProgressFilter[] = [
   "all",
@@ -42,6 +46,8 @@ export type RepertoireItemFilters = {
   kind: "all" | RepertoireItemKind;
   progress: RepertoireProgressFilter;
   sort: RepertoireSortOrder;
+  guitarType: GuitarTypeFilter;
+  futureLearn: FutureLearnFilter;
 };
 
 type PracticeStatsByItem = Map<
@@ -143,6 +149,17 @@ function sortItems(
   return items.slice().sort(compareByRecentUpdate);
 }
 
+function matchesGuitarType(item: RepertoireItem, filter: GuitarTypeFilter) {
+  if (filter === "all") return true;
+  return item.guitarType === filter;
+}
+
+function matchesFutureLearn(item: RepertoireItem, filter: FutureLearnFilter) {
+  if (filter === "all") return true;
+  if (filter === "future") return item.isFutureLearn === true;
+  return item.isFutureLearn !== true;
+}
+
 export function getFilteredRepertoireItems(
   items: RepertoireItem[],
   filters: RepertoireItemFilters,
@@ -152,7 +169,9 @@ export function getFilteredRepertoireItems(
     (item) =>
       (filters.kind === "all" || item.kind === filters.kind) &&
       matchesProgress(item, filters.progress) &&
-      matchesSearch(item, filters.query),
+      matchesSearch(item, filters.query) &&
+      matchesGuitarType(item, filters.guitarType) &&
+      matchesFutureLearn(item, filters.futureLearn),
   );
   return sortItems(filteredItems, filters.sort, practiceStats);
 }

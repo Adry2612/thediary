@@ -38,6 +38,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const clearActiveSession = useActivePracticeSessionStore(
     (state) => state.clearActiveSession,
   );
+  const addAttachedResource = useActivePracticeSessionStore(
+    (state) => state.addAttachedResource,
+  );
   const pathname = usePathname();
   const isPracticeRoute = pathname === "/practice";
   const router = useRouter();
@@ -172,7 +175,11 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
             )}
           </section>
         )}
-        <PracticeMaterials phases={phases} />
+        <PracticeMaterials
+          phases={phases}
+          attachedResources={session.attachedResources}
+          onAttach={addAttachedResource}
+        />
         <PracticeAudioRecorder
           sessionName={name}
           sessionId={sessionId}

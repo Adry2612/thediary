@@ -6,6 +6,13 @@ import { PracticeAudioPlayer } from "@/components/practice/PracticeAudioPlayer";
 import { getPracticeAsset } from "@/lib/practice-library";
 import { getCloudPracticeAsset } from "@/lib/supabase/practice-files";
 import { normalizeSongsterrUrl } from "@/lib/practice-templates";
+import {
+  extractSpotifyTrackId,
+  extractYoutubeVideoId,
+} from "@/lib/practice-resource-links";
+import { AttachMaterialForm } from "@/components/practice/AttachMaterialForm";
+import { AttachMaterialMenu } from "@/components/practice/AttachMaterialMenu";
+import { usePracticeAttachment } from "@/hooks/usePracticeAttachment";
 import type { PracticePhase, PracticeResource } from "@/types/practice";
 import { useAppData } from "@/components/providers/AppDataProvider";
 
@@ -139,7 +146,7 @@ function ResourcePreview({
         <iframe
           src={safeUrl}
           title={resource.title}
-          className="h-[32rem] w-full border-0 bg-white"
+          className="h-[24rem] w-full border-0 bg-white sm:h-[32rem]"
           loading="lazy"
           allow="fullscreen"
         />
@@ -150,6 +157,71 @@ function ResourcePreview({
           className="mt-3 inline-block text-sm text-muted underline underline-offset-4"
         >
           Abrir Songsterr en otra pestaña
+        </a>
+      </div>
+    );
+  }
+
+  if (resource.kind === "tab" && !resource.assetId) {
+    return (
+      <pre className="max-h-[32rem] overflow-auto bg-canvas p-4 font-mono text-xs leading-relaxed text-ink sm:text-sm">
+        {resource.text}
+      </pre>
+    );
+  }
+
+  if (resource.kind === "youtube") {
+    const videoId = extractYoutubeVideoId(resource.url ?? "");
+    if (!videoId) {
+      return <p className="p-6 text-sm text-muted">El enlace de YouTube no es válido.</p>;
+    }
+    const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+
+    return (
+      <div>
+        <iframe
+          src={embedUrl}
+          title={resource.title}
+          className="aspect-video w-full border-0 bg-black"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+        <a
+          href={resource.url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-block text-sm text-muted underline underline-offset-4"
+        >
+          Abrir en YouTube
+        </a>
+      </div>
+    );
+  }
+
+  if (resource.kind === "spotify") {
+    const trackId = extractSpotifyTrackId(resource.url ?? "");
+    if (!trackId) {
+      return <p className="p-6 text-sm text-muted">El enlace de Spotify no es válido.</p>;
+    }
+    const embedUrl = `https://open.spotify.com/embed/track/${trackId}`;
+
+    return (
+      <div>
+        <iframe
+          src={embedUrl}
+          title={resource.title}
+          className="h-[152px] w-full border-0"
+          loading="lazy"
+          allow="encrypted-media"
+        />
+        <a
+          href={resource.url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-block text-sm text-muted underline underline-offset-4"
+        >
+          Abrir en Spotify
         </a>
       </div>
     );
@@ -173,25 +245,40 @@ function ResourcePreview({
       <iframe
         src={url}
         title={resource.title}
-        className="h-[36rem] w-full border-0 bg-white"
+        className="h-[28rem] w-full border-0 bg-white sm:h-[36rem]"
       />
     );
   }
 
-  return   <GuitarProViewer resource={resource} userId={userId} />;
+  return <GuitarProViewer resource={resource} userId={userId} />;
 }
 
-export function PracticeMaterials({ phases }: { phases: PracticePhase[] }) {
+interface PracticeMaterialsProps {
+  phases: PracticePhase[];
+  attachedResources?: PracticeResource[];
+  onAttach?: (resource: PracticeResource) => void;
+}
+
+export function PracticeMaterials({
+  phases,
+  attachedResources = [],
+  onAttach,
+}: PracticeMaterialsProps) {
   const { user } = useAppData();
   const resources = useMemo(
-    () =>
-      phases.flatMap((phase) =>
+    () => [
+      ...phases.flatMap((phase) =>
         (phase.resources ?? []).map((resource) => ({
           phaseName: phase.name,
           resource,
         })),
       ),
-    [phases],
+      ...attachedResources.map((resource) => ({
+        phaseName: "Adjunto",
+        resource,
+      })),
+    ],
+    [phases, attachedResources],
   );
   const [selectedResourceId, setSelectedResourceId] = useState<string | null>(
     resources[0]?.resource.id ?? null,
@@ -206,27 +293,61 @@ export function PracticeMaterials({ phases }: { phases: PracticePhase[] }) {
     }
   }, [resources, selectedResourceId]);
 
-  if (resources.length === 0) return null;
+  function handleAttach(resource: PracticeResource) {
+    setSelectedResourceId(resource.id);
+    onAttach?.(resource);
+  }
+
+  const attachment = usePracticeAttachment(handleAttach);
+
+  if (resources.length === 0 && !onAttach) return null;
 
   return (
-    <Card>
-      <div className="mb-5">
-        <p className="text-xs uppercase tracking-[0.05em] text-muted">
-          Material de estudio
-        </p>
-        <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8">
-        Material y backing tracks
-        </h2>
+    <Card className="p-5 sm:p-8">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.05em] text-muted">
+            Material de estudio
+          </p>
+          <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8">
+            Material y backing tracks
+          </h2>
+        </div>
+        {onAttach && <AttachMaterialMenu onSelect={attachment.open} />}
       </div>
+      {attachment.activeType && (
+        <AttachMaterialForm
+          type={attachment.activeType}
+          tabMode={attachment.tabMode}
+          draft={attachment.draft}
+          error={attachment.error}
+          isSaving={attachment.isSaving}
+          onTabModeChange={attachment.setTabMode}
+          onDraftChange={attachment.updateDraft}
+          onSubmit={attachment.submit}
+          onFileSelect={attachment.submitFile}
+          onCancel={attachment.close}
+        />
+      )}
+      {resources.length === 0 && (
+        <p className="text-sm text-muted">
+          Aún no hay material. Usa el botón + para adjuntar una TAB, un PDF o un
+          enlace de YouTube o Spotify.
+        </p>
+      )}
+      {resources.length > 0 && (
       <div className="grid gap-5 md:grid-cols-[12rem_minmax(0,1fr)]">
-        <nav aria-label="Materiales de práctica" className="space-y-2">
+        <nav
+          aria-label="Materiales de práctica"
+          className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:block md:space-y-2 md:overflow-visible md:px-0 md:pb-0"
+        >
           {resources.map(({ phaseName, resource }) => (
             <button
               key={resource.id}
               type="button"
               onClick={() => setSelectedResourceId(resource.id)}
               aria-current={resource.id === activeResource?.id ? "true" : undefined}
-              className={`block w-full border p-3 text-left transition ${
+              className={`block w-44 shrink-0 border p-3 text-left transition md:w-full ${
                 resource.id === activeResource?.id
                   ? "border-ink/40 bg-white/5"
                   : "border-line hover:bg-white/5"
@@ -252,6 +373,7 @@ export function PracticeMaterials({ phases }: { phases: PracticePhase[] }) {
           </div>
         )}
       </div>
+      )}
     </Card>
   );
 }
