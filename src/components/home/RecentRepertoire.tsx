@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { getRecentRepertoireItems } from "@/lib/repertoire-filtering";
 import type { RepertoireItem } from "@/types/practice";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 function formatUpdatedDate(updatedAt: string) {
   const date = new Date(updatedAt);
@@ -22,6 +23,7 @@ export function RecentRepertoire({
   items: RepertoireItem[];
   hasHydrated: boolean;
 }) {
+  const home = useI18nSection("home");
   const recentItems = useMemo(() => getRecentRepertoireItems(items), [items]);
 
   return (
@@ -29,23 +31,23 @@ export function RecentRepertoire({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-            Biblioteca musical
+             {home.savedLibrary}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-            Repertorio reciente
+             {home.recentRepertoire}
           </h2>
         </div>
         <Link
           href="/repertoire"
           className="text-sm text-zinc-300 underline decoration-zinc-700 underline-offset-4 transition hover:text-zinc-100"
         >
-          Ver repertorio
+           {home.viewRepertoire}
         </Link>
       </div>
 
       {!hasHydrated ? (
         <p className="mt-5 text-sm text-zinc-500">
-          Cargando elementos guardados…
+           {home.loadingSaved}
         </p>
       ) : recentItems.length > 0 ? (
         <ul className="mt-5 divide-y divide-zinc-800">
@@ -63,16 +65,16 @@ export function RecentRepertoire({
                     {item.title}
                   </p>
                   <p className="mt-1 truncate text-sm text-zinc-500">
-                    {item.kind === "song" ? "Canción" : "Lick"}
+                     {item.kind === "song" ? home.song ?? home.savedLibrary : home.lick ?? home.recentRepertoire}
                     {item.artist ? ` · ${item.artist}` : ""}
                   </p>
                 </div>
                 <div className="shrink-0 text-right font-mono text-xs text-zinc-500">
                   <p>
-                    {learnedParts}/{item.parts.length} partes aprendidas
+                     {learnedParts}/{item.parts.length} {home.learnedParts}
                   </p>
                   {updatedDate && (
-                    <p className="mt-1">Actualizada {updatedDate}</p>
+                     <p className="mt-1">{home.updated} {updatedDate}</p>
                   )}
                 </div>
               </li>
@@ -81,7 +83,7 @@ export function RecentRepertoire({
         </ul>
       ) : (
         <p className="mt-5 text-sm text-zinc-400">
-          Aún no hay canciones o licks en tu repertorio.
+           {home.noRepertoire}
         </p>
       )}
     </section>

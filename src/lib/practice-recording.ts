@@ -1,5 +1,6 @@
 import type { PracticeAudioRecording } from "@/lib/practice-library";
 import type { PracticeSkill } from "@/types/practice";
+import { createId } from "./create-id.ts";
 
 interface PracticeRecordingPhase {
   id: string | number;
@@ -28,7 +29,7 @@ export function createPracticeAudioRecording({
   blob,
 }: CreatePracticeAudioRecordingInput): PracticeAudioRecording {
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     title: title.trim() || sessionName,
     sessionName,
     sessionId,

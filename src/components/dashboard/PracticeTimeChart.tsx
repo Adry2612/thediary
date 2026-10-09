@@ -7,12 +7,7 @@ import { getContainedTooltipPosition } from "@/lib/practice-chart-tooltip";
 import type { PracticeChartPeriod } from "@/lib/practice-analytics";
 import { SelectField } from "@/components/ui/SelectField";
 import type { SessionRecord } from "@/types/practice";
-
-const PERIOD_OPTIONS: { value: PracticeChartPeriod; label: string }[] = [
-  { value: "week", label: "Semana" },
-  { value: "month", label: "Mes" },
-  { value: "year", label: "Año" },
-];
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 function formatTotal(seconds: number) {
   return formatPracticeDuration(seconds / 60);
@@ -39,6 +34,12 @@ export function PracticeTimeChart({
   today: Date;
 }) {
   const [period, setPeriod] = useState<PracticeChartPeriod>("week");
+  const dashboard = useI18nSection("dashboard");
+  const periodOptions = [
+    { value: "week" as const, label: dashboard.periodWeek ?? dashboard.period },
+    { value: "month" as const, label: dashboard.periodMonth ?? dashboard.period },
+    { value: "year" as const, label: dashboard.periodYear ?? dashboard.period },
+  ];
   const [tooltip, setTooltip] = useState<ChartTooltip | null>(null);
   const chartContainerRef = useRef<HTMLElement>(null);
   const buckets = useMemo(
@@ -87,29 +88,27 @@ export function PracticeTimeChart({
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-            Tiempo registrado
+             {dashboard.recordedTimeTitle}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-            Ritmo de práctica
+             {dashboard.practiceRhythm}
           </h2>
           <p className="mt-2 text-sm text-zinc-500">
             {period === "week"
-              ? "Tiempo por día esta semana"
-              : period === "month"
-                ? "Tiempo por semana este mes"
-                : "Tiempo por mes este año"}
+              ? dashboard.weekTime
+              : period === "month" ? dashboard.monthTimeChart : dashboard.yearTime}
           </p>
         </div>
         <div className="min-w-32 text-xs text-zinc-500">
-          Periodo
+           {dashboard.period}
           <SelectField
             className="mt-1"
             value={period}
-            ariaLabel="Periodo del gráfico de práctica"
+             ariaLabel={dashboard.periodAria}
             onChange={(selectedPeriod) =>
               setPeriod(selectedPeriod as PracticeChartPeriod)
             }
-            options={PERIOD_OPTIONS}
+             options={periodOptions}
           />
         </div>
       </div>
@@ -118,12 +117,12 @@ export function PracticeTimeChart({
         <span className="font-mono text-2xl leading-tight font-medium tabular-nums tracking-normal text-zinc-100 sm:text-3xl">
           {formatTotal(totalSeconds)}
         </span>
-        <span className="text-xs text-zinc-500">en el periodo</span>
+         <span className="text-xs text-zinc-500">{dashboard.inPeriod}</span>
       </div>
 
       <div className="mt-5 min-h-0 flex-1 overflow-x-auto">
         <ul
-          aria-label="Tiempo practicado por intervalo"
+           aria-label={dashboard.chartAria}
           className="grid h-full min-h-56 min-w-full items-end gap-2 border-b border-zinc-800 pb-2 sm:gap-3"
           style={{
             gridTemplateColumns: `repeat(${buckets.length}, minmax(0, 1fr))`,
@@ -203,7 +202,7 @@ export function PracticeTimeChart({
       )}
       {maximumSeconds === 0 && (
         <p className="mt-4 text-center text-sm text-zinc-500">
-          Completa una sesión para ver tu tiempo aquí.
+           {dashboard.emptyChart}
         </p>
       )}
     </section>

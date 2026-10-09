@@ -13,6 +13,7 @@ import {
   getPracticeIntensityClass,
   PRACTICE_INTENSITY_CLASSES,
 } from "@/lib/practice-goals";
+import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 
 type YearPracticeCalendarProps = {
   days: DailyStats[];
@@ -28,8 +29,6 @@ type CalendarCell = {
   sessions: SessionRecord[];
 } | null;
 
-const WEEKDAY_LABELS = ["L", "", "X", "", "V", "", ""];
-
 function toDateKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -39,8 +38,8 @@ function parseDateKey(dateKey: string) {
   return new Date(year, month - 1, day);
 }
 
-function formatDate(dateKey: string, includeYear = false) {
-  return new Intl.DateTimeFormat("es-ES", {
+function formatDate(dateKey: string, locale: string, includeYear = false) {
+  return new Intl.DateTimeFormat(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -48,13 +47,13 @@ function formatDate(dateKey: string, includeYear = false) {
   }).format(parseDateKey(dateKey));
 }
 
-function getMonthMarkers(year: number, weekCount: number, firstWeekday: number) {
+function getMonthMarkers(year: number, weekCount: number, firstWeekday: number, locale: string) {
   const markers = Array<string>(weekCount).fill("");
   for (let monthIndex = 0; monthIndex < 12; monthIndex += 1) {
     const dayOfYear =
       (Date.UTC(year, monthIndex, 1) - Date.UTC(year, 0, 1)) / 86_400_000;
     const weekIndex = Math.floor((firstWeekday + dayOfYear) / 7);
-    markers[weekIndex] = new Intl.DateTimeFormat("es-ES", {
+    markers[weekIndex] = new Intl.DateTimeFormat(locale, {
       month: "short",
     })
       .format(new Date(year, monthIndex, 1))
@@ -98,6 +97,10 @@ export function YearPracticeCalendar({
   dailyGoalMinutes,
 }: YearPracticeCalendarProps) {
   const router = useRouter();
+  const { locale } = useI18n();
+  const calendar = useI18nSection("calendar");
+  const tooltip = useI18nSection("tooltip");
+  const weekdays = useI18nSection("weekdays");
   const [hoveredDay, setHoveredDay] = useState<PracticeTooltipDay | null>(null);
   const statsByDate = useMemo(
     () => new Map(days.map((day) => [day.dateKey, day])),
@@ -115,7 +118,7 @@ export function YearPracticeCalendar({
   const yearStart = new Date(year, 0, 1);
   const firstWeekday = (yearStart.getDay() + 6) % 7;
   const weekCount = Math.ceil((firstWeekday + days.length) / 7);
-  const monthMarkers = getMonthMarkers(year, weekCount, firstWeekday);
+  const monthMarkers = getMonthMarkers(year, weekCount, firstWeekday, locale);
   const cells = createCalendarCells(
     year,
     weekCount,
@@ -124,7 +127,7 @@ export function YearPracticeCalendar({
     statsByDate,
     sessionsByDate,
   );
-  const yearLabel = new Intl.NumberFormat("es-ES", {
+  const yearLabel = new Intl.NumberFormat(locale, {
     useGrouping: false,
   }).format(year);
 
@@ -146,40 +149,39 @@ export function YearPracticeCalendar({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-            Constancia
+            {calendar.consistency}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-            Mapa de práctica · {yearLabel}
+            {calendar.title} · {yearLabel}
           </h2>
           <p className="mt-2 text-sm text-zinc-500">
-            El tono compara los minutos registrados con tu objetivo diario de{" "}
-            {dailyGoalMinutes} min. Pasa por un día para ver las sesiones.
+            {calendar.description} {dailyGoalMinutes} min. {calendar.selectDay}.
           </p>
         </div>
         <div
           className="flex items-center gap-2 text-xs text-zinc-500"
-          aria-label="Intensidad según el objetivo diario"
+          aria-label={calendar.intensity}
         >
-          <span>Menos</span>
+          <span>{calendar.less}</span>
           {PRACTICE_INTENSITY_CLASSES.map((intensityClass, index) => (
             <span
               key={intensityClass}
               aria-hidden="true"
               title={
                 index === 0
-                  ? "Sin práctica"
+                  ? calendar.noPractice
                   : index === 1
-                    ? "Menos del 25% del objetivo"
+                    ? calendar.below25
                     : index === 2
-                      ? "Del 25% al 49% del objetivo"
+                      ? calendar.between25and49
                       : index === 3
-                        ? "Del 50% al 99% del objetivo"
-                        : "100% o más del objetivo"
+                        ? calendar.between50and99
+                        : calendar.above100
               }
               className={`size-3 rounded-[2px] ${intensityClass}`}
             />
           ))}
-          <span>Más</span>
+          <span>{calendar.more}</span>
         </div>
       </div>
 
@@ -201,7 +203,7 @@ export function YearPracticeCalendar({
               aria-hidden="true"
               className="grid grid-rows-7 gap-1 pt-0.5 font-mono text-[10px] leading-4 text-zinc-500"
             >
-              {WEEKDAY_LABELS.map((label, index) => (
+              {weekdays.short.map((label, index) => (
                 <span key={index} className="h-4 w-6">
                   {label}
                 </span>
@@ -209,7 +211,7 @@ export function YearPracticeCalendar({
             </div>
             <div
               role="group"
-              aria-label={`Días de práctica de todo ${yearLabel}`}
+              aria-label={`${calendar.yearDays} ${yearLabel}`}
               className="grid grid-flow-col grid-rows-7 gap-1"
               style={{
                 gridTemplateColumns: `repeat(${weekCount}, 16px)`,
@@ -234,7 +236,7 @@ export function YearPracticeCalendar({
                     key={cell.dateKey}
                     type="button"
                     disabled={isFuture}
-                    aria-label={`${formatDate(cell.dateKey, true)}: ${minutes ? `${Math.round(minutes)} minutos, ${cell.sessions.length} ${cell.sessions.length === 1 ? "sesión" : "sesiones"}. Ver detalle de práctica` : "sin práctica registrada"}`}
+                    aria-label={`${formatDate(cell.dateKey, locale, true)}: ${minutes ? `${Math.round(minutes)} minutos, ${cell.sessions.length} ${cell.sessions.length === 1 ? tooltip.session : tooltip.sessions}. ${tooltip.viewDetails}` : calendar.noPractice}`}
                     aria-describedby={
                       hoveredDay?.dateKey === cell.dateKey
                         ? "practice-day-tooltip"

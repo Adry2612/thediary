@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppData } from '@/components/providers/AppDataProvider';
 import { useTutorial } from '@/components/tutorial/TutorialProvider';
+import { SelectField } from '@/components/ui/SelectField';
+import { useI18n, useI18nSection } from '@/i18n/I18nProvider';
+import { type Locale } from '@/i18n/translations';
 
 type DialogName = 'password' | 'delete' | null;
 
@@ -14,6 +17,8 @@ function describeError(error: unknown, fallback: string): string {
 }
 
 export function SettingsView() {
+  const { locale, setLocale } = useI18n();
+  const settings = useI18nSection('settings');
   const { user, signOut, updatePassword, deleteAllPracticeData } = useAppData();
   const { openTutorial } = useTutorial();
   const router = useRouter();
@@ -28,7 +33,7 @@ export function SettingsView() {
       await signOut();
       router.replace('/account');
     } catch (error) {
-      setSignOutError(describeError(error, 'No se pudo cerrar sesión.'));
+       setSignOutError(describeError(error, settings.signOut));
     } finally {
       setIsSigningOut(false);
     }
@@ -37,13 +42,13 @@ export function SettingsView() {
   return (
     <main className='mx-auto max-w-3xl px-5 py-12 sm:px-8'>
       <p className='text-xs uppercase tracking-[0.12em] text-muted'>
-        Preferencias
+        {settings.eyebrow}
       </p>
       <h1 className='mt-2 text-3xl font-semibold tracking-tight text-ink'>
-        Configuración
+        {settings.title}
       </h1>
       <p className='mt-3 max-w-xl text-sm leading-6 text-muted'>
-        Gestiona tu cuenta, idioma y datos de práctica.
+        {settings.description}
       </p>
 
       <div className='mt-8 space-y-4'>
@@ -61,12 +66,12 @@ export function SettingsView() {
                 id='settings-account-title'
                 className='mt-2 text-lg font-medium text-ink'
               >
-                {user?.email ?? 'Modo invitado'}
+                 {user?.email ?? settings.guest}
               </h2>
               <p className='mt-2 max-w-lg text-sm leading-6 text-muted'>
                 {user ?
-                  'Tus datos se guardan en tu cuenta y se sincronizan entre dispositivos.'
-                : 'Inicia sesión o crea una cuenta para sincronizar tus datos entre dispositivos.'
+                   settings.accountSaved
+                : settings.accountPrompt
                 }
               </p>
             </div>
@@ -74,7 +79,7 @@ export function SettingsView() {
               href='/account'
               className='inline-flex min-h-11 shrink-0 items-center justify-center rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5'
             >
-              {user ? 'Cuenta y sincronización' : 'Iniciar sesión'}
+               {user ? settings.accountSync : settings.signIn}
             </Link>
           </div>
         </section>
@@ -83,26 +88,29 @@ export function SettingsView() {
           aria-labelledby='settings-language-title'
           className='rounded-xl border border-line bg-surface p-5 sm:p-6'
         >
-          <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-            Preferencias
+             <p className='text-xs uppercase tracking-[0.08em] text-muted'>
+             {settings.preferences}
           </p>
           <h2
             id='settings-language-title'
             className='mt-2 text-lg font-medium text-ink'
           >
-            Idioma
+             {settings.language}
           </h2>
           <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <p className='text-sm leading-6 text-muted'>
-              La selección de idioma estará disponible próximamente.
+               {settings.languageDescription}
             </p>
-            <button
-              type='button'
-              disabled
-              className='min-h-11 cursor-not-allowed rounded-md border border-line px-4 text-sm text-muted opacity-70'
-            >
-              Próximamente
-            </button>
+             <SelectField
+               value={locale}
+               onChange={(value) => setLocale(value as Locale)}
+               ariaLabel={settings.language}
+               className='w-full sm:w-44'
+               options={[
+                 { value: 'es', label: settings.spanish },
+                 { value: 'en', label: settings.english },
+               ]}
+             />
           </div>
         </section>
 
@@ -110,25 +118,25 @@ export function SettingsView() {
           aria-labelledby='settings-tutorial-title'
           className='rounded-xl border border-line bg-surface p-5 sm:p-6'
         >
-          <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-            Ayuda
+             <p className='text-xs uppercase tracking-[0.08em] text-muted'>
+             {settings.help}
           </p>
           <h2
             id='settings-tutorial-title'
             className='mt-2 text-lg font-medium text-ink'
           >
-            Tutorial de thediary
+             {settings.tutorialTitle}
           </h2>
           <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <p className='text-sm leading-6 text-muted'>
-              Vuelve a recorrer las secciones y descubre cómo usar la app.
+               {settings.tutorialDescription}
             </p>
             <button
               type='button'
               onClick={openTutorial}
               className='min-h-11 shrink-0 rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5'
             >
-              Ver tutorial
+               {settings.viewTutorial}
             </button>
           </div>
         </section>
@@ -140,24 +148,24 @@ export function SettingsView() {
               className='rounded-xl border border-line bg-surface p-5 sm:p-6'
             >
               <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-                Seguridad
+                 {settings.security}
               </p>
               <h2
                 id='settings-security-title'
                 className='mt-2 text-lg font-medium text-ink'
               >
-                Contraseña
+                 {settings.password}
               </h2>
               <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                 <p className='text-sm leading-6 text-muted'>
-                  Actualiza la contraseña de acceso a tu cuenta.
+                   {settings.passwordDescription}
                 </p>
                 <button
                   type='button'
                   onClick={() => setDialog('password')}
                   className='min-h-11 shrink-0 rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5'
                 >
-                  Cambiar contraseña
+                   {settings.changePassword}
                 </button>
               </div>
             </section>
@@ -167,17 +175,17 @@ export function SettingsView() {
               className='rounded-xl border border-line bg-surface p-5 sm:p-6'
             >
               <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-                Sesión
+                 {settings.session}
               </p>
               <h2
                 id='settings-session-title'
                 className='mt-2 text-lg font-medium text-ink'
               >
-                Cerrar sesión
+                 {settings.signOut}
               </h2>
               <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                 <p className='text-sm leading-6 text-muted'>
-                  Cierra tu sesión en este dispositivo.
+                   {settings.signOutDescription}
                 </p>
                 <button
                   type='button'
@@ -185,7 +193,7 @@ export function SettingsView() {
                   onClick={() => void handleSignOut()}
                   className='min-h-11 shrink-0 rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5 disabled:opacity-50'
                 >
-                  {isSigningOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
+                   {isSigningOut ? `${settings.signOut}…` : settings.signOut}
                 </button>
               </div>
               {signOutError && (
@@ -205,18 +213,17 @@ export function SettingsView() {
           className='rounded-xl border border-accent-red-fg/50 bg-accent-red-bg p-5 sm:p-6'
         >
           <p className='text-xs uppercase tracking-[0.08em] text-accent-red-fg'>
-            Datos
+             {settings.data}
           </p>
           <h2
             id='settings-data-title'
             className='mt-2 text-lg font-medium text-accent-red-fg'
           >
-            Eliminar todos los datos
+             {settings.deleteAll}
           </h2>
           <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <p className='max-w-lg text-sm leading-6 text-muted'>
-              Borra las sesiones, rutinas, repertorio y archivos de práctica. La
-              cuenta se conservará.
+               {settings.deleteDescription}
             </p>
             <button
               type='button'
@@ -224,7 +231,7 @@ export function SettingsView() {
               style={{ backgroundColor: 'var(--color-accent-red-button)' }}
               className='min-h-11 shrink-0 rounded-md px-4 text-sm font-medium text-white hover:opacity-90 focus-visible:outline-offset-2 focus-visible:outline-accent-red-fg'
             >
-              Eliminar datos
+               {settings.deleteData}
             </button>
           </div>
         </section>
@@ -234,19 +241,17 @@ export function SettingsView() {
           className='rounded-xl border border-[#FFDD00]/35 bg-surface p-5 sm:p-6'
         >
           <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-            Apoyo
+             {settings.support}
           </p>
           <h2
             id='settings-support-title'
             className='mt-2 text-lg font-medium text-ink'
           >
-            Buy Me a Coffee
+             {settings.supportTitle}
           </h2>
           <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <p className='max-w-xl text-sm leading-6 text-muted'>
-              thediary es completamente gratis porque surgió de una necesidad
-              propia y quiero que todo el mundo pueda disfrutarlo. Pero, si
-              quieres apoyarme de alguna manera, puedes invitarme a un café.
+               {settings.supportDescription}
             </p>
             <button
               type='button'
@@ -275,14 +280,14 @@ export function SettingsView() {
                   strokeWidth='1.8'
                 />
               </svg>
-              Buy me a coffee
+               {settings.supportButton}
             </button>
           </div>
           <p
             id='settings-support-status'
             className='mt-3 text-xs text-muted'
           >
-            El botón se activará cuando me proporciones el enlace a tu perfil.
+             {settings.supportStatus}
           </p>
         </section>
       </div>

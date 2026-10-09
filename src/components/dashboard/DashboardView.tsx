@@ -26,6 +26,7 @@ import {
 } from '@/lib/practice-calendar';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { useAppData } from '@/components/providers/AppDataProvider';
+import { useI18nSection } from '@/i18n/I18nProvider';
 
 function parseDateKey(dateKey: string) {
   const [year, month, day] = dateKey.split('-').map(Number);
@@ -37,6 +38,7 @@ type DashboardViewProps = {
 };
 
 export function DashboardView({ todayKey }: DashboardViewProps) {
+  const dashboard = useI18nSection('dashboard');
   const { user } = useAppData();
   const history = usePracticeStore((state) => state.history);
   const practiceGoals = usePracticeStore((state) => state.practiceGoals);
@@ -116,41 +118,41 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
   }).format(practiceStatistics.totalSeconds / 3600);
   const metricCards = [
     {
-      label: 'Racha actual',
-      value: `${getStreakCount(history, today)} días`,
-      description: 'días seguidos con práctica',
+      label: dashboard.streak,
+      value: `${getStreakCount(history, today)} ${dashboard.days}`,
+      description: dashboard.daysPracticed,
     },
     {
-      label: 'Tiempo este mes',
+      label: dashboard.monthTime,
       value: formatPracticeDuration(Math.round(totalMinutes)),
-      description: 'tiempo total registrado',
+      description: dashboard.recordedTime,
     },
     {
-      label: 'BPM promedio',
+      label: dashboard.averageBpm,
       value: averageBpm ? `${averageBpm} bpm` : '—',
       description:
         averageBpm ?
-          'tempo medio de tus sesiones con BPM'
-        : 'sin BPM registrado este mes',
+          dashboard.averageTempo
+        : dashboard.noBpm,
     },
     {
-      label: 'Sesiones registradas',
+      label: dashboard.recordedSessions,
       value: String(practiceStatistics.sessionCount),
-      description: 'prácticas completadas',
+      description: dashboard.completedPractices,
     },
     {
-      label: 'Apartado más practicado',
+      label: dashboard.mostPracticed,
       value:
         mostPracticedSkill ? PRACTICE_SKILL_LABELS[mostPracticedSkill] : '—',
       description:
         mostPracticedSkill ?
-          `${formatPracticeDuration(practiceStatistics.mostPracticedSeconds / 60)} acumulados`
-        : 'aún no hay práctica registrada',
+          `${formatPracticeDuration(practiceStatistics.mostPracticedSeconds / 60)} ${dashboard.accumulated}`
+        : dashboard.noPractice,
     },
     {
-      label: 'Horas de práctica',
+      label: dashboard.practiceHours,
       value: `${totalHours} h`,
-      description: 'tiempo total del historial',
+      description: dashboard.historyTime,
     },
   ];
 
@@ -159,14 +161,13 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
       <header className='enter mb-10 flex flex-wrap items-end justify-between gap-6'>
         <div>
           <p className='font-mono text-xs uppercase tracking-[0.14em] text-zinc-500'>
-            Diario de guitarra · resumen
+             {dashboard.eyebrow}
           </p>
           <h1 className='mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight text-zinc-100 sm:text-4xl'>
-            Tu práctica, en contexto.
+             {dashboard.title}
           </h1>
           <p className='mt-4 max-w-xl text-base font-medium text-zinc-400 sm:text-lg'>
-            Una vista clara de la constancia, el tiempo y las habilidades que
-            estás trabajando.
+             {dashboard.description}
           </p>
         </div>
         <div className='flex flex-wrap items-center gap-3'>
@@ -215,14 +216,14 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         <SuggestedPractice />
       </div>
       <p className='mt-8 text-center text-xs text-zinc-600'>
-        El calendario muestra todo {todayYear}.
+         {dashboard.calendarNote} {todayYear}.
       </p>
       {persistenceError && (
         <p
           className='mt-4 text-center text-sm text-red-300'
           role='alert'
         >
-          No se pudo cargar el historial guardado: {persistenceError}
+           {dashboard.persistenceError ?? dashboard.recordedTime}: {persistenceError}
         </p>
       )}
     </main>

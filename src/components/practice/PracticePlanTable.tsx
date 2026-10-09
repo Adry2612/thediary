@@ -1,13 +1,7 @@
 import { formatPracticeDuration } from '@/lib/dashboard-data';
 import { getPracticePlanDuration } from '@/lib/practice-plan';
 import type { PracticePhase, RepertoireItem } from '@/types/practice';
-
-const SKILL_LABELS: Record<PracticePhase['skill'], string> = {
-  technique: 'Técnica',
-  theory: 'Teoría',
-  repertoire: 'Repertorio',
-  improvisation: 'Improvisación',
-};
+import { useI18nSection } from '@/i18n/I18nProvider';
 
 function getLinkedPart(
   phase: PracticePhase,
@@ -32,11 +26,13 @@ export function PracticePlanTable({
   phases: PracticePhase[];
   repertoireItems: RepertoireItem[];
 }) {
+  const text = useI18nSection('practice');
+  const skills = useI18nSection('skills');
   const totalMinutes = getPracticePlanDuration(phases);
 
   return (
     <section
-      aria-label='Distribución de la sesión'
+       aria-label={text.sessionName}
       className='enter overflow-hidden'
     >
       <div className='overflow-x-auto'>
@@ -52,13 +48,13 @@ export function PracticePlanTable({
                 scope='col'
                 className='px-3 py-3 font-normal sm:px-5'
               >
-                Bloque
+                 {text.currentBlock}
               </th>
               <th
                 scope='col'
                 className='px-3 py-3 font-normal sm:px-5'
               >
-                Qué vas a practicar
+                 {text.exercises}
               </th>
               <th
                 scope='col'
@@ -88,10 +84,10 @@ export function PracticePlanTable({
                     className='px-3 py-4 text-sm font-medium text-ink sm:px-5'
                   >
                     <span className='block break-words'>
-                      {phase.name || `Bloque ${index + 1}`}
+                       {phase.name || `${text.currentBlock} ${index + 1}`}
                     </span>
                     <span className='mt-1 block text-xs font-normal text-muted'>
-                      {SKILL_LABELS[phase.skill]}
+                       {skills[phase.skill]}
                     </span>
                   </th>
                   <td className='px-3 py-4 text-xs leading-relaxed text-muted sm:px-5 sm:text-sm'>
@@ -99,19 +95,19 @@ export function PracticePlanTable({
                       <div className='space-y-1.5'>
                         {exercises.length > 0 && (
                           <p>
-                            <span className='text-ink'>Ejercicios:</span>{' '}
+                             <span className='text-ink'>{text.exercises}:</span>{' '}
                             {exercises.join(', ')}
                           </p>
                         )}
                         {linkedPart && (
                           <p>
-                            <span className='text-ink'>Repertorio:</span>{' '}
+                             <span className='text-ink'>{text.repertoirePart}:</span>{' '}
                             {linkedPart}
                           </p>
                         )}
                         {resources.length > 0 && (
                           <p>
-                            <span className='text-ink'>Material:</span>{' '}
+                             <span className='text-ink'>{text.material}:</span>{' '}
                             {resources
                               .map((resource) => resource.title)
                               .join(', ')}
@@ -119,7 +115,7 @@ export function PracticePlanTable({
                         )}
                       </div>
                     : <span className='italic text-muted/70'>
-                        Sin ejercicios ni partes vinculadas
+                         {text.noDetails}
                       </span>
                     }
                   </td>
@@ -137,7 +133,7 @@ export function PracticePlanTable({
                 colSpan={2}
                 className='px-3 py-3 text-right text-xs uppercase tracking-[0.1em] text-muted sm:px-5'
               >
-                Total
+                 {text.total}
               </th>
               <td className='whitespace-nowrap px-3 py-3 text-right font-mono text-sm font-medium text-accent-green-fg sm:px-5'>
                 {formatPracticeDuration(totalMinutes)}

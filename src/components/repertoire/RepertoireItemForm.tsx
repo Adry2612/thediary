@@ -19,6 +19,8 @@ import type {
 import { useAppData } from '@/components/providers/AppDataProvider';
 import { PracticeResourceEditor } from '@/components/practice/PracticeResourceEditor';
 import type { PracticeResource } from '@/types/practice';
+import { useI18nSection } from '@/i18n/I18nProvider';
+import { createId as createIdentifier } from '@/lib/create-id';
 
 const COMMON_TUNINGS = [
   'E Standard (EADGBE)',
@@ -36,10 +38,11 @@ const COMMON_TUNINGS = [
 ] as const;
 
 function createId() {
-  return crypto.randomUUID();
+  return createIdentifier();
 }
 
 export function RepertoireItemForm() {
+  const text = useI18nSection('repertoire');
   const { user, isReady } = useAppData();
   const saveRepertoireItem = usePracticeStore(
     (state) => state.saveRepertoireItem,
@@ -94,24 +97,22 @@ export function RepertoireItemForm() {
     event.preventDefault();
     const cleanTitle = title.trim();
     if (!cleanTitle) {
-      setError('Escribe el nombre de la canción o del lick.');
+       setError(`${text.title}: ${text.search}`);
       return;
     }
     if (
       guitarProFile &&
       getPracticeFileKind(guitarProFile.name) !== 'guitarpro'
     ) {
-      setError('El archivo debe ser un formato Guitar Pro compatible.');
+       setError(text.adjustFilters);
       return;
     }
     if (youtubeUrl.trim() && !validateYoutubeUrl(youtubeUrl)) {
-      setError('El enlace de YouTube no es válido.');
+       setError(text.adjustFilters);
       return;
     }
     if (spotifyUrl.trim() && !validateSpotifyUrl(spotifyUrl)) {
-      setError(
-        'El enlace de Spotify no es válido (debe ser de open.spotify.com).',
-      );
+       setError(text.adjustFilters);
       return;
     }
     const capoNum = capo.trim() ? Number(capo) : undefined;
@@ -119,7 +120,7 @@ export function RepertoireItemForm() {
       capoNum !== undefined &&
       (isNaN(capoNum) || capoNum < 0 || capoNum > 12)
     ) {
-      setError('El capotraste debe estar entre 0 y 12.');
+       setError(text.adjustFilters);
       return;
     }
 
@@ -208,10 +209,10 @@ export function RepertoireItemForm() {
     <section className='enter rounded-xl border border-line bg-surface p-6 sm:p-8'>
       <div>
         <p className='text-xs uppercase tracking-[0.12em] text-muted'>
-          Biblioteca personal
+           {text.library}
         </p>
         <h2 className='mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8'>
-          Añadir al repertorio
+           {text.title}
         </h2>
       </div>
 
@@ -220,27 +221,27 @@ export function RepertoireItemForm() {
         className='mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end'
       >
         <div className='block text-xs text-muted'>
-          Tipo
+           {text.typeFilter}
           <SelectField
             className='mt-1'
             value={kind}
-            ariaLabel='Tipo de elemento del repertorio'
+             ariaLabel={text.typeFilter}
             onChange={(value) => setKind(value as RepertoireItemKind)}
             options={[
-              { value: 'song', label: 'Canción' },
-              { value: 'lick', label: 'Lick' },
+               { value: 'song', label: text.songs },
+               { value: 'lick', label: text.licks },
             ]}
           />
         </div>
 
         <label className='block text-xs text-muted'>
-          {kind === 'song' ? 'Nombre de la canción' : 'Nombre del lick'}
+           {kind === 'song' ? text.songs : text.licks}
           <TextField
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             maxLength={100}
             placeholder={
-              kind === 'song' ? 'Master of Puppets' : 'Frase en La menor'
+               kind === 'song' ? text.titlePlaceholder : text.lickPlaceholder
             }
             required
             className='mt-1'
@@ -249,19 +250,19 @@ export function RepertoireItemForm() {
 
         {kind === 'song' ?
           <label className='block text-xs text-muted'>
-            Artista
+             {text.artist}
             <TextField
               value={artist}
               onChange={(event) => setArtist(event.target.value)}
               maxLength={100}
-              placeholder='Metallica'
+               placeholder={text.artistPlaceholder}
               className='mt-1'
             />
           </label>
         : <label className='block cursor-pointer text-xs text-muted'>
-            Archivo Guitar Pro · opcional
+             {text.guitarProOptional}
             <span className='mt-1 flex h-12 items-center truncate rounded-md border border-line px-4 text-sm text-muted transition-colors hover:border-white/20'>
-              {guitarProFile?.name ?? 'Seleccionar archivo .gp'}
+               {guitarProFile?.name ?? text.selectGuitarPro}
             </span>
             <input
               type='file'
@@ -285,7 +286,7 @@ export function RepertoireItemForm() {
           className='lg:col-span-4 mt-2'
           open={showExtraConfig}
         >
-          <summary className='cursor-pointer flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink'>
+             <summary className='cursor-pointer flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink'>
             <svg
               className='size-4 shrink-0 transition-transform duration-200'
               style={{
@@ -297,11 +298,11 @@ export function RepertoireItemForm() {
             >
               <path d='M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z' />
             </svg>
-            Configuraciones extra (afinación, capotraste, tipo de guitarra)
+             {text.extraConfig}
           </summary>
           <div className='mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-in slide-in-from-top-2 duration-200'>
             <label className='block text-xs text-muted sm:col-span-2'>
-              Afinación
+               {text.tuning}
               <SelectField
                 className='mt-1'
                 value={tuning}
@@ -311,26 +312,26 @@ export function RepertoireItemForm() {
                     // Keep custom tuning empty when selecting "Otra..."
                   }
                 }}
-                ariaLabel='Afinación de la canción'
+                 ariaLabel={text.tuning}
                 options={COMMON_TUNINGS.map((t) => ({ value: t, label: t }))}
               />
             </label>
 
             {tuning === 'Otra...' && (
               <label className='block text-xs text-muted sm:col-span-2'>
-                Afinación personalizada
+                 {text.customTuning}
                 <TextField
                   value={customTuning}
                   onChange={(event) => setCustomTuning(event.target.value)}
                   maxLength={50}
-                  placeholder='Ej. CGCFAD, DADGAD, etc.'
+                   placeholder={text.customTuningPlaceholder}
                   className='mt-1'
                 />
               </label>
             )}
 
             <label className='block text-xs text-muted'>
-              Capotraste (traste)
+                 {text.capo}
               <TextField
                 type='number'
                 min={0}
@@ -339,22 +340,22 @@ export function RepertoireItemForm() {
                 value={capo}
                 onChange={(event) => setCapo(event.target.value)}
                 placeholder='0'
-                aria-label='Traste del capotraste (0-12)'
+                 aria-label={text.capoAria}
                 className='mt-1 font-mono'
               />
             </label>
 
             <label className='block text-xs text-muted'>
-              Tipo de guitarra
+               {text.guitarType}
               <SelectField
                 className='mt-1'
                 value={guitarType}
-                ariaLabel='Tipo de guitarra'
+                 ariaLabel={text.guitarType}
                 onChange={(value) => setGuitarType(value as GuitarType | '')}
                 options={[
-                  { value: '', label: 'Sin especificar' },
-                  { value: 'electric', label: 'Eléctrica' },
-                  { value: 'acoustic', label: 'Acústica' },
+                   { value: '', label: text.unspecified },
+                   { value: 'electric', label: text.electric },
+                   { value: 'acoustic', label: text.acoustic },
                 ]}
               />
             </label>
@@ -384,7 +385,7 @@ export function RepertoireItemForm() {
                   />
                 </svg>
               </span>
-              <span>Añadir a «Aprender en el futuro»</span>
+               <span>{text.futureLearn}</span>
             </label>
           </div>
         </details>
@@ -395,8 +396,8 @@ export function RepertoireItemForm() {
           className='lg:col-span-4'
         >
           {isSaving ?
-            'Guardando…'
-          : `Añadir ${kind === 'song' ? 'canción' : 'lick'}`}
+             text.saving
+           : kind === 'song' ? text.addSong : text.addLick}
         </Button>
       </form>
 

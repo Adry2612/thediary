@@ -1,12 +1,15 @@
 import { PracticeWorkspace } from "@/components/practice/PracticeWorkspace";
 import type { PracticePhase } from "@/types/practice";
+import { getDictionary } from "@/i18n/translations";
+
+const practiceText = getDictionary().practicePage;
 
 const phases: PracticePhase[] = [
-  { id: 1, name: "Técnica", durationMinutes: 10, skill: "technique" },
-  { id: 2, name: "Repertorio", durationMinutes: 20, skill: "repertoire" },
+  { id: 1, name: practiceText.technique, durationMinutes: 10, skill: "technique" },
+  { id: 2, name: practiceText.repertoire, durationMinutes: 20, skill: "repertoire" },
   {
     id: 3,
-    name: "Vuelta a la calma",
+    name: practiceText.cooldown,
     durationMinutes: 5,
     skill: "technique",
   },
@@ -21,19 +24,19 @@ function createSuggestedPhases(totalMinutes: number): PracticePhase[] {
   return [
     {
       id: 1,
-      name: "Técnica",
+      name: practiceText.technique,
       durationMinutes: techniqueMinutes,
       skill: "technique",
     },
     {
       id: 2,
-      name: "Repertorio",
+      name: practiceText.repertoire,
       durationMinutes: repertoireMinutes,
       skill: "repertoire",
     },
     {
       id: 3,
-      name: "Vuelta a la calma",
+      name: practiceText.cooldown,
       durationMinutes: totalMinutes - techniqueMinutes - repertoireMinutes,
       skill: "technique",
     },

@@ -17,6 +17,7 @@ import {
   type TempoRampSettings,
   type TempoRampIntervalUnit,
 } from "@/lib/metronome-tempo-ramp";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 interface MetronomeSettingsProps {
   subdivision: number;
@@ -29,11 +30,6 @@ interface MetronomeSettingsProps {
   setTempoRamp: (settings: TempoRampSettings) => void;
 }
 
-const TEMPO_RAMP_INTERVAL_OPTIONS = [
-  { value: "bars", label: "Compás" },
-  { value: "seconds", label: "Seg." },
-  { value: "minutes", label: "Min." },
-];
 const TEMPO_RAMP_INTERVAL_MAX_VALUES: Record<TempoRampIntervalUnit, number> = {
   bars: 64,
   seconds: 3_600,
@@ -131,12 +127,18 @@ export function MetronomeSettings({
   setMeterSignature,
   setTempoRamp,
 }: MetronomeSettingsProps) {
+  const text = useI18nSection("metronome");
   const [isOpen, setIsOpen] = useState(false);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const settingsDialogRef = useRef<HTMLDialogElement>(null);
   const subdivisionGroupId = useId();
   const meter = getMetronomeMeter(meterSignature);
   const subdivisionOptions = getMetronomeSubdivisionOptions(meter);
+  const tempoRampIntervalOptions = [
+    { value: "bars", label: text.meter },
+    { value: "seconds", label: "Seg." },
+    { value: "minutes", label: "Min." },
+  ];
 
   useEffect(() => {
     const dialog = settingsDialogRef.current;
@@ -151,7 +153,7 @@ export function MetronomeSettings({
         ref={settingsButtonRef}
         type="button"
         onClick={() => setIsOpen(true)}
-        aria-label="Ajustes del metrónomo"
+         aria-label={text.settingsAria}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         className="flex size-11 items-center justify-center border border-line text-muted transition hover:bg-white/5 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink/60"
@@ -200,20 +202,20 @@ export function MetronomeSettings({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.05em] text-muted">
-                Metrónomo
+                 {text.title}
               </p>
               <h2
                 id="metronome-settings-title"
                 className="mt-2 font-sans text-3xl font-semibold"
               >
-                Ajustes
+                 {text.settings}
               </h2>
             </div>
             <button
               type="button"
               autoFocus
               onClick={() => setIsOpen(false)}
-              aria-label="Cerrar ajustes"
+               aria-label={text.closeSettings}
               className="flex size-11 items-center justify-center border border-line text-muted hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink/60"
             >
               <span aria-hidden="true">×</span>
@@ -221,10 +223,10 @@ export function MetronomeSettings({
           </div>
 
           <div className="mt-8">
-            <div className="text-sm text-muted">Compás</div>
+             <div className="text-sm text-muted">{text.meter}</div>
             <SelectField
               className="mt-2"
-              ariaLabel="Compás del metrónomo"
+               ariaLabel={text.meterAria}
               value={meterSignature}
               onChange={(value) => {
                 if (isMetronomeMeterSignature(value)) setMeterSignature(value);
@@ -238,7 +240,7 @@ export function MetronomeSettings({
 
           <div className="mt-6">
             <fieldset>
-              <legend className="text-sm text-muted">Subdivisión</legend>
+               <legend className="text-sm text-muted">{text.subdivision}</legend>
               <div className="mt-2 grid grid-cols-4 gap-2" role="group">
                 {subdivisionOptions.map((option) => (
                   <label key={option.value} className="group min-w-0">
@@ -274,7 +276,7 @@ export function MetronomeSettings({
 
           <div className="mt-6">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted">Volumen</span>
+               <span className="text-muted">{text.volume}</span>
               <span className="font-mono text-xs text-muted">
                 {Math.round(volume * 100)}%
               </span>
@@ -284,7 +286,7 @@ export function MetronomeSettings({
               max={1}
               step={0.01}
               value={volume}
-              ariaLabel="Volumen del metrónomo"
+               ariaLabel={text.volumeAria}
               ariaValueText={`${Math.round(volume * 100)}%`}
               onChange={setVolume}
               className="mt-2"
@@ -304,10 +306,10 @@ export function MetronomeSettings({
                 }
                 className="size-4 accent-accent-green-fg"
               />
-              <span>Activar tempo incremental</span>
+               <span>{text.ramp}</span>
             </label>
             <p className="mt-1 text-xs leading-5 text-muted">
-              Aumenta el tempo automáticamente hasta el límite configurado.
+               {text.rampDescription}
             </p>
 
             {tempoRamp.enabled && (
@@ -315,13 +317,13 @@ export function MetronomeSettings({
                 <div className="grid grid-cols-[minmax(0,0.7fr)_minmax(0,1.2fr)_minmax(0,0.7fr)_minmax(0,0.7fr)] items-end gap-2">
                   <div className="min-w-0">
                     <span className="block text-[10px] uppercase tracking-wide text-muted">
-                      Cada
+                       {text.each}
                     </span>
                     <AdjustableNumber
                       value={tempoRamp.intervalValue}
                       min={1}
                       max={TEMPO_RAMP_INTERVAL_MAX_VALUES[tempoRamp.intervalUnit]}
-                      ariaLabel="Intervalo del tempo incremental"
+                       ariaLabel={text.intervalAria}
                       className="mt-1 text-lg text-ink"
                       onChange={(intervalValue) =>
                         setTempoRamp({ ...tempoRamp, intervalValue })
@@ -330,11 +332,11 @@ export function MetronomeSettings({
                   </div>
                   <div className="min-w-0">
                     <span className="block text-[10px] uppercase tracking-wide text-muted">
-                      Unidad
+                       {text.unit}
                     </span>
                     <SelectField
                       className="mt-1"
-                      ariaLabel="Unidad del intervalo de incremento"
+                       ariaLabel={text.unitAria}
                       value={tempoRamp.intervalUnit}
                       onChange={(value) => {
                         if (!isTempoRampIntervalUnit(value)) return;
@@ -343,18 +345,18 @@ export function MetronomeSettings({
                           intervalUnit: value,
                         });
                       }}
-                      options={TEMPO_RAMP_INTERVAL_OPTIONS}
+                       options={tempoRampIntervalOptions}
                     />
                   </div>
                   <div className="min-w-0">
                     <span className="block text-[10px] uppercase tracking-wide text-muted">
-                      Sube BPM
+                       {text.increment}
                     </span>
                     <AdjustableNumber
                       value={tempoRamp.incrementBpm}
                       min={1}
                       max={20}
-                      ariaLabel="Aumento de tempo por intervalo en BPM"
+                       ariaLabel={text.incrementAria}
                       className="mt-1 text-lg text-ink"
                       onChange={(incrementBpm) =>
                         setTempoRamp({ ...tempoRamp, incrementBpm })
@@ -363,13 +365,13 @@ export function MetronomeSettings({
                   </div>
                   <div className="min-w-0">
                     <span className="block text-[10px] uppercase tracking-wide text-muted">
-                      Tope BPM
+                       {text.maximum}
                     </span>
                     <AdjustableNumber
                       value={tempoRamp.maximumBpm}
                       min={MIN_BPM}
                       max={MAX_BPM}
-                      ariaLabel="Tempo máximo incremental en BPM"
+                       ariaLabel={text.maximumAria}
                       className="mt-1 text-lg text-ink"
                       onChange={(maximumBpm) =>
                         setTempoRamp({ ...tempoRamp, maximumBpm })

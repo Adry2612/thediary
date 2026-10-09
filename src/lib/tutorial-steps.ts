@@ -1,7 +1,7 @@
 export interface TutorialStep {
   title: string;
   description: string;
-  target: string;
+  target?: string;
   href?: string;
 }
 

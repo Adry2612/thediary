@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { TextArea } from "@/components/ui/Field";
 import { formatClock } from "@/lib/format";
 import type { PracticeTimerResult } from "@/types/practice";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 interface PracticeCompletionDialogProps {
   result: PracticeTimerResult | null;
@@ -20,6 +21,7 @@ export function PracticeCompletionDialog({
   isVisible,
   onSave,
 }: PracticeCompletionDialogProps) {
+  const text = useI18nSection("practice");
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [sessionNotes, setSessionNotes] = useState("");
   const [phaseNotes, setPhaseNotes] = useState<Record<number, string>>({});
@@ -40,12 +42,12 @@ export function PracticeCompletionDialog({
     >
       <div className="p-6 sm:p-8">
         <p className="text-xs uppercase tracking-[0.05em] text-muted">
-          {result?.completed ? "Sesión completada" : "Práctica finalizada"}
+          {result?.completed ? text.completeTitle : text.finishedTitle}
         </p>
         <h2 className="mt-3 font-sans text-3xl font-semibold">
           {result?.completed
-            ? "Has terminado tu rutina"
-            : "Tu práctica está lista"}
+             ? text.finishedRoutine
+             : text.practiceReady}
         </h2>
         <p className="mt-4 text-sm leading-6 text-muted">
           {result?.completed
@@ -53,12 +55,12 @@ export function PracticeCompletionDialog({
             : `Has registrado ${formatClock(result?.elapsedSeconds ?? 0)} de práctica.`}
         </p>
         <label className="mt-5 block text-sm text-ink">
-          Notas de la sesión
+           {text.notes}
           <TextArea
             className="mt-2"
             value={sessionNotes}
             onChange={(event) => setSessionNotes(event.target.value)}
-            placeholder="Sensaciones, objetivos o ideas para la próxima práctica…"
+             placeholder={text.notesPlaceholder}
             rows={3}
           />
         </label>
@@ -71,7 +73,7 @@ export function PracticeCompletionDialog({
               id="completion-phase-notes"
               className="text-sm font-medium text-ink"
             >
-              Notas por bloque
+             {text.phaseNotes}
             </h3>
             <div className="mt-4 space-y-4">
               {result.phases.map((phase, index) => (
@@ -94,7 +96,7 @@ export function PracticeCompletionDialog({
                         [index]: event.target.value,
                       }))
                     }
-                    placeholder={`Notas para ${phase.name.toLowerCase()}…`}
+                     placeholder={`${text.notes} ${phase.name.toLowerCase()}…`}
                     rows={2}
                   />
                 </label>
@@ -107,7 +109,7 @@ export function PracticeCompletionDialog({
           className="mt-6 w-full"
           onClick={() => onSave(sessionNotes, phaseNotes)}
         >
-          Guardar práctica
+           {text.saveCompletion}
         </Button>
       </div>
     </dialog>

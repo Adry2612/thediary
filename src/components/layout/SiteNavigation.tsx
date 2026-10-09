@@ -2,30 +2,34 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useI18nSection } from '@/i18n/I18nProvider';
 
 const NAVIGATION = [
-  { href: '/', label: 'Inicio' },
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/practice', label: 'Práctica' },
-  { href: '/metronome', label: 'Metrónomo' },
-  { href: '/recordings', label: 'Grabaciones' },
-  { href: '/repertoire', label: 'Mi repertorio' },
+  { href: '/', label: 'home' },
+  { href: '/dashboard', label: 'dashboard' },
+  { href: '/practice', label: 'practice' },
+  { href: '/metronome', label: 'metronome' },
+  { href: '/recordings', label: 'recordings' },
+  { href: '/repertoire', label: 'repertoire' },
 ];
 
 export function SiteNavigation() {
   const pathname = usePathname();
+  const navigation = useI18nSection('navigation');
+  const common = useI18nSection('common');
+  const app = useI18nSection('app');
 
   return (
     <header className='border-b border-line'>
       <nav
-        aria-label='Navegación principal'
+        aria-label={navigation.main}
         className='mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-6 px-5 sm:px-8'
       >
         <div
           data-tour-target='brand'
           className='shrink-0 font-sans text-xl font-semibold tracking-[-0.02em] text-ink'
         >
-          thediary.
+          {app.name}
         </div>
         <ul className='flex min-w-0 flex-1 items-center gap-1 overflow-x-auto'>
           {NAVIGATION.map((item) => {
@@ -44,7 +48,7 @@ export function SiteNavigation() {
                   aria-current={isCurrent ? 'page' : undefined}
                   className={`block rounded-md px-3 py-2 text-xs transition sm:text-sm ${isCurrent ? 'bg-white/5 text-ink' : 'text-muted hover:text-ink'}`}
                 >
-                  {item.label}
+                  {navigation[item.label as keyof typeof navigation]}
                 </Link>
               </li>
             );
@@ -52,7 +56,7 @@ export function SiteNavigation() {
         </ul>
         <Link
           href='/settings'
-          aria-label='Configuración'
+          aria-label={common.settings}
           aria-current={
             pathname === '/settings' || pathname.startsWith('/settings/') ?
               'page'
@@ -80,7 +84,7 @@ export function SiteNavigation() {
               strokeWidth='1.5'
             />
           </svg>
-          <span className='hidden sm:inline'>Configuración</span>
+          <span className='hidden sm:inline'>{common.settings}</span>
         </Link>
       </nav>
     </header>

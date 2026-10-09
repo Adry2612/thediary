@@ -19,6 +19,17 @@ import {
   type TutorialProgress,
 } from "@/lib/tutorial-progress";
 import { TUTORIAL_STEPS, type TutorialStep } from "@/lib/tutorial-steps";
+import { useI18nSection } from "@/i18n/I18nProvider";
+
+type TutorialText = {
+  steps: Array<{ title: string; description: string }>;
+  progress: string;
+  saveError: string;
+  skip: string;
+  previous: string;
+  next: string;
+  finish: string;
+};
 
 interface TargetBounds {
   top: number;
@@ -57,6 +68,7 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function TutorialProvider({ children }: { children: ReactNode }) {
+  const tutorialText = useI18nSection("tutorial")!;
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -209,11 +221,12 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     <TutorialContext.Provider value={contextValue}>
       {children}
       {isOpen && (
-        <TutorialDialog
-          step={TUTORIAL_STEPS[stepIndex]}
+           <TutorialDialog
+           step={{ ...TUTORIAL_STEPS[stepIndex], ...tutorialText.steps[stepIndex] }}
           stepIndex={stepIndex}
           stepCount={TUTORIAL_STEPS.length}
-          storageError={storageError}
+           storageError={storageError}
+           tutorialText={tutorialText}
           isTransitioning={isTransitioning}
           onTargetReady={handleTargetReady}
           onClose={skipTutorial}
@@ -230,6 +243,7 @@ function TutorialDialog({
   stepIndex,
   stepCount,
   storageError,
+  tutorialText,
   isTransitioning,
   onTargetReady,
   onClose,
@@ -240,6 +254,7 @@ function TutorialDialog({
   stepIndex: number;
   stepCount: number;
   storageError: string | null;
+  tutorialText: TutorialText;
   isTransitioning: boolean;
   onTargetReady: (stepIndex: number) => void;
   onClose: () => void;
@@ -313,6 +328,11 @@ function TutorialDialog({
   }, []);
 
   useEffect(() => {
+    if (stepIndex === 0 || !step.target) {
+      setTargetBounds(null);
+      setReadyStepIndex(stepIndex);
+      return;
+    }
     if (step.href && pathname !== step.href) {
       setTargetBounds(null);
       setReadyStepIndex(null);
@@ -400,7 +420,7 @@ function TutorialDialog({
       window.removeEventListener("resize", updateTargetBounds);
       window.removeEventListener("scroll", updateTargetBounds, true);
     };
-  }, [pathname, step.href, step.target]);
+  }, [pathname, step.href, step.target, stepIndex]);
 
   useLayoutEffect(() => {
     if (readyStepIndex === stepIndex) {
@@ -560,7 +580,7 @@ function TutorialDialog({
         </div>
         <div
           role="progressbar"
-          aria-label="Progreso del tutorial"
+           aria-label={tutorialText.progress}
           aria-valuemin={1}
           aria-valuemax={stepCount}
           aria-valuenow={stepIndex + 1}
@@ -589,7 +609,7 @@ function TutorialDialog({
 
         {storageError && (
           <p className="mt-4 text-sm text-accent-red-fg" role="alert">
-            No se pudo guardar el progreso del tutorial: {storageError}
+             {tutorialText.saveError}: {storageError}
           </p>
         )}
 
@@ -600,7 +620,7 @@ function TutorialDialog({
             disabled={isTransitioning}
             className="min-h-10 rounded-md px-2 text-xs uppercase tracking-[0.08em] text-muted underline underline-offset-4 transition hover:text-ink"
           >
-            Omitir
+                 {tutorialText.skip}
           </button>
           <div className="flex items-center gap-2">
             {stepIndex > 0 && (
@@ -610,7 +630,7 @@ function TutorialDialog({
                 disabled={isTransitioning}
                 className="min-h-10 rounded-md border border-line px-3 text-sm text-ink transition hover:bg-white/5"
               >
-                Anterior
+                 {tutorialText.previous}
               </button>
             )}
             <button
@@ -620,7 +640,7 @@ function TutorialDialog({
               disabled={isTransitioning}
               className="min-h-10 rounded-md bg-ink px-4 text-sm font-medium text-canvas transition hover:opacity-90 active:scale-[0.98]"
             >
-              {stepIndex === stepCount - 1 ? "Terminar tutorial" : "Siguiente"}
+               {stepIndex === stepCount - 1 ? tutorialText.finish : tutorialText.next}
             </button>
           </div>
         </div>

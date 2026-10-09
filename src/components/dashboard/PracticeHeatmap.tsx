@@ -6,6 +6,7 @@ import {
   PRACTICE_SKILL_LABELS,
   type PracticeDay,
 } from "@/lib/dashboard-data";
+import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 
 type PracticeHeatmapProps = {
   days: PracticeDay[];
@@ -17,8 +18,6 @@ type PracticeHeatmapProps = {
   onChangeMonth: (offset: -1 | 1) => void;
 };
 
-const WEEKDAY_LABELS = ["L", "", "X", "", "V", "", ""];
-
 function getIntensity(minutes: number) {
   if (minutes === 0) return "bg-zinc-800/70";
   if (minutes < 25) return "bg-[#26372b]";
@@ -27,9 +26,9 @@ function getIntensity(minutes: number) {
   return "bg-[#89a78b]";
 }
 
-function formatSelectedDate(dateKey: string) {
+function formatSelectedDate(dateKey: string, locale: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
-  return new Intl.DateTimeFormat("es-ES", {
+  return new Intl.DateTimeFormat(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -45,6 +44,9 @@ export function PracticeHeatmap({
   onSelectDate,
   onChangeMonth,
 }: PracticeHeatmapProps) {
+  const { locale } = useI18n();
+  const calendar = useI18nSection("calendar");
+  const weekdays = useI18nSection("weekdays");
   const year = month.getFullYear();
   const monthIndex = month.getMonth();
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
@@ -65,7 +67,7 @@ export function PracticeHeatmap({
     };
   });
 
-  const monthLabel = new Intl.DateTimeFormat("es-ES", {
+  const monthLabel = new Intl.DateTimeFormat(locale, {
     month: "long",
     year: "numeric",
   }).format(month);
@@ -75,17 +77,17 @@ export function PracticeHeatmap({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-            Constancia
+             {calendar.consistency}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-            Mapa de práctica
+             {calendar.title}
           </h2>
         </div>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => onChangeMonth(-1)}
-            aria-label="Mes anterior"
+             aria-label={calendar.previousMonth}
             className="flex size-10 items-center justify-center rounded-md border border-zinc-800 text-zinc-300 transition hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-300"
           >
             <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
@@ -106,7 +108,7 @@ export function PracticeHeatmap({
             type="button"
             onClick={() => onChangeMonth(1)}
             disabled={!canGoForward}
-            aria-label="Mes siguiente"
+             aria-label={calendar.nextMonth}
             className="flex size-10 items-center justify-center rounded-md border border-zinc-800 text-zinc-300 transition hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-300 disabled:cursor-not-allowed disabled:opacity-35"
           >
             <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
@@ -126,7 +128,7 @@ export function PracticeHeatmap({
       <div className="mt-8 overflow-x-auto pb-2">
         <div className="flex w-full min-w-[360px] justify-center gap-3">
           <div className="grid grid-rows-7 gap-1 pt-0.5 text-[10px] leading-4 text-zinc-500">
-            {WEEKDAY_LABELS.map((label, index) => (
+             {weekdays.short.map((label, index) => (
               <span key={index} className="h-4 w-3">
                 {label}
               </span>
@@ -134,7 +136,7 @@ export function PracticeHeatmap({
           </div>
           <div
             role="group"
-            aria-label={`Días de práctica de ${monthLabel}`}
+             aria-label={`${calendar.yearDays} ${monthLabel}`}
             className="grid grid-flow-col grid-rows-7 gap-1"
             style={{
               gridTemplateColumns: `repeat(${weekCount}, minmax(0, 1fr))`,
@@ -154,7 +156,7 @@ export function PracticeHeatmap({
                   type="button"
                   disabled={cell.isFuture}
                   onClick={() => onSelectDate(cell.dateKey)}
-                  aria-label={`${cell.dayNumber} de ${monthLabel}: ${minutes ? `${minutes} minutos de práctica` : "sin práctica registrada"}`}
+                   aria-label={`${cell.dayNumber} de ${monthLabel}: ${minutes ? `${minutes} minutos de práctica` : calendar.noPractice}`}
                   aria-pressed={isSelected}
                   title={`${cell.dayNumber}: ${minutes} min`}
                   className={`size-4 rounded-[3px] ${getIntensity(minutes)} transition hover:outline hover:outline-1 hover:outline-zinc-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-200 disabled:cursor-default disabled:opacity-30 ${isSelected ? "outline outline-2 outline-offset-1 outline-[#d9c68f]" : ""}`}
@@ -167,7 +169,7 @@ export function PracticeHeatmap({
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-zinc-800 pt-5">
         <div className="flex items-center gap-2 text-xs text-zinc-500">
-          <span>Menos</span>
+           <span>{calendar.less}</span>
           {[0, 12, 30, 45, 60].map((minutes) => (
             <span
               key={minutes}
@@ -175,27 +177,27 @@ export function PracticeHeatmap({
               className={`size-3 rounded-[2px] ${getIntensity(minutes)}`}
             />
           ))}
-          <span>Más</span>
+           <span>{calendar.more}</span>
         </div>
         <p className="text-xs text-zinc-500">
-          Selecciona un día para ver el desglose
+           {calendar.selectDay}
         </p>
       </div>
 
       <div className="mt-6 rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-4 sm:flex sm:items-center sm:justify-between sm:gap-6">
         <div>
           <p className="text-xs uppercase tracking-[0.1em] text-zinc-500">
-            Día seleccionado
+             {calendar.selectedDay}
           </p>
           <h3 className="mt-1 text-zinc-200">
-            {formatSelectedDate(selectedDate)}
+             {formatSelectedDate(selectedDate, locale)}
           </h3>
         </div>
         {selectedDay && selectedDay.minutes > 0 ? (
           <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-2 sm:mt-0 sm:grid-cols-3">
             <p className="font-mono text-sm text-zinc-200">
               {formatPracticeDuration(selectedDay.minutes)}{" "}
-              <span className="font-mono text-xs text-zinc-500">total</span>
+               <span className="font-mono text-xs text-zinc-500">{calendar.total}</span>
             </p>
             <p className="font-mono text-sm text-zinc-200">
               {selectedDay.averageBpm || "—"}{" "}
@@ -209,7 +211,7 @@ export function PracticeHeatmap({
           </div>
         ) : (
           <p className="mt-3 text-sm text-zinc-500 sm:mt-0">
-            No hay práctica registrada para este día.
+             {calendar.noDayPractice}
           </p>
         )}
       </div>

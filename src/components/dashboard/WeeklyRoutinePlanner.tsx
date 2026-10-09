@@ -4,13 +4,13 @@ import Link from "next/link";
 import { SelectField } from "@/components/ui/SelectField";
 import {
   WEEKDAY_INDEXES,
-  WEEKDAY_LABELS,
 } from "@/lib/weekly-routine-schedule";
 import type {
   WeekdayIndex,
   WeeklyRoutineSchedule,
 } from "@/lib/weekly-routine-schedule";
 import type { PracticeTemplate } from "@/types/practice";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 export function WeeklyRoutinePlanner({
   routines,
@@ -26,6 +26,8 @@ export function WeeklyRoutinePlanner({
     templateId: string | null,
   ) => void;
 }) {
+  const home = useI18nSection("home");
+  const weekdays = useI18nSection("weekdays");
   const routineOptions = routines.map((routine) => ({
     value: routine.id,
     label: routine.name,
@@ -35,19 +37,19 @@ export function WeeklyRoutinePlanner({
     <section className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
       <div>
         <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-          Organización semanal
+           {home.weeklyOrganization}
         </p>
         <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-          Rutina por día
+           {home.routineByDay}
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-zinc-500">
-          Asigna una rutina a cada día. Puedes repetirla o dejar días sin plan.
+           {home.routineByDayDescription}
         </p>
       </div>
 
       {!hasHydrated ? (
         <p className="mt-5 text-sm text-zinc-500">
-          Cargando planificación semanal…
+           {home.loadingWeekly}
         </p>
       ) : routines.length === 0 ? (
         <p className="mt-5 text-sm text-zinc-400">
@@ -76,11 +78,11 @@ export function WeeklyRoutinePlanner({
                 className="min-w-0 bg-transparent p-3"
               >
                 <p className="mb-2 text-xs uppercase tracking-[0.1em] text-zinc-300">
-                  {WEEKDAY_LABELS[weekday]}
+                   {weekdays.long[weekday]}
                 </p>
                 <SelectField
                   value={assignedRoutineId ?? ""}
-                  ariaLabel={`Rutina para ${WEEKDAY_LABELS[weekday]}`}
+                   ariaLabel={`${home.routineByDay}: ${weekdays.long[weekday]}`}
                   onChange={(templateId) =>
                     onScheduleChange(
                       weekday,
@@ -88,12 +90,12 @@ export function WeeklyRoutinePlanner({
                     )
                   }
                   options={[
-                    { value: "", label: "Sin rutina asignada" },
+                     { value: "", label: home.noRoutineAssigned },
                     ...(hasUnavailableRoutine
                       ? [
                           {
                             value: assignedRoutineId,
-                            label: "Rutina no disponible",
+                             label: home.unavailableRoutine,
                             disabled: true,
                           },
                         ]

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PracticeRecordingItem } from "@/components/practice/PracticeRecordingItem";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/Field";
+import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 import {
   getFilteredPracticeRecordings,
   isPracticeRecordingSort,
@@ -22,8 +23,8 @@ const INITIAL_FILTERS: PracticeRecordingFilters = {
   phaseName: "",
   sort: "newest",
 };
-function formatDateLabel(dateKey: string) {
-  return new Intl.DateTimeFormat("es-ES", {
+function formatDateLabel(dateKey: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -32,6 +33,8 @@ function formatDateLabel(dateKey: string) {
 }
 
 export function RecordingsLibrary() {
+  const { locale } = useI18n();
+  const text = useI18nSection("recordings");
   const [recordings, setRecordings] = useState<PracticeAudioRecording[]>([]);
   const [filters, setFilters] =
     useState<PracticeRecordingFilters>(INITIAL_FILTERS);
@@ -76,7 +79,7 @@ export function RecordingsLibrary() {
         .sort((left, right) => left - right)
         .map((order) => ({
           value: String(order),
-          label: `Bloque ${order}`,
+          label: `${text.block} ${order}`,
         })),
     [recordings],
   );
@@ -120,16 +123,15 @@ export function RecordingsLibrary() {
     <main className="mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
       <header className="mb-8">
         <p className="font-mono text-xs uppercase tracking-[0.12em] text-muted">
-          Archivo personal
+          {text.eyebrow}
         </p>
         <h1
           className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl"
         >
-          Grabaciones
+          {text.title}
         </h1>
         <p className="mt-3 max-w-2xl text-base text-muted">
-          Escucha tus tomas agrupadas por día y localízalas por bloque o tipo
-          de práctica.
+          {text.description}
         </p>
       </header>
 
@@ -140,19 +142,19 @@ export function RecordingsLibrary() {
       )}
 
       <section
-        aria-label="Filtros y orden de grabaciones"
+        aria-label={text.filters}
         className="rounded-xl border border-line bg-surface p-5 sm:p-6"
       >
         <div className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <p className="text-xs text-muted">Bloque</p>
+            <p className="text-xs text-muted">{text.block}</p>
             <SelectField
               value={filters.phaseOrder}
-              ariaLabel="Filtrar por bloque"
+              ariaLabel={text.filterBlock}
               onChange={(value) => updateFilter("phaseOrder", value)}
               className="mt-1"
               options={[
-                { value: "", label: "Todos los bloques" },
+                { value: "", label: text.allBlocks },
                 ...blockOptions,
               ]}
             />
@@ -162,22 +164,22 @@ export function RecordingsLibrary() {
               htmlFor="recording-phase-name"
               className="text-xs text-muted"
             >
-              Nombre del bloque
+              {text.blockName}
             </label>
             <TextField
               id="recording-phase-name"
               value={filters.phaseName}
               onChange={(event) => updateFilter("phaseName", event.target.value)}
-              placeholder="Buscar bloque"
-              aria-label="Filtrar por nombre del bloque"
+              placeholder={text.searchBlock}
+              aria-label={text.filterBlockName}
               className="mt-1"
             />
           </div>
           <div>
-            <p className="text-xs text-muted">Ordenar por</p>
+            <p className="text-xs text-muted">{text.sortBy}</p>
             <SelectField
               value={filters.sort}
-              ariaLabel="Ordenar grabaciones"
+              ariaLabel={text.sortAria}
               onChange={(value) => {
                 if (isPracticeRecordingSort(value)) {
                   updateFilter("sort", value);
@@ -185,11 +187,11 @@ export function RecordingsLibrary() {
               }}
               className="mt-1"
               options={[
-                { value: "newest", label: "Día más reciente" },
-                { value: "oldest", label: "Día más antiguo" },
-                { value: "type", label: "Tipo de práctica" },
-                { value: "name", label: "Nombre: A–Z" },
-                { value: "block", label: "Orden de bloque" },
+                { value: "newest", label: text.newest },
+                { value: "oldest", label: text.oldest },
+                { value: "type", label: text.type },
+                { value: "name", label: text.name },
+                { value: "block", label: text.blockOrder },
               ]}
             />
           </div>
@@ -197,14 +199,14 @@ export function RecordingsLibrary() {
         <p className="mt-4 text-xs text-muted" aria-live="polite">
           {filteredRecordings.length}{" "}
           {filteredRecordings.length === 1
-            ? "grabación encontrada"
-            : "grabaciones encontradas"}
+            ? text.found
+            : text.foundMany}
         </p>
       </section>
 
       {isLoading ? (
         <p className="mt-8 text-sm text-muted" role="status">
-          Cargando grabaciones…
+          {text.loading}
         </p>
       ) : filteredRecordings.length > 0 ? (
         <div className="mt-8 space-y-10">
@@ -219,12 +221,12 @@ export function RecordingsLibrary() {
                   className="font-sans text-2xl font-semibold capitalize tracking-tight text-ink sm:text-3xl"
                 >
                   {group.dateKey
-                    ? formatDateLabel(group.dateKey)
-                    : "Fecha no disponible"}
+                    ? formatDateLabel(group.dateKey, locale)
+                    : text.unavailableDate}
                 </h2>
                 <span className="font-mono text-xs text-muted">
                   {group.recordings.length}{" "}
-                  {group.recordings.length === 1 ? "grabación" : "grabaciones"}
+                  {group.recordings.length === 1 ? text.recording : text.recordings}
                 </span>
               </header>
               <ul className="mt-4 space-y-3">
@@ -244,33 +246,32 @@ export function RecordingsLibrary() {
       ) : recordings.length > 0 ? (
         <section className="mt-8 border-y border-line py-8">
           <h2 className="text-lg font-semibold text-ink">
-            No hay coincidencias
+            {text.noMatches}
           </h2>
           <p className="mt-2 text-sm text-muted">
-            Prueba con otro bloque, tipo o nombre.
+            {text.tryOther}
           </p>
           <button
             type="button"
             onClick={() => setFilters(INITIAL_FILTERS)}
             className="mt-4 text-sm text-ink underline underline-offset-4"
           >
-            Limpiar filtros
+            {text.clear}
           </button>
         </section>
       ) : (
         <section className="mt-8 border-y border-line py-8">
           <h2 className="text-lg font-semibold text-ink">
-            Todavía no hay grabaciones
+            {text.emptyTitle}
           </h2>
           <p className="mt-2 text-sm text-muted">
-            Inicia una grabación desde una sesión de práctica para que aparezca
-            aquí.
+            {text.emptyDescription}
           </p>
           <Link
             href="/practice"
             className="mt-4 inline-flex text-sm text-ink underline underline-offset-4"
           >
-            Ir a práctica
+            {text.goPractice}
           </Link>
         </section>
       )}

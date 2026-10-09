@@ -9,6 +9,7 @@ import { MetronomeSettings } from "@/components/practice/MetronomeSettings";
 import { MetronomeTempoSlider } from "@/components/practice/MetronomeTempoSlider";
 import { MAX_BPM, MIN_BPM, useMetronome } from "@/hooks/useMetronome";
 import { getMetronomeMeter } from "@/lib/metronome-meter";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 type MetronomeCardProps = {
   variant?: "default" | "large";
@@ -22,6 +23,7 @@ export function MetronomeCard({
   stopOnUnmount = true,
 }: MetronomeCardProps) {
   const isLarge = variant === "large";
+  const text = useI18nSection("metronome");
   const {
     audioError,
     activeBeat,
@@ -63,7 +65,7 @@ export function MetronomeCard({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm uppercase tracking-[0.05em] text-muted">
-            Metrónomo
+             {text.title}
           </h3>
           <div className="mt-1 flex items-center gap-2 font-mono text-xs text-muted">
             <span
@@ -72,7 +74,7 @@ export function MetronomeCard({
                 isPulsing ? "scale-100 opacity-100" : "scale-75 opacity-35"
               }`}
             />
-            <span>{isRunning ? `Activo · ${meterSignature}` : meterSignature}</span>
+             <span>{isRunning ? `${text.active} · ${meterSignature}` : meterSignature}</span>
           </div>
         </div>
         <MetronomeSettings
@@ -94,7 +96,7 @@ export function MetronomeCard({
         <div className="flex items-center justify-between gap-4">
           <Button
             onClick={() => setBpm(bpm - 1)}
-            aria-label="Bajar un BPM"
+             aria-label={text.decreaseBpm}
             disabled={bpm <= MIN_BPM}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -107,7 +109,7 @@ export function MetronomeCard({
               value={bpm}
               min={MIN_BPM}
               max={MAX_BPM}
-              ariaLabel="Tempo en BPM"
+               ariaLabel={text.bpmAria}
               onChange={setBpm}
               className={`w-full text-ink ${
                 isLarge
@@ -122,7 +124,7 @@ export function MetronomeCard({
 
           <Button
             onClick={() => setBpm(bpm + 1)}
-            aria-label="Subir un BPM"
+             aria-label={text.increaseBpm}
             disabled={bpm >= MAX_BPM}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -137,13 +139,13 @@ export function MetronomeCard({
 
         <div
           className="mt-6 grid grid-cols-4 gap-2"
-          aria-label={`Pulsos del compás ${meterSignature}`}
+           aria-label={`${text.beats} ${meterSignature}`}
           role="group"
         >
           {Array.from({ length: meter.beatsPerMeasure }, (_, beat) => (
             <div key={beat} className="flex flex-col items-center gap-2">
               <span
-                aria-label={`Pulso ${beat + 1}${activeBeat === beat ? ", activo" : ""}`}
+                 aria-label={`${text.beat} ${beat + 1}${activeBeat === beat ? `, ${text.activeBeat}` : ""}`}
                 className={`size-3 rounded-full transition duration-100 ${
                   activeBeat === beat
                     ? "scale-110 bg-accent-green-fg opacity-100"
@@ -183,10 +185,10 @@ export function MetronomeCard({
         }`}
       >
         {isStarting
-          ? "Activando audio…"
+           ? text.startAudio
           : isRunning
-            ? "Detener metrónomo"
-            : "Iniciar metrónomo"}
+             ? text.stop
+             : text.start}
       </Button>
       {audioError && (
         <p className="mt-2 text-sm text-red-300" role="alert">
@@ -195,14 +197,14 @@ export function MetronomeCard({
       )}
 
       <Button onClick={tapTempo} className="mt-5 w-full">
-        Tap tempo
+         {text.tapTempo}
       </Button>
       <p className="mt-2 text-center text-xs text-muted" aria-live="polite">
         {tapCount === 0
-          ? "Toca al pulso para ajustar el tempo"
-          : tapCount === 1
-            ? "Un toque registrado; continúa tocando"
-            : `${tapCount} toques · tempo actualizado`}
+           ? text.tapHint
+           : tapCount === 1
+             ? text.tapRegistered
+             : `${tapCount} ${text.tapsUpdated}`}
       </p>
     </Card>
   );

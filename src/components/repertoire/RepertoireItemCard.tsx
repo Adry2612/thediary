@@ -18,6 +18,8 @@ import type {
   RepertoireItem,
   GuitarType,
 } from '@/types/practice';
+import { useI18nSection } from '@/i18n/I18nProvider';
+import { createId as createIdentifier } from '@/lib/create-id';
 
 const COMMON_TUNINGS = [
   'E Standard (EADGBE)',
@@ -35,7 +37,7 @@ const COMMON_TUNINGS = [
 ] as const;
 
 function createId() {
-  return crypto.randomUUID();
+  return createIdentifier();
 }
 
 export function RepertoireItemCard({
@@ -53,6 +55,7 @@ export function RepertoireItemCard({
   detail?: boolean;
   onOpen?: (item: RepertoireItem) => void;
 }) {
+  const text = useI18nSection('repertoire');
   const [isExpanded, setIsExpanded] = useState(detail);
   const [title, setTitle] = useState(item.title);
   const [artist, setArtist] = useState(item.artist ?? '');
@@ -187,7 +190,7 @@ export function RepertoireItemCard({
             </span>
             <span className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted'>
               <span className='uppercase tracking-[0.08em]'>
-                {item.kind === 'song' ? 'Canción' : 'Lick'}
+                 {item.kind === 'song' ? text.songs : text.licks}
               </span>
               {item.artist && (
                 <>
@@ -196,7 +199,7 @@ export function RepertoireItemCard({
                 </>
               )}
               <span aria-hidden='true'>·</span>
-              <span>{item.parts.length} partes</span>
+               <span>{item.parts.length} {text.parts}</span>
             </span>
           </span>
         </span>
@@ -204,7 +207,7 @@ export function RepertoireItemCard({
           <span className='text-right font-mono text-xs text-muted'>
             {formatPracticeDuration(totalSeconds / 60)}
             <span className='mt-1 block'>
-              {learnedParts}/{item.parts.length} aprendidas
+               {learnedParts}/{item.parts.length} {text.learnedParts}
             </span>
           </span>
           <span
@@ -228,7 +231,7 @@ export function RepertoireItemCard({
           <div className='flex flex-wrap items-end justify-between gap-4'>
             <div className='flex min-w-0 flex-1 flex-wrap gap-3'>
               <label className='min-w-48 flex-1 text-xs text-muted'>
-                Nombre
+                 {text.title}
                 <TextField
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
@@ -239,13 +242,13 @@ export function RepertoireItemCard({
               </label>
               {item.kind === 'song' && (
                 <label className='min-w-40 flex-1 text-xs text-muted sm:max-w-64'>
-                  Artista
+                   {text.artist}
                   <TextField
                     value={artist}
                     onChange={(event) => setArtist(event.target.value)}
                     onBlur={saveDetails}
                     maxLength={100}
-                    placeholder='Artista'
+                   placeholder={text.artistSort}
                     className='mt-1 h-11 text-sm'
                   />
                 </label>
@@ -255,26 +258,26 @@ export function RepertoireItemCard({
               type='button'
               onClick={() => {
                 const confirmed = window.confirm(
-                  `¿Eliminar «${item.title}» del repertorio? Las sesiones permanecerán en el historial general, pero sus horas dejarán de mostrarse aquí.`,
+                   text.deleteConfirm,
                 );
                 if (confirmed) onDelete(item.id);
               }}
               className='h-11 px-2 text-xs text-muted underline decoration-line underline-offset-4 transition hover:text-ink focus-visible:outline-ink/60'
             >
-              Eliminar elemento
+               {text.deleteItem}
             </button>
           </div>
 
           <div className='mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4'>
             <p className='text-xs uppercase tracking-[0.1em] text-muted'>
-              Partes · {item.parts.length}
+               {text.parts} · {item.parts.length}
             </p>
             <Button
               type='button'
               onClick={addPart}
               className='h-11 min-w-11 px-4'
             >
-              Añadir parte
+               {text.addPart}
             </Button>
           </div>
 
@@ -310,12 +313,12 @@ export function RepertoireItemCard({
               >
                 <path d='M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z' />
               </svg>
-              Configuraciones extra
+               {text.extraConfig}
             </summary>
             <div className='border-t border-line p-4 space-y-4 animate-in slide-in-from-top-2 duration-200'>
               <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
                 <label className='block text-xs text-muted sm:col-span-2'>
-                  Afinación
+                   {text.tuning}
                   <SelectField
                     className='mt-1'
                     value={tuning}
@@ -324,7 +327,7 @@ export function RepertoireItemCard({
                       if (value !== 'Otra...') setCustomTuning('');
                       saveExtraConfig();
                     }}
-                    ariaLabel='Afinación de la canción'
+                       ariaLabel={text.tuning}
                     options={COMMON_TUNINGS.map((t) => ({
                       value: t,
                       label: t,
@@ -333,20 +336,20 @@ export function RepertoireItemCard({
                 </label>
                 {tuning === 'Otra...' && (
                   <label className='block text-xs text-muted sm:col-span-2'>
-                    Afinación personalizada
+                       {text.customTuning}
                     <TextField
                       value={customTuning}
                       onChange={(event) => setCustomTuning(event.target.value)}
                       onBlur={saveExtraConfig}
                       maxLength={50}
-                      placeholder='Ej. CGCFAD, DADGAD, etc.'
+                       placeholder={text.customTuningPlaceholder}
                       className='mt-1'
                     />
                   </label>
                 )}
 
                 <label className='block text-xs text-muted'>
-                  Capotraste (traste)
+                   {text.capo}
                   <TextField
                     type='number'
                     min={0}
@@ -356,51 +359,51 @@ export function RepertoireItemCard({
                     onChange={(event) => setCapo(event.target.value)}
                     onBlur={saveExtraConfig}
                     placeholder='0'
-                    aria-label='Traste del capotraste (0-12)'
+                     aria-label={text.capoAria}
                     className='mt-1 font-mono'
                   />
                 </label>
 
                 <label className='block text-xs text-muted'>
-                  Tipo de guitarra
+                   {text.guitarType}
                   <SelectField
                     className='mt-1'
                     value={guitarType}
-                    ariaLabel='Tipo de guitarra'
+                     ariaLabel={text.guitarType}
                     onChange={(value) => {
                       setGuitarType(value as GuitarType | '');
                       saveExtraConfig();
                     }}
                     options={[
-                      { value: '', label: 'Sin especificar' },
-                      { value: 'electric', label: 'Eléctrica' },
-                      { value: 'acoustic', label: 'Acústica' },
+                       { value: '', label: text.unspecified },
+                       { value: 'electric', label: text.electric },
+                       { value: 'acoustic', label: text.acoustic },
                     ]}
                   />
                 </label>
 
                 <label className='block text-xs text-muted sm:col-span-2'>
-                  Enlace de YouTube · opcional
+                   {text.youtubeOptional}
                   <TextField
                     type='url'
                     value={youtubeUrl}
                     onChange={(event) => setYoutubeUrl(event.target.value)}
                     onBlur={saveExtraConfig}
-                    placeholder='https://www.youtube.com/watch?v=...'
-                    aria-label='Enlace de YouTube'
+                     placeholder='https://www.youtube.com/watch?v=...'
+                     aria-label={text.youtubeAria}
                     className='mt-1'
                   />
                 </label>
 
                 <label className='block text-xs text-muted sm:col-span-2'>
-                  Enlace de Spotify · opcional
+                   {text.spotifyOptional}
                   <TextField
                     type='url'
                     value={spotifyUrl}
                     onChange={(event) => setSpotifyUrl(event.target.value)}
                     onBlur={saveExtraConfig}
                     placeholder='https://open.spotify.com/track/...'
-                    aria-label='Enlace de Spotify'
+                     aria-label={text.spotifyAria}
                     className='mt-1'
                   />
                 </label>
@@ -433,7 +436,7 @@ export function RepertoireItemCard({
                       />
                     </svg>
                   </span>
-                  <span>Añadir a «Aprender en el futuro»</span>
+                   <span>{text.futureLearn}</span>
                 </label>
               </div>
             </div>

@@ -7,6 +7,8 @@ import { getPracticePlanDuration } from '@/lib/practice-plan';
 import { useActivePracticeSessionStore } from '@/stores/useActivePracticeSessionStore';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import type { PracticePhase } from '@/types/practice';
+import { useI18nSection } from '@/i18n/I18nProvider';
+import { createId } from '@/lib/create-id';
 
 export function PracticeWorkspace({
   initialPhases,
@@ -19,6 +21,7 @@ export function PracticeWorkspace({
   requestedSessionId?: string;
   autoStartTemplate?: boolean;
 }) {
+  const text = useI18nSection('practice');
   const templates = usePracticeStore((state) => state.templates);
   const history = usePracticeStore((state) => state.history);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
@@ -32,7 +35,7 @@ export function PracticeWorkspace({
     (state) => state.clearActiveSession,
   );
   const [draftPlan, setDraftPlan] = useState({
-    name: 'Mi sesión',
+    name: text.yourPractice,
     phases: initialPhases,
   });
   const [templateLaunchError, setTemplateLaunchError] = useState<string | null>(
@@ -60,15 +63,13 @@ export function PracticeWorkspace({
       (candidate) => candidate.id === requestedTemplateId,
     );
     if (!template) {
-      setTemplateLaunchError(
-        'No se encontró esa rutina guardada en este navegador.',
-      );
+      setTemplateLaunchError(text.templateNotFound);
       return;
     }
 
     const plan = { name: template.name, phases: template.phases };
     setDraftPlan(plan);
-    setActiveSession({ id: crypto.randomUUID(), ...plan });
+    setActiveSession({ id: createId(), ...plan });
     setTemplateLaunchError(null);
   }, [
     autoStartTemplate,
@@ -90,52 +91,50 @@ export function PracticeWorkspace({
     );
     const plan = session ? createPracticePlanFromSession(session) : null;
     if (!plan) {
-      setTemplateLaunchError(
-        'No se encontró una sesión con bloques que se pueda repetir.',
-      );
+      setTemplateLaunchError(text.repeatNotFound);
       return;
     }
 
     setDraftPlan(plan);
-    setActiveSession({ id: crypto.randomUUID(), ...plan });
+    setActiveSession({ id: createId(), ...plan });
     setTemplateLaunchError(null);
-  }, [activeSession, hasHydrated, history, requestedSessionId, setActiveSession]);
+  }, [
+    activeSession,
+    hasHydrated,
+    history,
+    requestedSessionId,
+    setActiveSession,
+  ]);
 
   return (
     <WorkspaceContainer
       className={`mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 pt-16 sm:pt-24 ${activePlan ? '' : 'min-h-screen pb-16 sm:pb-24'}`}
     >
       <header className='enter mb-4'>
-        <p className='font-mono text-xs uppercase tracking-[0.05em] text-muted'>
-          Diario de práctica
-        </p>
+        <p className='font-mono text-xs uppercasetext-muted'>{text.diary}</p>
         <h1 className='mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight sm:text-4xl'>
-          {activePlan?.name ?? 'Tu práctica'}
+          {activePlan?.name ?? text.yourPractice}
         </h1>
         {activePlan ?
           <div className='mt-3 flex flex-wrap items-center justify-between gap-3'>
-            <p className='font-mono text-xs uppercase tracking-[0.05em] text-muted'>
-              {getPracticePlanDuration(activePlan.phases)} min · sesión personal
+            <p className='font-mono text-xs uppercase text-muted'>
+              {getPracticePlanDuration(activePlan.phases)} min ·{' '}
+              {text.personalSession}
             </p>
             <button
               type='button'
               onClick={() => {
-                if (
-                  window.confirm(
-                    'Al cambiar, el temporizador se reiniciará y la sesión incompleta no se registrará. ¿Continuar?',
-                  )
-                ) {
+                if (window.confirm(text.changeConfirm)) {
                   clearActiveSession();
                 }
               }}
               className='text-sm text-muted underline underline-offset-4 hover:text-ink'
             >
-              Cambiar sesión
+              {text.changeSession}
             </button>
           </div>
         : <p className='mt-3 max-w-xl text-sm text-muted'>
-            Organiza tus bloques, ejercicios y material de estudio antes de
-            empezar. Las sesiones completadas se guardan en tu historial.
+            {text.setupDescription}
           </p>
         }
       </header>
@@ -156,7 +155,7 @@ export function PracticeWorkspace({
             onStart={(name, phases) => {
               const nextPlan = { name, phases };
               setDraftPlan(nextPlan);
-              setActiveSession({ id: crypto.randomUUID(), ...nextPlan });
+              setActiveSession({ id: createId(), ...nextPlan });
             }}
           />
         </>

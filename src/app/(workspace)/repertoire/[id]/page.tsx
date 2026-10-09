@@ -1,16 +1,18 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { use } from "react";
-import { RepertoireItemCard } from "@/components/repertoire/RepertoireItemCard";
-import { getRepertoirePracticeStats } from "@/lib/repertoire-analytics";
-import { usePracticeStore } from "@/stores/usePracticeStore";
+import Link from 'next/link';
+import { use } from 'react';
+import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
+import { getRepertoirePracticeStats } from '@/lib/repertoire-analytics';
+import { usePracticeStore } from '@/stores/usePracticeStore';
+import { getDictionary } from '@/i18n/translations';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 export default function RepertoireDetailPage({ params }: Props) {
+  const repertoireDetail = getDictionary().repertoireDetail;
   const items = usePracticeStore((state) => state.repertoireItems);
   const saveRepertoireItem = usePracticeStore(
     (state) => state.saveRepertoireItem,
@@ -25,28 +27,44 @@ export default function RepertoireDetailPage({ params }: Props) {
   const practiceStats = getRepertoirePracticeStats(history).get(itemId);
 
   if (!hasHydrated) {
-    return <main className="mx-auto max-w-5xl px-5 py-16 text-sm text-muted">Cargando…</main>;
+    return (
+      <main className='mx-auto max-w-5xl px-5 py-16 text-sm text-muted'>
+        {repertoireDetail.loading}
+      </main>
+    );
   }
 
   if (!item) {
     return (
-      <main className="mx-auto max-w-5xl px-5 py-16 sm:px-8">
-        <Link href="/repertoire" className="text-sm text-muted underline underline-offset-4">
-          Volver al repertorio
+      <main className='mx-auto max-w-5xl px-5 py-16 sm:px-8'>
+        <Link
+          href='/repertoire'
+          className='text-sm text-muted underline underline-offset-4'
+        >
+          {repertoireDetail.back}
         </Link>
-        <h1 className="mt-8 font-sans text-3xl font-semibold">Elemento no encontrado</h1>
+        <h1 className='mt-8 font-sans text-3xl font-semibold'>
+          {repertoireDetail.notFound}
+        </h1>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
-      <Link href="/repertoire" className="text-sm text-muted underline underline-offset-4">
-        ← Volver al repertorio
+    <main className='mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16'>
+      <Link
+        href='/repertoire'
+        className='text-sm text-muted underline underline-offset-4'
+      >
+        ← {repertoireDetail.back}
       </Link>
-      <header className="mb-8 mt-8">
-        <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted">Detalle del repertorio</p>
-        <h1 className="mt-3 font-sans text-3xl font-semibold tracking-tight sm:text-4xl">{item.title}</h1>
+      <header className='mb-8 mt-8'>
+        <p className='font-mono text-xs uppercase tracking-[0.14em] text-muted'>
+          {repertoireDetail.eyebrow}
+        </p>
+        <h1 className='mt-3 font-sans text-3xl font-semibold tracking-tight sm:text-4xl'>
+          {item.title}
+        </h1>
       </header>
       <RepertoireItemCard
         item={item}

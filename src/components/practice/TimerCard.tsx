@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import type { PracticeTimerController } from "@/hooks/usePracticeTimer";
 import { formatClock } from "@/lib/format";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 type TimerCardProps = {
   timer: PracticeTimerController;
@@ -19,6 +20,7 @@ export function TimerCard({
 }: TimerCardProps) {
   const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
   const finishDialogRef = useRef<HTMLDialogElement>(null);
+  const timerText = useI18nSection("timer");
   const {
     currentPhase,
     awaitingPhaseAdvance,
@@ -48,11 +50,11 @@ export function TimerCard({
     <>
       <Card className="enter flex flex-col items-center text-center">
         <span className="rounded-full bg-accent-green-bg px-3 py-1 font-sans text-xs uppercase tracking-[0.05em] text-accent-green-fg">
-          {currentPhase ? "Bloque actual" : "Sesión completada"}
+          {currentPhase ? timerText.currentBlock : timerText.completedSession}
         </span>
 
         <h2 className="mt-6 font-sans text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">
-          {currentPhase?.name ?? "Fin de la práctica"}
+          {currentPhase?.name ?? timerText.endPractice}
         </h2>
         {currentPhase?.exercises && currentPhase.exercises.length > 0 && (
           <ul className="mt-4 flex flex-wrap justify-center gap-2">
@@ -75,7 +77,7 @@ export function TimerCard({
           {formatClock(remainingSeconds)}
         </p>
         <p className="-mt-10 mb-10 font-mono text-xs uppercase tracking-[0.05em] text-muted">
-          Tiempo total {formatClock(elapsedSeconds)}
+          {timerText.totalTime} {formatClock(elapsedSeconds)}
         </p>
 
         {awaitingPhaseAdvance && (
@@ -84,7 +86,7 @@ export function TimerCard({
             role="status"
             aria-live="polite"
           >
-            Tiempo cumplido. Pulsa «Saltar bloque» para continuar.
+            {timerText.completeBlockNotice}
           </p>
         )}
 
@@ -96,22 +98,22 @@ export function TimerCard({
             className="flex-1"
           >
             {isRunning
-              ? "Pausar"
+              ? timerText.pause
               : awaitingPhaseAdvance
-                ? "Bloque terminado"
+                ? timerText.blockFinished
                 : elapsedSeconds > 0
-                  ? "Continuar"
-                  : "Iniciar"}
+                  ? timerText.continue
+                  : timerText.start}
           </Button>
           <Button
             variant={awaitingPhaseAdvance ? "primary" : "ghost"}
             onClick={skip}
             disabled={!currentPhase || isCompleted}
           >
-            Saltar bloque
+            {timerText.skipBlock}
           </Button>
           <Button onClick={reset} disabled={isCompleted}>
-            Reiniciar
+            {timerText.reset}
           </Button>
         </div>
 
@@ -128,7 +130,7 @@ export function TimerCard({
             >
               <rect x="3" y="3" width="10" height="10" />
             </svg>
-            Terminar práctica
+            {timerText.finishSession}
           </Button>
         )}
       </Card>
@@ -141,16 +143,15 @@ export function TimerCard({
       >
         <div className="p-6 sm:p-8">
           <p className="text-xs uppercase tracking-[0.05em] text-muted">
-            Finalizar sesión
+            {timerText.finishSession}
           </p>
-          <h2 className="mt-3 font-sans text-3xl font-semibold">¿Terminar práctica?</h2>
+          <h2 className="mt-3 font-sans text-3xl font-semibold">{timerText.finishPracticeTitle}</h2>
           <p className="mt-4 text-sm leading-6 text-muted">
-            Guardaremos el tiempo registrado hasta ahora. Si terminas, no podrás
-            reanudar esta sesión.
+            {timerText.finishPracticeDescription}
           </p>
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button onClick={() => setIsFinishDialogOpen(false)}>
-              Seguir practicando
+              {timerText.keepPracticing}
             </Button>
             <Button
               variant="primary"
@@ -159,7 +160,7 @@ export function TimerCard({
                 finish();
               }}
             >
-              Terminar y guardar
+              {timerText.finishAndSave}
             </Button>
           </div>
         </div>

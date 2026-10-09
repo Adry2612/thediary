@@ -9,6 +9,7 @@ import {
 } from "@/lib/practice-resource-links";
 import { savePracticeAsset } from "@/lib/practice-library";
 import { getPracticeFileKind } from "@/lib/practice-templates";
+import { createId as createIdentifier } from "@/lib/create-id";
 import { saveCloudPracticeAsset } from "@/lib/supabase/practice-files";
 import type {
   AttachmentDraft,
@@ -43,7 +44,7 @@ const FILE_ERRORS: Record<AttachmentType, string> = {
 };
 
 function createId() {
-  return crypto.randomUUID();
+  return createIdentifier();
 }
 
 function isTextFile(file: File): boolean {
