@@ -276,12 +276,16 @@ interface PracticeMaterialsProps {
   phases: PracticePhase[];
   attachedResources?: PracticeResource[];
   onAttach?: (resource: PracticeResource) => void;
+  embedded?: boolean;
+  splitView?: boolean;
 }
 
 export function PracticeMaterials({
   phases,
   attachedResources = [],
   onAttach,
+  embedded = false,
+  splitView = false,
 }: PracticeMaterialsProps) {
   const { user } = useAppData();
   const resources = useMemo(
@@ -322,7 +326,10 @@ export function PracticeMaterials({
   if (resources.length === 0 && !onAttach) return null;
 
   return (
-    <Card className='p-5 sm:p-8'>
+    <Card
+      bare={embedded}
+      className={embedded ? 'p-4 sm:p-6' : 'p-5 sm:p-8'}
+    >
       <div className='mb-5 flex items-start justify-between gap-4'>
         <div className='min-w-0'>
           <p className='text-xs uppercase text-muted'>Material de estudio</p>
@@ -353,10 +360,10 @@ export function PracticeMaterials({
         </p>
       )}
       {resources.length > 0 && (
-        <div className='grid gap-5 md:grid-cols-[12rem_minmax(0,1fr)]'>
+        <div className={splitView ? 'grid min-h-0 gap-5' : 'grid gap-5 md:grid-cols-[12rem_minmax(0,1fr)]'}>
           <nav
             aria-label='Materiales de práctica'
-            className='-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:block md:space-y-2 md:overflow-visible md:px-0 md:pb-0'
+            className={splitView ? '-mx-1 flex flex-nowrap gap-2 overflow-x-auto overflow-y-hidden px-1 pb-1' : '-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:block md:space-y-2 md:overflow-visible md:px-0 md:pb-0'}
           >
             {resources.map(({ phaseName, resource }) => (
               <button
@@ -366,7 +373,7 @@ export function PracticeMaterials({
                 aria-current={
                   resource.id === activeResource?.id ? 'true' : undefined
                 }
-                className={`block w-44 shrink-0 border p-3 text-left transition md:w-full ${
+                className={`${splitView ? 'w-40 shrink-0' : 'block w-44 shrink-0 md:w-full'} border p-3 text-left transition ${
                   resource.id === activeResource?.id ?
                     'border-ink/40 bg-white/5'
                   : 'border-line hover:bg-white/5'

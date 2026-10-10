@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PracticeRecordingItem } from "@/components/practice/PracticeRecordingItem";
+import { RecordingsSkeleton } from "@/components/ui/Skeletons";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/Field";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
@@ -119,6 +120,10 @@ export function RecordingsLibrary() {
     }
   }
 
+  if (isLoading) {
+    return <RecordingsSkeleton />;
+  }
+
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
       <header className="mb-8">
@@ -204,11 +209,7 @@ export function RecordingsLibrary() {
         </p>
       </section>
 
-      {isLoading ? (
-        <p className="mt-8 text-sm text-muted" role="status">
-          {text.loading}
-        </p>
-      ) : filteredRecordings.length > 0 ? (
+      {filteredRecordings.length > 0 ? (
         <div className="mt-8 space-y-10">
           {recordingGroups.map((group) => (
             <section

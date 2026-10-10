@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
 import { useAppData } from "@/components/providers/AppDataProvider";
 import {
   extractSpotifyTrackId,
@@ -104,8 +103,7 @@ export function usePracticeAttachment(
     attach("spotify", { kind: "spotify", url: draft.url.trim() });
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function submit() {
     if (activeType === "youtube") return submitYoutube();
     if (activeType === "spotify") return submitSpotify();
     if (activeType === "tab" && tabMode === "text") return submitTabText();

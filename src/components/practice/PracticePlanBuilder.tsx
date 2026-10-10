@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { PracticePhaseEditor } from "@/components/practice/PracticePhaseEditor";
@@ -110,7 +109,7 @@ export function PracticePlanBuilder({
   }
 
   return (
-    <Card className="enter">
+    <div className="enter">
       <div data-tour-target="practice-plan">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -203,6 +202,6 @@ export function PracticePlanBuilder({
       <p className="mt-5 text-xs leading-6 text-muted">
          {text.storageNote}
       </p>
-    </Card>
+    </div>
   );
 }

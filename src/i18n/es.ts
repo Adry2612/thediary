@@ -15,7 +15,7 @@ export const es: Dict = {
     repertoire: 'Mi repertorio',
     settings: 'Configuración',
   },
-  common: { settings: 'Configuración' },
+  common: { settings: 'Configuración', openMenu: 'Abrir menú de navegación', closeMenu: 'Cerrar menú de navegación' },
   settings: {
     eyebrow: 'Preferencias',
     title: 'Configuración',
@@ -304,6 +304,12 @@ export const es: Dict = {
     personalSession: 'sesión personal',
     changeConfirm:
       'Al cambiar, el temporizador se reiniciará y la sesión incompleta no se registrará. ¿Continuar?',
+    exitWithoutSaving: 'Salir sin guardar',
+    newPracticeTitle: '¿Iniciar una nueva práctica?',
+    newPracticeDescription:
+      'La práctica que está en curso se descartará y no se guardará.',
+    cancelNewPractice: 'Continuar con la práctica actual',
+    confirmNewPractice: 'Iniciar nueva práctica',
     setupDescription:
       'Organiza tus bloques, ejercicios y material de estudio antes de empezar. Las sesiones completadas se guardan en tu historial.',
     templateNotFound: 'No se encontró esa rutina guardada en este navegador.',
@@ -365,5 +371,6 @@ export const es: Dict = {
       'Guardaremos el tiempo registrado hasta ahora. Si terminas, no podrás reanudar esta sesión.',
     keepPracticing: 'Seguir practicando',
     finishAndSave: 'Terminar y guardar',
+    exitWithoutSaving: 'Salir sin guardar',
   },
 };

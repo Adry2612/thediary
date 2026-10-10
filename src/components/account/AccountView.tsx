@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Field';
 import { useAppData } from '@/components/providers/AppDataProvider';
+import { AccountSkeleton } from '@/components/ui/Skeletons';
 
 export function AccountView() {
   const {
@@ -104,6 +105,10 @@ export function AccountView() {
     }
   }
 
+  if (!isReady) {
+    return <AccountSkeleton />;
+  }
+
   return (
     <main className='mx-auto max-w-3xl px-5 py-12 sm:px-8'>
       <p className='text-xs uppercase tracking-[0.12em] text-muted'>Cuenta</p>
@@ -112,15 +117,6 @@ export function AccountView() {
       >
         Tus datos y sincronización
       </h1>
-
-      {!isReady && (
-        <p
-          className='mt-6 text-sm text-muted'
-          role='status'
-        >
-          Cargando tus datos guardados…
-        </p>
-      )}
 
       {configurationError && (
         <p

@@ -22,6 +22,7 @@ import { usePracticeStore } from '@/stores/usePracticeStore';
 import { useRouter } from 'next/navigation';
 import type { RepertoireItemKind, GuitarType } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
+import { RepertoireSkeleton } from '@/components/ui/Skeletons';
 
 type RepertoireFilter = 'all' | RepertoireItemKind;
 type GuitarTypeFilter = 'all' | GuitarType;
@@ -64,11 +65,33 @@ const SORT_OPTIONS: { value: RepertoireSortOrder; label: string }[] = [
 
 export function RepertoireView() {
   const text = useI18nSection('repertoire');
-  const filters = [{ value: 'all' as const, label: text.all }, { value: 'song' as const, label: text.allSongs }, { value: 'lick' as const, label: text.allLicks }];
-  const guitarFilters = [{ value: 'all' as const, label: text.allGuitars }, { value: 'electric' as const, label: text.electric }, { value: 'acoustic' as const, label: text.acoustic }];
-  const futureFilters = [{ value: 'all' as const, label: text.allRepertoire }, { value: 'current' as const, label: text.current }, { value: 'future' as const, label: text.future }];
-  const progressFilters = [{ value: 'all' as const, label: text.allStates }, { value: 'learning' as const, label: text.learning }, { value: 'learned' as const, label: text.learned }];
-  const sortOptions = [{ value: 'original' as const, label: text.original }, { value: 'recent' as const, label: text.recent }, { value: 'title' as const, label: text.titleSort }, { value: 'artist' as const, label: text.artistSort }, { value: 'practice' as const, label: text.mostPracticed }];
+  const filters = [
+    { value: 'all' as const, label: text.all },
+    { value: 'song' as const, label: text.allSongs },
+    { value: 'lick' as const, label: text.allLicks },
+  ];
+  const guitarFilters = [
+    { value: 'all' as const, label: text.allGuitars },
+    { value: 'electric' as const, label: text.electric },
+    { value: 'acoustic' as const, label: text.acoustic },
+  ];
+  const futureFilters = [
+    { value: 'all' as const, label: text.allRepertoire },
+    { value: 'current' as const, label: text.current },
+    { value: 'future' as const, label: text.future },
+  ];
+  const progressFilters = [
+    { value: 'all' as const, label: text.allStates },
+    { value: 'learning' as const, label: text.learning },
+    { value: 'learned' as const, label: text.learned },
+  ];
+  const sortOptions = [
+    { value: 'original' as const, label: text.original },
+    { value: 'recent' as const, label: text.recent },
+    { value: 'title' as const, label: text.titleSort },
+    { value: 'artist' as const, label: text.artistSort },
+    { value: 'practice' as const, label: text.mostPracticed },
+  ];
   const router = useRouter();
   const history = usePracticeStore((state) => state.history);
   const items = usePracticeStore((state) => state.repertoireItems);
@@ -138,41 +161,45 @@ export function RepertoireView() {
     setSortOrder('original');
   }
 
+  if (!hasHydrated) {
+    return <RepertoireSkeleton />;
+  }
+
   return (
     <main className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'>
       <header className='enter mb-8 flex flex-wrap items-end justify-between gap-6'>
         <div>
           <p className='font-mono text-xs uppercase tracking-[0.14em] text-muted'>
-             {text.library}
+            {text.library}
           </p>
           <h1 className='mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight sm:text-4xl'>
-             {text.title}
+            {text.title}
           </h1>
           <p className='mt-4 max-w-2xl text-base font-medium text-muted sm:text-lg'>
-             {text.description}
+            {text.description}
           </p>
         </div>
         <Link
           href='/practice'
           className='inline-flex h-12 items-center justify-center rounded-md bg-ink px-5 text-sm font-medium text-canvas transition hover:opacity-90 active:scale-[0.98]'
         >
-           {text.prepare}
+          {text.prepare}
         </Link>
       </header>
 
       <section
-         aria-label={text.summary}
+        aria-label={text.summary}
         className='mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4'
       >
         {[
-           { label: text.songs, value: overview.songCount },
-           { label: text.licks, value: overview.lickCount },
+          { label: text.songs, value: overview.songCount },
+          { label: text.licks, value: overview.lickCount },
           {
-             label: text.learnedParts,
+            label: text.learnedParts,
             value: `${overview.learnedCount}/${overview.partCount}`,
           },
           {
-             label: text.practicedTime,
+            label: text.practicedTime,
             value: formatPracticeDuration(overview.totalSeconds / 60),
           },
         ].map((metric) => (
@@ -196,17 +223,17 @@ export function RepertoireView() {
         <div>
           <div>
             <p className='text-xs uppercase tracking-[0.12em] text-muted'>
-               {text.tracking}
+              {text.tracking}
             </p>
             <h2 className='mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8'>
-               {text.savedItems}
+              {text.savedItems}
             </h2>
           </div>
         </div>
 
         <div className='mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_minmax(12rem,0.7fr)_minmax(14rem,0.8fr)_minmax(12rem,0.7fr)_minmax(14rem,0.8fr)]'>
           <label className='block text-xs text-muted sm:col-span-2 xl:col-span-1'>
-             {text.search}
+            {text.search}
             <span className='relative mt-1 block'>
               <svg
                 aria-hidden='true'
@@ -232,60 +259,60 @@ export function RepertoireView() {
                 type='search'
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                 placeholder={text.searchPlaceholder}
-                 aria-label={text.searchAria}
+                placeholder={text.searchPlaceholder}
+                aria-label={text.searchAria}
                 className='pl-10'
               />
             </span>
           </label>
           <div className='text-xs text-muted'>
-             <span className='block'>{text.progress}</span>
+            <span className='block'>{text.progress}</span>
             <SelectField
               className='mt-1'
               value={progressFilter}
-               ariaLabel={text.progress}
+              ariaLabel={text.progress}
               onChange={(value) => {
                 if (isRepertoireProgressFilter(value)) {
                   setProgressFilter(value);
                 }
               }}
-               options={progressFilters}
+              options={progressFilters}
             />
           </div>
           <div className='text-xs text-muted'>
-             <span className='block'>{text.sort}</span>
+            <span className='block'>{text.sort}</span>
             <SelectField
               className='mt-1'
               value={sortOrder}
-               ariaLabel={text.sort}
+              ariaLabel={text.sort}
               onChange={(value) => {
                 if (isRepertoireSortOrder(value)) setSortOrder(value);
               }}
-               options={sortOptions}
+              options={sortOptions}
             />
           </div>
           <div className='text-xs text-muted'>
-             <span className='block'>{text.guitar}</span>
+            <span className='block'>{text.guitar}</span>
             <SelectField
               className='mt-1'
               value={guitarTypeFilter}
-               ariaLabel={text.guitar}
+              ariaLabel={text.guitar}
               onChange={(value) =>
                 setGuitarTypeFilter(value as GuitarTypeFilter)
               }
-               options={guitarFilters}
+              options={guitarFilters}
             />
           </div>
           <div className='text-xs text-muted'>
-             <span className='block'>{text.list}</span>
+            <span className='block'>{text.list}</span>
             <SelectField
               className='mt-1'
               value={futureLearnFilter}
-               ariaLabel={text.list}
+              ariaLabel={text.list}
               onChange={(value) =>
                 setFutureLearnFilter(value as FutureLearnFilter)
               }
-               options={futureFilters}
+              options={futureFilters}
             />
           </div>
         </div>
@@ -294,9 +321,9 @@ export function RepertoireView() {
           <div
             className='flex max-w-full gap-1 overflow-x-auto rounded-lg border border-line p-1'
             role='group'
-             aria-label={text.typeFilter}
+            aria-label={text.typeFilter}
           >
-             {filters.map((option) => (
+            {filters.map((option) => (
               <button
                 key={option.value}
                 type='button'
@@ -314,14 +341,14 @@ export function RepertoireView() {
               role='status'
               aria-live='polite'
             >
-               {visibleItems.length} de {items.length}{' '}
-               {items.length === 1 ? text.item : text.items}
+              {visibleItems.length} de {items.length}{' '}
+              {items.length === 1 ? text.item : text.items}
             </p>
           )}
         </div>
 
         {!hasHydrated ?
-           <p className='mt-5 text-sm text-muted'>{text.loading}</p>
+          <p className='mt-5 text-sm text-muted'>{text.loading}</p>
         : visibleItems.length > 0 ?
           <ul className='mt-5 space-y-4'>
             {visibleItems.map((item) => (
@@ -344,16 +371,13 @@ export function RepertoireView() {
         : <div className='mt-5 rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center'>
             <p className='font-sans text-2xl font-semibold'>
               {items.length === 0 ?
-                 text.emptyTitle
+                text.emptyTitle
               : searchQuery.trim() ?
-                 `${text.noResults} «${searchQuery.trim()}».`
-               : text.noFilters}
+                `${text.noResults} «${searchQuery.trim()}».`
+              : text.noFilters}
             </p>
             <p className='mx-auto mt-2 max-w-lg text-sm text-muted'>
-              {items.length === 0 ?
-                 text.emptyDescription
-               : text.adjustFilters
-              }
+              {items.length === 0 ? text.emptyDescription : text.adjustFilters}
             </p>
             {items.length > 0 && hasActiveFilters && (
               <button
@@ -361,7 +385,7 @@ export function RepertoireView() {
                 onClick={clearFilters}
                 className='mt-4 text-sm text-ink underline decoration-line underline-offset-4 transition hover:text-accent-green-fg focus-visible:outline-accent-green-fg'
               >
-                 {text.clear}
+                {text.clear}
               </button>
             )}
           </div>
@@ -373,16 +397,9 @@ export function RepertoireView() {
           className='mt-6 text-sm text-red-300'
           role='alert'
         >
-           {text.resourceError ?? text.adjustFilters}: {persistenceError}
+          {text.resourceError ?? text.adjustFilters}: {persistenceError}
         </p>
       )}
-      <p className='mt-8 text-center text-xs text-muted'>
-        {overview.learnedCount} de {overview.partCount} partes marcadas como
-        aprendidas ·{' '}
-        {overview.totalSeconds ?
-           text.timeNote
-         : text.linkNote}
-      </p>
     </main>
   );
 }
