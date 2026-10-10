@@ -28,6 +28,7 @@ function emptySkillElapsedMs(): Record<PracticeSkill, number> {
 function createSnapshot(
   runtime: PracticeTimerRuntime,
   phasePlan: PracticeTimerPlanItem[],
+  countUp: boolean,
 ): TimerSnapshot {
   const currentPhase = phasePlan[runtime.phaseIndex];
   const remainingMs = currentPhase
@@ -41,7 +42,8 @@ function createSnapshot(
         ? null
         : new Date(runtime.startedAtMs).toISOString(),
     phaseIndex: runtime.phaseIndex,
-    remainingSeconds: Math.ceil(remainingMs / 1000),
+    remainingSeconds:
+      countUp ? Math.floor(runtime.elapsedMs / 1000) : Math.ceil(remainingMs / 1000),
     isRunning: runtime.isRunning,
     awaitingPhaseAdvance: runtime.awaitingPhaseAdvance,
   };
@@ -66,6 +68,7 @@ export function usePracticeTimer(
   phases: PracticePhase[],
   onPhaseChange?: (phase: PracticePhase) => void,
   onComplete?: (result: PracticeTimerResult) => void,
+  countUp = false,
 ) {
   const phasePlan = useMemo(() => validatePhases(phases), [phases]);
   const [snapshot, setSnapshot] = useState<TimerSnapshot>(() =>
@@ -82,6 +85,7 @@ export function usePracticeTimer(
         awaitingPhaseAdvance: false,
       },
       phasePlan,
+      countUp,
     ),
   );
   const runtimeRef = useRef<PracticeTimerRuntime>({
@@ -129,7 +133,7 @@ export function usePracticeTimer(
 
   const publishSnapshot = useCallback(
     (runtime: PracticeTimerRuntime) => {
-      const nextSnapshot = createSnapshot(runtime, phasePlan);
+      const nextSnapshot = createSnapshot(runtime, phasePlan, countUp);
       setSnapshot((current) => {
         if (
           current.elapsedSeconds === nextSnapshot.elapsedSeconds &&
@@ -145,7 +149,7 @@ export function usePracticeTimer(
         return nextSnapshot;
       });
     },
-    [phasePlan],
+    [countUp, phasePlan],
   );
 
   const synchronize = useCallback(
@@ -153,12 +157,12 @@ export function usePracticeTimer(
       const runtime = runtimeRef.current;
       if (!runtime.isRunning) return;
 
-      const result = synchronizePracticeTimer(runtime, phasePlan, now);
+      const result = synchronizePracticeTimer(runtime, phasePlan, now, countUp);
       runtimeRef.current = result.runtime;
       publishSnapshot(result.runtime);
       if (result.completed) completeSession(result.runtime, true);
     },
-    [completeSession, phasePlan, publishSnapshot],
+    [completeSession, countUp, phasePlan, publishSnapshot],
   );
 
   useEffect(() => {
@@ -183,7 +187,7 @@ export function usePracticeTimer(
 
     runtimeRef.current = runtime;
     publishSnapshot(runtime);
-  }, [phasePlan, publishSnapshot]);
+  }, [countUp, phasePlan, publishSnapshot]);
 
   const resume = useCallback(() => {
     const runtime = runtimeRef.current;
@@ -294,6 +298,7 @@ export function usePracticeTimer(
     resume,
     skip,
     finish,
+    isCountUp: countUp,
   };
 }
 

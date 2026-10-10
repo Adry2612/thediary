@@ -21,6 +21,7 @@ export function synchronizePracticeTimer(
   runtime: PracticeTimerRuntime,
   phasePlan: PracticeTimerPlanItem[],
   now: number,
+  countUp = false,
 ): { runtime: PracticeTimerRuntime; completed: boolean } {
   const deltaMs = Math.max(0, now - runtime.lastUpdatedAtMs);
   const activePhase = phasePlan[runtime.phaseIndex];
@@ -32,7 +33,7 @@ export function synchronizePracticeTimer(
     0,
     activePhase.durationMs - runtime.phaseElapsedMs,
   );
-  const consumedMs = Math.min(deltaMs, remainingMs);
+  const consumedMs = countUp ? deltaMs : Math.min(deltaMs, remainingMs);
   const phaseElapsedMs = runtime.phaseElapsedMs + consumedMs;
   const phaseElapsedTotalsMs = [...runtime.phaseElapsedTotalsMs];
   const skillElapsedMs = { ...runtime.skillElapsedMs };
@@ -40,7 +41,7 @@ export function synchronizePracticeTimer(
   phaseElapsedTotalsMs[runtime.phaseIndex] += consumedMs;
   skillElapsedMs[activePhase.phase.skill] += consumedMs;
 
-  const phaseEnded = phaseElapsedMs >= activePhase.durationMs;
+  const phaseEnded = !countUp && phaseElapsedMs >= activePhase.durationMs;
   const completed =
     phaseEnded && runtime.phaseIndex === phasePlan.length - 1;
 

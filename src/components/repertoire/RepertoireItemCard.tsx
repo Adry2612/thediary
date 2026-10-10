@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { PracticeMaterials } from '@/components/practice/PracticeMaterials';
 import { RepertoirePartEditor } from '@/components/repertoire/RepertoirePartEditor';
 import { Button } from '@/components/ui/Button';
@@ -20,6 +21,7 @@ import type {
 } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { createId as createIdentifier } from '@/lib/create-id';
+import { useActivePracticeSessionStore } from '@/stores/useActivePracticeSessionStore';
 
 const COMMON_TUNINGS = [
   'E Standard (EADGBE)',
@@ -40,6 +42,38 @@ function createId() {
   return createIdentifier();
 }
 
+function ChevronIcon({ open = false }: { open?: boolean }) {
+  return (
+    <svg
+      viewBox='0 0 20 20'
+      fill='currentColor'
+      aria-hidden='true'
+      className={`size-4 shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+    >
+      <path d='M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z' />
+    </svg>
+  );
+}
+
+function DeleteIcon() {
+  return (
+    <svg
+      viewBox='0 0 24 24'
+      fill='none'
+      aria-hidden='true'
+      className='size-4'
+    >
+      <path
+        d='M5 7h14m-9 4v6m4-6v6M9 7V5.5h6V7m-8 0 .8 12h8.4L17 7'
+        stroke='currentColor'
+        strokeLinecap='round'
+        strokeLinejoin='round'
+        strokeWidth='1.5'
+      />
+    </svg>
+  );
+}
+
 export function RepertoireItemCard({
   item,
   practiceStats,
@@ -55,7 +89,15 @@ export function RepertoireItemCard({
   detail?: boolean;
   onOpen?: (item: RepertoireItem) => void;
 }) {
+  const router = useRouter();
   const text = useI18nSection('repertoire');
+  const practiceText = useI18nSection('practice');
+  const activeSession = useActivePracticeSessionStore(
+    (state) => state.activeSession,
+  );
+  const clearActiveSession = useActivePracticeSessionStore(
+    (state) => state.clearActiveSession,
+  );
   const [isExpanded, setIsExpanded] = useState(detail);
   const [title, setTitle] = useState(item.title);
   const [artist, setArtist] = useState(item.artist ?? '');
@@ -73,6 +115,8 @@ export function RepertoireItemCard({
     item.isFutureLearn ?? false,
   );
   const [showExtraConfig, setShowExtraConfig] = useState(false);
+  const [showMaterials, setShowMaterials] = useState(false);
+  const [isQuickPracticeDialogOpen, setIsQuickPracticeDialogOpen] = useState(false);
 
   useEffect(() => {
     setTitle(item.title);
@@ -132,7 +176,6 @@ export function RepertoireItemCard({
       updates.isFutureLearn = isFutureLearn || undefined;
 
     if (Object.keys(updates).length > 1) {
-      // more than just updatedAt
       onSave({ ...item, ...updates });
     }
   }
@@ -142,6 +185,16 @@ export function RepertoireItemCard({
     onSave({
       ...item,
       parts: [...item.parts, newPart],
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  function addStudyMaterial(
+    resource: NonNullable<RepertoireItem['resources']>[number],
+  ) {
+    onSave({
+      ...item,
+      resources: [...(item.resources ?? []), resource],
       updatedAt: new Date().toISOString(),
     });
   }
@@ -166,118 +219,188 @@ export function RepertoireItemCard({
   const learnedParts = item.parts.filter((part) => part.learned).length;
 
   return (
-    <article className='enter overflow-hidden rounded-xl border border-line bg-surface'>
-      <button
-        type='button'
-        aria-expanded={isExpanded}
-        aria-controls={`repertoire-details-${item.id}`}
-        onClick={() => {
-          if (onOpen) {
-            onOpen(item);
-            return;
-          }
-          if (!detail) setIsExpanded((expanded) => !expanded);
-        }}
-        className='grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 p-4 text-left transition hover:bg-white/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-ink/60 sm:p-5'
+    <article className='enter rounded-xl border border-line bg-surface'>
+      <div
+        className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 p-4 text-left sm:p-5 ${onOpen ? 'cursor-pointer transition focus-visible:outline-inset focus-visible:outline-ink/60' : ''}`}
+        onClick={onOpen ? () => onOpen(item) : undefined}
+        onKeyDown={
+          onOpen ?
+            (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onOpen(item);
+              }
+            }
+          : undefined
+        }
+        role={onOpen ? 'link' : undefined}
+        tabIndex={onOpen ? 0 : undefined}
       >
         <span className='flex min-w-0 items-center gap-4'>
-          <span className='hidden size-10 shrink-0 items-center justify-center border border-line font-mono text-xs text-muted sm:flex'>
-            {item.kind === 'song' ? '♫' : 'L'}
-          </span>
           <span className='min-w-0'>
-            <span className='block truncate font-sans text-xl font-semibold text-ink sm:text-2xl'>
-              {item.title}
-            </span>
+            {detail ?
+              <span
+                contentEditable
+                suppressContentEditableWarning
+                role='textbox'
+                aria-label={text.title}
+                spellCheck={false}
+                onClick={(event) => event.stopPropagation()}
+                onInput={(event) =>
+                  setTitle(event.currentTarget.textContent ?? '')
+                }
+                onBlur={saveDetails}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    event.currentTarget.blur();
+                  }
+                }}
+                className='block max-w-full truncate font-sans text-xl font-semibold text-ink outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 sm:text-2xl'
+              >
+                {title}
+              </span>
+            : <span className='block max-w-full truncate font-sans text-xl font-semibold text-ink sm:text-2xl'>
+                {item.title}
+              </span>
+            }
             <span className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted'>
               <span className='uppercase tracking-[0.08em]'>
-                 {item.kind === 'song' ? text.songs : text.licks}
+                {item.kind === 'song' ? text.songs : text.licks}
               </span>
-              {item.artist && (
+              {item.kind === 'song' && (
                 <>
                   <span aria-hidden='true'>·</span>
-                  <span className='truncate'>{item.artist}</span>
+                  {detail ?
+                    <span
+                      contentEditable
+                      suppressContentEditableWarning
+                      role='textbox'
+                      aria-label={text.artist}
+                      aria-placeholder={text.artistSort}
+                      spellCheck={false}
+                      onClick={(event) => event.stopPropagation()}
+                      onInput={(event) =>
+                        setArtist(event.currentTarget.textContent ?? '')
+                      }
+                      onBlur={saveDetails}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          event.currentTarget.blur();
+                        }
+                      }}
+                      className={`max-w-40 truncate outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 ${artist ? 'text-muted' : 'text-muted/60'}`}
+                    >
+                      {artist}
+                    </span>
+                  : <span className='max-w-40 truncate'>{item.artist}</span>}
                 </>
               )}
               <span aria-hidden='true'>·</span>
-               <span>{item.parts.length} {text.parts}</span>
+              <span>
+                {item.parts.length} {text.parts}
+              </span>
             </span>
+            {detail && (
+              <label className='mt-3 flex w-fit cursor-pointer items-center gap-2 text-xs text-muted'>
+                <input
+                  type='checkbox'
+                  checked={isFutureLearn}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    setIsFutureLearn(checked);
+                    onSave({
+                      ...item,
+                      isFutureLearn: checked || undefined,
+                      updatedAt: new Date().toISOString(),
+                    });
+                  }}
+                  className='peer sr-only'
+                />
+                <span
+                  aria-hidden='true'
+                  className='flex size-4 items-center justify-center border border-muted text-transparent transition peer-checked:border-accent-green-fg peer-checked:bg-accent-green-fg peer-checked:text-canvas peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-green-fg'
+                >
+                  <svg
+                    viewBox='0 0 12 12'
+                    className='size-3'
+                    fill='none'
+                  >
+                    <path
+                      d='m2 6 2.5 2.5L10 3'
+                      stroke='currentColor'
+                      strokeWidth='1.5'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                    />
+                  </svg>
+                </span>
+                <span>{text.futureLearn}</span>
+              </label>
+            )}
           </span>
         </span>
         <span className='flex items-center gap-3 sm:gap-6'>
           <span className='text-right font-mono text-xs text-muted'>
             {formatPracticeDuration(totalSeconds / 60)}
             <span className='mt-1 block'>
-               {learnedParts}/{item.parts.length} {text.learnedParts}
+              {learnedParts}/{item.parts.length} {text.learnedParts}
             </span>
           </span>
-          <span
-            aria-hidden='true'
-            className='flex size-9 shrink-0 items-center justify-center border border-line text-lg text-muted'
+          {detail && (
+            <button
+              type='button'
+              onClick={(event) => {
+                event.stopPropagation();
+                if (activeSession) {
+                  setIsQuickPracticeDialogOpen(true);
+                  return;
+                }
+                router.push(`/practice?quickRepertoire=${encodeURIComponent(item.id)}`);
+              }}
+              className='inline-flex h-9 items-center border border-line px-3 text-xs text-muted transition hover:bg-white/5 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60'
+            >
+              {text.quickPractice}
+            </button>
+          )}
+          <button
+            type='button'
+            aria-label={text.deleteItem}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (window.confirm(text.deleteConfirm)) onDelete(item.id);
+            }}
+            className='flex size-9 shrink-0 items-center justify-center border border-line text-muted transition hover:border-red-300/50 hover:text-red-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60'
           >
-            {detail ?
-              '·'
-            : isExpanded ?
-              '−'
-            : '+'}
-          </span>
+            <DeleteIcon />
+          </button>
+          {!detail && (
+            <span
+              aria-hidden='true'
+              className='flex size-9 shrink-0 items-center justify-center border border-line text-muted'
+            >
+              <ChevronIcon open={isExpanded} />
+            </span>
+          )}
         </span>
-      </button>
+      </div>
 
       {isExpanded && (
         <div
           id={`repertoire-details-${item.id}`}
           className='border-t border-line bg-canvas/40 p-4 sm:p-6'
         >
-          <div className='flex flex-wrap items-end justify-between gap-4'>
-            <div className='flex min-w-0 flex-1 flex-wrap gap-3'>
-              <label className='min-w-48 flex-1 text-xs text-muted'>
-                 {text.title}
-                <TextField
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  onBlur={saveDetails}
-                  maxLength={100}
-                  className='mt-1 h-11 font-sans text-xl font-semibold'
-                />
-              </label>
-              {item.kind === 'song' && (
-                <label className='min-w-40 flex-1 text-xs text-muted sm:max-w-64'>
-                   {text.artist}
-                  <TextField
-                    value={artist}
-                    onChange={(event) => setArtist(event.target.value)}
-                    onBlur={saveDetails}
-                    maxLength={100}
-                   placeholder={text.artistSort}
-                    className='mt-1 h-11 text-sm'
-                  />
-                </label>
-              )}
-            </div>
-            <button
-              type='button'
-              onClick={() => {
-                const confirmed = window.confirm(
-                   text.deleteConfirm,
-                );
-                if (confirmed) onDelete(item.id);
-              }}
-              className='h-11 px-2 text-xs text-muted underline decoration-line underline-offset-4 transition hover:text-ink focus-visible:outline-ink/60'
-            >
-               {text.deleteItem}
-            </button>
-          </div>
-
-          <div className='mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4'>
-            <p className='text-xs uppercase tracking-[0.1em] text-muted'>
-               {text.parts} · {item.parts.length}
+          <div className='flex flex-wrap items-center justify-between gap-3  border-line pt-4'>
+            <p className='text-xs uppercase text-muted'>
+              {text.parts} · {item.parts.length}
             </p>
             <Button
               type='button'
               onClick={addPart}
               className='h-11 min-w-11 px-4'
             >
-               {text.addPart}
+              {text.addPart}
             </Button>
           </div>
 
@@ -297,28 +420,16 @@ export function RepertoireItemCard({
           <details
             className='mt-4 rounded-lg border border-line'
             open={showExtraConfig}
+            onToggle={(event) => setShowExtraConfig(event.currentTarget.open)}
           >
-            <summary
-              className='cursor-pointer flex items-center gap-2 px-4 py-3 text-sm text-muted transition hover:text-ink'
-              onClick={() => setShowExtraConfig(!showExtraConfig)}
-            >
-              <svg
-                className='size-4 shrink-0 transition-transform duration-200'
-                style={{
-                  transform: showExtraConfig ? 'rotate(90deg)' : 'rotate(0)',
-                }}
-                viewBox='0 0 20 20'
-                fill='currentColor'
-                aria-hidden='true'
-              >
-                <path d='M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z' />
-              </svg>
-               {text.extraConfig}
+            <summary className='cursor-pointer flex items-center gap-2 px-4 py-3 text-sm text-muted transition hover:text-ink'>
+              <ChevronIcon open={showExtraConfig} />
+              {text.extraConfig}
             </summary>
             <div className='border-t border-line p-4 space-y-4 animate-in slide-in-from-top-2 duration-200'>
               <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
                 <label className='block text-xs text-muted sm:col-span-2'>
-                   {text.tuning}
+                  {text.tuning}
                   <SelectField
                     className='mt-1'
                     value={tuning}
@@ -327,7 +438,7 @@ export function RepertoireItemCard({
                       if (value !== 'Otra...') setCustomTuning('');
                       saveExtraConfig();
                     }}
-                       ariaLabel={text.tuning}
+                    ariaLabel={text.tuning}
                     options={COMMON_TUNINGS.map((t) => ({
                       value: t,
                       label: t,
@@ -336,20 +447,20 @@ export function RepertoireItemCard({
                 </label>
                 {tuning === 'Otra...' && (
                   <label className='block text-xs text-muted sm:col-span-2'>
-                       {text.customTuning}
+                    {text.customTuning}
                     <TextField
                       value={customTuning}
                       onChange={(event) => setCustomTuning(event.target.value)}
                       onBlur={saveExtraConfig}
                       maxLength={50}
-                       placeholder={text.customTuningPlaceholder}
+                      placeholder={text.customTuningPlaceholder}
                       className='mt-1'
                     />
                   </label>
                 )}
 
                 <label className='block text-xs text-muted'>
-                   {text.capo}
+                  {text.capo}
                   <TextField
                     type='number'
                     min={0}
@@ -359,103 +470,87 @@ export function RepertoireItemCard({
                     onChange={(event) => setCapo(event.target.value)}
                     onBlur={saveExtraConfig}
                     placeholder='0'
-                     aria-label={text.capoAria}
+                    aria-label={text.capoAria}
                     className='mt-1 font-mono'
                   />
                 </label>
 
                 <label className='block text-xs text-muted'>
-                   {text.guitarType}
+                  {text.guitarType}
                   <SelectField
                     className='mt-1'
                     value={guitarType}
-                     ariaLabel={text.guitarType}
+                    ariaLabel={text.guitarType}
                     onChange={(value) => {
                       setGuitarType(value as GuitarType | '');
                       saveExtraConfig();
                     }}
                     options={[
-                       { value: '', label: text.unspecified },
-                       { value: 'electric', label: text.electric },
-                       { value: 'acoustic', label: text.acoustic },
+                      { value: '', label: text.unspecified },
+                      { value: 'electric', label: text.electric },
+                      { value: 'acoustic', label: text.acoustic },
                     ]}
                   />
-                </label>
-
-                <label className='block text-xs text-muted sm:col-span-2'>
-                   {text.youtubeOptional}
-                  <TextField
-                    type='url'
-                    value={youtubeUrl}
-                    onChange={(event) => setYoutubeUrl(event.target.value)}
-                    onBlur={saveExtraConfig}
-                     placeholder='https://www.youtube.com/watch?v=...'
-                     aria-label={text.youtubeAria}
-                    className='mt-1'
-                  />
-                </label>
-
-                <label className='block text-xs text-muted sm:col-span-2'>
-                   {text.spotifyOptional}
-                  <TextField
-                    type='url'
-                    value={spotifyUrl}
-                    onChange={(event) => setSpotifyUrl(event.target.value)}
-                    onBlur={saveExtraConfig}
-                    placeholder='https://open.spotify.com/track/...'
-                     aria-label={text.spotifyAria}
-                    className='mt-1'
-                  />
-                </label>
-
-                <label className='flex items-center gap-2 cursor-pointer text-xs text-muted sm:col-span-4'>
-                  <input
-                    type='checkbox'
-                    checked={isFutureLearn}
-                    onChange={(event) => {
-                      setIsFutureLearn(event.target.checked);
-                      saveExtraConfig();
-                    }}
-                    className='peer sr-only'
-                  />
-                  <span
-                    aria-hidden='true'
-                    className='flex size-4 items-center justify-center border border-muted text-transparent transition peer-checked:border-accent-green-fg peer-checked:bg-accent-green-fg peer-checked:text-canvas peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-green-fg'
-                  >
-                    <svg
-                      viewBox='0 0 12 12'
-                      className='size-3'
-                      fill='none'
-                    >
-                      <path
-                        d='m2 6 2.5 2.5L10 3'
-                        stroke='currentColor'
-                        strokeWidth='1.5'
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                      />
-                    </svg>
-                  </span>
-                   <span>{text.futureLearn}</span>
                 </label>
               </div>
             </div>
           </details>
 
-          {(item.guitarPro || item.resources?.length) && (
-            <details className='mt-4 rounded-lg border border-line'>
-              <summary className='cursor-pointer px-4 py-3 text-sm text-muted transition hover:text-ink'>
+          {detail && (
+            <details
+              className='mt-4 rounded-lg border border-line'
+              open={showMaterials}
+              onToggle={(event) => setShowMaterials(event.currentTarget.open)}
+            >
+              <summary className='flex cursor-pointer items-center gap-2 border-b border-line px-4 py-3 text-sm text-muted transition hover:text-ink'>
+                <ChevronIcon open={showMaterials} />
                 Ver material de estudio
               </summary>
-              <div className='border-t border-line p-3 sm:p-4'>
-                <PracticeMaterials
-                  phases={item.guitarPro ? materialPhase : []}
-                  attachedResources={item.resources}
-                />
-              </div>
+              <PracticeMaterials
+                phases={item.guitarPro ? materialPhase : []}
+                attachedResources={item.resources}
+                onAttach={addStudyMaterial}
+                embedded
+              />
             </details>
           )}
         </div>
+      )}
+      {isQuickPracticeDialogOpen && (
+        <dialog
+          open
+          aria-labelledby={`quick-practice-title-${item.id}`}
+          className='fixed inset-0 z-50 m-auto w-[calc(100%-2rem)] max-w-md border border-line bg-surface p-0 text-ink shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop:bg-black/70'
+        >
+          <div className='p-6 sm:p-8'>
+            <h2
+              id={`quick-practice-title-${item.id}`}
+              className='font-sans text-2xl font-semibold'
+            >
+              {practiceText.newPracticeTitle}
+            </h2>
+            <p className='mt-3 text-sm leading-6 text-muted'>
+              {practiceText.newPracticeDescription}
+            </p>
+            <div className='mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end'>
+              <Button onClick={() => setIsQuickPracticeDialogOpen(false)}>
+                {practiceText.cancelNewPractice}
+              </Button>
+              <Button
+                variant='primary'
+                onClick={() => {
+                  setIsQuickPracticeDialogOpen(false);
+                  clearActiveSession();
+                  router.push(
+                    `/practice?quickRepertoire=${encodeURIComponent(item.id)}`,
+                  );
+                }}
+              >
+                {practiceText.confirmNewPractice}
+              </Button>
+            </div>
+          </div>
+        </dialog>
       )}
     </article>
   );

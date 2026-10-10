@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
@@ -102,6 +102,7 @@ export function YearPracticeCalendar({
   const tooltip = useI18nSection("tooltip");
   const weekdays = useI18nSection("weekdays");
   const [hoveredDay, setHoveredDay] = useState<PracticeTooltipDay | null>(null);
+  const calendarScrollRef = useRef<HTMLDivElement>(null);
   const statsByDate = useMemo(
     () => new Map(days.map((day) => [day.dateKey, day])),
     [days],
@@ -127,9 +128,45 @@ export function YearPracticeCalendar({
     statsByDate,
     sessionsByDate,
   );
+  const latestPracticeDateKey = useMemo(() => {
+    const yearSessions = history
+      .filter((session) => new Date(session.startedAt).getFullYear() === year)
+      .sort(
+        (a, b) =>
+          new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+      );
+    if (yearSessions[0]) return toDateKey(new Date(yearSessions[0].startedAt));
+
+    return [...days]
+      .filter((day) => day.totalMinutes > 0)
+      .sort((a, b) => b.dateKey.localeCompare(a.dateKey))[0]?.dateKey;
+  }, [days, history, year]);
   const yearLabel = new Intl.NumberFormat(locale, {
     useGrouping: false,
   }).format(year);
+
+  useEffect(() => {
+    if (!latestPracticeDateKey || !calendarScrollRef.current) return;
+    const latestCellIndex = cells.findIndex(
+      (cell) => cell?.dateKey === latestPracticeDateKey,
+    );
+    if (latestCellIndex < 0) return;
+
+    const scrollContainer = calendarScrollRef.current;
+    const latestColumn = Math.floor(latestCellIndex / 7);
+    const columnWidth = 16 + 4;
+    const rightPadding = 96;
+
+    requestAnimationFrame(() => {
+      scrollContainer.scrollTo({
+        left: Math.max(
+          0,
+          latestColumn * columnWidth - scrollContainer.clientWidth + rightPadding,
+        ),
+        behavior: "smooth",
+      });
+    });
+  }, [cells, latestPracticeDateKey]);
 
   function showTooltip(
     element: HTMLButtonElement,
@@ -185,7 +222,7 @@ export function YearPracticeCalendar({
         </div>
       </div>
 
-      <div className="mt-8 overflow-x-auto pb-3">
+      <div ref={calendarScrollRef} className="mt-8 overflow-x-auto pb-3">
         <div className="min-w-max">
           <div
             aria-hidden="true"

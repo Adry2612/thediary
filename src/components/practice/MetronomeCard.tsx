@@ -15,12 +15,14 @@ type MetronomeCardProps = {
   variant?: "default" | "large";
   onBpmChange?: (bpm: number) => void;
   stopOnUnmount?: boolean;
+  compact?: boolean;
 };
 
 export function MetronomeCard({
   variant = "default",
   onBpmChange,
   stopOnUnmount = true,
+  compact = false,
 }: MetronomeCardProps) {
   const isLarge = variant === "large";
   const text = useI18nSection("metronome");
@@ -59,7 +61,7 @@ export function MetronomeCard({
 
   return (
     <Card
-      className={`enter ${isLarge ? "mx-auto w-full max-w-3xl p-8 sm:p-12" : ""}`}
+      className={`enter ${isLarge ? "mx-auto w-full max-w-3xl p-8 sm:p-12" : compact ? "p-5 sm:p-6" : ""}`}
       style={{ "--index": 1 } as CSSProperties}
     >
       <div className="flex items-center justify-between">
@@ -91,7 +93,7 @@ export function MetronomeCard({
 
       <div
         data-tour-target={isLarge ? "metronome-controls" : undefined}
-        className={isLarge ? "mt-10 sm:mt-14" : "mt-8"}
+        className={isLarge ? "mt-10 sm:mt-14" : compact ? "mt-5" : "mt-8"}
       >
         <div className="flex items-center justify-between gap-4">
           <Button
@@ -114,7 +116,7 @@ export function MetronomeCard({
               className={`w-full text-ink ${
                 isLarge
                   ? "text-7xl leading-none sm:text-8xl"
-                  : "text-4xl leading-[1.5] sm:text-5xl"
+                : compact ? "text-3xl leading-[1.4] sm:text-4xl" : "text-4xl leading-[1.5] sm:text-5xl"
               }`}
             />
             <p className="font-mono text-xs uppercase tracking-[0.05em] text-muted">

@@ -9,6 +9,8 @@ import { PracticeGoalsCard } from '@/components/dashboard/PracticeGoalsCard';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import type { WeekdayIndex } from '@/lib/weekly-routine-schedule';
 import { useI18nSection } from '@/i18n/I18nProvider';
+import { useAppData } from '@/components/providers/AppDataProvider';
+import { HomeSkeleton } from '@/components/ui/Skeletons';
 
 function parseDateKey(dateKey: string) {
   const [year, month, day] = dateKey.split('-').map(Number);
@@ -18,6 +20,7 @@ function parseDateKey(dateKey: string) {
 export function HomeView({ todayKey }: { todayKey: string }) {
   const home = useI18nSection('home');
   const weekdays = useI18nSection('weekdays');
+  const { isReady } = useAppData();
   const templates = usePracticeStore((state) => state.templates);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
   const weeklySchedule = usePracticeStore((state) => state.weeklySchedule);
@@ -30,6 +33,10 @@ export function HomeView({ todayKey }: { todayKey: string }) {
   const todaysRoutine = templates.find(
     (template) => template.id === weeklySchedule[todayWeekday],
   );
+
+  if (!isReady || !hasHydrated) {
+    return <HomeSkeleton />;
+  }
 
   return (
     <main className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'>

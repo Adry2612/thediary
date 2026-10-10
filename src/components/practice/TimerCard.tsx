@@ -11,16 +11,21 @@ type TimerCardProps = {
   timer: PracticeTimerController;
   isCompleted: boolean;
   isPracticeRoute: boolean;
+  onDiscard: () => void;
+  compact?: boolean;
 };
 
 export function TimerCard({
   timer,
   isCompleted,
   isPracticeRoute,
+  onDiscard,
+  compact = false,
 }: TimerCardProps) {
   const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
   const finishDialogRef = useRef<HTMLDialogElement>(null);
   const timerText = useI18nSection("timer");
+  const skills = useI18nSection("skills");
   const {
     currentPhase,
     awaitingPhaseAdvance,
@@ -32,6 +37,7 @@ export function TimerCard({
     reset,
     resume,
     skip,
+    isCountUp,
   } = timer;
 
   useEffect(() => {
@@ -48,9 +54,11 @@ export function TimerCard({
 
   return (
     <>
-      <Card className="enter flex flex-col items-center text-center">
+      <Card className={`enter flex flex-col items-center text-center ${compact ? "p-5 sm:p-6" : ""}`}>
         <span className="rounded-full bg-accent-green-bg px-3 py-1 font-sans text-xs uppercase tracking-[0.05em] text-accent-green-fg">
-          {currentPhase ? timerText.currentBlock : timerText.completedSession}
+          {currentPhase
+            ? skills[currentPhase.skill]
+            : timerText.completedSession}
         </span>
 
         <h2 className="mt-6 font-sans text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">
@@ -72,13 +80,15 @@ export function TimerCard({
         <p
           role="timer"
           aria-live="off"
-          className="my-14 font-mono text-5xl leading-[1.5] tabular-nums tracking-normal sm:text-7xl"
+          className={`${compact ? "my-8 text-4xl sm:text-6xl" : "my-14 text-5xl sm:text-7xl"} font-mono leading-[1.5] tabular-nums tracking-normal`}
         >
-          {formatClock(remainingSeconds)}
+          {formatClock(isCountUp ? elapsedSeconds : remainingSeconds)}
         </p>
-        <p className="-mt-10 mb-10 font-mono text-xs uppercase tracking-[0.05em] text-muted">
-          {timerText.totalTime} {formatClock(elapsedSeconds)}
-        </p>
+        {!isCountUp && (
+          <p className="-mt-10 mb-10 font-mono text-xs uppercase tracking-[0.05em] text-muted">
+            {timerText.totalTime} {formatClock(elapsedSeconds)}
+          </p>
+        )}
 
         {awaitingPhaseAdvance && (
           <p
@@ -90,12 +100,12 @@ export function TimerCard({
           </p>
         )}
 
-        <div className="flex w-full flex-wrap justify-center gap-3">
+        <div className="mt-auto flex w-full justify-center gap-3 pt-6">
           <Button
             variant="primary"
             onClick={isRunning ? pause : resume}
             disabled={!currentPhase || isCompleted || awaitingPhaseAdvance}
-            className="flex-1"
+            className={`${compact ? "h-12 px-4" : ""} min-w-0 flex-1 px-3 text-xs sm:px-4 sm:text-sm`}
           >
             {isRunning
               ? timerText.pause
@@ -105,14 +115,21 @@ export function TimerCard({
                   ? timerText.continue
                   : timerText.start}
           </Button>
+          {!isCountUp && (
           <Button
             variant={awaitingPhaseAdvance ? "primary" : "ghost"}
             onClick={skip}
             disabled={!currentPhase || isCompleted}
+            className="min-w-0 flex-1 px-3 text-xs sm:px-4 sm:text-sm"
           >
-            {timerText.skipBlock}
-          </Button>
-          <Button onClick={reset} disabled={isCompleted}>
+              {timerText.skipBlock}
+            </Button>
+          )}
+          <Button
+            onClick={reset}
+            disabled={isCompleted}
+            className="min-w-0 flex-1 px-3 text-xs sm:px-4 sm:text-sm"
+          >
             {timerText.reset}
           </Button>
         </div>
@@ -152,6 +169,9 @@ export function TimerCard({
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button onClick={() => setIsFinishDialogOpen(false)}>
               {timerText.keepPracticing}
+            </Button>
+            <Button onClick={onDiscard}>
+              {timerText.exitWithoutSaving}
             </Button>
             <Button
               variant="primary"

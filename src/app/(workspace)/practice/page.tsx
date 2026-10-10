@@ -50,6 +50,7 @@ export default async function PracticePage({
     minutes?: string;
     template?: string;
     repeatSessionId?: string;
+    quickRepertoire?: string;
     start?: string;
   }>;
 }) {
@@ -57,6 +58,7 @@ export default async function PracticePage({
     minutes: requestedMinutes,
     template: requestedTemplateId,
     repeatSessionId,
+    quickRepertoire,
     start,
   } = await searchParams;
   const requestedDuration = Number(requestedMinutes);
@@ -69,6 +71,7 @@ export default async function PracticePage({
       initialPhases={phasesForSession}
       requestedTemplateId={requestedTemplateId}
       requestedSessionId={repeatSessionId}
+      requestedQuickRepertoireId={quickRepertoire}
       autoStartTemplate={start === "1"}
     />
   );

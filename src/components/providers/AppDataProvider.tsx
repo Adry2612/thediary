@@ -537,13 +537,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppDataContext.Provider value={contextValue}>
-      {isReady ? (
-        children
-      ) : (
-        <main className="mx-auto max-w-3xl px-5 py-16 text-sm text-muted sm:px-8">
-          Cargando el almacenamiento…
-        </main>
-      )}
+      {children}
     </AppDataContext.Provider>
   );
 }

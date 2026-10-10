@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PracticeExerciseEditor } from '@/components/practice/PracticeExerciseEditor';
 import { PracticeResourceEditor } from '@/components/practice/PracticeResourceEditor';
 import { Button } from '@/components/ui/Button';
+import { Block } from '@/components/ui/Block';
 import { TextField } from '@/components/ui/Field';
 import { SelectField } from '@/components/ui/SelectField';
 import {
@@ -43,11 +44,13 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
   const [showMaterials, setShowMaterials] = useState(false);
 
   return (
-    <fieldset className='rounded-lg border border-line bg-canvas/70 p-4 sm:p-6'>
-       <legend className='sr-only'>{phase.name || text.phase} de práctica</legend>
+    <Block as='fieldset'>
+      <legend className='sr-only'>
+        {phase.name || text.phase} de práctica
+      </legend>
       <div className='mb-5 flex items-center justify-between border-b border-line pb-3'>
         <p className='text-xs uppercase tracking-[0.12em] text-muted'>
-           {text.currentBlock} {String(index + 1).padStart(2, '0')}
+          {text.currentBlock} {String(index + 1).padStart(2, '0')}
         </p>
         <span className='font-mono text-xs text-accent-green-fg'>
           {phase.durationMinutes} min
@@ -55,18 +58,18 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
       </div>
       <div className='grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem_11rem_auto]'>
         <label className='text-xs text-muted'>
-           {text.phaseName}
+          {text.phaseName}
           <TextField
             value={phase.name}
             onChange={(event) =>
               onChange(phase.id, { name: event.target.value })
             }
-             placeholder={skills.technique}
+            placeholder={skills.technique}
             className='mt-1'
           />
         </label>
         <label className='text-xs text-muted'>
-           {text.duration}
+          {text.duration}
           <TextField
             type='number'
             min={1}
@@ -82,11 +85,11 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
           />
         </label>
         <div className='text-xs text-muted'>
-           <span className='block'>{text.category}</span>
+          <span className='block'>{text.category}</span>
           <SelectField
             className='mt-1'
             value={phase.skill}
-             ariaLabel={`${text.category} ${index + 1}`}
+            ariaLabel={`${text.category} ${index + 1}`}
             onChange={(value) => {
               const skill = PRACTICE_SKILLS.find(
                 (candidate) => candidate === value,
@@ -95,7 +98,7 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
             }}
             options={PRACTICE_SKILLS.map((skill) => ({
               value: skill,
-               label: skills[skill],
+              label: skills[skill],
             }))}
           />
         </div>
@@ -103,21 +106,21 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
           <Button
             type='button'
             onClick={() => onRemove(phase.id)}
-             aria-label={`${text.removeBlock} ${phase.name || text.phase}`}
-             size='field'
-             className='px-3'
+            aria-label={`${text.removeBlock} ${phase.name || text.phase}`}
+            size='field'
+            className='px-3'
           >
-             {text.removeBlock}
+            {text.removeBlock}
           </Button>
         </div>
       </div>
 
       <div className='mt-4 block text-xs text-muted'>
-         <span className='block'>{text.repertoirePart}</span>
+        <span className='block'>{text.repertoirePart}</span>
         <SelectField
           className='mt-1'
           value={phase.repertoirePartId ?? ''}
-           ariaLabel={`${text.repertoirePart} ${index + 1}`}
+          ariaLabel={`${text.repertoirePart} ${index + 1}`}
           onChange={(selectedPartId) => {
             const item = repertoireItems.find((candidate) =>
               candidate.parts.some((part) => part.id === selectedPartId),
@@ -131,12 +134,12 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
             });
           }}
           options={[
-             { value: '', label: text.unlinked },
+            { value: '', label: text.unlinked },
             ...(phase.repertoirePartId && !selectedPartExists ?
               [
                 {
                   value: phase.repertoirePartId,
-                   label: text.missingReference,
+                  label: text.missingReference,
                   disabled: true,
                 },
               ]
@@ -156,7 +159,7 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
               href='/repertoire'
               className='text-ink underline decoration-line underline-offset-4'
             >
-               {text.repertoirePart}
+              {text.repertoirePart}
             </Link>{' '}
             para poder registrar el tiempo por parte.
           </span>
@@ -179,6 +182,6 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
           />
         </div>
       </div>
-    </fieldset>
+    </Block>
   );
 });

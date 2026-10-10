@@ -13,6 +13,9 @@ const variants: Record<Variant, string> = {
   ghost: "border border-line text-ink hover:bg-white/5",
 };
 
+const baseStyles =
+  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium tracking-wide transition active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60 disabled:cursor-not-allowed disabled:opacity-50";
+
 export function Button({
   variant = "ghost",
   size = "default",
@@ -22,7 +25,7 @@ export function Button({
   return (
     <button
       {...props}
-      className={`inline-flex ${size === "field" ? "h-12 px-4" : "h-14 min-w-14 px-6"} items-center justify-center gap-2 rounded-md text-sm font-medium tracking-wide transition active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60 ${variants[variant]} ${className}`}
+      className={`${baseStyles} ${size === "field" ? "h-11 px-3 sm:h-12 sm:px-4" : "h-12 min-w-12 px-4 sm:h-14 sm:min-w-14 sm:px-6"} ${variants[variant]} ${className}`}
     />
   );
 }

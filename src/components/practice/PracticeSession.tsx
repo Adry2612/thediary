@@ -34,11 +34,18 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const [isCompleted, setIsCompleted] = useState(false);
   const [pendingResult, setPendingResult] =
     useState<PracticeTimerResult | null>(null);
+  const [canUseSplitView, setCanUseSplitView] = useState(false);
   const sessionSavedRef = useRef(false);
   const completionHandledRef = useRef(false);
   const addSession = usePracticeStore((state) => state.addSession);
   const clearActiveSession = useActivePracticeSessionStore(
     (state) => state.clearActiveSession,
+  );
+  const isSplitView = useActivePracticeSessionStore(
+    (state) => state.isSplitView,
+  );
+  const setSplitView = useActivePracticeSessionStore(
+    (state) => state.setSplitView,
   );
   const addAttachedResource = useActivePracticeSessionStore(
     (state) => state.addAttachedResource,
@@ -57,7 +64,12 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     },
     [],
   );
-  const timer = usePracticeTimer(phases, undefined, completeSession);
+  const timer = usePracticeTimer(
+    phases,
+    undefined,
+    completeSession,
+    session.isCountUp ?? false,
+  );
   const timerElapsedSecondsRef = useRef(timer.elapsedSeconds);
   timerElapsedSecondsRef.current = timer.elapsedSeconds;
   const previousTimerStartedAtRef = useRef(timer.startedAt);
@@ -88,6 +100,25 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   );
   useEffect(() => () => stopMetronome(), [stopMetronome]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const updateSplitViewAvailability = () =>
+      setCanUseSplitView(mediaQuery.matches);
+
+    updateSplitViewAvailability();
+    mediaQuery.addEventListener('change', updateSplitViewAvailability);
+    return () =>
+      mediaQuery.removeEventListener('change', updateSplitViewAvailability);
+  }, []);
+
+  useEffect(() => {
+    if (!canUseSplitView && isSplitView) setSplitView(false);
+  }, [canUseSplitView, isSplitView, setSplitView]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [sessionId]);
+
   function saveCompletedSession(
     sessionNotes: string,
     phaseNotes: Record<number, string>,
@@ -115,8 +146,86 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     );
   }
 
+  function discardSession() {
+    clearActiveSession();
+    router.push('/practice');
+  }
+
   const nextPhase = phases[timer.currentPhaseIndex + 1];
   const currentPhase = phases[timer.currentPhaseIndex];
+
+  const timerCard = (
+    <TimerCard
+      timer={timer}
+      isCompleted={isCompleted}
+      isPracticeRoute={isPracticeRoute}
+      onDiscard={discardSession}
+    />
+  );
+  const metronomeCard = (
+    <MetronomeCard onBpmChange={recordBpmChange} stopOnUnmount={false} />
+  );
+  const timerAndMetronome = (
+    <div className="grid gap-6 md:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)]">
+      {timerCard}
+      {metronomeCard}
+    </div>
+  );
+  const nextPhasePanel = !isCompleted && (
+    <section
+      aria-labelledby="next-practice-phase-title"
+      className="enter rounded-xl border border-line bg-surface p-6 sm:p-8"
+    >
+      <p className="text-xs uppercase tracking-[0.05em] text-muted">Plan de la sesión</p>
+      <h2
+        id="next-practice-phase-title"
+        className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8"
+      >
+        {text.nextPhase}
+      </h2>
+      {nextPhase ? (
+        <div className="mt-4 border-t border-line pt-4">
+          <p className="font-medium">{nextPhase.name}</p>
+          <p className="mt-1 font-mono text-xs text-muted">
+            {nextPhase.durationMinutes} min
+          </p>
+          {nextPhase.exercises && nextPhase.exercises.length > 0 && (
+            <p className="mt-3 text-sm text-muted">{nextPhase.exercises.join(" · ")}</p>
+          )}
+        </div>
+      ) : (
+        <p className="mt-4 text-sm text-muted">{text.noNextPhase}</p>
+      )}
+    </section>
+  );
+  const materials = (
+    <PracticeMaterials
+      phases={phases}
+      attachedResources={session.attachedResources}
+      onAttach={addAttachedResource}
+      splitView={isSplitView}
+    />
+  );
+  const recorder = (
+    <PracticeAudioRecorder
+      sessionName={name}
+      sessionId={sessionId}
+      practiceDate={
+        timer.startedAt ? getLocalDateKey(new Date(timer.startedAt)) : undefined
+      }
+      phase={
+        currentPhase
+          ? {
+              id: currentPhase.id,
+              name: currentPhase.name,
+              order: timer.currentPhaseIndex + 1,
+              skill: currentPhase.skill,
+            }
+          : undefined
+      }
+      shouldStop={isCompleted}
+    />
+  );
 
   return (
     <>
@@ -124,84 +233,47 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         result={pendingResult}
         isVisible={isPracticeRoute}
         onSave={saveCompletedSession}
+        onDiscard={discardSession}
       />
       <main
         className={
           isPracticeRoute
-            ? "mx-auto w-full max-w-5xl space-y-6 px-6 pb-16 pt-6 sm:pb-24"
+            ? `mx-auto w-full ${isSplitView ? "max-w-7xl" : "max-w-5xl"} space-y-6 px-5 pb-16 pt-6 sm:px-8 sm:pb-24 sm:pt-8`
             : "hidden"
         }
         aria-hidden={!isPracticeRoute}
       >
-        <div className="grid gap-6 md:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)]">
-          <TimerCard
-            timer={timer}
-            isCompleted={isCompleted}
-            isPracticeRoute={isPracticeRoute}
-          />
-          <MetronomeCard
-            onBpmChange={recordBpmChange}
-            stopOnUnmount={false}
-          />
-        </div>
-        {!isCompleted && (
-          <section
-            aria-labelledby="next-practice-phase-title"
-            className="enter rounded-xl border border-line bg-surface p-6 sm:p-8"
-          >
-            <p className="text-xs uppercase tracking-[0.05em] text-muted">
-              Plan de la sesión
-            </p>
-            <h2
-              id="next-practice-phase-title"
-              className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8"
+        {canUseSplitView && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setSplitView(!isSplitView)}
+              className="rounded-md border border-line px-3 py-2 text-xs text-muted transition hover:bg-white/5 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
             >
-               {text.nextPhase}
-            </h2>
-            {nextPhase ? (
-              <div className="mt-4 border-t border-line pt-4">
-                <p className="font-medium">{nextPhase.name}</p>
-                <p className="mt-1 font-mono text-xs text-muted">
-                  {nextPhase.durationMinutes} min
-                </p>
-                {nextPhase.exercises && nextPhase.exercises.length > 0 && (
-                  <p className="mt-3 text-sm text-muted">
-                    {nextPhase.exercises.join(" · ")}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-muted">
-                 {text.noNextPhase}
-              </p>
-            )}
-          </section>
+              {isSplitView ? text.singleView : text.splitView}
+            </button>
+          </div>
         )}
-        <PracticeMaterials
-          phases={phases}
-          attachedResources={session.attachedResources}
-          onAttach={addAttachedResource}
-        />
-        <PracticeAudioRecorder
-          sessionName={name}
-          sessionId={sessionId}
-          practiceDate={
-            timer.startedAt
-              ? getLocalDateKey(new Date(timer.startedAt))
-              : undefined
-          }
-          phase={
-            currentPhase
-              ? {
-                  id: currentPhase.id,
-                  name: currentPhase.name,
-                  order: timer.currentPhaseIndex + 1,
-                  skill: currentPhase.skill,
-                }
-              : undefined
-          }
-          shouldStop={isCompleted}
-        />
+        {isSplitView ? (
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,1fr)]">
+            <div className="space-y-6">
+              {timerCard}
+              {metronomeCard}
+              {nextPhasePanel}
+              {recorder}
+            </div>
+            <aside className="min-h-0 min-w-0 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:min-h-0 lg:overflow-y-auto">
+              {materials}
+            </aside>
+          </div>
+        ) : (
+          <>
+            {timerAndMetronome}
+            {nextPhasePanel}
+            {materials}
+            {recorder}
+          </>
+        )}
       </main>
       {!isPracticeRoute && (
         <nav aria-label="Práctica en curso">

@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { RangeSlider } from "@/components/ui/RangeSlider";
-import { usePracticeAudioPlayer } from "@/hooks/usePracticeAudioPlayer";
-import { useI18nSection } from "@/i18n/I18nProvider";
+import { RangeSlider } from '@/components/ui/RangeSlider';
+import { usePracticeAudioPlayer } from '@/hooks/usePracticeAudioPlayer';
+import { useI18nSection } from '@/i18n/I18nProvider';
 
 function formatAudioTime(seconds: number | null) {
   if (seconds === null || !Number.isFinite(seconds) || seconds < 0) {
-    return "--:--";
+    return '--:--';
   }
 
   const wholeSeconds = Math.round(seconds);
-  return `${Math.floor(wholeSeconds / 60)}:${String(wholeSeconds % 60).padStart(2, "0")}`;
+  return `${Math.floor(wholeSeconds / 60)}:${String(wholeSeconds % 60).padStart(2, '0')}`;
 }
 
 export function PracticeAudioPlayer({
@@ -24,7 +24,7 @@ export function PracticeAudioPlayer({
   durationSeconds?: number;
   showVolumeControl?: boolean;
 }) {
-  const text = useI18nSection("recordings");
+  const text = useI18nSection('recordings');
   const {
     audioRef,
     isPlaying,
@@ -57,11 +57,11 @@ export function PracticeAudioPlayer({
     <div>
       <audio
         ref={audioRef}
-        aria-hidden="true"
+        aria-hidden='true'
         tabIndex={-1}
-        preload="metadata"
+        preload='metadata'
         src={src}
-        className="hidden"
+        className='hidden'
         onLoadedMetadata={handleLoadedMetadata}
         onDurationChange={handleDurationChange}
         onTimeUpdate={handleTimeUpdate}
@@ -73,24 +73,37 @@ export function PracticeAudioPlayer({
         onEnded={handleEnded}
         onError={handleError}
       />
-      <div className="flex flex-wrap items-center gap-3">
+      <div className='flex flex-wrap items-center gap-3'>
         <button
-          type="button"
+          type='button'
           onClick={() => void togglePlayback()}
-           aria-label={`${isPlaying ? text.pause : text.playback} ${title}`}
-          className="flex size-10 shrink-0 items-center justify-center border border-line text-ink transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-green-fg"
+          aria-label={`${isPlaying ? text.pause : text.playback} ${title}`}
+          className='flex size-10 shrink-0 items-center justify-center border border-line text-ink transition hover:bg-white/5 focus-visible:outline-accent-green-fg'
         >
-          {isPlaying ? (
-            <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
-              <path d="M4 3h3v10H4zM9 3h3v10H9z" fill="currentColor" />
+          {isPlaying ?
+            <svg
+              viewBox='0 0 16 16'
+              className='size-4'
+              aria-hidden='true'
+            >
+              <path
+                d='M4 3h3v10H4zM9 3h3v10H9z'
+                fill='currentColor'
+              />
             </svg>
-          ) : (
-            <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
-              <path d="M4 2.5 13 8l-9 5.5z" fill="currentColor" />
+          : <svg
+              viewBox='0 0 16 16'
+              className='size-4'
+              aria-hidden='true'
+            >
+              <path
+                d='M4 2.5 13 8l-9 5.5z'
+                fill='currentColor'
+              />
             </svg>
-          )}
+          }
         </button>
-        <span className="w-12 shrink-0 text-right font-mono text-xs tabular-nums text-muted">
+        <span className='w-12 shrink-0 text-right font-mono text-xs tabular-nums text-muted'>
           {formatAudioTime(currentTime)}
         </span>
         <RangeSlider
@@ -102,36 +115,36 @@ export function PracticeAudioPlayer({
           ariaValueText={`${formatAudioTime(currentTime)} de ${formatAudioTime(duration)}`}
           disabled={!duration || !isSeekReady}
           onChange={seek}
-          className="min-w-32 flex-1"
+          className='min-w-32 flex-1'
         />
-        <span className="w-12 shrink-0 font-mono text-xs tabular-nums text-muted">
+        <span className='w-12 shrink-0 font-mono text-xs tabular-nums text-muted'>
           {formatAudioTime(duration)}
         </span>
         {showVolumeControl && (
           <button
-            type="button"
-             aria-label={isVolumeOpen ? text.hideVolume : text.adjustVolume}
+            type='button'
+            aria-label={isVolumeOpen ? text.hideVolume : text.adjustVolume}
             aria-expanded={isVolumeOpen}
             onClick={toggleVolumeControl}
-            className="flex size-9 shrink-0 items-center justify-center border border-line text-muted transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-green-fg"
+            className='flex size-9 shrink-0 items-center justify-center border border-line text-muted transition hover:text-ink focus-visible:outline-accent-green-fg'
           >
             <svg
-              viewBox="0 0 20 20"
-              className="size-4"
-              fill="none"
-              aria-hidden="true"
+              viewBox='0 0 20 20'
+              className='size-4'
+              fill='none'
+              aria-hidden='true'
             >
               <path
-                d="M3 8v4h3l4 3V5L6 8H3Z"
-                fill="currentColor"
-                stroke="currentColor"
-                strokeLinejoin="round"
+                d='M3 8v4h3l4 3V5L6 8H3Z'
+                fill='currentColor'
+                stroke='currentColor'
+                strokeLinejoin='round'
               />
               <path
-                d="M13 7a4 4 0 0 1 0 6m2-8a7 7 0 0 1 0 10"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeWidth="1.5"
+                d='M13 7a4 4 0 0 1 0 6m2-8a7 7 0 0 1 0 10'
+                stroke='currentColor'
+                strokeLinecap='round'
+                strokeWidth='1.5'
               />
             </svg>
           </button>
@@ -139,12 +152,12 @@ export function PracticeAudioPlayer({
       </div>
       {showVolumeControl && isVolumeOpen && (
         <div
-          className="mt-3 flex items-center gap-3"
-          role="group"
-           aria-label={text.volume}
+          className='mt-3 flex items-center gap-3'
+          role='group'
+          aria-label={text.volume}
         >
-          <span className="text-[10px] uppercase tracking-[0.1em] text-muted">
-             {text.volume}
+          <span className='text-[10px] uppercase text-muted'>
+            {text.volume}
           </span>
           <RangeSlider
             min={0}
@@ -154,15 +167,18 @@ export function PracticeAudioPlayer({
             ariaLabel={`Volumen de ${title}`}
             ariaValueText={`${Math.round(volume * 100)}%`}
             onChange={changeVolume}
-            className="max-w-48"
+            className='max-w-48'
           />
-          <span className="w-10 font-mono text-xs tabular-nums text-muted">
+          <span className='w-10 font-mono text-xs tabular-nums text-muted'>
             {Math.round(volume * 100)}%
           </span>
         </div>
       )}
       {playbackError && (
-        <p className="mt-2 text-xs text-red-300" role="alert">
+        <p
+          className='mt-2 text-xs text-red-300'
+          role='alert'
+        >
           {playbackError}
         </p>
       )}

@@ -15,7 +15,7 @@ export const en: Dict = {
     repertoire: 'My repertoire',
     settings: 'Settings',
   },
-  common: { settings: 'Settings' },
+  common: { settings: 'Settings', openMenu: 'Open navigation menu', closeMenu: 'Close navigation menu' },
   settings: {
     eyebrow: 'Preferences',
     title: 'Settings',
@@ -301,6 +301,12 @@ export const en: Dict = {
     personalSession: 'personal session',
     changeConfirm:
       'Changing will reset the timer and the incomplete session will not be saved. Continue?',
+    exitWithoutSaving: 'Exit without saving',
+    newPracticeTitle: 'Start a new practice?',
+    newPracticeDescription:
+      'The practice currently in progress will be discarded and will not be saved.',
+    cancelNewPractice: 'Keep current practice',
+    confirmNewPractice: 'Start new practice',
     setupDescription:
       'Organize your blocks, exercises, and study material before starting. Completed sessions are saved to your history.',
     templateNotFound: 'That saved routine was not found in this browser.',
@@ -359,5 +365,6 @@ export const en: Dict = {
       "We'll keep the time recorded so far. If you finish, you won't be able to resume this session.",
     keepPracticing: 'Keep practicing',
     finishAndSave: 'Finish and save',
+    exitWithoutSaving: 'Exit without saving',
   },
 };

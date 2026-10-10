@@ -27,6 +27,7 @@ import {
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { useAppData } from '@/components/providers/AppDataProvider';
 import { useI18nSection } from '@/i18n/I18nProvider';
+import { DashboardSkeleton } from '@/components/ui/Skeletons';
 
 function parseDateKey(dateKey: string) {
   const [year, month, day] = dateKey.split('-').map(Number);
@@ -155,6 +156,10 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
       description: dashboard.historyTime,
     },
   ];
+
+  if (!hasHydrated) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <main className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'>

@@ -12,7 +12,7 @@ export type Dict = {
     repertoire: string;
     settings: string;
   };
-  common: { settings: string };
+  common: { settings: string; openMenu: string; closeMenu: string };
   settings: {
     eyebrow: string;
     title: string;
@@ -220,5 +220,6 @@ export type Dict = {
     finishPracticeDescription: string;
     keepPracticing: string;
     finishAndSave: string;
+    exitWithoutSaving: string;
   };
 };

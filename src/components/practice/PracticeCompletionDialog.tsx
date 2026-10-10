@@ -14,12 +14,14 @@ interface PracticeCompletionDialogProps {
     sessionNotes: string,
     phaseNotes: Record<number, string>,
   ) => void;
+  onDiscard: () => void;
 }
 
 export function PracticeCompletionDialog({
   result,
   isVisible,
   onSave,
+  onDiscard,
 }: PracticeCompletionDialogProps) {
   const text = useI18nSection("practice");
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -104,12 +106,15 @@ export function PracticeCompletionDialog({
             </div>
           </section>
         )}
+        <Button className="mt-6 w-full" onClick={onDiscard}>
+          {text.exitWithoutSaving}
+        </Button>
         <Button
           variant="primary"
-          className="mt-6 w-full"
+          className="mt-3 w-full"
           onClick={() => onSave(sessionNotes, phaseNotes)}
         >
-           {text.saveCompletion}
+          {text.saveCompletion}
         </Button>
       </div>
     </dialog>

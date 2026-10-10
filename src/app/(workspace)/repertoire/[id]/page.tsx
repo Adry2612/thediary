@@ -52,20 +52,6 @@ export default function RepertoireDetailPage({ params }: Props) {
 
   return (
     <main className='mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16'>
-      <Link
-        href='/repertoire'
-        className='text-sm text-muted underline underline-offset-4'
-      >
-        ← {repertoireDetail.back}
-      </Link>
-      <header className='mb-8 mt-8'>
-        <p className='font-mono text-xs uppercase tracking-[0.14em] text-muted'>
-          {repertoireDetail.eyebrow}
-        </p>
-        <h1 className='mt-3 font-sans text-3xl font-semibold tracking-tight sm:text-4xl'>
-          {item.title}
-        </h1>
-      </header>
       <RepertoireItemCard
         item={item}
         practiceStats={practiceStats}
