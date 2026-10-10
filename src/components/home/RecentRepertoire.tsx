@@ -61,7 +61,7 @@ export function RecentRepertoire({
                 className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0 last:pb-0"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-zinc-100">
+                  <p className="break-words font-medium leading-tight text-zinc-100">
                     {item.title}
                   </p>
                   <p className="mt-1 truncate text-sm text-zinc-500">

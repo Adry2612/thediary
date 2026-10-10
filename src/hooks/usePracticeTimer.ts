@@ -11,6 +11,7 @@ import type {
   PracticeSkill,
   PracticeTimerResult,
 } from "@/types/practice";
+import type { PracticeSound } from "@/lib/practice-sounds";
 
 type TimerSnapshot = {
   elapsedSeconds: number;
@@ -69,6 +70,8 @@ export function usePracticeTimer(
   onPhaseChange?: (phase: PracticePhase) => void,
   onComplete?: (result: PracticeTimerResult) => void,
   countUp = false,
+  startSound: PracticeSound = 'voice',
+  endSound: PracticeSound = 'alarm',
 ) {
   const phasePlan = useMemo(() => validatePhases(phases), [phases]);
   const [snapshot, setSnapshot] = useState<TimerSnapshot>(() =>
@@ -88,6 +91,7 @@ export function usePracticeTimer(
       countUp,
     ),
   );
+  const [autoAdvance, setAutoAdvance] = useState(false);
   const runtimeRef = useRef<PracticeTimerRuntime>({
     elapsedMs: 0,
     phaseElapsedMs: 0,
@@ -99,10 +103,48 @@ export function usePracticeTimer(
     isRunning: false,
     awaitingPhaseAdvance: false,
   });
+  const audioContextRef = useRef<AudioContext | null>(null);
   const onPhaseChangeRef = useRef(onPhaseChange);
   const onCompleteRef = useRef(onComplete);
   onPhaseChangeRef.current = onPhaseChange;
   onCompleteRef.current = onComplete;
+
+  const playTransitionTone = useCallback((isStartingBlock: boolean) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const AudioContextConstructor =
+        window.AudioContext ??
+        (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (!AudioContextConstructor) return;
+      const context =
+        audioContextRef.current ?? new AudioContextConstructor();
+      audioContextRef.current = context;
+      if (context.state === 'suspended') void context.resume();
+
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const now = context.currentTime;
+      const sound = isStartingBlock ? startSound : endSound;
+      oscillator.type = sound === 'voice' ? 'sawtooth' : sound === 'alarm' ? 'square' : 'sine';
+      oscillator.frequency.value = sound === 'voice'
+        ? (isStartingBlock ? 520 : 390)
+        : sound === 'alarm'
+          ? (isStartingBlock ? 1_200 : 700)
+          : (isStartingBlock ? 880 : 330);
+      gain.gain.setValueAtTime(0.0001, now);
+      const duration = sound === 'bell' ? 0.8 : sound === 'alarm' ? 0.35 : 0.28;
+      gain.gain.exponentialRampToValueAtTime(0.24, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.02);
+    } catch {
+      // Audio is optional; the timer must continue if the browser blocks it.
+    }
+  }, [endSound, startSound]);
 
   const completeSession = useCallback(
     (runtime: PracticeTimerRuntime, completed: boolean) => {
@@ -158,11 +200,46 @@ export function usePracticeTimer(
       if (!runtime.isRunning) return;
 
       const result = synchronizePracticeTimer(runtime, phasePlan, now, countUp);
+      if (result.completed) {
+        runtimeRef.current = result.runtime;
+        publishSnapshot(result.runtime);
+        playTransitionTone(false);
+        completeSession(result.runtime, true);
+        return;
+      }
+
+      if (autoAdvance && result.runtime.awaitingPhaseAdvance) {
+        playTransitionTone(false);
+        const nextPhaseIndex = result.runtime.phaseIndex + 1;
+        const nextPhase = phasePlan[nextPhaseIndex]?.phase;
+        const nextRuntime: PracticeTimerRuntime = {
+          ...result.runtime,
+          phaseIndex: nextPhaseIndex,
+          phaseElapsedMs: 0,
+          isRunning: Boolean(nextPhase),
+          awaitingPhaseAdvance: false,
+        };
+        runtimeRef.current = nextRuntime;
+        if (nextPhase) {
+          window.setTimeout(() => playTransitionTone(true), 220);
+          onPhaseChangeRef.current?.(nextPhase);
+        }
+        publishSnapshot(nextRuntime);
+        return;
+      }
+
       runtimeRef.current = result.runtime;
+      if (result.runtime.awaitingPhaseAdvance) playTransitionTone(false);
       publishSnapshot(result.runtime);
-      if (result.completed) completeSession(result.runtime, true);
     },
-    [completeSession, countUp, phasePlan, publishSnapshot],
+    [
+      autoAdvance,
+      completeSession,
+      countUp,
+      phasePlan,
+      playTransitionTone,
+      publishSnapshot,
+    ],
   );
 
   useEffect(() => {
@@ -207,8 +284,9 @@ export function usePracticeTimer(
       awaitingPhaseAdvance: false,
     };
     runtimeRef.current = nextRuntime;
+    playTransitionTone(true);
     publishSnapshot(nextRuntime);
-  }, [phasePlan.length, publishSnapshot]);
+  }, [phasePlan.length, playTransitionTone, publishSnapshot]);
 
   const pause = useCallback(() => {
     const now = Date.now();
@@ -243,10 +321,14 @@ export function usePracticeTimer(
     };
 
     runtimeRef.current = nextRuntime;
-    if (nextPhase) onPhaseChangeRef.current?.(nextPhase);
+    if (nextPhase) {
+      playTransitionTone(false);
+      window.setTimeout(() => playTransitionTone(true), 220);
+      onPhaseChangeRef.current?.(nextPhase);
+    }
     publishSnapshot(nextRuntime);
     if (!nextPhase) completeSession(nextRuntime, true);
-  }, [completeSession, phasePlan, publishSnapshot, synchronize]);
+  }, [completeSession, phasePlan, playTransitionTone, publishSnapshot, synchronize]);
 
   const finish = useCallback(() => {
     const now = Date.now();
@@ -298,6 +380,8 @@ export function usePracticeTimer(
     resume,
     skip,
     finish,
+    autoAdvance,
+    setAutoAdvance,
     isCountUp: countUp,
   };
 }

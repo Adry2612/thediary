@@ -22,6 +22,16 @@ export function SiteNavigation() {
   const app = useI18nSection('app');
   const isSettingsCurrent =
     pathname === '/settings' || pathname.startsWith('/settings/');
+  const currentNavigationItem = NAVIGATION.find((item) =>
+    item.href === '/'
+      ? pathname === '/'
+      : pathname === item.href || pathname.startsWith(`${item.href}/`),
+  );
+  const currentSection = currentNavigationItem
+    ? navigation[currentNavigationItem.label as keyof typeof navigation]
+    : isSettingsCurrent
+      ? common.settings
+      : undefined;
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -106,6 +116,15 @@ export function SiteNavigation() {
           </span>
         </button>
       </nav>
+      {currentSection && (
+        <div className='border-t border-line md:hidden'>
+          <div className='mx-auto max-w-7xl px-5 py-2 sm:px-8'>
+            <p className='truncate text-xs font-medium text-muted'>
+              {currentSection}
+            </p>
+          </div>
+        </div>
+      )}
       {isMenuOpen && (
         <div id='mobile-navigation-menu' className='navigation-menu-enter border-t border-line bg-surface md:hidden'>
           <div className='mx-auto max-w-7xl px-5 py-3 sm:px-8'>

@@ -221,7 +221,7 @@ export function RepertoireItemCard({
   return (
     <article className='enter rounded-xl border border-line bg-surface'>
       <div
-        className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 p-4 text-left sm:p-5 ${onOpen ? 'cursor-pointer transition focus-visible:outline-inset focus-visible:outline-ink/60' : ''}`}
+        className={`grid w-full grid-cols-1 items-start gap-4 p-4 text-left sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5 ${onOpen ? 'cursor-pointer transition focus-visible:outline-inset focus-visible:outline-ink/60' : ''}`}
         onClick={onOpen ? () => onOpen(item) : undefined}
         onKeyDown={
           onOpen ?
@@ -236,8 +236,8 @@ export function RepertoireItemCard({
         role={onOpen ? 'link' : undefined}
         tabIndex={onOpen ? 0 : undefined}
       >
-        <span className='flex min-w-0 items-center gap-4'>
-          <span className='min-w-0'>
+        <span className='flex min-w-0 w-full items-center gap-4'>
+          <span className='min-w-0 w-full'>
             {detail ?
               <span
                 contentEditable
@@ -256,11 +256,11 @@ export function RepertoireItemCard({
                     event.currentTarget.blur();
                   }
                 }}
-                className='block max-w-full truncate font-sans text-xl font-semibold text-ink outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 sm:text-2xl'
+                className='block w-full whitespace-normal break-words font-sans text-xl font-semibold leading-tight text-ink [overflow-wrap:anywhere] outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 sm:text-2xl'
               >
                 {title}
               </span>
-            : <span className='block max-w-full truncate font-sans text-xl font-semibold text-ink sm:text-2xl'>
+            : <span className='block w-full whitespace-normal break-words font-sans text-xl font-semibold leading-tight text-ink [overflow-wrap:anywhere] sm:text-2xl'>
                 {item.title}
               </span>
             }
@@ -341,8 +341,8 @@ export function RepertoireItemCard({
             )}
           </span>
         </span>
-        <span className='flex items-center gap-3 sm:gap-6'>
-          <span className='text-right font-mono text-xs text-muted'>
+        <span className='flex w-full items-center justify-end gap-3 sm:w-auto sm:gap-6'>
+          <span className='ml-auto text-right font-mono text-xs text-muted'>
             {formatPracticeDuration(totalSeconds / 60)}
             <span className='mt-1 block'>
               {learnedParts}/{item.parts.length} {text.learnedParts}
