@@ -147,6 +147,15 @@ export function MetronomeSettings({
     if (!isOpen && dialog.open) dialog.close();
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   return (
     <>
       <button
@@ -196,17 +205,17 @@ export function MetronomeSettings({
             setIsOpen(false);
           }
         }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[min(100%-2rem,36rem)] overflow-x-hidden overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-1rem)] w-[min(100%-1rem,36rem)] overflow-x-hidden overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70 sm:max-h-[calc(100dvh-2rem)] sm:w-[min(100%-2rem,36rem)]"
       >
-        <div className="p-6 sm:p-8">
-          <div className="flex items-start justify-between gap-4">
-            <div>
+        <div className="p-4 sm:p-8">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.05em] text-muted">
                  {text.title}
               </p>
               <h2
                 id="metronome-settings-title"
-                className="mt-2 font-sans text-3xl font-semibold"
+                className="mt-2 break-words font-sans text-3xl font-semibold leading-tight"
               >
                  {text.settings}
               </h2>
@@ -241,7 +250,7 @@ export function MetronomeSettings({
           <div className="mt-6">
             <fieldset>
                <legend className="text-sm text-muted">{text.subdivision}</legend>
-              <div className="mt-2 grid grid-cols-4 gap-2" role="group">
+              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4" role="group">
                 {subdivisionOptions.map((option) => (
                   <label key={option.value} className="group min-w-0">
                     <input
@@ -253,7 +262,7 @@ export function MetronomeSettings({
                       aria-label={option.label}
                       className="peer sr-only"
                     />
-                    <span className="flex min-h-24 flex-col items-center justify-center gap-1 border border-line px-1 py-2 text-center text-xs text-muted transition-colors hover:bg-white/[0.04] peer-checked:border-accent-green-fg/60 peer-checked:bg-accent-green-bg/30 peer-checked:text-ink peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-accent-green-fg">
+                      <span className="flex min-h-24 min-w-0 flex-col items-center justify-center gap-1 border border-line px-2 py-2 text-center text-xs leading-tight text-muted transition-colors hover:bg-white/[0.04] peer-checked:border-accent-green-fg/60 peer-checked:bg-accent-green-bg/30 peer-checked:text-ink peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-accent-green-fg">
                       <SubdivisionNotation
                         subdivision={option.value}
                         isDotted={
@@ -266,13 +275,14 @@ export function MetronomeSettings({
                         }
                         isTuplet={option.isTuplet}
                       />
-                      <span className="leading-tight">{option.shortLabel}</span>
+                       <span className="max-w-full whitespace-normal break-words leading-tight">{option.shortLabel}</span>
                     </span>
                   </label>
                 ))}
               </div>
             </fieldset>
           </div>
+
 
           <div className="mt-6">
             <div className="flex items-center justify-between text-sm">

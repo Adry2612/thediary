@@ -214,6 +214,11 @@ export type Dict = {
     continue: string;
     start: string;
     skipBlock: string;
+    autoAdvance: string;
+    autoAdvanceDescription: string;
+    soundOptions: string;
+    startSound: string;
+    endSound: string;
     reset: string;
     finishSession: string;
     finishPracticeTitle: string;

@@ -53,7 +53,14 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const pathname = usePathname();
   const isPracticeRoute = pathname === "/practice";
   const router = useRouter();
-  const { bpm: metronomeBpm, stop: stopMetronome } = useMetronome();
+  const {
+    bpm: metronomeBpm,
+    stop: stopMetronome,
+    practiceStartSound,
+    setPracticeStartSound,
+    practiceEndSound,
+    setPracticeEndSound,
+  } = useMetronome();
   const completeSession = useCallback(
     (result: PracticeTimerResult) => {
       if (completionHandledRef.current) return;
@@ -69,6 +76,8 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     undefined,
     completeSession,
     session.isCountUp ?? false,
+    practiceStartSound,
+    practiceEndSound,
   );
   const timerElapsedSecondsRef = useRef(timer.elapsedSeconds);
   timerElapsedSecondsRef.current = timer.elapsedSeconds;
@@ -160,6 +169,10 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
       isCompleted={isCompleted}
       isPracticeRoute={isPracticeRoute}
       onDiscard={discardSession}
+      practiceStartSound={practiceStartSound}
+      setPracticeStartSound={setPracticeStartSound}
+      practiceEndSound={practiceEndSound}
+      setPracticeEndSound={setPracticeEndSound}
     />
   );
   const metronomeCard = (

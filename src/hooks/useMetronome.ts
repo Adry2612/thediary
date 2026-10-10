@@ -30,6 +30,7 @@ import {
   type TempoRampSettings,
 } from "@/lib/metronome-tempo-ramp";
 import { scheduleMetronomeClick } from "@/lib/metronome-audio";
+import { type PracticeSound } from "@/lib/practice-sounds";
 import {
   closeMetronomeAudioContext,
   getOrCreateMetronomeAudioContext,
@@ -60,6 +61,8 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
   const [tempoRamp, setTempoRampState] = useState(
     DEFAULT_TEMPO_RAMP_SETTINGS,
   );
+  const [practiceStartSound, setPracticeStartSound] = useState<PracticeSound>("voice");
+  const [practiceEndSound, setPracticeEndSound] = useState<PracticeSound>("alarm");
   const [isRunning, setIsRunning] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [isPulsing, setIsPulsing] = useState(false);
@@ -294,7 +297,10 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     if (runningRef.current || startingRef.current) return;
     const startAttempt = ++startAttemptRef.current;
 
-    const AudioContextConstructor = window.AudioContext;
+    const AudioContextConstructor =
+      window.AudioContext ??
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
     if (!AudioContextConstructor) {
       setAudioError("Este navegador no admite la Web Audio API.");
       return;
@@ -405,6 +411,10 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     setMeterSignature,
     tempoRamp,
     setTempoRamp,
+    practiceStartSound,
+    setPracticeStartSound,
+    practiceEndSound,
+    setPracticeEndSound,
     activeBeat,
     activeSubdivision,
   };

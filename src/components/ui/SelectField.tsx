@@ -172,9 +172,9 @@ export function SelectField({
             openListbox(event.key === "ArrowDown" ? 1 : -1);
           }
         }}
-        className="flex h-12 w-full items-center justify-between gap-3 border border-line bg-canvas px-4 text-left font-mono text-sm text-ink transition hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex min-h-12 h-auto w-full items-center justify-between gap-3 border border-line bg-canvas px-4 py-3 text-left font-mono text-sm leading-tight text-ink transition hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <span className="truncate">{selectedOption?.label ?? ""}</span>
+        <span className="min-w-0 whitespace-normal break-words">{selectedOption?.label ?? ""}</span>
         <svg
           aria-hidden="true"
           viewBox="0 0 16 16"
@@ -222,7 +222,7 @@ export function SelectField({
                     : "text-muted hover:bg-white/[0.04] hover:text-ink"
               }`}
             >
-              <span className="truncate">{option.label}</span>
+              <span className="whitespace-normal break-words">{option.label}</span>
               {option.value === value && (
                 <span aria-hidden="true" className="font-mono text-accent-green-fg">
                   ✓
@@ -231,7 +231,7 @@ export function SelectField({
             </div>
           ))}
         </div>,
-        document.body,
+        triggerRef.current?.closest("dialog") ?? document.body,
       )}
     </div>
   );
