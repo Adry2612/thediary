@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatPracticeDuration } from "@/lib/dashboard-data";
 import { getPracticePlanDuration } from "@/lib/practice-plan";
 import type { PracticeTemplate } from "@/types/practice";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 type SavedRoutinesProps = {
   routines: PracticeTemplate[];
@@ -9,33 +10,34 @@ type SavedRoutinesProps = {
 };
 
 export function SavedRoutines({ routines, hasHydrated }: SavedRoutinesProps) {
+  const home = useI18nSection("home");
   return (
     <section className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-            Inicio rápido
+             {home.quickStart}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-            Tus rutinas
+             {home.routines}
           </h2>
           <p className="mt-2 text-sm text-zinc-500">
-            Pulsa una rutina para iniciar una nueva práctica con ella.
+             {home.routinesDescription}
           </p>
         </div>
         <Link
           href="/practice"
           className="text-sm text-zinc-300 underline decoration-zinc-700 underline-offset-4 transition hover:text-zinc-100"
         >
-          Crear o editar rutinas
+           {home.createRoutines}
         </Link>
       </div>
 
       {!hasHydrated ? (
-        <p className="mt-5 text-sm text-zinc-500">Cargando rutinas guardadas…</p>
+         <p className="mt-5 text-sm text-zinc-500">{home.loadingRoutines}</p>
       ) : routines.length === 0 ? (
         <p className="mt-5 text-sm text-zinc-400">
-          Guarda una rutina desde la pantalla de práctica y aparecerá aquí.
+           {home.saveRoutine}
         </p>
       ) : (
         <ul className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -47,7 +49,7 @@ export function SavedRoutines({ routines, hasHydrated }: SavedRoutinesProps) {
               <li key={routine.id}>
                 <Link
                   href={sessionUrl}
-                  aria-label={`Iniciar la rutina ${routine.name}`}
+                   aria-label={`${home.startPractice} ${routine.name}`}
                   className="group flex h-full min-h-28 items-center justify-between gap-4 rounded-lg border border-zinc-800 p-4 transition hover:border-zinc-600 hover:bg-zinc-800/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-300"
                 >
                   <span className="min-w-0">
@@ -59,7 +61,7 @@ export function SavedRoutines({ routines, hasHydrated }: SavedRoutinesProps) {
                       {formatPracticeDuration(durationMinutes)}
                     </span>
                     <span className="mt-3 inline-flex items-center gap-2 text-xs text-zinc-300">
-                      Iniciar práctica
+                       {home.startPractice}
                       <span aria-hidden="true">→</span>
                     </span>
                   </span>

@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { CSSProperties } from "react";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 const AVAILABLE_MINUTES = [15, 30, 45, 60];
 
 export function SuggestedPractice() {
+  const home = useI18nSection("home");
   const [durationMinutes, setDurationMinutes] = useState(30);
 
   return (
@@ -16,15 +18,15 @@ export function SuggestedPractice() {
     >
       <div className="max-w-lg">
         <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-          Acceso directo
+           {home.directAccess}
         </p>
         <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-          ¿Cuánto tiempo tienes hoy?
+           {home.howMuchTime}
         </h2>
         <p className="mt-2 text-sm text-zinc-400">
-          Preparamos una sesión breve de técnica y repertorio según tu tiempo.
+           {home.suggestedDescription}
         </p>
-        <div className="mt-6 flex flex-wrap gap-2" aria-label="Tiempo disponible">
+         <div className="mt-6 flex flex-wrap gap-2" aria-label={home.availableTime}>
           {AVAILABLE_MINUTES.map((minutes) => (
             <button
               key={minutes}
@@ -48,7 +50,7 @@ export function SuggestedPractice() {
         href={`/practice?minutes=${durationMinutes}`}
         className="mt-7 inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-md bg-zinc-100 px-6 text-sm font-semibold text-zinc-950 transition hover:bg-white active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-300 sm:mt-0 sm:w-auto sm:min-w-64"
       >
-        Iniciar práctica sugerida
+         {home.startSuggested}
         <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
           <path
             d="M4 10h11m-4-4 4 4-4 4"

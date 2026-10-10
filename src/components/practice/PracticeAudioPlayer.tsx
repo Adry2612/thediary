@@ -2,6 +2,7 @@
 
 import { RangeSlider } from "@/components/ui/RangeSlider";
 import { usePracticeAudioPlayer } from "@/hooks/usePracticeAudioPlayer";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 function formatAudioTime(seconds: number | null) {
   if (seconds === null || !Number.isFinite(seconds) || seconds < 0) {
@@ -23,6 +24,7 @@ export function PracticeAudioPlayer({
   durationSeconds?: number;
   showVolumeControl?: boolean;
 }) {
+  const text = useI18nSection("recordings");
   const {
     audioRef,
     isPlaying,
@@ -75,7 +77,7 @@ export function PracticeAudioPlayer({
         <button
           type="button"
           onClick={() => void togglePlayback()}
-          aria-label={isPlaying ? `Pausar ${title}` : `Reproducir ${title}`}
+           aria-label={`${isPlaying ? text.pause : text.playback} ${title}`}
           className="flex size-10 shrink-0 items-center justify-center border border-line text-ink transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-green-fg"
         >
           {isPlaying ? (
@@ -108,7 +110,7 @@ export function PracticeAudioPlayer({
         {showVolumeControl && (
           <button
             type="button"
-            aria-label={isVolumeOpen ? "Ocultar volumen" : "Ajustar volumen"}
+             aria-label={isVolumeOpen ? text.hideVolume : text.adjustVolume}
             aria-expanded={isVolumeOpen}
             onClick={toggleVolumeControl}
             className="flex size-9 shrink-0 items-center justify-center border border-line text-muted transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-green-fg"
@@ -139,10 +141,10 @@ export function PracticeAudioPlayer({
         <div
           className="mt-3 flex items-center gap-3"
           role="group"
-          aria-label="Volumen del backing track"
+           aria-label={text.volume}
         >
           <span className="text-[10px] uppercase tracking-[0.1em] text-muted">
-            Volumen
+             {text.volume}
           </span>
           <RangeSlider
             min={0}

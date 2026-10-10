@@ -9,6 +9,7 @@ import {
 } from "@/lib/repertoire-item-editing";
 import type { RepertoirePartPracticeStats } from "@/lib/repertoire-analytics";
 import type { RepertoireItem, RepertoirePart } from "@/types/practice";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 interface RepertoirePartEditorProps {
   item: RepertoireItem;
@@ -23,6 +24,7 @@ export function RepertoirePartEditor({
   stats,
   onSave,
 }: RepertoirePartEditorProps) {
+  const text = useI18nSection("repertoire");
   const [name, setName] = useState(part.name);
   const [masteredBpm, setMasteredBpm] = useState(
     part.masteredBpm?.toString() ?? "",
@@ -56,7 +58,7 @@ export function RepertoirePartEditor({
     <li className="rounded-lg border border-line bg-canvas/50 p-4 sm:p-5">
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1.5fr)_auto_minmax(6rem,0.7fr)_minmax(6rem,0.7fr)_auto] sm:items-end">
         <label className="block text-xs text-muted">
-          Parte
+           {text.learnedParts}
           <TextField
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -94,11 +96,11 @@ export function RepertoirePartEditor({
               />
             </svg>
           </span>
-          <span>Aprendido</span>
+           <span>{text.learned}</span>
         </label>
 
         <label className="block text-xs text-muted">
-          BPM dominado
+           {text.masteredBpm}
           <TextField
             type="number"
             min={0}
@@ -113,7 +115,7 @@ export function RepertoirePartEditor({
         </label>
 
         <label className="block text-xs text-muted">
-          BPM objetivo
+           {text.targetBpm}
           <TextField
             type="number"
             min={0}
@@ -129,7 +131,7 @@ export function RepertoirePartEditor({
 
         <p className="whitespace-nowrap font-mono text-xs text-muted sm:pb-3">
           {formatPracticeDuration((stats?.practiceSeconds ?? 0) / 60)}
-          <span className="ml-1">· {stats?.sessionCount ?? 0} sesiones</span>
+           <span className="ml-1">· {stats?.sessionCount ?? 0} {text.sessions}</span>
         </p>
       </div>
     </li>

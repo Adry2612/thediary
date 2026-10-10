@@ -17,6 +17,8 @@ import {
 } from "@/lib/practice-templates";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import type { PracticePhase, PracticeTemplate } from "@/types/practice";
+import { useI18nSection } from "@/i18n/I18nProvider";
+import { createId } from "@/lib/create-id";
 
 interface PracticePlanBuilderProps {
   initialName?: string;
@@ -24,21 +26,12 @@ interface PracticePlanBuilderProps {
   onStart: (name: string, phases: PracticePhase[]) => void;
 }
 
-const VALIDATION_MESSAGES: Record<PracticeTemplateValidationError, string> = {
-  name: "Escribe un nombre de hasta 80 caracteres.",
-  phases: "Añade al menos un bloque.",
-  phase: "Revisa los nombres, minutos y categorías de los bloques.",
-};
-
-function createId() {
-  return crypto.randomUUID();
-}
-
 export function PracticePlanBuilder({
   initialName = "Mi sesión",
   initialPhases,
   onStart,
 }: PracticePlanBuilderProps) {
+  const text = useI18nSection("practice");
   const templates = usePracticeStore((state) => state.templates);
   const saveTemplate = usePracticeStore((state) => state.saveTemplate);
   const deleteTemplate = usePracticeStore((state) => state.deleteTemplate);
@@ -88,7 +81,7 @@ export function PracticePlanBuilder({
       return true;
     }
 
-    setError(VALIDATION_MESSAGES[validationError]);
+    setError({ name: "Escribe un nombre de hasta 80 caracteres.", phases: "Añade al menos un bloque.", phase: "Revisa los nombres, minutos y categorías de los bloques." }[validationError]);
     return false;
   }
 
@@ -122,19 +115,19 @@ export function PracticePlanBuilder({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.05em] text-muted">
-              Preparar práctica
+               {text.prepare}
             </p>
             <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8">
-              Diseña tus bloques
+               {text.designBlocks}
             </h2>
           </div>
           {templates.length > 0 && (
             <div className="min-w-52 flex-1 text-xs text-muted sm:max-w-64">
-              Plantilla guardada
+               {text.savedTemplate}
               <SelectField
                 className="mt-1"
                 value={selectedTemplateId}
-                ariaLabel="Plantilla guardada"
+                 ariaLabel={text.savedTemplate}
                 onChange={(templateId) => {
                   const template = templates.find(
                     (candidate) => candidate.id === templateId,
@@ -146,7 +139,7 @@ export function PracticePlanBuilder({
                   setSelectedTemplateId("");
                 }}
                 options={[
-                  { value: "", label: "Plan nuevo" },
+                   { value: "", label: text.newPlan },
                   ...templates.map((template) => ({
                     value: template.id,
                     label: template.name,
@@ -158,7 +151,7 @@ export function PracticePlanBuilder({
         </div>
 
         <label className="mt-6 block text-xs text-muted">
-          Nombre de la sesión
+           {text.sessionName}
           <TextField
             value={name}
             maxLength={80}
@@ -182,25 +175,25 @@ export function PracticePlanBuilder({
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
-        <Button type="button" onClick={createPhase}>
-          Añadir bloque
+         <Button type="button" onClick={createPhase} size="field">
+           {text.addBlock}
         </Button>
         <div className="flex flex-wrap gap-2">
           {selectedTemplateId && (
             <Button type="button" onClick={removeTemplate}>
-              Eliminar plantilla
+               {text.deleteTemplate}
             </Button>
           )}
           <Button type="button" onClick={handleSaveTemplate}>
-            Guardar plantilla
+             {text.saveTemplate}
           </Button>
           <Button type="button" variant="primary" onClick={handleStart}>
-            Iniciar sesión
+             {text.startSession}
           </Button>
         </div>
       </div>
       <p className="mt-3 text-right font-mono text-xs text-muted">
-        {getPracticePlanDuration(phases)} min en total
+         {getPracticePlanDuration(phases)} {text.total}
       </p>
       {error && (
         <p className="mt-3 text-sm text-red-300" role="alert">
@@ -208,8 +201,7 @@ export function PracticePlanBuilder({
         </p>
       )}
       <p className="mt-5 text-xs leading-6 text-muted">
-        Las plantillas y archivos se guardan en este navegador. Los enlaces de
-        Songsterr requieren conexión a internet.
+         {text.storageNote}
       </p>
     </Card>
   );

@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 
 export type SelectOption = {
   value: string;
@@ -31,7 +32,9 @@ export function SelectField({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [opensUpward, setOpensUpward] = useState(false);
+  const [listboxStyle, setListboxStyle] = useState<
+    { left: number; top?: number; bottom?: number; width: number } | null
+  >(null);
   const selectedIndex = options.findIndex((option) => option.value === value);
   const [activeIndex, setActiveIndex] = useState(
     Math.max(selectedIndex, 0),
@@ -45,7 +48,10 @@ export function SelectField({
       listboxRef.current?.focus(),
     );
     const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setIsOpen(false);
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !listboxRef.current?.contains(target)) {
+        setIsOpen(false);
+      }
     };
     document.addEventListener("pointerdown", closeOnOutsidePointer);
 
@@ -61,18 +67,25 @@ export function SelectField({
       ?.closest("dialog")
       ?.getBoundingClientRect();
 
-    if (triggerBounds && dialogBounds) {
-      const visibleTop = Math.max(dialogBounds.top, 0);
-      const visibleBottom = Math.min(dialogBounds.bottom, window.innerHeight);
+    if (triggerBounds) {
+      const visibleTop = Math.max(dialogBounds?.top ?? 0, 0);
+      const visibleBottom = Math.min(
+        dialogBounds?.bottom ?? window.innerHeight,
+        window.innerHeight,
+      );
       const availableAbove = triggerBounds.top - visibleTop;
       const availableBelow = visibleBottom - triggerBounds.bottom;
       const estimatedListboxHeight = Math.min(options.length * 40 + 8, 240);
-      setOpensUpward(
-        availableBelow < estimatedListboxHeight &&
-          availableAbove > availableBelow,
-      );
+      const shouldOpenUpward =
+        availableBelow < estimatedListboxHeight && availableAbove > availableBelow;
+      setListboxStyle({
+        left: triggerBounds.left,
+        width: triggerBounds.width,
+        ...(shouldOpenUpward
+          ? { bottom: window.innerHeight - triggerBounds.top + 4 }
+          : { top: triggerBounds.bottom + 4 }),
+      });
     } else {
-      setOpensUpward(false);
     }
 
     const startingIndex =
@@ -177,7 +190,8 @@ export function SelectField({
           />
         </svg>
       </button>
-      {isOpen && (
+      {isOpen && listboxStyle && typeof document !== "undefined" &&
+        createPortal(
         <div
           ref={listboxRef}
           id={`${id}-listbox`}
@@ -188,9 +202,8 @@ export function SelectField({
           }
           tabIndex={0}
           onKeyDown={handleListboxKeyDown}
-          className={`absolute inset-x-0 z-50 max-h-60 overflow-y-auto border border-line bg-surface p-1 shadow-[0_8px_24px_rgba(0,0,0,0.35)] outline-none ${
-            opensUpward ? "bottom-full mb-1" : "top-full mt-1"
-          }`}
+          style={listboxStyle}
+          className="fixed z-[1000] max-h-60 overflow-y-auto border border-line bg-surface p-1 shadow-[0_8px_24px_rgba(0,0,0,0.35)] outline-none"
         >
           {options.map((option, index) => (
             <div
@@ -217,7 +230,8 @@ export function SelectField({
               )}
             </div>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

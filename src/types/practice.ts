@@ -7,7 +7,7 @@ export const PRACTICE_SKILLS = [
 
 export type PracticeSkill = (typeof PRACTICE_SKILLS)[number];
 
-export type PracticeResourceKind = "songsterr" | "guitarpro" | "pdf" | "audio";
+export type PracticeResourceKind = "songsterr" | "guitarpro" | "pdf" | "audio" | "youtube" | "spotify" | "tab";
 
 export interface PracticeResource {
   id: string;
@@ -16,9 +16,12 @@ export interface PracticeResource {
   url?: string;
   assetId?: string;
   fileName?: string;
+  text?: string;
 }
 
 export type RepertoireItemKind = "song" | "lick";
+
+export type GuitarType = "electric" | "acoustic";
 
 export interface RepertoirePart {
   id: string;
@@ -35,7 +38,20 @@ export interface RepertoireItem {
   artist?: string;
   parts: RepertoirePart[];
   guitarPro?: PracticeResource;
+  resources?: PracticeResource[];
   updatedAt: string;
+  /** Afinación de la canción (ej. "E Standard", "Drop D", "DADGAD") */
+  tuning?: string;
+  /** Traste donde colocar el capotraste (1-12) */
+  capo?: number;
+  /** Tipo de guitarra para filtrado */
+  guitarType?: GuitarType;
+  /** Enlace opcional de YouTube */
+  youtubeUrl?: string;
+  /** Enlace opcional de Spotify */
+  spotifyUrl?: string;
+  /** Si está en la lista de "aprender en el futuro" */
+  isFutureLearn?: boolean;
 }
 
 export interface PracticePhase {

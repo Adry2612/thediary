@@ -10,6 +10,7 @@ import type { SessionRecord } from "@/types/practice";
 import { formatPracticeDuration } from "@/lib/dashboard-data";
 import type { PracticeWeekDay } from "@/lib/practice-calendar";
 import { getPracticeIntensityClass } from "@/lib/practice-goals";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 type WeeklyPracticeSummaryProps = {
   sessions: SessionRecord[];
@@ -24,6 +25,8 @@ export function WeeklyPracticeSummary({
   dailyGoalMinutes,
   weeklyGoalDays,
 }: WeeklyPracticeSummaryProps) {
+  const dashboard = useI18nSection("dashboard");
+  const weekdays = useI18nSection("weekdays");
   const router = useRouter();
   const [hoveredDay, setHoveredDay] = useState<PracticeTooltipDay | null>(null);
   const sessionsByDate = useMemo(() => {
@@ -73,10 +76,10 @@ export function WeeklyPracticeSummary({
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-            Lunes a domingo
+             {dashboard.mondayToSunday}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-            Esta semana
+             {dashboard.weekly}
           </h2>
         </div>
         <div className="min-w-48">
@@ -86,23 +89,23 @@ export function WeeklyPracticeSummary({
                 {sessions.length}
               </span>
               <span className="text-sm text-zinc-400">
-                {sessions.length === 1 ? "sesión" : "sesiones"}
+                 {sessions.length === 1 ? dashboard.session : dashboard.sessions}
               </span>
             </p>
             <p className="font-mono text-sm leading-6 tracking-normal text-zinc-300 sm:text-base sm:leading-7">
-              {formatPracticeDuration(totalMinutes)} practicados
+               {formatPracticeDuration(totalMinutes)} {dashboard.practiced}
             </p>
           </div>
           <p className="mt-2 text-xs text-zinc-500">
-            Objetivo semanal ·{" "}
+             {dashboard.weeklyGoal} ·{" "}
             <span             className="font-mono text-sm text-zinc-300 sm:text-base">
-              {practicedDays}/{weeklyGoalDays} días
+               {practicedDays}/{weeklyGoalDays} {dashboard.days}
             </span>
           </p>
           <div
             className="mt-2 h-1.5 overflow-hidden bg-zinc-800"
             role="progressbar"
-            aria-label="Progreso del objetivo semanal de días"
+             aria-label={dashboard.weeklyGoalAria}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(weeklyProgress)}
@@ -117,7 +120,7 @@ export function WeeklyPracticeSummary({
 
       <div className="mt-7">
         <ol
-          aria-label="Días de práctica de esta semana"
+           aria-label={dashboard.weekDaysAria}
           className="grid grid-cols-7 gap-1.5 sm:gap-3"
         >
           {days.map((day) => (
@@ -127,7 +130,7 @@ export function WeeklyPracticeSummary({
             >
               <button
                 type="button"
-                aria-label={`${day.dayLabel} ${day.dayOfMonth}: ${day.sessionCount} ${day.sessionCount === 1 ? "sesión" : "sesiones"}${day.hasPractice ? `, ${formatPracticeDuration(day.totalMinutes)} practicados. Ver detalle de práctica` : ""}`}
+                 aria-label={`${weekdays.short[new Date(`${day.dateKey}T12:00:00`).getDay()]} ${day.dayOfMonth}: ${day.sessionCount} ${day.sessionCount === 1 ? dashboard.session : dashboard.sessions}${day.hasPractice ? `, ${formatPracticeDuration(day.totalMinutes)} ${dashboard.practiced}. ${dashboard.weekDaysAria}` : ""}`}
                 aria-describedby={
                   hoveredDay?.dateKey === day.dateKey
                     ? "practice-day-tooltip"
@@ -146,7 +149,7 @@ export function WeeklyPracticeSummary({
               >
                 <span className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                   <span className="truncate font-mono text-[10px] uppercase tracking-[0.04em] text-zinc-400 sm:text-xs sm:tracking-[0.08em]">
-                    {day.dayLabel.replace(/\.$/, "")}
+                     {weekdays.short[new Date(`${day.dateKey}T12:00:00`).getDay()]}
                   </span>
                   <span className="font-mono text-sm leading-6 tabular-nums tracking-normal text-zinc-100 sm:text-base sm:leading-7">
                     {day.dayOfMonth}
@@ -155,7 +158,7 @@ export function WeeklyPracticeSummary({
                 <span
                   className={`truncate font-mono text-[9px] leading-4 tracking-normal sm:text-[10px] sm:leading-5 ${day.hasPractice ? "text-[#c1d2c2]" : "text-zinc-500"}`}
                 >
-                  {day.sessionCount} ses.
+                   {day.sessionCount} {dashboard.session.slice(0, 3)}.
                 </span>
               </button>
             </li>

@@ -1,4 +1,5 @@
 import type { PracticeSkill, SessionRecord } from "../types/practice";
+import { createId } from "./create-id.ts";
 
 const PRACTICE_SKILLS: PracticeSkill[] = [
   "technique",
@@ -87,7 +88,7 @@ export function createManualPracticeRecord(
   }
 
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     title: input.title.trim() || "Práctica manual",
     startedAt: startedAt.toISOString(),
     durationSeconds,

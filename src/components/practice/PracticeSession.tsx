@@ -20,6 +20,7 @@ import {
 } from "@/stores/useActivePracticeSessionStore";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import type { PracticePhase, PracticeTimerResult } from "@/types/practice";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 function getSessionStatus(isCompleted: boolean, isRunning: boolean): string {
   if (isCompleted) return "Práctica finalizada";
@@ -28,6 +29,7 @@ function getSessionStatus(isCompleted: boolean, isRunning: boolean): string {
 }
 
 export function PracticeSession({ session }: { session: ActivePracticeSession }) {
+  const text = useI18nSection("practice");
   const { id: sessionId, name, phases } = session;
   const [isCompleted, setIsCompleted] = useState(false);
   const [pendingResult, setPendingResult] =
@@ -37,6 +39,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const addSession = usePracticeStore((state) => state.addSession);
   const clearActiveSession = useActivePracticeSessionStore(
     (state) => state.clearActiveSession,
+  );
+  const addAttachedResource = useActivePracticeSessionStore(
+    (state) => state.addAttachedResource,
   );
   const pathname = usePathname();
   const isPracticeRoute = pathname === "/practice";
@@ -151,7 +156,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
               id="next-practice-phase-title"
               className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8"
             >
-              Siguiente bloque
+               {text.nextPhase}
             </h2>
             {nextPhase ? (
               <div className="mt-4 border-t border-line pt-4">
@@ -167,12 +172,16 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
               </div>
             ) : (
               <p className="mt-4 text-sm text-muted">
-                Este es el último bloque de la sesión.
+                 {text.noNextPhase}
               </p>
             )}
           </section>
         )}
-        <PracticeMaterials phases={phases} />
+        <PracticeMaterials
+          phases={phases}
+          attachedResources={session.attachedResources}
+          onAttach={addAttachedResource}
+        />
         <PracticeAudioRecorder
           sessionName={name}
           sessionId={sessionId}

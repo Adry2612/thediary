@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/Field";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 interface PracticeExerciseEditorProps {
   exercises: string[];
@@ -14,6 +15,7 @@ export function PracticeExerciseEditor({
   exercises,
   onChange,
 }: PracticeExerciseEditorProps) {
+  const text = useI18nSection("practice");
   const [newExercise, setNewExercise] = useState("");
 
   function addExercise(event: FormEvent<HTMLFormElement>) {
@@ -27,7 +29,7 @@ export function PracticeExerciseEditor({
   return (
     <div>
       <p className="mb-2 text-xs uppercase tracking-[0.05em] text-muted">
-        Ejercicios
+        {text.exercises}
       </p>
       {exercises.length > 0 && (
         <ul className="mb-3 flex flex-wrap gap-2">
@@ -44,7 +46,7 @@ export function PracticeExerciseEditor({
                     exercises.filter((_, itemIndex) => itemIndex !== index),
                   )
                 }
-                aria-label={`Quitar ${exercise}`}
+                 aria-label={`${text.removeExercise} ${exercise}`}
                 className="text-muted hover:text-ink"
               >
                 ×
@@ -57,12 +59,12 @@ export function PracticeExerciseEditor({
         <TextField
           value={newExercise}
           onChange={(event) => setNewExercise(event.target.value)}
-          placeholder="p. ej. Sweep picking"
-          aria-label="Nuevo ejercicio"
+           placeholder={text.exercisePlaceholder}
+           aria-label={text.newExercise}
           className="flex-1"
         />
-        <Button type="submit" aria-label="Añadir ejercicio">
-          Añadir
+         <Button type="submit" aria-label={text.addExercise} size="field">
+           {text.addExercise}
         </Button>
       </form>
     </div>

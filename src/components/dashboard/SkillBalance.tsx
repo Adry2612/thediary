@@ -7,8 +7,10 @@ import {
   getSkillPercentages,
   type SkillTotals,
 } from "@/lib/dashboard-data";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 export function SkillBalance({ totals }: { totals: SkillTotals }) {
+  const dashboard = useI18nSection("dashboard");
   const totalMinutes = PRACTICE_SKILLS.reduce(
     (total, skill) => total + totals[skill],
     0,
@@ -23,10 +25,10 @@ export function SkillBalance({ totals }: { totals: SkillTotals }) {
       style={{ "--index": 1 } as CSSProperties}
     >
       <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-        Reparto del tiempo
+         {dashboard.skillDistribution}
       </p>
       <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-        Balance de habilidades
+         {dashboard.skillBalance}
       </h2>
 
       <div className="mt-8 flex flex-1 items-center justify-center">
@@ -34,7 +36,7 @@ export function SkillBalance({ totals }: { totals: SkillTotals }) {
           viewBox="0 0 120 120"
           className="size-44 -rotate-90"
           role="img"
-          aria-label="Distribución del tiempo de práctica por habilidad"
+           aria-label={dashboard.skillAria}
         >
           <circle
             cx="60"
@@ -69,7 +71,7 @@ export function SkillBalance({ totals }: { totals: SkillTotals }) {
           <span className="font-mono text-xs leading-6 tracking-normal text-zinc-100 sm:text-sm sm:leading-7">
             {formatPracticeDuration(totalMinutes)}
           </span>
-          <span className="mt-1 text-xs text-zinc-500">este mes</span>
+           <span className="mt-1 text-xs text-zinc-500">{dashboard.thisMonth}</span>
         </div>
       </div>
 

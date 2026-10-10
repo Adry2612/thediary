@@ -3,6 +3,7 @@
 import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
 import { adjustPracticeGoal } from "@/lib/practice-goals";
 import { usePracticeStore } from "@/stores/usePracticeStore";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 type GoalControl = {
   key: string;
@@ -18,6 +19,7 @@ type GoalControl = {
 };
 
 export function PracticeGoalsCard() {
+  const dashboard = useI18nSection("dashboard");
   const goals = usePracticeStore((state) => state.practiceGoals);
   const setPracticeGoals = usePracticeStore((state) => state.setPracticeGoals);
 
@@ -32,26 +34,26 @@ export function PracticeGoalsCard() {
   const goalControls: GoalControl[] = [
     {
       key: "daily",
-      label: "Objetivo diario",
+       label: dashboard.dailyGoal,
       value: goals.dailyMinutes,
       min: 5,
       max: 720,
       step: 5,
       unit: "min",
-      ariaLabel: "Objetivo diario de práctica en minutos",
+       ariaLabel: dashboard.dailyGoalAria,
       adjust: (direction) =>
         setDailyGoal(adjustPracticeGoal(goals.dailyMinutes, direction, 720)),
       onChange: setDailyGoal,
     },
     {
       key: "weekly",
-      label: "Días por semana",
+       label: dashboard.daysPerWeek,
       value: goals.weeklyDays,
       min: 1,
       max: 7,
       step: 1,
       unit: "días",
-      ariaLabel: "Objetivo semanal de días de práctica",
+       ariaLabel: dashboard.weeklyGoalDaysAria,
       adjust: (direction) =>
         setWeeklyGoal(adjustPracticeGoal(goals.weeklyDays, direction, 7, 1, 1)),
       onChange: setWeeklyGoal,
@@ -62,14 +64,13 @@ export function PracticeGoalsCard() {
     <section className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
       <div>
         <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
-          Objetivos
+           {dashboard.goals}
         </p>
         <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-          Tiempo de práctica
+           {dashboard.practiceTime}
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-zinc-500">
-          Ajusta tus metas aquí; el dashboard y el calendario usan estos mismos
-          valores.
+           {dashboard.goalsDescription}
         </p>
       </div>
 
@@ -87,7 +88,7 @@ export function PracticeGoalsCard() {
                 type="button"
                 onClick={() => goal.adjust(-1)}
                 disabled={goal.value <= goal.min}
-                aria-label={`Reducir ${goal.label.toLowerCase()}`}
+               aria-label={`${dashboard.reduce} ${goal.label.toLowerCase()}`}
                 className="flex size-11 shrink-0 items-center justify-center border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 −
@@ -106,14 +107,14 @@ export function PracticeGoalsCard() {
                 type="button"
                 onClick={() => goal.adjust(1)}
                 disabled={goal.value >= goal.max}
-                aria-label={`Aumentar ${goal.label.toLowerCase()}`}
+               aria-label={`${dashboard.increase} ${goal.label.toLowerCase()}`}
                 className="flex size-11 shrink-0 items-center justify-center border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 +
               </button>
             </div>
             <p className="mt-3 text-center text-xs text-zinc-600">
-              Pulsa la cifra para editar o usa la rueda para ajustar
+               {dashboard.editHint}
             </p>
           </div>
         ))}

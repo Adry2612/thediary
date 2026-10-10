@@ -1,5 +1,6 @@
 import type { SessionRecord } from "@/types/practice";
 import { formatPracticeDuration } from "@/lib/dashboard-data";
+import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 
 export type PracticeTooltipDay = {
   dateKey: string;
@@ -16,8 +17,8 @@ function parseDateKey(dateKey: string) {
   return new Date(year, month - 1, day);
 }
 
-function formatDate(dateKey: string) {
-  return new Intl.DateTimeFormat("es-ES", {
+function formatDate(dateKey: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -25,8 +26,8 @@ function formatDate(dateKey: string) {
   }).format(parseDateKey(dateKey));
 }
 
-function formatSessionTime(startedAt: string) {
-  return new Intl.DateTimeFormat("es-ES", {
+function formatSessionTime(startedAt: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(startedAt));
@@ -59,6 +60,8 @@ export function getPracticeTooltipPosition(
 }
 
 export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
+  const { locale } = useI18n();
+  const tooltip = useI18nSection("tooltip");
   return (
     <div
       id="practice-day-tooltip"
@@ -68,10 +71,10 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
     >
       <div className="min-w-0">
         <p className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-          Resumen de práctica
+           {tooltip.summary}
         </p>
         <h3 className="mt-1 font-sans text-lg font-semibold capitalize leading-tight text-zinc-100">
-          {formatDate(day.dateKey)}
+           {formatDate(day.dateKey, locale)}
         </h3>
       </div>
 
@@ -80,7 +83,7 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
           <div className="mt-4 flex items-center justify-between border-y border-zinc-800 py-3">
             <span className="text-sm text-zinc-400">
               {day.sessionCount}{" "}
-              {day.sessionCount === 1 ? "sesión" : "sesiones"}
+               {day.sessionCount === 1 ? tooltip.session : tooltip.sessions}
             </span>
             <span className="font-mono text-sm text-zinc-100">
               {formatPracticeDuration(day.totalMinutes)}
@@ -94,10 +97,10 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="min-w-0 truncate text-sm font-medium text-zinc-200">
-                    {session.title || "Sesión de práctica"}
+                     {session.title || tooltip.defaultTitle}
                   </p>
                   <span className="shrink-0 font-mono text-[10px] text-zinc-500">
-                    {formatSessionTime(session.startedAt)}
+                     {formatSessionTime(session.startedAt, locale)}
                   </span>
                 </div>
                 <p className="mt-1 font-mono text-xs text-zinc-500">
@@ -135,7 +138,7 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
         </>
       ) : (
         <p className="mt-4 border-t border-zinc-800 pt-3 text-sm text-zinc-500">
-          No hay sesiones registradas este día.
+           {tooltip.noSessions}
         </p>
       )}
     </div>

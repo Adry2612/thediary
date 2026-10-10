@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { PracticeAudioPlayer } from "@/components/practice/PracticeAudioPlayer";
 import { PRACTICE_SKILL_LABELS } from "@/lib/dashboard-data";
 import type { PracticeAudioRecording } from "@/lib/practice-library";
+import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 
 interface PracticeRecordingItemProps {
   recording: PracticeAudioRecording;
@@ -35,7 +36,9 @@ export function PracticeRecordingItem({
   onDelete,
 }: PracticeRecordingItemProps) {
   const audioUrl = useRecordingUrl(recording);
-  const date = new Date(recording.createdAt).toLocaleString("es-ES", {
+  const { locale } = useI18n();
+  const text = useI18nSection("recordings");
+  const date = new Date(recording.createdAt).toLocaleString(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   });
@@ -49,20 +52,20 @@ export function PracticeRecordingItem({
             {recording.sessionName} · {date}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {recording.phaseOrder ? `Bloque ${recording.phaseOrder} · ` : ""}
-            {recording.phaseName ?? "Bloque sin asociar"}
+             {recording.phaseOrder ? `${recording.phaseOrder} · ` : ""}
+             {recording.phaseName ?? text.unassignedBlock}
           </p>
           <p className="mt-1 text-xs text-muted">
             {recording.practiceSkill
               ? PRACTICE_SKILL_LABELS[recording.practiceSkill]
-              : "Tipo de práctica sin asociar"}
+               : text.unassignedType}
           </p>
         </div>
         <button
           type="button"
           onClick={() => onDelete(recording.id)}
-          aria-label={`Eliminar grabación ${recording.title}`}
-          title="Eliminar grabación"
+           aria-label={`${text.delete} ${recording.title}`}
+           title={text.delete}
           className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-red-300 transition hover:bg-red-400/10 hover:text-red-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-300"
         >
           <svg

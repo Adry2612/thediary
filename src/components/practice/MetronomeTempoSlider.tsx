@@ -7,6 +7,7 @@ import {
   METRONOME_SCALE_ZONE_COLORS,
 } from "@/lib/metronome-scale";
 import { MAX_BPM, MIN_BPM } from "@/hooks/useMetronome";
+import { useI18nSection } from "@/i18n/I18nProvider";
 
 const TICK_COUNT = 49;
 
@@ -18,6 +19,7 @@ export function MetronomeTempoSlider({
   onChange: (value: number) => void;
 }) {
   const tempoMarking = getTempoMarking(value);
+  const text = useI18nSection("metronome");
   const zone = getMetronomeScaleZone(
     (value - MIN_BPM) / (MAX_BPM - MIN_BPM),
   );
@@ -38,7 +40,7 @@ export function MetronomeTempoSlider({
         min={MIN_BPM}
         max={MAX_BPM}
         value={value}
-        ariaLabel="Tempo en BPM"
+         ariaLabel={text.bpmAria}
         ariaValueText={`${value} BPM, ${tempoMarking.name}`}
         onChange={onChange}
         renderVisuals={(progress) => (
@@ -70,9 +72,9 @@ export function MetronomeTempoSlider({
         )}
       />
       <div className="flex justify-between text-xs text-muted">
-        <span>Lento</span>
-        <span className="text-accent-green-fg">Medio</span>
-        <span>Rápido</span>
+         <span>{text.slow}</span>
+         <span className="text-accent-green-fg">{text.medium}</span>
+         <span>{text.fast}</span>
       </div>
     </div>
   );
