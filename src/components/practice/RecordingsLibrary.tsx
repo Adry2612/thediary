@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PracticeRecordingItem } from "@/components/practice/PracticeRecordingItem";
-import { RecordingsSkeleton } from "@/components/ui/Skeletons";
+import { RecordingsListSkeleton } from "@/components/ui/Skeletons";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/Field";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
@@ -18,6 +18,9 @@ import {
   listPracticeRecordings,
   type PracticeAudioRecording,
 } from "@/lib/practice-library";
+import { mergeRemoteCatalog } from "@/lib/cloud-sync/catalog";
+import { RECORDING_SAVED_EVENT } from "@/lib/practice-events";
+import { useCloudRecordingSync } from "@/hooks/useCloudRecordingSync";
 
 const INITIAL_FILTERS: PracticeRecordingFilters = {
   phaseOrder: "",
@@ -40,17 +43,25 @@ export function RecordingsLibrary() {
   const [filters, setFilters] =
     useState<PracticeRecordingFilters>(INITIAL_FILTERS);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCatalogLoaded, setIsCatalogLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const {
+    statuses: cloudStatuses,
+    isLoading: isLoadingProviders,
+    listRemoteRecordings,
+  } = useCloudRecordingSync();
+
+  const loadRecordings = useCallback(async (): Promise<PracticeAudioRecording[]> => {
+    const savedRecordings = await listPracticeRecordings();
+    setRecordings(savedRecordings);
+    setLoadError(null);
+    return savedRecordings;
+  }, []);
 
   useEffect(() => {
     let isActive = true;
-    void listPracticeRecordings()
-      .then((savedRecordings) => {
-        if (!isActive) return;
-        setRecordings(savedRecordings);
-        setLoadError(null);
-      })
+    void loadRecordings()
       .catch((error: unknown) => {
         if (!isActive) return;
         setLoadError(
@@ -66,7 +77,53 @@ export function RecordingsLibrary() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [loadRecordings]);
+
+  useEffect(() => {
+    function reload() {
+      void loadRecordings().catch(() => undefined);
+    }
+    function reloadWhenVisible() {
+      if (document.visibilityState === "visible") reload();
+    }
+
+    window.addEventListener(RECORDING_SAVED_EVENT, reload);
+    window.addEventListener("focus", reload);
+    document.addEventListener("visibilitychange", reloadWhenVisible);
+    return () => {
+      window.removeEventListener(RECORDING_SAVED_EVENT, reload);
+      window.removeEventListener("focus", reload);
+      document.removeEventListener("visibilitychange", reloadWhenVisible);
+    };
+  }, [loadRecordings]);
+
+  useEffect(() => {
+    const connectedProviders = cloudStatuses.filter((status) => status.connected);
+    if (connectedProviders.length === 0 || isLoading) return;
+    let active = true;
+    void Promise.all(
+      connectedProviders.map(async ({ provider }) => {
+        try {
+          return { provider, recordings: await listRemoteRecordings(provider) };
+        } catch {
+          return { provider, recordings: [] };
+        }
+      }),
+    ).then((catalogs) => {
+      if (!active) return;
+      setRecordings((current) =>
+        catalogs.reduce(
+          (merged, catalog) => mergeRemoteCatalog(merged, catalog.provider, catalog.recordings),
+          current,
+        ),
+      );
+    }).finally(() => {
+      if (active) setIsCatalogLoaded(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [cloudStatuses, isLoading, listRemoteRecordings]);
 
   const blockOptions = useMemo(
     () =>
@@ -120,9 +177,19 @@ export function RecordingsLibrary() {
     }
   }
 
-  if (isLoading) {
-    return <RecordingsSkeleton />;
+  function updateRecording(updatedRecording: PracticeAudioRecording) {
+    setRecordings((current) =>
+      current.map((recording) =>
+        recording.id === updatedRecording.id ? updatedRecording : recording,
+      ),
+    );
   }
+
+  // Solo esperamos a la nube si hay algún proveedor conectado; así el skeleton
+  // de la lista no bloquea toda la pantalla mientras llega el catálogo remoto.
+  const isCloudPending =
+    isLoadingProviders ||
+    (cloudStatuses.some((status) => status.connected) && !isCatalogLoaded);
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
@@ -137,6 +204,9 @@ export function RecordingsLibrary() {
         </h1>
         <p className="mt-3 max-w-2xl text-base text-muted">
           {text.description}
+        </p>
+        <p className="mt-3 max-w-2xl rounded-md border border-line bg-surface px-4 py-3 text-sm text-muted" role="note">
+          {text.cloudStorageNotice}
         </p>
       </header>
 
@@ -209,8 +279,17 @@ export function RecordingsLibrary() {
         </p>
       </section>
 
-      {filteredRecordings.length > 0 ? (
-        <div className="mt-8 space-y-10">
+      {isLoading ? (
+        <RecordingsListSkeleton label={text.loading} rows={3} />
+      ) : filteredRecordings.length > 0 ? (
+        <>
+          {isCloudPending && (
+            <RecordingsListSkeleton
+              label={text.loadingCloudRecordings}
+              rows={0}
+            />
+          )}
+          <div className="mt-8 space-y-10">
           {recordingGroups.map((group) => (
             <section
               key={group.dateKey || "unknown-date"}
@@ -238,12 +317,16 @@ export function RecordingsLibrary() {
                     onDelete={(recordingId) =>
                       void removeRecording(recordingId)
                     }
+                    onUpdate={updateRecording}
                   />
                 ))}
               </ul>
             </section>
           ))}
-        </div>
+          </div>
+        </>
+      ) : isCloudPending ? (
+        <RecordingsListSkeleton label={text.loadingCloudRecordings} rows={2} />
       ) : recordings.length > 0 ? (
         <section className="mt-8 border-y border-line py-8">
           <h2 className="text-lg font-semibold text-ink">

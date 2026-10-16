@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { TrashIcon } from "@/components/ui/icons";
 import { TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { PracticePhaseEditor } from "@/components/practice/PracticePhaseEditor";
@@ -22,12 +23,14 @@ import { createId } from "@/lib/create-id";
 interface PracticePlanBuilderProps {
   initialName?: string;
   initialPhases: PracticePhase[];
+  initialTemplateId?: string;
   onStart: (name: string, phases: PracticePhase[]) => void;
 }
 
 export function PracticePlanBuilder({
   initialName = "Mi sesión",
   initialPhases,
+  initialTemplateId,
   onStart,
 }: PracticePlanBuilderProps) {
   const text = useI18nSection("practice");
@@ -41,6 +44,23 @@ export function PracticePlanBuilder({
   );
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const appliedTemplateRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!initialTemplateId || appliedTemplateRef.current === initialTemplateId) {
+      return;
+    }
+    const template = templates.find(
+      (candidate) => candidate.id === initialTemplateId,
+    );
+    if (!template) return;
+
+    appliedTemplateRef.current = initialTemplateId;
+    setSelectedTemplateId(template.id);
+    setName(template.name);
+    setPhases(clonePracticePhases(template.phases));
+    setError(null);
+  }, [initialTemplateId, templates]);
 
   const updatePhase = useCallback(
     (phaseId: PracticePhase["id"], changes: Partial<PracticePhase>) => {
@@ -180,6 +200,7 @@ export function PracticePlanBuilder({
         <div className="flex flex-wrap gap-2">
           {selectedTemplateId && (
             <Button type="button" onClick={removeTemplate}>
+               <TrashIcon className="size-4" />
                {text.deleteTemplate}
             </Button>
           )}

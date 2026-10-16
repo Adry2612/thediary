@@ -14,7 +14,7 @@ const STORAGE_DELETE_BATCH_SIZE = 100;
 
 interface RecordingRow {
   id: string;
-  storage_path: string;
+  storage_path: string | null;
   title: string;
   session_name: string;
   session_id: string | null;
@@ -211,25 +211,14 @@ export async function saveCloudPracticeRecording(
   userId: string,
   recording: PracticeAudioRecording,
 ): Promise<void> {
-  if (!recording.blob) {
-    throw new Error("No se encontró el archivo de esta grabación.");
-  }
-
   const client = getSupabaseClient();
   if (!client) throw new Error("Supabase no está configurado.");
 
-  const storagePath = await uploadFile(
-    userId,
-    "recordings",
-    recording.id,
-    `${recording.id}.${getFileExtension(recording.id, recording.mimeType)}`,
-    recording.blob,
-  );
   const { error } = await client.from("practice_recordings").upsert(
     {
       id: recording.id,
       user_id: userId,
-      storage_path: storagePath,
+      storage_path: null,
       title: recording.title,
       session_name: recording.sessionName,
       session_id: recording.sessionId ?? null,
@@ -240,7 +229,10 @@ export async function saveCloudPracticeRecording(
       phase_name: recording.phaseName ?? null,
       practice_skill: recording.practiceSkill ?? null,
       created_at: recording.createdAt,
-      duration_seconds: recording.durationSeconds ?? null,
+      duration_seconds:
+        recording.durationSeconds === undefined
+          ? null
+          : Math.max(0, Math.round(recording.durationSeconds)),
       mime_type: recording.mimeType,
     },
     { onConflict: "id" },
@@ -261,8 +253,7 @@ export async function listCloudPracticeRecordings(
     .order("created_at", { ascending: false });
   if (error) throwSupabaseError("No se pudieron cargar las grabaciones", error);
 
-  return Promise.all(
-    ((data ?? []) as unknown as RecordingRow[]).map(async (row) => ({
+  return ((data ?? []) as unknown as RecordingRow[]).map((row) => ({
       id: row.id,
       title: row.title,
       sessionName: row.session_name,
@@ -275,9 +266,7 @@ export async function listCloudPracticeRecordings(
       createdAt: row.created_at,
       durationSeconds: row.duration_seconds ?? undefined,
       mimeType: row.mime_type,
-      playbackUrl: await getSignedUrl(row.storage_path),
-    })),
-  );
+    }));
 }
 
 export async function deleteCloudPracticeRecording(
@@ -287,30 +276,13 @@ export async function deleteCloudPracticeRecording(
   const client = getSupabaseClient();
   if (!client) throw new Error("Supabase no está configurado.");
 
-  const { data, error } = await client
-    .from("practice_recordings")
-    .select("storage_path")
-    .eq("user_id", userId)
-    .eq("id", recordingId)
-    .maybeSingle();
-  if (error) throwSupabaseError("No se pudo localizar la grabación", error);
-  if (!data) return;
-
-  const row = data as unknown as Pick<RecordingRow, "storage_path">;
-  const { error: storageError } = await client.storage
-    .from(STORAGE_BUCKET)
-    .remove([row.storage_path]);
-  if (storageError) {
-    throwSupabaseError("No se pudo borrar el archivo de audio", storageError);
-  }
-
   const { error: rowError } = await client
     .from("practice_recordings")
     .delete()
     .eq("user_id", userId)
     .eq("id", recordingId);
   if (rowError) {
-    throwSupabaseError("Se borró el audio, pero no su registro", rowError);
+    throwSupabaseError("No se pudo borrar el registro de la grabación", rowError);
   }
 }
 

@@ -37,6 +37,8 @@ type PracticeStoreState = {
   hasHydrated: boolean;
   persistenceError: string | null;
   addSession: (session: SessionRecord) => void;
+  updateSession: (session: SessionRecord) => void;
+  deleteSession: (sessionId: string) => void;
   saveTemplate: (template: PracticeTemplate) => void;
   deleteTemplate: (templateId: string) => void;
   setRoutineForWeekday: (
@@ -63,6 +65,18 @@ export const usePracticeStore = create<PracticeStoreState>()(
       addSession: (session) =>
         set((state) => ({
           history: [...state.history, session],
+          persistenceError: null,
+        })),
+      updateSession: (session) =>
+        set((state) => ({
+          history: state.history.map((item) =>
+            item.id === session.id ? session : item,
+          ),
+          persistenceError: null,
+        })),
+      deleteSession: (sessionId) =>
+        set((state) => ({
+          history: state.history.filter((item) => item.id !== sessionId),
           persistenceError: null,
         })),
       saveTemplate: (template) =>

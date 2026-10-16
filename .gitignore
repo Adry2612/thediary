@@ -22,6 +22,9 @@ pnpm-debug.log*
 # local env files
 .env*
 
+# server-side app configuration (OAuth client credentials)
+/.data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

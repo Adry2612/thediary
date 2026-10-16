@@ -7,8 +7,12 @@ import { useRouter } from 'next/navigation';
 import { useAppData } from '@/components/providers/AppDataProvider';
 import { useTutorial } from '@/components/tutorial/TutorialProvider';
 import { SelectField } from '@/components/ui/SelectField';
+import { CloudSyncProviderIcon } from '@/components/ui/icons';
 import { useI18n, useI18nSection } from '@/i18n/I18nProvider';
 import { type Locale } from '@/i18n/translations';
+import { useCloudRecordingSync } from '@/hooks/useCloudRecordingSync';
+import { useAutoSyncPreference } from '@/hooks/useAutoSyncPreference';
+import type { CloudSyncProvider } from '@/lib/cloud-sync/types';
 
 type DialogName = 'password' | 'delete' | null;
 
@@ -21,10 +25,23 @@ export function SettingsView() {
   const settings = useI18nSection('settings');
   const { user, signOut, updatePassword, deleteAllPracticeData } = useAppData();
   const { openTutorial } = useTutorial();
+  const {
+    statuses: cloudStatuses,
+    isLoading: isLoadingCloud,
+    connect: connectCloud,
+    disconnect: disconnectCloud,
+  } = useCloudRecordingSync();
+  const { enabled: autoSyncEnabled, setEnabled: setAutoSyncEnabled } =
+    useAutoSyncPreference();
   const router = useRouter();
   const [dialog, setDialog] = useState<DialogName>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
+  const [cloudError, setCloudError] = useState<string | null>(null);
+  const [workingProvider, setWorkingProvider] =
+    useState<CloudSyncProvider | null>(null);
+  const [connectedProvider, setConnectedProvider] =
+    useState<CloudSyncProvider | null>(null);
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -33,9 +50,40 @@ export function SettingsView() {
       await signOut();
       router.replace('/account');
     } catch (error) {
-       setSignOutError(describeError(error, settings.signOut));
+      setSignOutError(describeError(error, settings.signOut));
     } finally {
       setIsSigningOut(false);
+    }
+  }
+
+  async function handleDisconnectCloud(provider: CloudSyncProvider) {
+    setWorkingProvider(provider);
+    setCloudError(null);
+    try {
+      await disconnectCloud(provider);
+    } catch (error) {
+      setCloudError(
+        error instanceof Error ? error.message : settings.providerUnavailable,
+      );
+    } finally {
+      setWorkingProvider(null);
+    }
+  }
+
+  async function handleConnectCloud(provider: CloudSyncProvider) {
+    setWorkingProvider(provider);
+    setCloudError(null);
+    try {
+      await connectCloud(provider);
+      setConnectedProvider(provider);
+    } catch (error) {
+      const label =
+        provider === 'google-drive' ? settings.googleDrive : settings.onedrive;
+      setCloudError(
+        `${settings.connectionFailed} ${label}. ${error instanceof Error ? error.message : ''}`,
+      );
+    } finally {
+      setWorkingProvider(null);
     }
   }
 
@@ -66,20 +114,17 @@ export function SettingsView() {
                 id='settings-account-title'
                 className='mt-2 text-lg font-medium text-ink'
               >
-                 {user?.email ?? settings.guest}
+                {user?.email ?? settings.guest}
               </h2>
               <p className='mt-2 max-w-lg text-sm leading-6 text-muted'>
-                {user ?
-                   settings.accountSaved
-                : settings.accountPrompt
-                }
+                {user ? settings.accountSaved : settings.accountPrompt}
               </p>
             </div>
             <Link
               href='/account'
               className='inline-flex min-h-11 shrink-0 items-center justify-center rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5'
             >
-               {user ? settings.accountSync : settings.signIn}
+              {user ? settings.accountSync : settings.signIn}
             </Link>
           </div>
         </section>
@@ -88,55 +133,170 @@ export function SettingsView() {
           aria-labelledby='settings-language-title'
           className='rounded-xl border border-line bg-surface p-5 sm:p-6'
         >
-             <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-             {settings.preferences}
+          <p className='text-xs uppercase tracking-[0.08em] text-muted'>
+            {settings.preferences}
           </p>
           <h2
             id='settings-language-title'
             className='mt-2 text-lg font-medium text-ink'
           >
-             {settings.language}
+            {settings.language}
           </h2>
           <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <p className='text-sm leading-6 text-muted'>
-               {settings.languageDescription}
+              {settings.languageDescription}
             </p>
-             <SelectField
-               value={locale}
-               onChange={(value) => setLocale(value as Locale)}
-               ariaLabel={settings.language}
-               className='w-full sm:w-44'
-               options={[
-                 { value: 'es', label: settings.spanish },
-                 { value: 'en', label: settings.english },
-               ]}
-             />
+            <SelectField
+              value={locale}
+              onChange={(value) => setLocale(value as Locale)}
+              ariaLabel={settings.language}
+              className='w-full sm:w-44'
+              options={[
+                { value: 'es', label: settings.spanish },
+                { value: 'en', label: settings.english },
+              ]}
+            />
           </div>
+        </section>
+
+        <section
+          aria-labelledby='settings-cloud-sync-title'
+          className='rounded-xl border border-line bg-surface p-5 sm:p-6'
+        >
+          <p className='text-xs uppercase tracking-[0.08em] text-muted'>
+            {settings.preferences}
+          </p>
+          <h2
+            id='settings-cloud-sync-title'
+            className='mt-2 text-lg font-medium text-ink'
+          >
+            {settings.cloudSyncTitle}
+          </h2>
+          <p className='mt-2 text-sm leading-6 text-muted'>
+            {settings.cloudSyncDescription}
+          </p>
+          <div className='mt-4 grid gap-3 sm:grid-cols-2'>
+            {cloudStatuses.map((status) => {
+              const label =
+                status.provider === 'google-drive' ?
+                  settings.googleDrive
+                : settings.onedrive;
+              return (
+                <div
+                  key={status.provider}
+                  className='rounded-md border border-line p-4'
+                >
+                  <p className='flex items-center gap-2 text-sm font-medium text-ink'>
+                    <CloudSyncProviderIcon
+                      provider={status.provider}
+                      className='size-5'
+                    />
+                    {label}
+                  </p>
+                  <p className='mt-1 text-xs text-muted'>
+                    {!status.enabled ?
+                      settings.providerUnavailable
+                    : status.connected ?
+                      `${settings.connected}${status.accountLabel ? ` · ${status.accountLabel}` : ''}`
+                    : settings.syncNotConnected}
+                  </p>
+                  <button
+                    type='button'
+                    disabled={isLoadingCloud || workingProvider !== null}
+                    onClick={() => {
+                      if (!status.enabled) {
+                        const label =
+                          status.provider === 'google-drive' ?
+                            settings.googleDrive
+                          : settings.onedrive;
+                        setCloudError(
+                          `${settings.connectionFailed} ${label}: ${settings.providerUnavailable}`,
+                        );
+                        return;
+                      }
+                      if (status.connected)
+                        void handleDisconnectCloud(status.provider);
+                      else void handleConnectCloud(status.provider);
+                    }}
+                    className={`mt-3 inline-flex min-h-10 items-center gap-2 rounded-md border px-3 text-sm transition hover:bg-white/5 disabled:opacity-50 ${
+                      (
+                        connectedProvider === status.provider &&
+                        status.connected
+                      ) ?
+                        'border-accent-green-fg/50 bg-accent-green-bg/30 text-accent-green-fg'
+                      : 'border-line text-ink'
+                    }`}
+                  >
+                    {connectedProvider === status.provider && status.connected ?
+                      settings.connectionSuccess
+                    : status.connected ?
+                      settings.disconnect
+                    : settings.connect}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <div className='mt-4 flex flex-col gap-3 rounded-md border border-line p-4 sm:flex-row sm:items-center sm:justify-between'>
+            <div>
+              <p className='text-sm font-medium text-ink'>
+                {settings.cloudAutoSyncTitle}
+              </p>
+              <p className='mt-1 max-w-lg text-xs leading-5 text-muted'>
+                {settings.cloudAutoSyncDescription}
+              </p>
+            </div>
+            <button
+              type='button'
+              aria-pressed={autoSyncEnabled}
+              onClick={() => setAutoSyncEnabled(!autoSyncEnabled)}
+              className={`mt-3 min-h-10 shrink-0 rounded-md border px-3 text-sm transition hover:bg-white/5 sm:mt-0 ${
+                autoSyncEnabled ?
+                  'border-accent-green-fg/50 bg-accent-green-bg/30 text-accent-green-fg'
+                : 'border-line text-ink'
+              }`}
+            >
+              {autoSyncEnabled ?
+                settings.cloudAutoSyncToggleOn
+              : settings.cloudAutoSyncToggleOff}
+            </button>
+          </div>
+          <p className='mt-3 text-xs text-muted'>
+            {settings.remoteFilesRemain}
+          </p>
+          {cloudError && (
+            <p
+              className='mt-3 text-sm text-accent-red-fg'
+              role='alert'
+            >
+              {cloudError}
+            </p>
+          )}
         </section>
 
         <section
           aria-labelledby='settings-tutorial-title'
           className='rounded-xl border border-line bg-surface p-5 sm:p-6'
         >
-             <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-             {settings.help}
+          <p className='text-xs uppercase tracking-[0.08em] text-muted'>
+            {settings.help}
           </p>
           <h2
             id='settings-tutorial-title'
             className='mt-2 text-lg font-medium text-ink'
           >
-             {settings.tutorialTitle}
+            {settings.tutorialTitle}
           </h2>
           <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <p className='text-sm leading-6 text-muted'>
-               {settings.tutorialDescription}
+              {settings.tutorialDescription}
             </p>
             <button
               type='button'
               onClick={openTutorial}
               className='min-h-11 shrink-0 rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5'
             >
-               {settings.viewTutorial}
+              {settings.viewTutorial}
             </button>
           </div>
         </section>
@@ -148,24 +308,24 @@ export function SettingsView() {
               className='rounded-xl border border-line bg-surface p-5 sm:p-6'
             >
               <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-                 {settings.security}
+                {settings.security}
               </p>
               <h2
                 id='settings-security-title'
                 className='mt-2 text-lg font-medium text-ink'
               >
-                 {settings.password}
+                {settings.password}
               </h2>
               <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                 <p className='text-sm leading-6 text-muted'>
-                   {settings.passwordDescription}
+                  {settings.passwordDescription}
                 </p>
                 <button
                   type='button'
                   onClick={() => setDialog('password')}
                   className='min-h-11 shrink-0 rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5'
                 >
-                   {settings.changePassword}
+                  {settings.changePassword}
                 </button>
               </div>
             </section>
@@ -175,17 +335,17 @@ export function SettingsView() {
               className='rounded-xl border border-line bg-surface p-5 sm:p-6'
             >
               <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-                 {settings.session}
+                {settings.session}
               </p>
               <h2
                 id='settings-session-title'
                 className='mt-2 text-lg font-medium text-ink'
               >
-                 {settings.signOut}
+                {settings.signOut}
               </h2>
               <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
                 <p className='text-sm leading-6 text-muted'>
-                   {settings.signOutDescription}
+                  {settings.signOutDescription}
                 </p>
                 <button
                   type='button'
@@ -193,7 +353,7 @@ export function SettingsView() {
                   onClick={() => void handleSignOut()}
                   className='min-h-11 shrink-0 rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5 disabled:opacity-50'
                 >
-                   {isSigningOut ? `${settings.signOut}…` : settings.signOut}
+                  {isSigningOut ? `${settings.signOut}…` : settings.signOut}
                 </button>
               </div>
               {signOutError && (
@@ -213,17 +373,17 @@ export function SettingsView() {
           className='rounded-xl border border-accent-red-fg/50 bg-accent-red-bg p-5 sm:p-6'
         >
           <p className='text-xs uppercase tracking-[0.08em] text-accent-red-fg'>
-             {settings.data}
+            {settings.data}
           </p>
           <h2
             id='settings-data-title'
             className='mt-2 text-lg font-medium text-accent-red-fg'
           >
-             {settings.deleteAll}
+            {settings.deleteAll}
           </h2>
           <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <p className='max-w-lg text-sm leading-6 text-muted'>
-               {settings.deleteDescription}
+              {settings.deleteDescription}
             </p>
             <button
               type='button'
@@ -231,7 +391,7 @@ export function SettingsView() {
               style={{ backgroundColor: 'var(--color-accent-red-button)' }}
               className='min-h-11 shrink-0 rounded-md px-4 text-sm font-medium text-white hover:opacity-90 focus-visible:outline-offset-2 focus-visible:outline-accent-red-fg'
             >
-               {settings.deleteData}
+              {settings.deleteData}
             </button>
           </div>
         </section>
@@ -241,17 +401,17 @@ export function SettingsView() {
           className='rounded-xl border border-[#FFDD00]/35 bg-surface p-5 sm:p-6'
         >
           <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-             {settings.support}
+            {settings.support}
           </p>
           <h2
             id='settings-support-title'
             className='mt-2 text-lg font-medium text-ink'
           >
-             {settings.supportTitle}
+            {settings.supportTitle}
           </h2>
           <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <p className='max-w-xl text-sm leading-6 text-muted'>
-               {settings.supportDescription}
+              {settings.supportDescription}
             </p>
             <button
               type='button'
@@ -280,14 +440,14 @@ export function SettingsView() {
                   strokeWidth='1.8'
                 />
               </svg>
-               {settings.supportButton}
+              {settings.supportButton}
             </button>
           </div>
           <p
             id='settings-support-status'
             className='mt-3 text-xs text-muted'
           >
-             {settings.supportStatus}
+            {settings.supportStatus}
           </p>
         </section>
       </div>

@@ -183,3 +183,46 @@ export function groupPracticeRecordingsByDate(
     return order === "oldest" ? comparison : -comparison;
   });
 }
+
+export interface AssociatedDayRecordings {
+  bySession: Map<string, PracticeAudioRecording[]>;
+  unlinked: PracticeAudioRecording[];
+}
+
+/**
+ * Asocia las grabaciones de un día con las sesiones guardadas de ese día.
+ *
+ * Además del emparejamiento exacto por `sessionId` (o por título y fecha en
+ * datos antiguos), nunca se descarta una grabación del día: si sobra y el día
+ * tiene una sola sesión se le asigna, y si no aparece en una sección aparte.
+ * Así una grabación huérfana (sesión descartada, id cambiado o datos previos)
+ * sigue siendo visible en el detalle del día.
+ */
+export function associateDayRecordings(
+  recordings: PracticeAudioRecording[],
+  sessions: PracticeRecordingSession[],
+  dateKey: string,
+): AssociatedDayRecordings {
+  const bySession = groupPracticeRecordingsBySession(recordings, sessions);
+  const linkedIds = new Set<string>();
+  for (const items of bySession.values()) {
+    for (const item of items) linkedIds.add(item.id);
+  }
+
+  const unlinked = recordings.filter(
+    (recording) =>
+      !linkedIds.has(recording.id) &&
+      getPracticeRecordingDateKey(recording) === dateKey,
+  );
+
+  const onlySession = sessions.length === 1 ? sessions[0] : null;
+  if (onlySession && unlinked.length > 0) {
+    bySession.set(onlySession.id, [
+      ...(bySession.get(onlySession.id) ?? []),
+      ...unlinked,
+    ]);
+    return { bySession, unlinked: [] };
+  }
+
+  return { bySession, unlinked };
+}
