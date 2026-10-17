@@ -10,7 +10,8 @@ import { getPracticeFileKind } from '@/lib/practice-templates';
 import { savePracticeAsset } from '@/lib/practice-library';
 import type { PracticeAsset } from '@/lib/practice-library';
 import { saveCloudPracticeAsset } from '@/lib/supabase/practice-files';
-import { createRepertoireItem } from '@/lib/repertoire-item';
+import { createRepertoireItem, REPERTOIRE_DIFFICULTIES } from '@/lib/repertoire-item';
+import { getDifficultyLabel } from '@/components/repertoire/difficulty-labels';
 import { emptyChordChart, normalizeChordChart } from '@/lib/repertoire-chord-chart';
 import { normalizeTab } from '@/lib/repertoire-tab';
 import { parseTuningNotes } from '@/lib/chords';
@@ -19,6 +20,7 @@ import type {
   RepertoireItem,
   RepertoireItemKind,
   GuitarType,
+  RepertoireDifficulty,
 } from '@/types/practice';
 import { useAppData } from '@/components/providers/AppDataProvider';
 import { PracticeResourceEditor } from '@/components/practice/PracticeResourceEditor';
@@ -66,6 +68,7 @@ export function RepertoireSongForm({
   const [customTuning, setCustomTuning] = useState('');
   const [capo, setCapo] = useState('');
   const [guitarType, setGuitarType] = useState<GuitarType | ''>('');
+  const [difficulty, setDifficulty] = useState<RepertoireDifficulty | ''>('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [spotifyUrl, setSpotifyUrl] = useState('');
   const [isFutureLearn, setIsFutureLearn] = useState(false);
@@ -171,6 +174,7 @@ export function RepertoireSongForm({
           tuning: finalTuning || undefined,
           capo: capoNum,
           guitarType: guitarType || undefined,
+          difficulty: difficulty || undefined,
           youtubeUrl: youtubeUrl.trim() || undefined,
           spotifyUrl: spotifyUrl.trim() || undefined,
           isFutureLearn: isFutureLearn || undefined,
@@ -327,6 +331,25 @@ export function RepertoireSongForm({
                   { value: '', label: text.unspecified },
                   { value: 'electric', label: text.electric },
                   { value: 'acoustic', label: text.acoustic },
+                ]}
+              />
+            </label>
+
+            <label className='block text-xs text-muted'>
+              {text.difficulty}
+              <SelectField
+                className='mt-1'
+                value={difficulty}
+                ariaLabel={text.difficulty}
+                onChange={(value) =>
+                  setDifficulty(value as RepertoireDifficulty | '')
+                }
+                options={[
+                  { value: '', label: text.difficultyNone },
+                  ...REPERTOIRE_DIFFICULTIES.map((value) => ({
+                    value,
+                    label: getDifficultyLabel(text, value),
+                  })),
                 ]}
               />
             </label>

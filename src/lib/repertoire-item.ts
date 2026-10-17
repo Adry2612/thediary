@@ -1,4 +1,27 @@
-import type { RepertoireItem, RepertoireItemKind, GuitarType } from "../types/practice";
+import type { RepertoireItem, RepertoireItemKind, GuitarType, RepertoireDifficulty } from "../types/practice";
+
+/** Dificultades admitidas, de la más suave a la más exigente. */
+export const REPERTOIRE_DIFFICULTIES: RepertoireDifficulty[] = [
+  "beginner",
+  "intermediate",
+  "advanced",
+];
+
+export function isRepertoireDifficulty(
+  value: unknown,
+): value is RepertoireDifficulty {
+  return (
+    typeof value === "string" &&
+    REPERTOIRE_DIFFICULTIES.some((difficulty) => difficulty === value)
+  );
+}
+
+/** Devuelve la dificultad solo si es una de las admitidas. */
+export function normalizeRepertoireDifficulty(
+  value: unknown,
+): RepertoireDifficulty | undefined {
+  return isRepertoireDifficulty(value) ? value : undefined;
+}
 
 interface CreateRepertoireItemInput {
   id: string;
@@ -11,6 +34,7 @@ interface CreateRepertoireItemInput {
   tuning?: string;
   capo?: number;
   guitarType?: GuitarType;
+  difficulty?: RepertoireDifficulty;
   youtubeUrl?: string;
   spotifyUrl?: string;
   isFutureLearn?: boolean;
@@ -30,6 +54,7 @@ export function createRepertoireItem({
   tuning,
   capo,
   guitarType,
+  difficulty,
   youtubeUrl,
   spotifyUrl,
   isFutureLearn,
@@ -59,6 +84,7 @@ export function createRepertoireItem({
     ...(tuning?.trim() ? { tuning: tuning.trim() } : {}),
     ...(capo !== undefined && capo > 0 && capo <= 12 ? { capo } : {}),
     ...(guitarType ? { guitarType } : {}),
+    ...(difficulty ? { difficulty } : {}),
     ...(youtubeUrl?.trim() ? { youtubeUrl: youtubeUrl.trim() } : {}),
     ...(spotifyUrl?.trim() ? { spotifyUrl: spotifyUrl.trim() } : {}),
     ...(isFutureLearn ? { isFutureLearn: true } : {}),

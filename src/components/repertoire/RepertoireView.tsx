@@ -8,6 +8,7 @@ import { TextField } from '@/components/ui/Field';
 import { PlusIcon } from '@/components/ui/icons';
 import { formatPracticeDuration } from '@/lib/dashboard-data';
 import {
+  getRepertoireItemPracticeStats,
   getRepertoireOverview,
   getRepertoirePracticeStats,
 } from '@/lib/repertoire-analytics';
@@ -116,6 +117,10 @@ export function RepertoireView() {
     () => getRepertoirePracticeStats(history),
     [history],
   );
+  const itemPracticeStats = useMemo(
+    () => getRepertoireItemPracticeStats(history),
+    [history],
+  );
   const visibleItems = useMemo(
     () =>
       getFilteredRepertoireItems(
@@ -128,22 +133,22 @@ export function RepertoireView() {
           guitarType: guitarTypeFilter,
           futureLearn: futureLearnFilter,
         },
-        practiceStats,
+        itemPracticeStats,
       ),
     [
       filter,
-      guitarTypeFilter,
       futureLearnFilter,
+      guitarTypeFilter,
+      itemPracticeStats,
       items,
-      practiceStats,
       progressFilter,
       searchQuery,
       sortOrder,
     ],
   );
   const overview = useMemo(
-    () => getRepertoireOverview(items, practiceStats),
-    [items, practiceStats],
+    () => getRepertoireOverview(items, itemPracticeStats),
+    [items, itemPracticeStats],
   );
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
@@ -368,6 +373,8 @@ export function RepertoireView() {
                 <RepertoireItemCard
                   item={item}
                   practiceStats={practiceStats.get(item.id)}
+                  itemPractice={itemPracticeStats.get(item.id)}
+                  showKind={filter === 'all'}
                   onSave={saveRepertoireItem}
                   onDelete={deleteRepertoireItem}
                   onOpen={(selectedItem) =>

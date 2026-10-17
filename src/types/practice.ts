@@ -23,6 +23,9 @@ export type RepertoireItemKind = "song" | "lick";
 
 export type GuitarType = "electric" | "acoustic";
 
+/** Dificultad con la que se estudia un elemento del repertorio. */
+export type RepertoireDifficulty = "beginner" | "intermediate" | "advanced";
+
 /** Forma de un acorde: un traste por cuerda, de la 6ª (grave) a la 1ª (aguda). */
 export interface ChordShape {
   frets: (number | null)[];
@@ -145,6 +148,8 @@ export interface RepertoireItem {
   capo?: number;
   /** Tipo de guitarra para filtrado */
   guitarType?: GuitarType;
+  /** Dificultad para estudiarla (opcional). */
+  difficulty?: RepertoireDifficulty;
   /** Enlace opcional de YouTube */
   youtubeUrl?: string;
   /** Enlace opcional de Spotify */

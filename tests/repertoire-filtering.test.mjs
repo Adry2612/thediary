@@ -91,8 +91,8 @@ test("combines kind and learning-status filters", () => {
 
 test("sorts by title, artist, and total linked practice time", () => {
   const practiceStats = new Map([
-    ["song-1", new Map([["bridge", { practiceSeconds: 1200, sessionCount: 2 }]])],
-    ["song-2", new Map([["solo", { practiceSeconds: 2400, sessionCount: 3 }]])],
+    ["song-1", { practiceSeconds: 1200, sessionCount: 2 }],
+    ["song-2", { practiceSeconds: 2400, sessionCount: 3 }],
   ]);
   const byTitle = getFilteredRepertoireItems(
     items,

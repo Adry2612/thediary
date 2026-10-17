@@ -8,7 +8,12 @@ import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Field';
 import { SelectField } from '@/components/ui/SelectField';
 import { formatPracticeDuration } from '@/lib/dashboard-data';
-import type { RepertoirePartPracticeStats } from '@/lib/repertoire-analytics';
+import type {
+  RepertoireItemPracticeStats,
+  RepertoirePartPracticeStats,
+} from '@/lib/repertoire-analytics';
+import { REPERTOIRE_DIFFICULTIES } from '@/lib/repertoire-item';
+import { getDifficultyLabel } from '@/components/repertoire/difficulty-labels';
 import {
   createRepertoirePart,
   parseRepertoireBpm,
@@ -18,6 +23,7 @@ import type {
   PracticePhase,
   RepertoireItem,
   GuitarType,
+  RepertoireDifficulty,
 } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { createId as createIdentifier } from '@/lib/create-id';
@@ -77,6 +83,8 @@ function DeleteIcon() {
 export function RepertoireItemCard({
   item,
   practiceStats,
+  itemPractice,
+  showKind = true,
   onSave,
   onDelete,
   detail = false,
@@ -84,6 +92,8 @@ export function RepertoireItemCard({
 }: {
   item: RepertoireItem;
   practiceStats: Map<string, RepertoirePartPracticeStats> | undefined;
+  itemPractice?: RepertoireItemPracticeStats;
+  showKind?: boolean;
   onSave: (item: RepertoireItem) => void;
   onDelete: (itemId: string) => void;
   detail?: boolean;
@@ -109,6 +119,9 @@ export function RepertoireItemCard({
   const [guitarType, setGuitarType] = useState<GuitarType | ''>(
     item.guitarType ?? '',
   );
+  const [difficulty, setDifficulty] = useState<RepertoireDifficulty | ''>(
+    item.difficulty ?? '',
+  );
   const [youtubeUrl, setYoutubeUrl] = useState(item.youtubeUrl ?? '');
   const [spotifyUrl, setSpotifyUrl] = useState(item.spotifyUrl ?? '');
   const [isFutureLearn, setIsFutureLearn] = useState(
@@ -124,6 +137,7 @@ export function RepertoireItemCard({
     setTuning(item.tuning ?? '');
     setCapo(item.capo?.toString() ?? '');
     setGuitarType(item.guitarType ?? '');
+    setDifficulty(item.difficulty ?? '');
     setYoutubeUrl(item.youtubeUrl ?? '');
     setSpotifyUrl(item.spotifyUrl ?? '');
     setIsFutureLearn(item.isFutureLearn ?? false);
@@ -147,10 +161,29 @@ export function RepertoireItemCard({
     });
   }
 
-  function saveExtraConfig() {
+  /**
+   * Guarda la configuración extra. Los valores que llegan por `overrides` son
+   * los que el usuario acaba de elegir: leerlos del estado daría el valor
+   * anterior, porque React no ha vuelto a renderizar todavía.
+   */
+  function saveExtraConfig(
+    overrides: Partial<{
+      tuning: string;
+      customTuning: string;
+      capo: string;
+      guitarType: GuitarType | '';
+      difficulty: RepertoireDifficulty | '';
+    }> = {},
+  ) {
+    const nextTuning = overrides.tuning ?? tuning;
+    const nextCustomTuning = overrides.customTuning ?? customTuning;
+    const nextCapo = overrides.capo ?? capo;
+    const nextGuitarType = overrides.guitarType ?? guitarType;
+    const nextDifficulty = overrides.difficulty ?? difficulty;
+
     const finalTuning =
-      tuning === 'Otra...' ? customTuning.trim() : tuning.trim();
-    const capoNum = capo.trim() ? Number(capo) : undefined;
+      nextTuning === 'Otra...' ? nextCustomTuning.trim() : nextTuning.trim();
+    const capoNum = nextCapo.trim() ? Number(nextCapo) : undefined;
 
     if (
       capoNum !== undefined &&
@@ -166,8 +199,10 @@ export function RepertoireItemCard({
     if (finalTuning !== (item.tuning ?? ''))
       updates.tuning = finalTuning || undefined;
     if (capoNum !== item.capo) updates.capo = capoNum;
-    if (guitarType !== (item.guitarType ?? ''))
-      updates.guitarType = guitarType || undefined;
+    if (nextGuitarType !== (item.guitarType ?? ''))
+      updates.guitarType = nextGuitarType || undefined;
+    if (nextDifficulty !== (item.difficulty ?? ''))
+      updates.difficulty = nextDifficulty || undefined;
     if (youtubeUrl.trim() !== (item.youtubeUrl ?? ''))
       updates.youtubeUrl = youtubeUrl.trim() || undefined;
     if (spotifyUrl.trim() !== (item.spotifyUrl ?? ''))
@@ -211,12 +246,35 @@ export function RepertoireItemCard({
         },
       ]
     : [];
-  const totalSeconds = item.parts.reduce(
-    (total, part) =>
-      total + (practiceStats?.get(part.id)?.practiceSeconds ?? 0),
-    0,
-  );
+  // El tiempo del elemento suma toda fase vinculada a él, con parte o sin ella.
+  const totalSeconds = itemPractice?.practiceSeconds ?? 0;
   const learnedParts = item.parts.filter((part) => part.learned).length;
+  const hasArtist = item.kind === 'song' && (detail || Boolean(item.artist));
+  const artistNode =
+    detail ?
+      <span
+        contentEditable
+        suppressContentEditableWarning
+        role='textbox'
+        aria-label={text.artist}
+        aria-placeholder={text.artistSort}
+        spellCheck={false}
+        onClick={(event) => event.stopPropagation()}
+        onInput={(event) =>
+          setArtist(event.currentTarget.textContent ?? '')
+        }
+        onBlur={saveDetails}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            event.currentTarget.blur();
+          }
+        }}
+        className={`max-w-40 truncate outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 ${artist ? 'text-muted' : 'text-muted/60'}`}
+      >
+        {artist}
+      </span>
+    : <span className='max-w-40 truncate'>{item.artist}</span>;
 
   return (
     <article className='enter rounded-xl border border-line bg-surface'>
@@ -265,39 +323,28 @@ export function RepertoireItemCard({
               </span>
             }
             <span className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted'>
-              <span className='uppercase tracking-[0.08em]'>
-                {item.kind === 'song' ? text.songs : text.licks}
-              </span>
-              {item.kind === 'song' && (
+              {showKind && (
+                <span className='uppercase tracking-[0.08em]'>
+                  {item.kind === 'song' ? text.song : text.lick}
+                </span>
+              )}
+              {hasArtist && (
                 <>
-                  <span aria-hidden='true'>·</span>
-                  {detail ?
-                    <span
-                      contentEditable
-                      suppressContentEditableWarning
-                      role='textbox'
-                      aria-label={text.artist}
-                      aria-placeholder={text.artistSort}
-                      spellCheck={false}
-                      onClick={(event) => event.stopPropagation()}
-                      onInput={(event) =>
-                        setArtist(event.currentTarget.textContent ?? '')
-                      }
-                      onBlur={saveDetails}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          event.currentTarget.blur();
-                        }
-                      }}
-                      className={`max-w-40 truncate outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 ${artist ? 'text-muted' : 'text-muted/60'}`}
-                    >
-                      {artist}
-                    </span>
-                  : <span className='max-w-40 truncate'>{item.artist}</span>}
+                  {showKind && <span aria-hidden='true'>·</span>}
+                  {artistNode}
                 </>
               )}
-              <span aria-hidden='true'>·</span>
+              {item.difficulty && (
+                <>
+                  {(showKind || hasArtist) && (
+                    <span aria-hidden='true'>·</span>
+                  )}
+                  <span>{getDifficultyLabel(text, item.difficulty)}</span>
+                </>
+              )}
+              {(showKind || hasArtist || item.difficulty) && (
+                <span aria-hidden='true'>·</span>
+              )}
               <span>
                 {item.parts.length} {text.parts}
               </span>
@@ -436,7 +483,12 @@ export function RepertoireItemCard({
                     onChange={(value) => {
                       setTuning(value);
                       if (value !== 'Otra...') setCustomTuning('');
-                      saveExtraConfig();
+                      saveExtraConfig({
+                        tuning: value,
+                        ...(value === 'Otra...' ?
+                          {}
+                        : { customTuning: '' }),
+                      });
                     }}
                     ariaLabel={text.tuning}
                     options={COMMON_TUNINGS.map((t) => ({
@@ -451,7 +503,7 @@ export function RepertoireItemCard({
                     <TextField
                       value={customTuning}
                       onChange={(event) => setCustomTuning(event.target.value)}
-                      onBlur={saveExtraConfig}
+                      onBlur={() => saveExtraConfig()}
                       maxLength={50}
                       placeholder={text.customTuningPlaceholder}
                       className='mt-1'
@@ -468,7 +520,7 @@ export function RepertoireItemCard({
                     step={1}
                     value={capo}
                     onChange={(event) => setCapo(event.target.value)}
-                    onBlur={saveExtraConfig}
+                    onBlur={() => saveExtraConfig()}
                     placeholder='0'
                     aria-label={text.capoAria}
                     className='mt-1 font-mono'
@@ -483,12 +535,32 @@ export function RepertoireItemCard({
                     ariaLabel={text.guitarType}
                     onChange={(value) => {
                       setGuitarType(value as GuitarType | '');
-                      saveExtraConfig();
+                      saveExtraConfig({ guitarType: value as GuitarType | '' });
                     }}
                     options={[
                       { value: '', label: text.unspecified },
                       { value: 'electric', label: text.electric },
                       { value: 'acoustic', label: text.acoustic },
+                    ]}
+                  />
+                </label>
+                <label className='block text-xs text-muted'>
+                  {text.difficulty}
+                  <SelectField
+                    className='mt-1'
+                    value={difficulty}
+                    ariaLabel={text.difficulty}
+                    onChange={(value) => {
+                      const next = value as RepertoireDifficulty | '';
+                      setDifficulty(next);
+                      saveExtraConfig({ difficulty: next });
+                    }}
+                    options={[
+                      { value: '', label: text.difficultyNone },
+                      ...REPERTOIRE_DIFFICULTIES.map((value) => ({
+                        value,
+                        label: getDifficultyLabel(text, value),
+                      })),
                     ]}
                   />
                 </label>

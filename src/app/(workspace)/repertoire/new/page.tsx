@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RepertoireSongForm } from '@/components/repertoire/RepertoireSongForm';
+import { BackLink } from '@/components/ui/BackLink';
 import { useI18nSection } from '@/i18n/I18nProvider';
 
 export default function NewRepertoireItemPage() {
@@ -11,12 +11,7 @@ export default function NewRepertoireItemPage() {
 
   return (
     <main className='mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16'>
-      <Link
-        href='/repertoire'
-        className='text-sm text-muted underline underline-offset-4 transition hover:text-ink'
-      >
-        {text.backToRepertoire}
-      </Link>
+      <BackLink href='/repertoire'>{text.backToRepertoire}</BackLink>
       <header className='mt-6'>
         <p className='font-mono text-xs uppercase tracking-[0.14em] text-muted'>
           {text.library}

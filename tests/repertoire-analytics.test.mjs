@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  getRepertoireItemPracticeStats,
   getRepertoireOverview,
   getRepertoirePracticeStats,
 } from "../src/lib/repertoire-analytics.ts";
@@ -111,13 +112,7 @@ test("summarizes repertoire items, learned parts, and linked practice time", () 
     },
   ];
   const practiceStats = new Map([
-    [
-      "song-1",
-      new Map([
-        ["intro", { practiceSeconds: 120, sessionCount: 1 }],
-        ["solo", { practiceSeconds: 180, sessionCount: 2 }],
-      ]),
-    ],
+    ["song-1", { practiceSeconds: 300, sessionCount: 2 }],
   ]);
 
   assert.deepEqual(getRepertoireOverview(items, practiceStats), {
@@ -127,4 +122,65 @@ test("summarizes repertoire items, learned parts, and linked practice time", () 
     partCount: 3,
     totalSeconds: 300,
   });
+});
+
+test("counts an item's time with or without a part and ignores unlinked phases", () => {
+  const history = [
+    createSession("session-1", [
+      {
+        id: "phase-1",
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 600,
+        repertoireItemId: "song-1",
+      },
+      {
+        id: "phase-2",
+        name: "Solo",
+        skill: "repertoire",
+        elapsedSeconds: 300,
+        repertoireItemId: "song-1",
+        repertoirePartId: "solo-1",
+      },
+      {
+        id: "phase-3",
+        name: "Ejercicio suelto",
+        skill: "technique",
+        elapsedSeconds: 500,
+      },
+    ]),
+    createSession("session-2", [
+      {
+        id: "phase-4",
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 300,
+        repertoireItemId: "song-1",
+      },
+    ]),
+  ];
+
+  const stats = getRepertoireItemPracticeStats(history);
+
+  assert.deepEqual(stats.get("song-1"), {
+    practiceSeconds: 1200,
+    sessionCount: 2,
+  });
+  assert.equal(stats.has("missing-item"), false);
+});
+
+test("does not count an item phase left untouched", () => {
+  const history = [
+    createSession("session-1", [
+      {
+        id: "phase-1",
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 0,
+        repertoireItemId: "song-1",
+      },
+    ]),
+  ];
+
+  assert.equal(getRepertoireItemPracticeStats(history).has("song-1"), false);
 });

@@ -1,4 +1,6 @@
-import type { RepertoirePartPracticeStats } from "@/lib/repertoire-analytics";
+import type {
+  RepertoireItemPracticeStats,
+} from "./repertoire-analytics.ts";
 import type {
   RepertoireItem,
   RepertoireItemKind,
@@ -50,10 +52,7 @@ export type RepertoireItemFilters = {
   futureLearn: FutureLearnFilter;
 };
 
-type PracticeStatsByItem = Map<
-  string,
-  Map<string, RepertoirePartPracticeStats>
->;
+type ItemPracticeStatsByItem = Map<string, RepertoireItemPracticeStats>;
 
 function normalizeSearchText(value: string) {
   return value
@@ -88,14 +87,9 @@ function matchesProgress(
 
 function getPracticeSeconds(
   item: RepertoireItem,
-  practiceStats: PracticeStatsByItem,
+  practiceStats: ItemPracticeStatsByItem,
 ) {
-  return item.parts.reduce(
-    (total, part) =>
-      total +
-      (practiceStats.get(item.id)?.get(part.id)?.practiceSeconds ?? 0),
-    0,
-  );
+  return practiceStats.get(item.id)?.practiceSeconds ?? 0;
 }
 
 function compareTitles(first: RepertoireItem, second: RepertoireItem) {
@@ -133,7 +127,7 @@ function compareArtists(first: RepertoireItem, second: RepertoireItem) {
 function sortItems(
   items: RepertoireItem[],
   sort: RepertoireSortOrder,
-  practiceStats: PracticeStatsByItem,
+  practiceStats: ItemPracticeStatsByItem,
 ) {
   if (sort === "original") return items;
   if (sort === "title") return items.slice().sort(compareTitles);
@@ -163,7 +157,7 @@ function matchesFutureLearn(item: RepertoireItem, filter: FutureLearnFilter) {
 export function getFilteredRepertoireItems(
   items: RepertoireItem[],
   filters: RepertoireItemFilters,
-  practiceStats: PracticeStatsByItem,
+  practiceStats: ItemPracticeStatsByItem,
 ) {
   const filteredItems = items.filter(
     (item) =>
