@@ -2,15 +2,15 @@ import {
   DEFAULT_PRACTICE_GOALS,
   normalizePracticeGoals,
   type PracticeGoals,
-} from "@/lib/practice-goals";
+} from "../practice-goals.ts";
 import {
   DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
   normalizeWeeklyRoutineSchedule,
   type WeeklyRoutineSchedule,
-} from "@/lib/weekly-routine-schedule";
+} from "../weekly-routine-schedule.ts";
 import type { PersistedPracticeState } from "@/stores/practiceStorage";
-import type { SessionRecord, PracticeTemplate, RepertoireItem } from "@/types/practice";
-import { getSupabaseClient } from "./client";
+import type { SessionRecord, PracticeTemplate, RepertoireItem, UserChord } from "@/types/practice";
+import { getSupabaseClient } from "./client.ts";
 
 interface PracticeDataRow {
   state: PersistedPracticeState;
@@ -53,6 +53,9 @@ export function normalizePracticeData(value: unknown): PersistedPracticeState {
     repertoireItems: Array.isArray(state.repertoireItems)
       ? (state.repertoireItems as RepertoireItem[])
       : [],
+    customChords: Array.isArray(state.customChords)
+      ? (state.customChords as UserChord[])
+      : [],
     weeklySchedule: normalizeWeeklyRoutineSchedule(state.weeklySchedule),
     practiceGoals: normalizePracticeGoals(state.practiceGoals),
   };
@@ -72,6 +75,7 @@ export function mergePracticeData(
     ),
     templates: mergeById(remote.templates, local.templates),
     repertoireItems: mergeById(remote.repertoireItems, local.repertoireItems),
+    customChords: mergeById(remote.customChords, local.customChords),
     weeklySchedule: hasAssignedRoutine(local.weeklySchedule)
       ? local.weeklySchedule
       : remote.weeklySchedule,
@@ -133,6 +137,7 @@ export function createEmptyPracticeData(): PersistedPracticeState {
     history: [],
     templates: [],
     repertoireItems: [],
+    customChords: [],
     weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
     practiceGoals: { ...DEFAULT_PRACTICE_GOALS },
   };

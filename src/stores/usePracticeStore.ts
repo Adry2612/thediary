@@ -6,11 +6,13 @@ import {
   type SessionRecord,
   type PracticeTemplate,
   type RepertoireItem,
+  type UserChord,
 } from "@/types/practice";
 import {
   createLocalPracticeStorage,
   type PersistedPracticeState,
 } from "@/stores/practiceStorage";
+import { isSameChord } from "@/lib/chords";
 import {
   assignRoutineToWeekday,
   DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
@@ -32,6 +34,7 @@ type PracticeStoreState = {
   history: SessionRecord[];
   templates: PracticeTemplate[];
   repertoireItems: RepertoireItem[];
+  customChords: UserChord[];
   weeklySchedule: WeeklyRoutineSchedule;
   practiceGoals: PracticeGoals;
   hasHydrated: boolean;
@@ -48,6 +51,8 @@ type PracticeStoreState = {
   setPracticeGoals: (goals: PracticeGoals) => void;
   saveRepertoireItem: (item: RepertoireItem) => void;
   deleteRepertoireItem: (itemId: string) => void;
+  saveCustomChord: (chord: UserChord) => void;
+  deleteCustomChord: (chordId: string) => void;
   setHasHydrated: (hasHydrated: boolean) => void;
   setPersistenceError: (message: string | null) => void;
 };
@@ -58,6 +63,7 @@ export const usePracticeStore = create<PracticeStoreState>()(
       history: [],
       templates: [],
       repertoireItems: [],
+      customChords: [],
       weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
       practiceGoals: { ...DEFAULT_PRACTICE_GOALS },
       hasHydrated: false,
@@ -127,6 +133,24 @@ export const usePracticeStore = create<PracticeStoreState>()(
           ),
           persistenceError: null,
         })),
+      saveCustomChord: (chord) =>
+        set((state) => ({
+          customChords: [
+            ...state.customChords.filter(
+              (candidate) =>
+                candidate.id !== chord.id && !isSameChord(candidate, chord),
+            ),
+            chord,
+          ],
+          persistenceError: null,
+        })),
+      deleteCustomChord: (chordId) =>
+        set((state) => ({
+          customChords: state.customChords.filter(
+            (chord) => chord.id !== chordId,
+          ),
+          persistenceError: null,
+        })),
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),
       setPersistenceError: (persistenceError) => set({ persistenceError }),
     }),
@@ -139,6 +163,7 @@ export const usePracticeStore = create<PracticeStoreState>()(
           history: state.history,
           templates: state.templates,
           repertoireItems: state.repertoireItems,
+          customChords: state.customChords,
           weeklySchedule: state.weeklySchedule,
           practiceGoals: state.practiceGoals,
         }) satisfies PersistedPracticeState,
@@ -173,6 +198,7 @@ export function getPersistedPracticeState(): PersistedPracticeState {
     history,
     templates,
     repertoireItems,
+    customChords,
     weeklySchedule,
     practiceGoals,
   } = usePracticeStore.getState();
@@ -180,6 +206,7 @@ export function getPersistedPracticeState(): PersistedPracticeState {
     history,
     templates,
     repertoireItems,
+    customChords,
     weeklySchedule,
     practiceGoals,
   };

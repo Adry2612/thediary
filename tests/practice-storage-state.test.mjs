@@ -23,6 +23,7 @@ test("uses safe defaults when persisted state is absent", () => {
     history: [],
     templates: [],
     repertoireItems: [],
+    customChords: [],
     weeklySchedule: DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
     practiceGoals: DEFAULT_PRACTICE_GOALS,
   });
@@ -32,6 +33,7 @@ test("preserves valid collections and normalizes optional persisted settings", (
   const history = [{ id: "session-1" }];
   const templates = [{ id: "template-1" }];
   const repertoireItems = [{ id: "item-1" }];
+  const customChords = [{ id: "chord-1", name: "Cadd9" }];
 
   assert.deepEqual(
     normalizePracticeStorageState({
@@ -39,6 +41,7 @@ test("preserves valid collections and normalizes optional persisted settings", (
         history,
         templates,
         repertoireItems,
+        customChords,
         weeklySchedule: { 1: "routine-1", 2: " " },
         practiceGoals: { dailyMinutes: 90, weeklyDays: 3 },
       },
@@ -48,6 +51,7 @@ test("preserves valid collections and normalizes optional persisted settings", (
       history,
       templates,
       repertoireItems,
+      customChords,
       weeklySchedule: {
         0: null,
         1: "routine-1",
@@ -69,6 +73,7 @@ test("replaces malformed collections and settings with defaults", () => {
         history: null,
         templates: {},
         repertoireItems: null,
+        customChords: null,
         weeklySchedule: null,
         practiceGoals: { dailyMinutes: -1, weeklyDays: 10 },
       },
@@ -78,6 +83,7 @@ test("replaces malformed collections and settings with defaults", () => {
       history: [],
       templates: [],
       repertoireItems: [],
+      customChords: [],
       weeklySchedule: DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
       practiceGoals: DEFAULT_PRACTICE_GOALS,
     },

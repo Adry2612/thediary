@@ -3,9 +3,9 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
-import { RepertoireItemForm } from '@/components/repertoire/RepertoireItemForm';
 import { SelectField } from '@/components/ui/SelectField';
 import { TextField } from '@/components/ui/Field';
+import { PlusIcon } from '@/components/ui/icons';
 import { formatPracticeDuration } from '@/lib/dashboard-data';
 import {
   getRepertoireOverview,
@@ -217,7 +217,16 @@ export function RepertoireView() {
         ))}
       </section>
 
-      <RepertoireItemForm />
+      <div className='flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-surface p-5 sm:p-6'>
+        <p className='max-w-xl text-sm text-muted'>{text.newItemDescription}</p>
+        <Link
+          href='/repertoire/new'
+          className='inline-flex h-12 items-center justify-center gap-2 rounded-md bg-ink px-5 text-sm font-medium text-canvas transition hover:opacity-90 active:scale-[0.98]'
+        >
+          <PlusIcon className='size-4' />
+          {text.newItem}
+        </Link>
+      </div>
 
       <section className='mt-8'>
         <div>

@@ -83,6 +83,7 @@ function hasPracticeData(state: PersistedPracticeState): boolean {
     state.history.length > 0 ||
     state.templates.length > 0 ||
     state.repertoireItems.length > 0 ||
+    state.customChords.length > 0 ||
     Object.values(state.weeklySchedule).some((routineId) => routineId !== null) ||
     state.practiceGoals.dailyMinutes !== DEFAULT_PRACTICE_GOALS.dailyMinutes ||
     state.practiceGoals.weeklyDays !== DEFAULT_PRACTICE_GOALS.weeklyDays
@@ -110,6 +111,7 @@ function hasPracticeStateChanged(
     current.history !== previous.history ||
     current.templates !== previous.templates ||
     current.repertoireItems !== previous.repertoireItems ||
+    current.customChords !== previous.customChords ||
     current.weeklySchedule !== previous.weeklySchedule ||
     current.practiceGoals !== previous.practiceGoals
   );
@@ -257,6 +259,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         history: state.history,
         templates: state.templates,
         repertoireItems: state.repertoireItems,
+        customChords: state.customChords,
         weeklySchedule: state.weeklySchedule,
         practiceGoals: state.practiceGoals,
       };
@@ -264,6 +267,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         history: previousState.history,
         templates: previousState.templates,
         repertoireItems: previousState.repertoireItems,
+        customChords: previousState.customChords,
         weeklySchedule: previousState.weeklySchedule,
         practiceGoals: previousState.practiceGoals,
       };
@@ -464,6 +468,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         : [],
       repertoireItems: Array.isArray(rawGuestState?.repertoireItems)
         ? rawGuestState.repertoireItems
+        : [],
+      customChords: Array.isArray(rawGuestState?.customChords)
+        ? rawGuestState.customChords
         : [],
       weeklySchedule:
         rawGuestState?.weeklySchedule ??

@@ -55,6 +55,23 @@ export function SplitViewIcon({ className, ...props }: IconProps) {
   );
 }
 
+export function PlusIcon({ className, ...props }: IconProps) {
+  return (
+    <StrokeIcon className={className} {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </StrokeIcon>
+  );
+}
+
+export function SearchIcon({ className, ...props }: IconProps) {
+  return (
+    <StrokeIcon className={className} {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.6-3.6" />
+    </StrokeIcon>
+  );
+}
+
 export function GoogleDriveIcon({ className = "size-5", ...props }: IconProps) {
   return (
     <svg

@@ -19,6 +19,7 @@ export function normalizePracticeStorageState({
     repertoireItems: Array.isArray(state?.repertoireItems)
       ? state.repertoireItems
       : [],
+    customChords: Array.isArray(state?.customChords) ? state.customChords : [],
     weeklySchedule: normalizeSchedule(state?.weeklySchedule),
     practiceGoals: normalizeGoals(state?.practiceGoals),
   };
