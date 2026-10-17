@@ -1,34 +1,58 @@
 "use client";
 
-import { useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/Button";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import {
+  canApplyTabTechniqueToSelection,
   clearTabNote,
-  findTabNote,
   getTabColumns,
+  getTabTechnique,
+  groupTabSystems,
   MAX_FRET,
+  setTabBendAmounts,
   setTabMeasures,
   setTabNote,
   setTabSubdivision,
+  TAB_BEND_AMOUNTS,
+  TAB_TECHNIQUES,
+  tabCellsBetween,
+  tabSystemTechniques,
+  tabTechniqueGlyphs,
+  tabTechniqueSelectionState,
+  toggleTabTechniques,
+  type TabCell,
+  type TabTechniqueId,
 } from "@/lib/repertoire-tab";
 import { parseTuningNotes, STRING_COUNT } from "@/lib/chords";
-import type { RepertoireTab } from "@/types/practice";
+import { isTabEditorEnabled } from "@/lib/feature-flags";
+import type { RepertoireTab, RepertoireTabNote } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 const MIN_MEASURES = 1;
 const MAX_MEASURES = 16;
-const CELL_WIDTH = 26;
+/** Ancho de la columna con los nombres de las cuerdas. */
+const LABEL_WIDTH = 34;
+/** Alto de cada fila de cuerda (h-9). */
+const STRING_ROW_HEIGHT = 36;
+/** Ancho mínimo de celda que buscamos al decidir cuántos compases caben. */
+const MIN_CELL_WIDTH = 22;
+/** Suelo del ancho de celda: por debajo de esto no se puede estrechar más. */
+const MIN_CELL_WIDTH_FLOOR = 8;
+/** Etiqueta corta de cada cantidad de bend admitida. */
+const BEND_AMOUNT_LABELS: Record<string, string> = {
+  "0.25": "¼",
+  "0.5": "½",
+  "1": "1",
+  "1.5": "1½",
+  "2": "2",
+};
 
 interface TabEditorProps {
   value: RepertoireTab;
   onChange: (value: RepertoireTab) => void;
-}
-
-interface Cursor {
-  string: number;
-  column: number;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -37,9 +61,24 @@ function clamp(value: number, min: number, max: number): number {
 
 export function TabEditor({ value, onChange }: TabEditorProps) {
   const text = useI18nSection("repertoire");
-  const [cursor, setCursor] = useState<Cursor>({ string: 0, column: 0 });
+  const [anchor, setAnchor] = useState<TabCell>({ string: 0, column: 0 });
+  const [focus, setFocus] = useState<TabCell>({ string: 0, column: 0 });
+  const [dragging, setDragging] = useState(false);
   const [buffer, setBuffer] = useState("");
   const gridRef = useRef<HTMLDivElement>(null);
+  const measureObserverRef = useRef<ResizeObserver | null>(null);
+  const [gridWidth, setGridWidth] = useState(0);
+  // La rejilla se mide a sí misma: cuántos compases caben por sistema según el ancho.
+  // Se usa un ref de callback porque la rejilla solo existe cuando la sección está abierta.
+  const measureRef = useCallback((node: HTMLDivElement | null) => {
+    measureObserverRef.current?.disconnect();
+    measureObserverRef.current = null;
+    if (!node) return;
+    setGridWidth(node.clientWidth);
+    const observer = new ResizeObserver(() => setGridWidth(node.clientWidth));
+    observer.observe(node);
+    measureObserverRef.current = observer;
+  }, []);
 
   const columns = getTabColumns(value);
   const tuningNotes = useMemo(
@@ -58,28 +97,102 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
     }
     return map;
   }, [value.notes]);
+  const noteByCell = useMemo(() => {
+    const map = new Map<string, RepertoireTabNote>();
+    for (const note of value.notes) {
+      map.set(`${note.string}:${note.column}`, note);
+    }
+    return map;
+  }, [value.notes]);
 
-  const currentFret = fretByCell.get(`${cursor.string}:${cursor.column}`);
+  const availableWidth = Math.max(0, gridWidth - LABEL_WIDTH);
+  const availableColumns = Math.max(
+    value.subdivision,
+    Math.floor(availableWidth / MIN_CELL_WIDTH),
+  );
+  const systems = groupTabSystems(value, availableColumns);
+  const fullColumns = systems[0]?.columnCount ?? value.subdivision;
+  const cellWidth = Math.max(
+    MIN_CELL_WIDTH_FLOOR,
+    Math.floor(availableWidth / fullColumns),
+  );
+
+  const currentFret = fretByCell.get(`${focus.string}:${focus.column}`);
+
+  // La capa de anotaciones usa la misma geometría que la rejilla: las celdas
+  // tienen ancho fijo y no hay separación entre ellas, así que basta el índice
+  // de la columna y el ancho de celda.
+  function cellCenterX(indexInSystem: number): number {
+    return LABEL_WIDTH + indexInSystem * cellWidth + cellWidth / 2;
+  }
+
+  function stringRowY(rowIndex: number): number {
+    return rowIndex * STRING_ROW_HEIGHT + STRING_ROW_HEIGHT / 2;
+  }
+  const selectedNote = noteByCell.get(`${focus.string}:${focus.column}`);
   const fretFieldValue =
     buffer !== "" ? buffer : currentFret !== undefined ? String(currentFret) : "";
+
+  const selectedCells = tabCellsBetween(anchor, focus);
+  const selectionBounds = {
+    minString: Math.min(anchor.string, focus.string),
+    maxString: Math.max(anchor.string, focus.string),
+    minColumn: Math.min(anchor.column, focus.column),
+    maxColumn: Math.max(anchor.column, focus.column),
+  };
+  const hasSelectionNotes = selectedCells.some((cell) =>
+    noteByCell.has(`${cell.string}:${cell.column}`),
+  );
+
+  function isCellSelected(string: number, column: number): boolean {
+    return (
+      string >= selectionBounds.minString &&
+      string <= selectionBounds.maxString &&
+      column >= selectionBounds.minColumn &&
+      column <= selectionBounds.maxColumn
+    );
+  }
+
+  function clampCell(cell: TabCell): TabCell {
+    return {
+      string: clamp(cell.string, 0, STRING_COUNT - 1),
+      column: clamp(cell.column, 0, Math.max(0, columns - 1)),
+    };
+  }
+
+  // Al soltar el puntero se termina el arrastre, aunque se suelte fuera de la rejilla.
+  useEffect(() => {
+    if (!dragging) return;
+    const stop = () => setDragging(false);
+    window.addEventListener("pointerup", stop);
+    return () => window.removeEventListener("pointerup", stop);
+  }, [dragging]);
 
   function commitBuffer() {
     if (buffer === "") return;
     const fret = Number(buffer);
     setBuffer("");
     if (Number.isFinite(fret) && fret >= 0 && fret <= MAX_FRET) {
-      onChange(setTabNote(value, cursor.string, cursor.column, fret));
+      onChange(setTabNote(value, focus.string, focus.column, fret));
     }
   }
 
-  function selectCell(string: number, column: number) {
-    if (string === cursor.string && column === cursor.column) return;
+  function startSelection(string: number, column: number, extend: boolean) {
     commitBuffer();
-    setCursor((current) => ({
-      string: clamp(string, 0, STRING_COUNT - 1),
-      column: clamp(column, 0, Math.max(0, columns - 1)),
-    }));
+    const cell = clampCell({ string, column });
+    if (extend) {
+      setFocus(cell);
+    } else {
+      setAnchor(cell);
+      setFocus(cell);
+      setDragging(true);
+    }
     gridRef.current?.focus();
+  }
+
+  function extendSelection(string: number, column: number) {
+    if (!dragging) return;
+    setFocus(clampCell({ string, column }));
   }
 
   function handleGridKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -92,7 +205,7 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
     if (key === "Backspace" || key === "Delete") {
       event.preventDefault();
       setBuffer("");
-      onChange(clearTabNote(value, cursor.string, cursor.column));
+      onChange(clearTabNote(value, focus.string, focus.column));
       return;
     }
     if (key === "Enter") {
@@ -105,10 +218,25 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
       commitBuffer();
       const rowStep = key === "ArrowUp" ? 1 : key === "ArrowDown" ? -1 : 0;
       const columnStep = key === "ArrowRight" ? 1 : key === "ArrowLeft" ? -1 : 0;
-      setCursor({
-        string: clamp(cursor.string + rowStep, 0, STRING_COUNT - 1),
-        column: clamp(cursor.column + columnStep, 0, columns - 1),
+      const nextCell = clampCell({
+        string: focus.string + rowStep,
+        column: focus.column + columnStep,
       });
+      if (event.shiftKey) {
+        setFocus(nextCell);
+      } else {
+        setAnchor(nextCell);
+        setFocus(nextCell);
+      }
+      return;
+    }
+    const technique = TAB_TECHNIQUES.find(
+      (entry) => entry.shortcut === key.toLowerCase(),
+    );
+    if (technique) {
+      event.preventDefault();
+      commitBuffer();
+      onChange(toggleTabTechniques(value, selectedCells, technique.id));
     }
   }
 
@@ -116,22 +244,21 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
     const clean = raw.replace(/[^0-9]/g, "").slice(0, 2);
     setBuffer(clean);
     if (clean === "") {
-      onChange(clearTabNote(value, cursor.string, cursor.column));
+      onChange(clearTabNote(value, focus.string, focus.column));
       return;
     }
     const fret = Number(clean);
     if (fret >= 0 && fret <= MAX_FRET) {
-      onChange(setTabNote(value, cursor.string, cursor.column, fret));
+      onChange(setTabNote(value, focus.string, focus.column, fret));
     }
   }
 
-  return (
-    <section className="mt-5 rounded-xl border border-line bg-surface p-5 sm:p-6">
-      <h2 className="font-sans text-lg font-semibold tracking-tight text-ink sm:text-xl">
-        {text.tabTitle}
-      </h2>
-      <p className="mt-2 text-sm text-muted">{text.tabDescription}</p>
+  // La tablatura propia sigue en diseño: el código y los datos se conservan,
+  // pero la sección solo se muestra con la bandera activada.
+  if (!isTabEditorEnabled) return null;
 
+  return (
+    <CollapsibleSection title={text.tabTitle} description={text.tabDescription}>
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <div className="text-xs text-muted">
           {text.tabResolution}
@@ -186,7 +313,7 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
           type="button"
           size="field"
           onClick={() =>
-            onChange(clearTabNote(value, cursor.string, cursor.column))
+            onChange(clearTabNote(value, focus.string, focus.column))
           }
         >
           {text.tabClearCell}
@@ -202,6 +329,85 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
 
       <p className="mt-3 text-xs text-muted">{text.tabHint}</p>
 
+      <div className="mt-3 rounded-lg border border-line bg-canvas/40 p-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+            {text.techniquesTitle}
+          </h3>
+          <span className="text-[11px] text-muted">{text.techniquesHint}</span>
+        </div>
+
+        {!hasSelectionNotes ?
+          <p className="mt-2 text-xs text-muted">{text.techniquesNoNote}</p>
+        : null}
+
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {TAB_TECHNIQUES.map((technique) => {
+            const label = text[technique.labelKey] ?? technique.id;
+            const state = tabTechniqueSelectionState(
+              value,
+              selectedCells,
+              technique.id,
+            );
+            const canToggle =
+              state !== "none" ||
+              canApplyTabTechniqueToSelection(
+                value,
+                selectedCells,
+                technique.id,
+              );
+            const needsPrevious =
+              technique.isTransition && !canToggle;
+            return (
+              <button
+                key={technique.id}
+                type="button"
+                disabled={!canToggle}
+                aria-pressed={state === "all" ? true : state === "some" ? "mixed" : false}
+                title={
+                  needsPrevious ?
+                    text.techniquesNeedsPrevious
+                  : `${label} [${technique.shortcut}]`
+                }
+                onClick={() =>
+                  onChange(toggleTabTechniques(value, selectedCells, technique.id))
+                }
+                className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                  state === "all" ?
+                    "border-accent-green-fg bg-accent-green-bg/40 text-ink"
+                  : state === "some" ?
+                    "border-accent-green-fg/60 bg-accent-green-bg/20 text-ink"
+                  : "border-line text-muted hover:bg-white/5 hover:text-ink"
+                }`}
+              >
+                <span className="font-mono text-[10px] font-semibold text-accent-green-fg">
+                  {technique.glyph}
+                </span>
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {selectedNote?.bend ?
+          <label className="mt-2 block text-[11px] text-muted">
+            {text.techniqueBendAmount}
+            <SelectField
+              className="mt-1 w-28"
+              value={String(selectedNote.bend.semitones)}
+              ariaLabel={text.techniqueBendAmount}
+              onChange={(next) =>
+                onChange(setTabBendAmounts(value, selectedCells, Number(next)))
+              }
+              options={TAB_BEND_AMOUNTS.map((amount) => ({
+                value: String(amount),
+                label: BEND_AMOUNT_LABELS[String(amount)] ?? String(amount),
+              }))}
+            />
+          </label>
+        : null}
+      </div>
+
       <div
         ref={gridRef}
         tabIndex={0}
@@ -209,72 +415,228 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
         aria-label={text.tabTitle}
         onKeyDown={handleGridKeyDown}
         onBlur={commitBuffer}
-        className="mt-3 overflow-x-auto rounded-lg border border-line bg-canvas/40 p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/40"
+        className="mt-3 rounded-lg border border-line bg-canvas/40 p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/40"
       >
-        <div className="inline-block">
-          <div className="flex items-center">
-            <span className="shrink-0 pr-2 text-right font-mono text-[10px] text-transparent" style={{ width: 34 }}>
-              0
-            </span>
-            {Array.from({ length: columns }, (_, column) => {
-              const measureStart = column % value.subdivision === 0;
-              return (
+        <div ref={measureRef} className="w-full">
+          {systems.map((system) => {
+            const techniques = tabSystemTechniques(value, system);
+            const spanRows = TAB_TECHNIQUES.filter(
+              (technique) =>
+                technique.render === "span" &&
+                techniques.spans.some(
+                  (span) => span.techniqueId === technique.id,
+                ),
+            );
+            return (
+            <div key={system.startColumn} className="mt-3 first:mt-0">
+              <div className="flex items-center">
                 <span
-                  key={column}
-                  style={{ width: CELL_WIDTH }}
-                  className={`shrink-0 text-center font-mono text-[10px] text-muted ${
-                    measureStart && column > 0 ? "border-l border-line" : ""
-                  }`}
+                  style={{ width: LABEL_WIDTH }}
+                  className="shrink-0 pr-2 text-right font-mono text-[10px] text-transparent"
                 >
-                  {measureStart ? column / value.subdivision + 1 : ""}
+                  0
                 </span>
-              );
-            })}
-          </div>
+                {Array.from({ length: system.columnCount }, (_, index) => {
+                  const column = system.startColumn + index;
+                  const measureStart = column % value.subdivision === 0;
+                  return (
+                    <span
+                      key={column}
+                      style={{ width: cellWidth }}
+                      className={`shrink-0 text-center font-mono text-[10px] text-muted ${
+                        measureStart && column > 0 ? "border-l border-line" : ""
+                      }`}
+                    >
+                      {measureStart ? column / value.subdivision + 1 : ""}
+                    </span>
+                  );
+                })}
+              </div>
 
-          {stringOrder.map((stringIndex) => (
-            <div key={stringIndex} className="flex items-center">
-              <span
-                style={{ width: 34 }}
-                className="shrink-0 pr-2 text-right font-mono text-xs text-muted"
-              >
-                {tuningNotes[stringIndex]}
-              </span>
-              {Array.from({ length: columns }, (_, column) => {
-                const isCursor =
-                  cursor.string === stringIndex && cursor.column === column;
-                const fret = fretByCell.get(`${stringIndex}:${column}`);
-                const display =
-                  isCursor && buffer !== "" ?
-                    buffer
-                  : fret !== undefined ?
-                    String(fret)
-                  : "";
-                const measureStart = column % value.subdivision === 0;
-                return (
-                  <button
-                    key={column}
-                    type="button"
-                    tabIndex={-1}
-                    onClick={() => selectCell(stringIndex, column)}
-                    style={{ width: CELL_WIDTH }}
-                    aria-label={`${text.tabFret} ${column + 1}, ${tuningNotes[stringIndex]}`}
-                    className={`h-8 shrink-0 border-b border-line/60 font-mono text-xs tabular-nums text-ink transition ${
-                      measureStart && column > 0 ? "border-l border-line" : ""
-                    } ${
-                      isCursor ?
-                        "bg-accent-green-bg/40 ring-1 ring-inset ring-accent-green-fg"
-                      : "hover:bg-white/5"
-                    }`}
+              {spanRows.map((technique) => (
+                <div key={technique.id} className="flex items-center">
+                  <span style={{ width: LABEL_WIDTH }} className="shrink-0" />
+                  <div className="relative h-3 flex-1">
+                    {techniques.spans
+                      .filter((span) => span.techniqueId === technique.id)
+                      .map((span) => {
+                        const startIndex = span.startColumn - system.startColumn;
+                        const endIndex = span.endColumn - system.startColumn;
+                        const tremolo = technique.id === "tremoloPicking";
+                        return (
+                          <div
+                            key={span.startColumn}
+                            className="absolute top-0 flex h-full items-center"
+                            style={{
+                              left: startIndex * cellWidth + 2,
+                              width:
+                                (endIndex - startIndex + 1) * cellWidth - 4,
+                            }}
+                          >
+                            {technique.label && (span.opens || startIndex === 0) ?
+                              <span className="shrink-0 bg-canvas px-0.5 font-mono text-[9px] leading-none text-accent-green-fg">
+                                {technique.label}
+                              </span>
+                            : null}
+                            {tremolo ?
+                              <span className="h-full flex-1 overflow-hidden whitespace-nowrap font-mono text-[9px] leading-none tracking-[-0.08em] text-accent-green-fg/70">
+                                {"/".repeat(60)}
+                              </span>
+                            : <span className="h-0 flex-1 border-t border-dashed border-accent-green-fg/60" />}
+                            <span className="shrink-0 font-mono text-[9px] leading-none text-accent-green-fg">
+                              |
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              ))}
+
+              <div className="relative">
+              {stringOrder.map((stringIndex) => (
+                <div key={stringIndex} className="flex items-center">
+                  <span
+                    style={{ width: LABEL_WIDTH }}
+                    className="shrink-0 pr-2 text-right font-mono text-xs text-muted"
                   >
-                    {display}
-                  </button>
-                );
-              })}
+                    {tuningNotes[stringIndex]}
+                  </span>
+                  {Array.from({ length: system.columnCount }, (_, index) => {
+                    const column = system.startColumn + index;
+                    const isActive =
+                      focus.string === stringIndex && focus.column === column;
+                    const isSelected = isCellSelected(stringIndex, column);
+                    const note = noteByCell.get(`${stringIndex}:${column}`);
+                    const display =
+                      isActive && buffer !== "" ?
+                        buffer
+                      : note?.dead ?
+                        "x"
+                      : note !== undefined ?
+                        String(note.fret)
+                      : "";
+                    const glyphs = note ? tabTechniqueGlyphs(note) : [];
+                    const measureStart = column % value.subdivision === 0;
+                    return (
+                      <button
+                        key={column}
+                        type="button"
+                        tabIndex={-1}
+                        data-selected={isSelected ? "true" : undefined}
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          startSelection(
+                            stringIndex,
+                            column,
+                            event.shiftKey,
+                          );
+                        }}
+                        onPointerEnter={() =>
+                          extendSelection(stringIndex, column)
+                        }
+                        style={{ width: cellWidth }}
+                        aria-label={`${text.tabFret} ${column + 1}, ${tuningNotes[stringIndex]}${
+                          glyphs.length > 0 ? `, ${glyphs.join(" ")}` : ""
+                        }`}
+                        className={`flex h-9 shrink-0 flex-col items-center justify-center overflow-hidden border-b border-line/60 font-mono text-xs tabular-nums text-ink transition ${
+                          measureStart && column > 0 ? "border-l border-line" : ""
+                        } ${
+                          isActive ?
+                            "bg-accent-green-bg/40 ring-1 ring-inset ring-accent-green-fg"
+                          : isSelected ?
+                            "bg-accent-green-bg/20"
+                          : "hover:bg-white/5"
+                        }`}
+                      >
+                        <span className="flex w-full flex-wrap items-center justify-center gap-x-0.5 overflow-hidden text-[8px] leading-none text-accent-green-fg">
+                          {glyphs.join(" ")}
+                        </span>
+                        <span className="leading-none">{display}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+
+                <div className="pointer-events-none absolute inset-0">
+                  <svg
+                    className="absolute left-0 top-0 overflow-visible text-accent-green-fg/40"
+                    width={LABEL_WIDTH + system.columnCount * cellWidth}
+                    height={STRING_COUNT * STRING_ROW_HEIGHT}
+                  >
+                    {techniques.links.map((link) => {
+                      const y = stringRowY(stringOrder.indexOf(link.string));
+                      return (
+                        <line
+                          key={`${link.techniqueId}-${link.string}-${link.toColumn}`}
+                          x1={cellCenterX(link.fromColumn - system.startColumn)}
+                          y1={y}
+                          x2={cellCenterX(link.toColumn - system.startColumn)}
+                          y2={y}
+                          stroke="currentColor"
+                          strokeWidth={1}
+                        />
+                      );
+                    })}
+                    {techniques.holds.map((hold) => {
+                      const y =
+                        stringRowY(stringOrder.indexOf(hold.string)) + 10;
+                      return (
+                        <line
+                          key={`${hold.techniqueId}-${hold.string}-${hold.column}`}
+                          x1={cellCenterX(hold.column - system.startColumn)}
+                          y1={y}
+                          x2={
+                            cellCenterX(hold.endColumn - system.startColumn) +
+                            cellWidth / 2
+                          }
+                          y2={y}
+                          stroke="currentColor"
+                          strokeWidth={1}
+                          strokeDasharray="2 2"
+                        />
+                      );
+                    })}
+                  </svg>
+
+                  {techniques.links.map((link) => (
+                    <span
+                      key={`${link.techniqueId}-${link.string}-${link.toColumn}`}
+                      style={{
+                        left:
+                          (cellCenterX(link.fromColumn - system.startColumn) +
+                            cellCenterX(link.toColumn - system.startColumn)) /
+                          2,
+                        top: stringRowY(stringOrder.indexOf(link.string)),
+                      }}
+                      className="absolute -translate-x-1/2 -translate-y-1/2 bg-canvas px-0.5 font-mono text-[9px] leading-none text-accent-green-fg"
+                    >
+                      {getTabTechnique(link.techniqueId)?.glyph}
+                    </span>
+                  ))}
+
+                  {techniques.holds.map((hold) => (
+                    <span
+                      key={`${hold.techniqueId}-${hold.string}-${hold.column}`}
+                      style={{
+                        left:
+                          cellCenterX(hold.column - system.startColumn) -
+                          cellWidth / 2,
+                        top: stringRowY(stringOrder.indexOf(hold.string)) + 10,
+                      }}
+                      className="absolute -translate-y-1/2 bg-canvas px-0.5 font-mono text-[9px] leading-none text-accent-green-fg"
+                    >
+                      {getTabTechnique(hold.techniqueId)?.glyph}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
-    </section>
+    </CollapsibleSection>
   );
 }
