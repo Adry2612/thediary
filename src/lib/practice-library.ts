@@ -1,7 +1,12 @@
-import type { PracticeResourceKind, PracticeSkill } from "@/types/practice";
+import type { PracticeResourceKind, PracticeSkill } from "../types/practice";
+import {
+  CLOUD_SYNC_PROVIDERS,
+  createCloudSyncReference,
+  type CloudSyncMap,
+} from "./cloud-sync/types.ts";
 
 const DATABASE_NAME = "guitar-practice-library";
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 const ASSETS_STORE = "assets";
 const RECORDINGS_STORE = "recordings";
 let databasePromise: Promise<IDBDatabase> | null = null;
@@ -28,6 +33,23 @@ export interface PracticeAudioRecording {
   mimeType: string;
   blob?: Blob;
   playbackUrl?: string;
+  cloudSync?: CloudSyncMap;
+}
+
+export function normalizePracticeRecording(
+  recording: PracticeAudioRecording,
+): PracticeAudioRecording {
+  if (recording.cloudSync) return recording;
+
+  return {
+    ...recording,
+    cloudSync: Object.fromEntries(
+      CLOUD_SYNC_PROVIDERS.map((provider) => [
+        provider,
+        createCloudSyncReference(provider, false, recording.createdAt),
+      ]),
+    ) as CloudSyncMap,
+  };
 }
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -122,7 +144,9 @@ export function savePracticeRecording(
 }
 
 export function listPracticeRecordings(): Promise<PracticeAudioRecording[]> {
-  return runRequest(RECORDINGS_STORE, "readonly", (store) => store.getAll());
+  return runRequest(RECORDINGS_STORE, "readonly", (store) => store.getAll()).then(
+    (recordings) => recordings.map(normalizePracticeRecording),
+  );
 }
 
 export function deletePracticeRecording(recordingId: string): Promise<undefined> {

@@ -3,13 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PracticeSessionDetails } from "@/components/dashboard/PracticeSessionDetails";
+import { SessionEditor } from "@/components/dashboard/SessionEditor";
+import { PracticeRecordingItem } from "@/components/practice/PracticeRecordingItem";
 import { getLocalDateKey } from "@/lib/local-date";
 import {
   deletePracticeRecording,
   listPracticeRecordings,
   type PracticeAudioRecording,
 } from "@/lib/practice-library";
-import { groupPracticeRecordingsBySession } from "@/lib/practice-recording-filtering";
+import { associateDayRecordings } from "@/lib/practice-recording-filtering";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 
 function parseDateKey(dateKey: string) {
@@ -34,6 +36,9 @@ export function PracticeDayDetail({ dateKey }: PracticeDayDetailProps) {
   const history = usePracticeStore((state) => state.history);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
+  const updateSession = usePracticeStore((state) => state.updateSession);
+  const deleteSession = usePracticeStore((state) => state.deleteSession);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [recordings, setRecordings] = useState<PracticeAudioRecording[]>([]);
   const [recordingsLoaded, setRecordingsLoaded] = useState(false);
   const [recordingsError, setRecordingsError] = useState<string | null>(null);
@@ -76,18 +81,20 @@ export function PracticeDayDetail({ dateKey }: PracticeDayDetailProps) {
         ),
     [dateKey, history],
   );
-  const recordingsBySession = useMemo(
+  const sessionDescriptors = useMemo(
     () =>
-      groupPracticeRecordingsBySession(
-        recordings,
-        sessions.map((session) => ({
-          id: session.id,
-          title: session.title,
-          dateKey: getLocalDateKey(new Date(session.startedAt)),
-        })),
-      ),
-    [recordings, sessions],
+      sessions.map((session) => ({
+        id: session.id,
+        title: session.title,
+        dateKey: getLocalDateKey(new Date(session.startedAt)),
+      })),
+    [sessions],
   );
+  const { bySession: recordingsBySession, unlinked: unlinkedRecordings } =
+    useMemo(
+      () => associateDayRecordings(recordings, sessionDescriptors, dateKey),
+      [dateKey, recordings, sessionDescriptors],
+    );
 
   async function removeRecording(recordingId: string) {
     try {
@@ -146,23 +153,66 @@ export function PracticeDayDetail({ dateKey }: PracticeDayDetailProps) {
           Cargando sesiones…
         </p>
       ) : sessions.length > 0 ? (
-        <div className="mt-8 space-y-5">
-          {sessions.map((session) => (
-            <PracticeSessionDetails
-              key={session.id}
-              session={session}
-              sessionRecordings={
-                recordingsLoaded
-                  ? (recordingsBySession.get(session.id) ?? [])
-                  : []
-              }
-              repertoireItems={repertoireItems}
-              onDeleteRecording={(recordingId) =>
-                void removeRecording(recordingId)
-              }
-            />
-          ))}
-        </div>
+        <>
+          <div className="mt-8 space-y-5">
+            {sessions.map((session) =>
+              editingSessionId === session.id ? (
+                <SessionEditor
+                  key={session.id}
+                  session={session}
+                  onSave={(updated) => {
+                    updateSession(updated);
+                    setEditingSessionId(null);
+                  }}
+                  onCancel={() => setEditingSessionId(null)}
+                />
+              ) : (
+                <PracticeSessionDetails
+                  key={session.id}
+                  session={session}
+                  sessionRecordings={
+                    recordingsBySession.get(session.id) ?? []
+                  }
+                  recordingsLoading={!recordingsLoaded}
+                  repertoireItems={repertoireItems}
+                  onDeleteRecording={(recordingId) =>
+                    void removeRecording(recordingId)
+                  }
+                  onEdit={() => setEditingSessionId(session.id)}
+                  onDelete={(sessionId) => deleteSession(sessionId)}
+                />
+              ),
+            )}
+          </div>
+
+          {unlinkedRecordings.length > 0 && (
+            <section
+              aria-labelledby="unlinked-recordings-title"
+              className="mt-10 border-t border-line pt-6"
+            >
+              <h2
+                id="unlinked-recordings-title"
+                className="text-lg font-semibold text-ink"
+              >
+                Otras grabaciones de este día
+              </h2>
+              <p className="mt-2 text-sm text-muted">
+                No están asociadas a ninguna práctica guardada.
+              </p>
+              <ul className="mt-4 space-y-3">
+                {unlinkedRecordings.map((recording) => (
+                  <PracticeRecordingItem
+                    key={recording.id}
+                    recording={recording}
+                    onDelete={(recordingId) =>
+                      void removeRecording(recordingId)
+                    }
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
       ) : (
         <section className="mt-8 border-y border-line py-8">
           <h2 className="text-lg font-semibold text-ink">

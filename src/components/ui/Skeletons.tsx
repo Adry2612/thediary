@@ -195,6 +195,46 @@ export function RecordingsSkeleton() {
   );
 }
 
+export function RecordingsListSkeleton({
+  label,
+  rows = 3,
+}: {
+  label?: string;
+  rows?: number;
+}) {
+  return (
+    <div aria-busy='true' className='mt-8'>
+      {label && (
+        <p className='text-sm text-muted' role='status' aria-live='polite'>
+          {label}
+        </p>
+      )}
+      {rows > 0 && (
+        <div className='mt-4 space-y-3'>
+          {Array.from({ length: rows }, (_, index) => (
+            <div
+              key={index}
+              className='rounded-lg border border-line bg-canvas/60 p-4'
+            >
+              <div className='flex items-start justify-between gap-3'>
+                <div className='min-w-0 flex-1'>
+                  <Skeleton className='h-4 w-44 max-w-full' />
+                  <Skeleton className='mt-2 h-3 w-56 max-w-full' />
+                  <Skeleton className='mt-2 h-3 w-32' />
+                </div>
+                <Skeleton className='size-10 shrink-0 rounded-md' />
+              </div>
+              <div className='mt-4 border-t border-line pt-4'>
+                <Skeleton className='h-10 w-full' />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SettingsSkeleton() {
   return (
     <main

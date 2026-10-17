@@ -12,9 +12,9 @@ import {
 } from "@/lib/practice-library";
 import {
   deleteCloudPracticeRecording,
-  listCloudPracticeRecordings,
   saveCloudPracticeRecording,
 } from "@/lib/supabase/practice-files";
+import { notifyRecordingSaved } from "@/lib/practice-events";
 import { getSessionPracticeRecordings } from "@/lib/practice-recording-filtering";
 import type { PracticeSkill } from "@/types/practice";
 import { useAppData } from "@/components/providers/AppDataProvider";
@@ -60,9 +60,7 @@ export function usePracticeAudioRecorder({
   const refreshRecordings = useCallback(async () => {
     if (!isReady) return;
     try {
-      const savedRecordings = user
-        ? await listCloudPracticeRecordings(user.id)
-        : await listPracticeRecordings();
+      const savedRecordings = await listPracticeRecordings();
       setRecordings(getSessionPracticeRecordings(savedRecordings, sessionId));
       setStorageError(null);
     } catch (loadError) {
@@ -189,11 +187,27 @@ export function usePracticeAudioRecorder({
                   ),
             blob,
           });
-          const saveOperation = recordingContext.userId
-            ? saveCloudPracticeRecording(recordingContext.userId, recording)
-            : savePracticeRecording(recording);
+          const saveOperation = (async () => {
+            // The audio lives only on this device (IndexedDB). This is the
+            // authoritative save; it must never depend on Supabase or a drive.
+            await savePracticeRecording(recording);
+            notifyRecordingSaved();
+            await refreshRecordings();
+            // Supabase stores recording metadata only (never the audio blob) so
+            // it can be listed later. Treat it as best-effort: a failure here
+            // must not surface as a failed recording.
+            if (recordingContext.userId) {
+              try {
+                await saveCloudPracticeRecording(recordingContext.userId, recording);
+              } catch (metadataError) {
+                console.warn(
+                  "No se pudieron guardar los metadatos de la grabación.",
+                  metadataError,
+                );
+              }
+            }
+          })();
           void saveOperation
-            .then(refreshRecordings)
             .catch((saveError: unknown) => {
               setStorageError(
                 saveError instanceof Error
@@ -232,11 +246,8 @@ export function usePracticeAudioRecorder({
 
   async function removeRecording(recordingId: string) {
     try {
-      if (user) {
-        await deleteCloudPracticeRecording(user.id, recordingId);
-      } else {
-        await deletePracticeRecording(recordingId);
-      }
+      await deletePracticeRecording(recordingId);
+      if (user) await deleteCloudPracticeRecording(user.id, recordingId);
       setRecordings((current) =>
         current.filter((recording) => recording.id !== recordingId),
       );

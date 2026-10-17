@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { PracticeCompletionDialog } from "@/components/practice/PracticeCompletionDialog";
 import { MetronomeCard } from "@/components/practice/MetronomeCard";
 import { PracticeAudioRecorder } from "@/components/practice/PracticeAudioRecorder";
+import { SplitViewIcon } from "@/components/ui/icons";
 import { PracticeMaterials } from "@/components/practice/PracticeMaterials";
 import { TimerCard } from "@/components/practice/TimerCard";
 import { useMetronome } from "@/hooks/useMetronome";
@@ -261,8 +262,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
             <button
               type="button"
               onClick={() => setSplitView(!isSplitView)}
-              className="rounded-md border border-line px-3 py-2 text-xs text-muted transition hover:bg-white/5 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
+              className="inline-flex items-center gap-2 rounded-md border border-line px-3 py-2 text-xs text-muted transition hover:bg-white/5 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
             >
+              <SplitViewIcon className="size-4" />
               {isSplitView ? text.singleView : text.splitView}
             </button>
           </div>

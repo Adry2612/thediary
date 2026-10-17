@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createPracticeAudioRecording } from "../src/lib/practice-recording.ts";
+import { normalizePracticeRecording } from "../src/lib/practice-library.ts";
 
 test("creates a recording with its session, phase, duration, and audio metadata", () => {
   const blob = new Blob(["audio"], { type: "audio/webm" });
@@ -46,4 +47,21 @@ test("omits the phase and duration when they were not provided", () => {
   assert.equal(recording.phaseId, undefined);
   assert.equal(recording.phaseName, undefined);
   assert.equal(recording.durationSeconds, undefined);
+});
+
+test("normalizes recordings created before cloud sync without changing playback data", () => {
+  const blob = new Blob(["legacy audio"], { type: "audio/webm" });
+  const legacy = {
+    id: "legacy-recording",
+    title: "Grabación antigua",
+    sessionName: "Sesión",
+    createdAt: "2026-10-08T10:00:00.000Z",
+    mimeType: "audio/webm",
+    blob,
+  };
+
+  const normalized = normalizePracticeRecording(legacy);
+  assert.equal(normalized.blob, blob);
+  assert.equal(normalized.cloudSync?.["google-drive"]?.status, "not-connected");
+  assert.equal(normalized.cloudSync?.onedrive?.status, "not-connected");
 });
