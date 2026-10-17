@@ -26,7 +26,7 @@ export function MetricCard({
       >
         {value}
       </p>
-      <p className="mt-2 text-sm text-zinc-500">{description}</p>
+      <p className="mt-2 text-sm text-muted">{description}</p>
     </section>
   );
 }

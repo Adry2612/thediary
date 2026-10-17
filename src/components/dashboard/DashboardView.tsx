@@ -165,7 +165,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     <main className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'>
       <header className='enter mb-10 flex flex-wrap items-end justify-between gap-6'>
         <div>
-          <p className='font-mono text-xs uppercase tracking-[0.14em] text-zinc-500'>
+          <p className='font-mono text-xs uppercase tracking-[0.14em] text-muted'>
              {dashboard.eyebrow}
           </p>
           <h1 className='mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight text-zinc-100 sm:text-4xl'>
@@ -220,7 +220,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
       <div className='mt-5'>
         <SuggestedPractice />
       </div>
-      <p className='mt-8 text-center text-xs text-zinc-600'>
+      <p className='mt-8 text-center text-xs text-muted'>
          {dashboard.calendarNote} {todayYear}.
       </p>
       {persistenceError && (

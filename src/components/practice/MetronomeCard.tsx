@@ -147,6 +147,7 @@ export function MetronomeCard({
           {Array.from({ length: meter.beatsPerMeasure }, (_, beat) => (
             <div key={beat} className="flex flex-col items-center gap-2">
               <span
+                role='img'
                  aria-label={`${text.beat} ${beat + 1}${activeBeat === beat ? `, ${text.activeBeat}` : ""}`}
                 className={`size-3 rounded-full transition duration-100 ${
                   activeBeat === beat

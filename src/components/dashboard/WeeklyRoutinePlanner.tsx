@@ -36,19 +36,19 @@ export function WeeklyRoutinePlanner({
   return (
     <section className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
       <div>
-        <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+        <p className="text-xs uppercase tracking-[0.12em] text-muted">
            {home.weeklyOrganization}
         </p>
         <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
            {home.routineByDay}
         </h2>
-        <p className="mt-2 max-w-2xl text-sm text-zinc-500">
+        <p className="mt-2 max-w-2xl text-sm text-muted">
            {home.routineByDayDescription}
         </p>
       </div>
 
       {!hasHydrated ? (
-        <p className="mt-5 text-sm text-zinc-500">
+        <p className="mt-5 text-sm text-muted">
            {home.loadingWeekly}
         </p>
       ) : routines.length === 0 ? (

@@ -24,7 +24,7 @@ export function SkillBalance({ totals }: { totals: SkillTotals }) {
       className="enter flex h-full min-h-[27rem] flex-col rounded-xl border border-zinc-800 bg-zinc-900 p-5 sm:min-h-[32rem] sm:p-8"
       style={{ "--index": 1 } as CSSProperties}
     >
-      <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+      <p className="text-xs uppercase tracking-[0.12em] text-muted">
          {dashboard.skillDistribution}
       </p>
       <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
@@ -71,7 +71,7 @@ export function SkillBalance({ totals }: { totals: SkillTotals }) {
           <span className="font-mono text-xs leading-6 tracking-normal text-zinc-100 sm:text-sm sm:leading-7">
             {formatPracticeDuration(totalMinutes)}
           </span>
-           <span className="mt-1 text-xs text-zinc-500">{dashboard.thisMonth}</span>
+           <span className="mt-1 text-xs text-muted">{dashboard.thisMonth}</span>
         </div>
       </div>
 

@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-17
+goal: Que la interfaz pase la auditoría de accesibilidad, empezando por el
+  contraste del texto secundario del inicio y el dashboard, el nombre accesible
+  del desplegable propio y la etiqueta del indicador de pulso del metrónomo

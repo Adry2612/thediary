@@ -75,7 +75,7 @@ export function WeeklyPracticeSummary({
     >
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted">
              {dashboard.mondayToSunday}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
@@ -96,7 +96,7 @@ export function WeeklyPracticeSummary({
                {formatPracticeDuration(totalMinutes)} {dashboard.practiced}
             </p>
           </div>
-          <p className="mt-2 text-xs text-zinc-500">
+          <p className="mt-2 text-xs text-muted">
              {dashboard.weeklyGoal} ·{" "}
             <span             className="font-mono text-sm text-zinc-300 sm:text-base">
                {practicedDays}/{weeklyGoalDays} {dashboard.days}
@@ -156,7 +156,7 @@ export function WeeklyPracticeSummary({
                   </span>
                 </span>
                 <span
-                  className={`truncate font-mono text-[9px] leading-4 tracking-normal sm:text-[10px] sm:leading-5 ${day.hasPractice ? "text-[#c1d2c2]" : "text-zinc-500"}`}
+                  className={`truncate font-mono text-[9px] leading-4 tracking-normal sm:text-[10px] sm:leading-5 ${day.hasPractice ? "text-[#c1d2c2]" : "text-muted"}`}
                 >
                    {day.sessionCount} {dashboard.session.slice(0, 3)}.
                 </span>

@@ -185,18 +185,18 @@ export function YearPracticeCalendar({
     <section className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted">
             {calendar.consistency}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
             {calendar.title} · {yearLabel}
           </h2>
-          <p className="mt-2 text-sm text-zinc-500">
+          <p className="mt-2 text-sm text-muted">
             {calendar.description} {dailyGoalMinutes} min. {calendar.selectDay}.
           </p>
         </div>
         <div
-          className="flex items-center gap-2 text-xs text-zinc-500"
+          className="flex items-center gap-2 text-xs text-muted"
           aria-label={calendar.intensity}
         >
           <span>{calendar.less}</span>
@@ -226,7 +226,7 @@ export function YearPracticeCalendar({
         <div className="min-w-max">
           <div
             aria-hidden="true"
-            className="mb-2 grid gap-1 pl-8 font-mono text-xs capitalize text-zinc-500"
+            className="mb-2 grid gap-1 pl-8 font-mono text-xs capitalize text-muted"
             style={{ gridTemplateColumns: `repeat(${weekCount}, 16px)` }}
           >
             {monthMarkers.map((month, index) => (
@@ -238,7 +238,7 @@ export function YearPracticeCalendar({
           <div className="flex gap-2">
             <div
               aria-hidden="true"
-              className="grid grid-rows-7 gap-1 pt-0.5 font-mono text-[10px] leading-4 text-zinc-500"
+              className="grid grid-rows-7 gap-1 pt-0.5 font-mono text-[10px] leading-4 text-muted"
             >
               {weekdays.short.map((label, index) => (
                 <span key={index} className="h-4 w-6">

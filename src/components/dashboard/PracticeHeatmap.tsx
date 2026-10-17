@@ -76,7 +76,7 @@ export function PracticeHeatmap({
     <section className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted">
              {calendar.consistency}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
@@ -127,7 +127,7 @@ export function PracticeHeatmap({
 
       <div className="mt-8 overflow-x-auto pb-2">
         <div className="flex w-full min-w-[360px] justify-center gap-3">
-          <div className="grid grid-rows-7 gap-1 pt-0.5 text-[10px] leading-4 text-zinc-500">
+          <div className="grid grid-rows-7 gap-1 pt-0.5 text-[10px] leading-4 text-muted">
              {weekdays.short.map((label, index) => (
               <span key={index} className="h-4 w-3">
                 {label}
@@ -168,7 +168,7 @@ export function PracticeHeatmap({
       </div>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-zinc-800 pt-5">
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
+        <div className="flex items-center gap-2 text-xs text-muted">
            <span>{calendar.less}</span>
           {[0, 12, 30, 45, 60].map((minutes) => (
             <span
@@ -179,14 +179,14 @@ export function PracticeHeatmap({
           ))}
            <span>{calendar.more}</span>
         </div>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted">
            {calendar.selectDay}
         </p>
       </div>
 
       <div className="mt-6 rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-4 sm:flex sm:items-center sm:justify-between sm:gap-6">
         <div>
-          <p className="text-xs uppercase tracking-[0.1em] text-zinc-500">
+          <p className="text-xs uppercase tracking-[0.1em] text-muted">
              {calendar.selectedDay}
           </p>
           <h3 className="mt-1 text-zinc-200">
@@ -197,20 +197,20 @@ export function PracticeHeatmap({
           <div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-2 sm:mt-0 sm:grid-cols-3">
             <p className="font-mono text-sm text-zinc-200">
               {formatPracticeDuration(selectedDay.minutes)}{" "}
-               <span className="font-mono text-xs text-zinc-500">{calendar.total}</span>
+               <span className="font-mono text-xs text-muted">{calendar.total}</span>
             </p>
             <p className="font-mono text-sm text-zinc-200">
               {selectedDay.averageBpm || "—"}{" "}
-              <span className="font-mono text-xs text-zinc-500">BPM</span>
+              <span className="font-mono text-xs text-muted">BPM</span>
             </p>
-            <p className="col-span-2 text-xs text-zinc-500 sm:col-span-1 sm:text-right">
+            <p className="col-span-2 text-xs text-muted sm:col-span-1 sm:text-right">
               {PRACTICE_SKILLS.map((skill) => (
                 `${PRACTICE_SKILL_LABELS[skill]} ${Math.round(selectedDay.skillMinutes[skill])}m`
               )).join(" · ")}
             </p>
           </div>
         ) : (
-          <p className="mt-3 text-sm text-zinc-500 sm:mt-0">
+          <p className="mt-3 text-sm text-muted sm:mt-0">
              {calendar.noDayPractice}
           </p>
         )}

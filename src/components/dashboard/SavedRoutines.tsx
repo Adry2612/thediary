@@ -15,13 +15,13 @@ export function SavedRoutines({ routines, hasHydrated }: SavedRoutinesProps) {
     <section className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted">
              {home.quickStart}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
              {home.routines}
           </h2>
-          <p className="mt-2 text-sm text-zinc-500">
+          <p className="mt-2 text-sm text-muted">
              {home.routinesDescription}
           </p>
         </div>
@@ -34,7 +34,7 @@ export function SavedRoutines({ routines, hasHydrated }: SavedRoutinesProps) {
       </div>
 
       {!hasHydrated ? (
-         <p className="mt-5 text-sm text-zinc-500">{home.loadingRoutines}</p>
+         <p className="mt-5 text-sm text-muted">{home.loadingRoutines}</p>
       ) : routines.length === 0 ? (
         <p className="mt-5 text-sm text-zinc-400">
            {home.saveRoutine}
@@ -56,7 +56,7 @@ export function SavedRoutines({ routines, hasHydrated }: SavedRoutinesProps) {
                     <span className="block truncate font-medium text-zinc-100">
                       {routine.name}
                     </span>
-                    <span className="mt-2 block font-mono text-xs text-zinc-500">
+                    <span className="mt-2 block font-mono text-xs text-muted">
                       {routine.phases.length} bloques ·{" "}
                       {formatPracticeDuration(durationMinutes)}
                     </span>

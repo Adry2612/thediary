@@ -40,6 +40,14 @@ export function SelectField({
     Math.max(selectedIndex, 0),
   );
   const selectedOption = options[selectedIndex];
+  /**
+   * El nombre accesible incluye el valor que el botón muestra: si el nombre
+   * fuera solo el del campo, el texto visible no formaría parte de él y quien
+   * use control por voz no podría nombrar el control por lo que ve (WCAG 2.5.3).
+   */
+  const visibleValue = selectedOption?.label?.trim();
+  const accessibleName =
+    visibleValue ? `${ariaLabel}: ${visibleValue}` : ariaLabel;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -160,7 +168,7 @@ export function SelectField({
       <button
         ref={triggerRef}
         type="button"
-        aria-label={ariaLabel}
+        aria-label={accessibleName}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-controls={`${id}-listbox`}
