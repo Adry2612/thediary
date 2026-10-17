@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { use } from 'react';
 import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
+import { RepertoireSongEditor } from '@/components/repertoire/RepertoireSongEditor';
 import { getRepertoirePracticeStats } from '@/lib/repertoire-analytics';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { getDictionary } from '@/i18n/translations';
@@ -59,6 +60,7 @@ export default function RepertoireDetailPage({ params }: Props) {
         onDelete={deleteRepertoireItem}
         detail
       />
+      <RepertoireSongEditor item={item} onSave={saveRepertoireItem} />
     </main>
   );
 }

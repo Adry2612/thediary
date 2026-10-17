@@ -23,6 +23,56 @@ export type RepertoireItemKind = "song" | "lick";
 
 export type GuitarType = "electric" | "acoustic";
 
+/** Forma de un acorde: un traste por cuerda, de la 6ª (grave) a la 1ª (aguda). */
+export interface ChordShape {
+  frets: (number | null)[];
+  /** Traste base cuando el acorde no tiene cuerdas al aire. Se calcula si falta. */
+  baseFret?: number;
+}
+
+/** Acorde colocado sobre una palabra o posición de una línea de la letra. */
+export interface RepertoireChord {
+  id: string;
+  name: string;
+  /** Índice de carácter dentro de la línea donde empieza el acorde. */
+  position: number;
+  shape?: ChordShape;
+}
+
+export interface RepertoireLyricLine {
+  id: string;
+  text: string;
+  chords: RepertoireChord[];
+}
+
+export interface RepertoireChordChart {
+  lines: RepertoireLyricLine[];
+}
+
+/** Acorde propio del usuario: un nombre y su forma, reutilizable entre canciones. */
+export interface UserChord {
+  id: string;
+  name: string;
+  shape: ChordShape;
+}
+
+export interface RepertoireTabNote {
+  /** 0 = cuerda más grave, 5 = más aguda. */
+  string: number;
+  fret: number;
+  /** Columna rítmica dentro de la tablatura. */
+  column: number;
+}
+
+export interface RepertoireTab {
+  /** Afinación en notación de cuerdas, p. ej. "EADGBE". */
+  tuning: string;
+  measures: number;
+  /** Columnas por compás (resolución rítmica). */
+  subdivision: number;
+  notes: RepertoireTabNote[];
+}
+
 export interface RepertoirePart {
   id: string;
   name: string;
@@ -52,6 +102,10 @@ export interface RepertoireItem {
   spotifyUrl?: string;
   /** Si está en la lista de "aprender en el futuro" */
   isFutureLearn?: boolean;
+  /** Letra de la canción con los acordes asignados. */
+  chordChart?: RepertoireChordChart;
+  /** Tablatura creada con el editor visual. */
+  tab?: RepertoireTab;
 }
 
 export interface PracticePhase {

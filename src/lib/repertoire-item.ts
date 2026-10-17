@@ -14,6 +14,8 @@ interface CreateRepertoireItemInput {
   youtubeUrl?: string;
   spotifyUrl?: string;
   isFutureLearn?: boolean;
+  chordChart?: RepertoireItem["chordChart"];
+  tab?: RepertoireItem["tab"];
   updatedAt: string;
 }
 
@@ -31,6 +33,8 @@ export function createRepertoireItem({
   youtubeUrl,
   spotifyUrl,
   isFutureLearn,
+  chordChart,
+  tab,
   updatedAt,
 }: CreateRepertoireItemInput): RepertoireItem {
   return {
@@ -58,5 +62,7 @@ export function createRepertoireItem({
     ...(youtubeUrl?.trim() ? { youtubeUrl: youtubeUrl.trim() } : {}),
     ...(spotifyUrl?.trim() ? { spotifyUrl: spotifyUrl.trim() } : {}),
     ...(isFutureLearn ? { isFutureLearn: true } : {}),
+    ...(chordChart ? { chordChart } : {}),
+    ...(tab ? { tab } : {}),
   };
 }

@@ -3,12 +3,12 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
+import {
+  buildSelectEntries,
+  type SelectOption,
+} from "@/lib/select-options";
 
-export type SelectOption = {
-  value: string;
-  label: string;
-  disabled?: boolean;
-};
+export type { SelectOption };
 
 type SelectFieldProps = {
   value: string;
@@ -205,31 +205,46 @@ export function SelectField({
           style={listboxStyle}
           className="fixed z-[1000] max-h-60 overflow-y-auto border border-line bg-surface p-1 shadow-[0_8px_24px_rgba(0,0,0,0.35)] outline-none"
         >
-          {options.map((option, index) => (
-            <div
-              key={option.value}
-              id={`${id}-option-${index}`}
-              role="option"
-              aria-selected={option.value === value}
-              aria-disabled={option.disabled || undefined}
-              onMouseEnter={() => setActiveIndex(index)}
-              onClick={() => selectOption(index)}
-              className={`flex min-h-10 items-center justify-between gap-3 px-3 py-2 font-mono text-sm transition ${
-                option.disabled
-                  ? "cursor-not-allowed text-muted/50"
-                  : index === activeIndex
-                    ? "bg-white/[0.08] text-ink"
-                    : "text-muted hover:bg-white/[0.04] hover:text-ink"
-              }`}
-            >
-              <span className="whitespace-normal break-words">{option.label}</span>
-              {option.value === value && (
-                <span aria-hidden="true" className="font-mono text-accent-green-fg">
-                  ✓
+          {buildSelectEntries(options).map((entry) =>
+            entry.kind === "header" ? (
+              <div
+                key={entry.key}
+                role="presentation"
+                className="px-3 pb-1 pt-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted"
+              >
+                {entry.label}
+              </div>
+            ) : (
+              <div
+                key={entry.option.value}
+                id={`${id}-option-${entry.index}`}
+                role="option"
+                aria-selected={entry.option.value === value}
+                aria-disabled={entry.option.disabled || undefined}
+                onMouseEnter={() => setActiveIndex(entry.index)}
+                onClick={() => selectOption(entry.index)}
+                className={`flex min-h-10 items-center justify-between gap-3 px-3 py-2 font-mono text-sm transition ${
+                  entry.option.disabled
+                    ? "cursor-not-allowed text-muted/50"
+                    : entry.index === activeIndex
+                      ? "bg-white/[0.08] text-ink"
+                      : "text-muted hover:bg-white/[0.04] hover:text-ink"
+                }`}
+              >
+                <span className="whitespace-normal break-words">
+                  {entry.option.label}
                 </span>
-              )}
-            </div>
-          ))}
+                {entry.option.value === value && (
+                  <span
+                    aria-hidden="true"
+                    className="font-mono text-accent-green-fg"
+                  >
+                    ✓
+                  </span>
+                )}
+              </div>
+            ),
+          )}
         </div>,
         triggerRef.current?.closest("dialog") ?? document.body,
       )}
