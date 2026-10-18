@@ -66,9 +66,9 @@ export function MetronomeCard({
     >
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm uppercase tracking-[0.05em] text-muted">
+          <h2 className="text-sm uppercase tracking-[0.05em] text-muted">
              {text.title}
-          </h3>
+          </h2>
           <div className="mt-1 flex items-center gap-2 font-mono text-xs text-muted">
             <span
               aria-hidden="true"

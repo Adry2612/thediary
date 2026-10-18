@@ -37,3 +37,35 @@ The system SHALL place the accessible label of an indicator, such as the state o
 #### Scenario: The beats of the metronome
 - **WHEN** the metronome draws the dots of its beats
 - **THEN** each dot announces its beat and whether it is the active one
+
+### Requirement: A control that names itself includes the text it shows
+
+The system SHALL compose the accessible name of a control whose name is set programmatically so that it contains the text the control shows, in the order the control shows it.
+
+#### Scenario: A goal of the practice plan
+- **WHEN** the user reaches the control that shows how many minutes of practice they aim for
+- **THEN** its accessible name contains the value and the unit the control shows
+
+#### Scenario: A day of the week
+- **WHEN** the user reaches the cell of a day that shows the practice of that day
+- **THEN** its accessible name contains the weekday, the day of the month and the count with the abbreviation the cell shows
+
+### Requirement: A day of the calendar is a target of its own
+
+The system SHALL give each day of the year calendar of the dashboard a target of at least 24×24 px, without changing the size of the square the calendar paints.
+
+#### Scenario: A day of the year
+- **WHEN** the user points at the square of a day of the year calendar
+- **THEN** the area that responds to the pointer is at least 24×24 px
+
+#### Scenario: Two days next to each other
+- **WHEN** two days of the calendar are neighbours
+- **THEN** their targets do not overlap
+
+### Requirement: The headings of a screen descend in order
+
+The system SHALL order the headings of a screen so that no level is skipped between one heading and the next.
+
+#### Scenario: The card of the metronome
+- **WHEN** the metronome screen shows its title and then the title of its card
+- **THEN** the title of the card is a heading of the level that follows the title of the screen

@@ -29,6 +29,12 @@ type CalendarCell = {
   sessions: SessionRecord[];
 } | null;
 
+// Cada día es un objetivo de 24 px (WCAG 2.5.8) alrededor del cuadrado de 16
+// que pinta el calendario. El ancho de las columnas de la rejilla y el
+// desplazamiento que sigue a la última práctica usan el objetivo, no el
+// cuadrado.
+const DAY_TARGET_SIZE = 24;
+
 function toDateKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -154,7 +160,7 @@ export function YearPracticeCalendar({
 
     const scrollContainer = calendarScrollRef.current;
     const latestColumn = Math.floor(latestCellIndex / 7);
-    const columnWidth = 16 + 4;
+    const columnWidth = DAY_TARGET_SIZE;
     const rightPadding = 96;
 
     requestAnimationFrame(() => {
@@ -226,8 +232,8 @@ export function YearPracticeCalendar({
         <div className="min-w-max">
           <div
             aria-hidden="true"
-            className="mb-2 grid gap-1 pl-8 font-mono text-xs capitalize text-muted"
-            style={{ gridTemplateColumns: `repeat(${weekCount}, 16px)` }}
+            className="mb-2 grid gap-0 pl-8 font-mono text-xs capitalize text-muted"
+            style={{ gridTemplateColumns: `repeat(${weekCount}, ${DAY_TARGET_SIZE}px)` }}
           >
             {monthMarkers.map((month, index) => (
               <span key={index} className="whitespace-nowrap">
@@ -238,10 +244,10 @@ export function YearPracticeCalendar({
           <div className="flex gap-2">
             <div
               aria-hidden="true"
-              className="grid grid-rows-7 gap-1 pt-0.5 font-mono text-[10px] leading-4 text-muted"
+              className="grid grid-rows-7 gap-0 font-mono text-[10px] leading-6 text-muted"
             >
               {weekdays.short.map((label, index) => (
-                <span key={index} className="h-4 w-6">
+                <span key={index} className="h-6 w-6">
                   {label}
                 </span>
               ))}
@@ -249,9 +255,9 @@ export function YearPracticeCalendar({
             <div
               role="group"
               aria-label={`${calendar.yearDays} ${yearLabel}`}
-              className="grid grid-flow-col grid-rows-7 gap-1"
+              className="grid grid-flow-col grid-rows-7 gap-0"
               style={{
-                gridTemplateColumns: `repeat(${weekCount}, 16px)`,
+                gridTemplateColumns: `repeat(${weekCount}, ${DAY_TARGET_SIZE}px)`,
               }}
             >
               {cells.map((cell, index) => {
@@ -259,7 +265,7 @@ export function YearPracticeCalendar({
                   return (
                     <span
                       key={`empty-${index}`}
-                      className="size-4"
+                      className="size-6"
                       aria-hidden="true"
                     />
                   );
@@ -290,8 +296,13 @@ export function YearPracticeCalendar({
                         router.push(`/dashboard/practice/${cell.dateKey}`);
                       }
                     }}
-                    className={`size-4 rounded-[3px] ${getPracticeIntensityClass(minutes, dailyGoalMinutes)} transition hover:outline hover:outline-1 hover:outline-zinc-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-200 disabled:cursor-default disabled:opacity-30 ${cell.sessions.length > 0 ? "cursor-pointer" : ""}`}
-                  />
+                    className={`group grid size-6 place-items-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-200 disabled:cursor-default disabled:opacity-30 ${cell.sessions.length > 0 ? "cursor-pointer" : ""}`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`size-4 rounded-[3px] group-hover:outline group-hover:outline-1 group-hover:outline-zinc-400 ${getPracticeIntensityClass(minutes, dailyGoalMinutes)}`}
+                    />
+                  </button>
                 );
               })}
             </div>

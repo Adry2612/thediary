@@ -123,46 +123,61 @@ export function WeeklyPracticeSummary({
            aria-label={dashboard.weekDaysAria}
           className="grid grid-cols-7 gap-1.5 sm:gap-3"
         >
-          {days.map((day) => (
-            <li
-              key={day.dateKey}
-              className="min-w-0"
-            >
-              <button
-                type="button"
-                 aria-label={`${weekdays.short[new Date(`${day.dateKey}T12:00:00`).getDay()]} ${day.dayOfMonth}: ${day.sessionCount} ${day.sessionCount === 1 ? dashboard.session : dashboard.sessions}${day.hasPractice ? `, ${formatPracticeDuration(day.totalMinutes)} ${dashboard.practiced}. ${dashboard.weekDaysAria}` : ""}`}
-                aria-describedby={
-                  hoveredDay?.dateKey === day.dateKey
-                    ? "practice-day-tooltip"
-                    : undefined
-                }
-                onClick={() => {
-                  if (day.hasPractice) {
-                    router.push(`/dashboard/practice/${day.dateKey}`);
-                  }
-                }}
-                onMouseEnter={(event) => showTooltip(event.currentTarget, day)}
-                onMouseLeave={() => setHoveredDay(null)}
-                onFocus={(event) => showTooltip(event.currentTarget, day)}
-                onBlur={() => setHoveredDay(null)}
-                className={`flex min-h-20 w-full flex-col justify-between rounded-lg p-1.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-200 sm:min-h-28 sm:p-3 ${day.hasPractice ? `${getPracticeIntensityClass(day.totalMinutes, dailyGoalMinutes)} hover:brightness-110` : "bg-zinc-950/40 hover:bg-zinc-900/70"}`}
+          {days.map((day) => {
+            const weekdayLabel =
+              weekdays.short[new Date(`${day.dateKey}T12:00:00`).getDay()];
+            // La casilla muestra la cifra con la abreviatura ("0 ses."), y el
+            // nombre accesible tiene que contener ese mismo texto (WCAG 2.5.3),
+            // así que la abreviatura se compone una sola vez y sirve a los dos.
+            const sessionAbbreviation = `${day.sessionCount} ${dashboard.session.slice(0, 3)}.`;
+
+            return (
+              <li
+                key={day.dateKey}
+                className="min-w-0"
               >
-                <span className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                  <span className="truncate font-mono text-[10px] uppercase tracking-[0.04em] text-zinc-400 sm:text-xs sm:tracking-[0.08em]">
-                     {weekdays.short[new Date(`${day.dateKey}T12:00:00`).getDay()]}
-                  </span>
-                  <span className="font-mono text-sm leading-6 tabular-nums tracking-normal text-zinc-100 sm:text-base sm:leading-7">
-                    {day.dayOfMonth}
-                  </span>
-                </span>
-                <span
-                  className={`truncate font-mono text-[9px] leading-4 tracking-normal sm:text-[10px] sm:leading-5 ${day.hasPractice ? "text-[#c1d2c2]" : "text-muted"}`}
+                <button
+                  type="button"
+                  aria-label={`${weekdayLabel} ${day.dayOfMonth} ${sessionAbbreviation}${day.hasPractice ? ` ${formatPracticeDuration(day.totalMinutes)} ${dashboard.practiced}.` : ""}`}
+                  aria-describedby={
+                    hoveredDay?.dateKey === day.dateKey
+                      ? "practice-day-tooltip"
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (day.hasPractice) {
+                      router.push(`/dashboard/practice/${day.dateKey}`);
+                    }
+                  }}
+                  onMouseEnter={(event) => showTooltip(event.currentTarget, day)}
+                  onMouseLeave={() => setHoveredDay(null)}
+                  onFocus={(event) => showTooltip(event.currentTarget, day)}
+                  onBlur={() => setHoveredDay(null)}
+                  className={`flex min-h-20 w-full flex-col justify-between rounded-lg p-1.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-200 sm:min-h-28 sm:p-3 ${day.hasPractice ? `${getPracticeIntensityClass(day.totalMinutes, dailyGoalMinutes)} hover:brightness-110` : "bg-zinc-950/40 hover:bg-zinc-900/70"}`}
                 >
-                   {day.sessionCount} {dashboard.session.slice(0, 3)}.
-                </span>
-              </button>
-            </li>
-          ))}
+                  <span className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                    <span className="truncate font-mono text-[10px] uppercase tracking-[0.04em] text-zinc-400 sm:text-xs sm:tracking-[0.08em]">
+                      {weekdayLabel}
+                    </span>
+                    {/* Los espacios explícitos mantienen el texto visible y el
+                        nombre accesible alineados (WCAG 2.5.3). Un nodo de
+                        texto en blanco no se pinta como item de flex, pero sí
+                        cuenta como texto visible. */}
+                    {" "}
+                    <span className="font-mono text-sm leading-6 tabular-nums tracking-normal text-zinc-100 sm:text-base sm:leading-7">
+                      {day.dayOfMonth}
+                    </span>
+                  </span>
+                  {" "}
+                  <span
+                    className={`truncate font-mono text-[9px] leading-4 tracking-normal sm:text-[10px] sm:leading-5 ${day.hasPractice ? "text-[#c1d2c2]" : "text-muted"}`}
+                  >
+                    {sessionAbbreviation}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ol>
       </div>
       {hoveredDay &&
