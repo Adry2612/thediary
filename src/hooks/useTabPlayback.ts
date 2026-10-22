@@ -1,165 +1,75 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  closeMetronomeAudioContext,
-  getOrCreateMetronomeAudioContext,
-} from "@/lib/metronome-audio-context";
-import {
-  getTabColumnSeconds,
-  getTabPlaybackDuration,
-  getTabPlaybackEvents,
-  midiToFrequency,
-  type TabPlaybackEvent,
-} from "@/lib/tab-playback";
+import type * as AlphaTab from "@coderline/alphatab";
+import { buildTabAlphaTex } from "@/lib/tab-alphatex";
+import { getTabColumnSeconds } from "@/lib/tab-playback";
 import { getTabColumns } from "@/lib/repertoire-tab";
 import type { RepertoireTab } from "@/types/practice";
 
-const SCHEDULE_INTERVAL_MS = 40;
-const SCHEDULE_AHEAD_SECONDS = 0.2;
-const START_DELAY_SECONDS = 0.08;
+const SOUND_FONT_URL = "/alphatab/soundfont/sonivox.sf2";
+const SYNTH_BUFFER_MS = 200;
+const READY_TIMEOUT_MS = 8_000;
+
+let soundFontPromise: Promise<Uint8Array> | null = null;
+
+function loadSoundFontBytes(): Promise<Uint8Array> {
+  if (!soundFontPromise) {
+    soundFontPromise = fetch(SOUND_FONT_URL)
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`SoundFont ${response.status}`);
+        }
+        return new Uint8Array(await response.arrayBuffer());
+      })
+      .catch((error: unknown) => {
+        soundFontPromise = null;
+        throw error;
+      });
+  }
+  return soundFontPromise;
+}
+
+function waitForPlaybackReady(synth: AlphaTab.synth.AlphaSynth) {
+  if (synth.isReadyForPlayback) return Promise.resolve();
+
+  return new Promise<void>((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("La síntesis no ha terminado de cargar."));
+    }, READY_TIMEOUT_MS);
+    const offReady = synth.readyForPlayback.on(() => {
+      cleanup();
+      resolve();
+    });
+    const offSoundFontFailure = synth.soundFontLoadFailed.on((error) => {
+      cleanup();
+      reject(error);
+    });
+    const offMidiFailure = synth.midiLoadFailed.on((error) => {
+      cleanup();
+      reject(error);
+    });
+
+    function cleanup() {
+      window.clearTimeout(timeoutId);
+      offReady();
+      offSoundFontFailure();
+      offMidiFailure();
+    }
+  });
+}
 
 interface PlaybackSession {
-  context: AudioContext;
-  master: GainNode;
-  output: DynamicsCompressorNode;
-  events: TabPlaybackEvent[];
-  nextEventIndex: number;
-  startTime: number;
-  finishedAt: number;
+  synth: AlphaTab.synth.AlphaSynth;
   columnDuration: number;
   columns: number;
-  intervalId: number;
-  rafId: number;
-  activeNodes: Set<AudioScheduledSourceNode>;
-}
-
-function releaseSession(session: PlaybackSession) {
-  window.clearInterval(session.intervalId);
-  window.cancelAnimationFrame(session.rafId);
-  for (const node of session.activeNodes) {
-    try {
-      node.stop();
-    } catch {
-      // El nodo ya había terminado.
-    }
-    node.disconnect();
-  }
-  session.activeNodes.clear();
-  session.master.disconnect();
-  session.output.disconnect();
-}
-
-function schedulePlaybackNote(
-  session: PlaybackSession,
-  event: TabPlaybackEvent,
-) {
-  const { context, master, activeNodes } = session;
-  const when = session.startTime + event.time;
-  if (when < context.currentTime - 0.05) return;
-
-  const note = event.note;
-  const duration = Math.max(0.05, event.duration);
-  const oscillator = context.createOscillator();
-  const filter = context.createBiquadFilter();
-  const gain = context.createGain();
-
-  oscillator.type = note.dead ? "square" : "triangle";
-  const baseFrequency = note.dead ? 95 : midiToFrequency(event.midi);
-  oscillator.frequency.setValueAtTime(baseFrequency, when);
-
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(
-    note.dead ? 650
-    : note.palmMute ? 1_100
-    : note.slap || note.pop ? 5_000
-    : 3_200,
-    when,
-  );
-  filter.Q.value = 0.7;
-
-  const peak =
-    note.dead ? 0.035
-    : note.palmMute ? 0.1
-    : note.slap || note.pop ? 0.24
-    : 0.16;
-  gain.gain.setValueAtTime(0.0001, when);
-  gain.gain.linearRampToValueAtTime(peak, when + 0.006);
-  gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
-
-  oscillator.connect(filter);
-  filter.connect(gain);
-  gain.connect(master);
-
-  if (note.bend && !note.dead) {
-    const target = baseFrequency * Math.pow(2, note.bend.semitones / 12);
-    const releaseAt = when + duration * 0.7;
-    if (note.bend.prebend) {
-      oscillator.frequency.setValueAtTime(target, when);
-      if (note.bend.release) {
-        oscillator.frequency.setValueAtTime(target, releaseAt);
-        oscillator.frequency.exponentialRampToValueAtTime(
-          baseFrequency,
-          when + duration,
-        );
-      }
-    } else {
-      oscillator.frequency.exponentialRampToValueAtTime(
-        target,
-        when + Math.min(0.3, duration * 0.5),
-      );
-      if (note.bend.release) {
-        oscillator.frequency.setValueAtTime(target, releaseAt);
-        oscillator.frequency.exponentialRampToValueAtTime(
-          baseFrequency,
-          when + duration,
-        );
-      }
-    }
-  }
-
-  activeNodes.add(oscillator);
-  oscillator.addEventListener(
-    "ended",
-    () => {
-      activeNodes.delete(oscillator);
-      oscillator.disconnect();
-      filter.disconnect();
-      gain.disconnect();
-    },
-    { once: true },
-  );
-  oscillator.start(when);
-  oscillator.stop(when + duration + 0.02);
-
-  if (
-    !note.dead &&
-    (note.vibrato === "slight" || note.vibrato === "wide")
-  ) {
-    const lfo = context.createOscillator();
-    const lfoGain = context.createGain();
-    lfo.frequency.value = 5.5;
-    lfoGain.gain.value = note.vibrato === "wide" ? 11 : 4;
-    lfo.connect(lfoGain);
-    lfoGain.connect(oscillator.frequency);
-    activeNodes.add(lfo);
-    lfo.addEventListener(
-      "ended",
-      () => {
-        activeNodes.delete(lfo);
-        lfo.disconnect();
-        lfoGain.disconnect();
-      },
-      { once: true },
-    );
-    lfo.start(when);
-    lfo.stop(when + duration);
-  }
 }
 
 /**
- * Reproductor MIDI sintetizado para la tablatura estructurada. Programa las
- * notas con un pequeño margen de antelación y actualiza la columna activa.
+ * Reproductor de la tablatura con el sintetizador de alphaTab y su SoundFont
+ * local. La partitura AlphaTex se genera solo para el audio; la rejilla visual
+ * y la edición siguen siendo las de la app.
  */
 export function useTabPlayback({
   tab,
@@ -169,150 +79,189 @@ export function useTabPlayback({
   bpm: number;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [playhead, setPlayhead] = useState<number | null>(null);
   const [error, setError] = useState(false);
-  const contextRef = useRef<AudioContext | null>(null);
+  const synthRef = useRef<AlphaTab.synth.AlphaSynth | null>(null);
+  const moduleRef = useRef<typeof AlphaTab | null>(null);
   const sessionRef = useRef<PlaybackSession | null>(null);
+  const unsubscribersRef = useRef<(() => void)[]>([]);
+  const soundFontLoadedRef = useRef(false);
+  const midiLoadedRef = useRef(false);
   const startingRef = useRef(false);
-  const mountedRef = useRef(true);
+  const requestIdRef = useRef(0);
+
+  const ensureSynth = useCallback(async () => {
+    if (synthRef.current && moduleRef.current) {
+      return { synth: synthRef.current, alphaTab: moduleRef.current };
+    }
+
+    const alphaTab = await import("@coderline/alphatab");
+    // alphaTab expone este output en tiempo de ejecución, pero no lo declara
+    // en sus tipos públicos.
+    const OutputClass = (
+      alphaTab.synth as unknown as {
+        AlphaSynthScriptProcessorOutput: new () => AlphaTab.synth.ISynthOutput;
+      }
+    ).AlphaSynthScriptProcessorOutput;
+    const synth = new alphaTab.synth.AlphaSynth(
+      new OutputClass(),
+      SYNTH_BUFFER_MS,
+    );
+    synth.masterVolume = 0.85;
+    synth.isLooping = false;
+    synthRef.current = synth;
+    moduleRef.current = alphaTab;
+
+    unsubscribersRef.current.push(
+      synth.positionChanged.on((position) => {
+        const session = sessionRef.current;
+        if (!session) return;
+        const column = Math.min(
+          session.columns - 1,
+          Math.max(
+            0,
+            Math.floor(
+              position.currentTime / (session.columnDuration * 1_000),
+            ),
+          ),
+        );
+        setPlayhead(column);
+      }),
+      synth.finished.on(() => {
+        if (sessionRef.current?.synth !== synth) return;
+        sessionRef.current = null;
+        setIsPlaying(false);
+        setPlayhead(null);
+      }),
+      synth.soundFontLoaded.on(() => {
+        soundFontLoadedRef.current = true;
+      }),
+      synth.midiLoaded.on(() => {
+        midiLoadedRef.current = true;
+      }),
+      synth.soundFontLoadFailed.on(() => {
+        soundFontLoadedRef.current = false;
+        sessionRef.current = null;
+        setIsPlaying(false);
+        setIsLoading(false);
+        setPlayhead(null);
+        setError(true);
+      }),
+      synth.midiLoadFailed.on(() => {
+        midiLoadedRef.current = false;
+        sessionRef.current = null;
+        setIsPlaying(false);
+        setIsLoading(false);
+        setPlayhead(null);
+        setError(true);
+      }),
+    );
+
+    return { synth, alphaTab };
+  }, []);
 
   const stop = useCallback(() => {
-    const session = sessionRef.current;
-    sessionRef.current = null;
+    requestIdRef.current += 1;
     startingRef.current = false;
-    if (session) releaseSession(session);
+    sessionRef.current = null;
+    synthRef.current?.stop();
     setIsPlaying(false);
+    setIsLoading(false);
     setPlayhead(null);
   }, []);
 
   const play = useCallback(async () => {
-    if (sessionRef.current || startingRef.current || tab.notes.length === 0) {
+    if (
+      startingRef.current ||
+      sessionRef.current ||
+      tab.notes.length === 0
+    ) {
       return;
     }
 
-    setError(false);
+    const requestId = ++requestIdRef.current;
     startingRef.current = true;
+    setError(false);
+    setIsLoading(true);
     try {
-      const AudioContextConstructor =
-        window.AudioContext ??
-        (window as unknown as { webkitAudioContext?: typeof AudioContext })
-          .webkitAudioContext;
-      if (!AudioContextConstructor) throw new Error("AudioContext no disponible");
+      const [{ synth, alphaTab }, soundFont] = await Promise.all([
+        ensureSynth(),
+        loadSoundFontBytes(),
+      ]);
+      if (requestId !== requestIdRef.current) return;
 
-      const context = getOrCreateMetronomeAudioContext(
-        contextRef.current,
-        AudioContextConstructor,
-      );
-      contextRef.current = context;
-      if (context.state !== "running") await context.resume();
-      if (!mountedRef.current) return;
-
-      const master = context.createGain();
-      master.gain.value = 0.55;
-      const output = context.createDynamicsCompressor();
-      output.threshold.value = -18;
-      output.knee.value = 12;
-      output.ratio.value = 5;
-      output.attack.value = 0.003;
-      output.release.value = 0.2;
-      master.connect(output);
-      output.connect(context.destination);
-
-      const startTime = context.currentTime + START_DELAY_SECONDS;
-      const columnDuration = getTabColumnSeconds(tab, bpm);
-      const columns = getTabColumns(tab);
-      const events = getTabPlaybackEvents(tab, bpm);
-      const session: PlaybackSession = {
-        context,
-        master,
-        output,
-        events,
-        nextEventIndex: 0,
-        startTime,
-        finishedAt:
-          startTime + getTabPlaybackDuration(tab, bpm) + 0.08,
-        columnDuration,
-        columns,
-        intervalId: 0,
-        rafId: 0,
-        activeNodes: new Set(),
-      };
-
-      const scheduleAhead = () => {
-        const horizon = context.currentTime + SCHEDULE_AHEAD_SECONDS;
-        while (
-          session.nextEventIndex < session.events.length &&
-          startTime + session.events[session.nextEventIndex].time <= horizon
-        ) {
-          schedulePlaybackNote(
-            session,
-            session.events[session.nextEventIndex],
-          );
-          session.nextEventIndex += 1;
-        }
-      };
-
-      const finish = () => {
-        if (sessionRef.current !== session) return;
-        sessionRef.current = null;
-        releaseSession(session);
-        setIsPlaying(false);
-        setPlayhead(null);
-      };
-
-      const update = () => {
-        if (sessionRef.current !== session) return;
-        const now = context.currentTime;
-        if (now >= session.finishedAt) {
-          finish();
-          return;
-        }
-        const elapsed = Math.max(0, now - session.startTime);
-        const column = Math.min(
-          session.columns - 1,
-          Math.max(0, Math.floor(elapsed / session.columnDuration)),
-        );
-        setPlayhead(column);
-        session.rafId = window.requestAnimationFrame(update);
-      };
-
-      sessionRef.current = session;
-      startingRef.current = false;
-      setIsPlaying(true);
-      setPlayhead(0);
-      scheduleAhead();
-      session.intervalId = window.setInterval(
-        scheduleAhead,
-        SCHEDULE_INTERVAL_MS,
-      );
-      session.rafId = window.requestAnimationFrame(update);
-    } catch {
-      startingRef.current = false;
-      if (!mountedRef.current) return;
-      stop();
-      setError(true);
-    }
-  }, [bpm, stop, tab]);
-
-  // Al cambiar la tablatura o el tempo, la reproducción en curso deja de ser
-  // válida: es mejor detenerla que escuchar una versión antigua.
-  useEffect(() => {
-    if (sessionRef.current) stop();
-  }, [bpm, stop, tab]);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      const session = sessionRef.current;
-      sessionRef.current = null;
-      if (session) releaseSession(session);
-      if (contextRef.current) {
-        closeMetronomeAudioContext(contextRef.current);
-        contextRef.current = null;
+      if (!soundFontLoadedRef.current) {
+        synth.loadSoundFont(soundFont, false);
       }
+      if (!soundFontLoadedRef.current) {
+        throw new Error("No se pudo cargar el SoundFont.");
+      }
+
+      const importer = new alphaTab.importer.AlphaTexImporter();
+      const settings = new alphaTab.Settings();
+      importer.initFromString(buildTabAlphaTex(tab, bpm), settings);
+      const score = importer.readScore();
+      const midi = new alphaTab.midi.MidiFile();
+      const handler = new alphaTab.midi.AlphaSynthMidiFileHandler(midi);
+      new alphaTab.midi.MidiFileGenerator(score, settings, handler).generate();
+      if (requestId !== requestIdRef.current) return;
+
+      const columnDuration = getTabColumnSeconds(tab, bpm);
+      sessionRef.current = {
+        synth,
+        columnDuration,
+        columns: getTabColumns(tab),
+      };
+      synth.stop();
+      midiLoadedRef.current = false;
+      synth.loadMidiFile(midi);
+      if (!midiLoadedRef.current) {
+        throw new Error("No se pudo cargar el MIDI.");
+      }
+      if (!synth.isReadyForPlayback) {
+        await waitForPlaybackReady(synth);
+      }
+      if (requestId !== requestIdRef.current) return;
+
+      if (!synth.play()) {
+        throw new Error("No se pudo iniciar el sintetizador.");
+      }
+      setIsPlaying(true);
+      setIsLoading(false);
+      setPlayhead(0);
+    } catch {
+      if (requestId !== requestIdRef.current) return;
+      sessionRef.current = null;
+      synthRef.current?.stop();
+      setIsPlaying(false);
+      setIsLoading(false);
+      setPlayhead(null);
+      setError(true);
+    } finally {
+      if (requestId === requestIdRef.current) {
+        startingRef.current = false;
+      }
+    }
+  }, [bpm, ensureSynth, tab]);
+
+  // Cambiar el contenido o el tempo invalida el MIDI ya cargado.
+  useEffect(() => {
+    if (sessionRef.current || startingRef.current) stop();
+  }, [bpm, stop, tab]);
+
+  useEffect(() => {
+    return () => {
+      requestIdRef.current += 1;
+      sessionRef.current = null;
+      startingRef.current = false;
+      for (const unsubscribe of unsubscribersRef.current) unsubscribe();
+      unsubscribersRef.current = [];
+      synthRef.current?.destroy();
+      synthRef.current = null;
+      moduleRef.current = null;
     };
   }, []);
 
-  return { isPlaying, playhead, play, stop, error };
+  return { isPlaying, isLoading, playhead, play, stop, error };
 }

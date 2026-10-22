@@ -37,10 +37,11 @@ export function TabPlaybackBar({
   const text = useI18nSection("repertoire");
   const [bpm, setBpm] = useState(() => safeBpm(initialBpm));
   const [bpmDraft, setBpmDraft] = useState(() => String(bpm));
-  const { isPlaying, playhead, play, stop, error } = useTabPlayback({
-    tab,
-    bpm,
-  });
+  const { isPlaying, isLoading, playhead, play, stop, error } =
+    useTabPlayback({
+      tab,
+      bpm,
+    });
 
   useEffect(() => {
     const next = safeBpm(initialBpm);
@@ -75,15 +76,25 @@ export function TabPlaybackBar({
         size="field"
         variant={isPlaying ? "primary" : "ghost"}
         disabled={!canPlay}
+        aria-busy={isLoading}
         aria-pressed={isPlaying}
-        aria-label={isPlaying ? text.tabStop : text.tabPlay}
+        aria-label={
+          isLoading ? `${text.tabPlaybackLoading}. ${text.tabStop}`
+          : isPlaying ? text.tabStop
+          : text.tabPlay
+        }
+        title={isLoading ? text.tabStop : undefined}
         onClick={() => {
-          if (isPlaying) stop();
+          if (isPlaying || isLoading) stop();
           else void play();
         }}
       >
-        <span aria-hidden="true">{isPlaying ? "■" : "▶"}</span>
-        {isPlaying ? text.tabStop : text.tabPlay}
+        <span aria-hidden="true">
+          {isLoading ? "…" : isPlaying ? "■" : "▶"}
+        </span>
+        {isLoading ? text.tabPlaybackLoading
+        : isPlaying ? text.tabStop
+        : text.tabPlay}
       </Button>
 
       <label className="text-xs text-muted">
@@ -94,7 +105,7 @@ export function TabPlaybackBar({
           max={MAX_BPM}
           value={bpmDraft}
           aria-label={text.tabPlaybackBpm}
-          disabled={isPlaying}
+          disabled={isPlaying || isLoading}
           onChange={(event) => {
             const next = event.target.value.replace(/\D/g, "").slice(0, 3);
             setBpmDraft(next);
@@ -120,7 +131,7 @@ export function TabPlaybackBar({
       </label>
 
       <span className="mb-1 rounded border border-line px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
-        MIDI
+        MIDI · {text.tabPlaybackSound}
       </span>
 
       {error ? (
