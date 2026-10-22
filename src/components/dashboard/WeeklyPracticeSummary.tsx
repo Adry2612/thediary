@@ -9,7 +9,10 @@ import type { PracticeTooltipDay } from "@/types/dashboard";
 import type { SessionRecord } from "@/types/practice";
 import { formatPracticeDuration } from "@/lib/dashboard-data";
 import type { PracticeWeekDay } from "@/lib/practice-calendar";
-import { getPracticeIntensityClass } from "@/lib/practice-goals";
+import {
+  getPracticeIntensityClass,
+  getPracticeIntensityLevel,
+} from "@/lib/practice-goals";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 type WeeklyPracticeSummaryProps = {
@@ -126,6 +129,24 @@ export function WeeklyPracticeSummary({
           {days.map((day) => {
             const weekdayLabel =
               weekdays.short[new Date(`${day.dateKey}T12:00:00`).getDay()];
+            // La paleta cambia de oscura a clara. A partir del nivel 3 el
+            // texto claro no llega a 4.5:1, así que el contenido pasa a negro.
+            const intensityLevel = day.hasPractice
+              ? getPracticeIntensityLevel(day.totalMinutes, dailyGoalMinutes)
+              : -1;
+            const usesDarkText = intensityLevel >= 3;
+            const primaryTextClass = day.hasPractice
+              ? usesDarkText
+                ? "text-black"
+                : "text-zinc-100"
+              : "text-zinc-100";
+            const secondaryTextClass = day.hasPractice
+              ? usesDarkText
+                ? "text-black"
+                : intensityLevel === 2
+                  ? "text-zinc-200"
+                  : "text-zinc-300"
+              : "text-zinc-400";
             // La casilla muestra la cifra con la abreviatura ("0 ses."), y el
             // nombre accesible tiene que contener ese mismo texto (WCAG 2.5.3),
             // así que la abreviatura se compone una sola vez y sirve a los dos.
@@ -156,7 +177,7 @@ export function WeeklyPracticeSummary({
                   className={`flex min-h-20 w-full flex-col justify-between rounded-lg p-1.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-200 sm:min-h-28 sm:p-3 ${day.hasPractice ? `${getPracticeIntensityClass(day.totalMinutes, dailyGoalMinutes)} hover:brightness-110` : "bg-zinc-950/40 hover:bg-zinc-900/70"}`}
                 >
                   <span className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                    <span className="truncate font-mono text-[10px] uppercase tracking-[0.04em] text-zinc-400 sm:text-xs sm:tracking-[0.08em]">
+                    <span className={`truncate font-mono text-[10px] uppercase tracking-[0.04em] sm:text-xs sm:tracking-[0.08em] ${secondaryTextClass}`}>
                       {weekdayLabel}
                     </span>
                     {/* Los espacios explícitos mantienen el texto visible y el
@@ -164,13 +185,13 @@ export function WeeklyPracticeSummary({
                         texto en blanco no se pinta como item de flex, pero sí
                         cuenta como texto visible. */}
                     {" "}
-                    <span className="font-mono text-sm leading-6 tabular-nums tracking-normal text-zinc-100 sm:text-base sm:leading-7">
+                    <span className={`font-mono text-sm leading-6 tabular-nums tracking-normal sm:text-base sm:leading-7 ${primaryTextClass}`}>
                       {day.dayOfMonth}
                     </span>
                   </span>
                   {" "}
                   <span
-                    className={`truncate font-mono text-[9px] leading-4 tracking-normal sm:text-[10px] sm:leading-5 ${day.hasPractice ? "text-[#c1d2c2]" : "text-muted"}`}
+                    className={`truncate font-mono text-[9px] leading-4 tracking-normal sm:text-[10px] sm:leading-5 ${day.hasPractice ? secondaryTextClass : "text-muted"}`}
                   >
                     {sessionAbbreviation}
                   </span>

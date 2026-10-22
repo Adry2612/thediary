@@ -29,10 +29,10 @@ type CalendarCell = {
   sessions: SessionRecord[];
 } | null;
 
-// Cada día es un objetivo de 24 px (WCAG 2.5.8) alrededor del cuadrado de 16
-// que pinta el calendario. El ancho de las columnas de la rejilla y el
-// desplazamiento que sigue a la última práctica usan el objetivo, no el
-// cuadrado.
+// Cada día es un objetivo de 24 px (WCAG 2.5.8) alrededor del cuadrado de 20
+// que pinta el calendario: quedan 4 px de separación sin reducir el área
+// interactiva. El ancho de las columnas y el desplazamiento que sigue a la
+// última práctica usan el objetivo, no el cuadrado.
 const DAY_TARGET_SIZE = 24;
 
 function toDateKey(date: Date) {
@@ -300,7 +300,7 @@ export function YearPracticeCalendar({
                   >
                     <span
                       aria-hidden="true"
-                      className={`size-4 rounded-[3px] group-hover:outline group-hover:outline-1 group-hover:outline-zinc-400 ${getPracticeIntensityClass(minutes, dailyGoalMinutes)}`}
+                      className={`size-5 rounded-[3px] group-hover:outline group-hover:outline-1 group-hover:outline-zinc-400 ${getPracticeIntensityClass(minutes, dailyGoalMinutes)}`}
                     />
                   </button>
                 );
