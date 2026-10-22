@@ -439,13 +439,18 @@ export const es: Dict = {
     editTitle: 'Editar lick',
     editorEyebrow: 'Lick',
     editorDescription:
-      'Escribe la tablatura tal y como quieres verla. Los espacios se conservan.',
+      'Coloca las notas en la rejilla y añade trastes y técnicas.',
     titleLabel: 'Título',
     titlePlaceholder: 'Frase en La menor',
     tabLabel: 'Tablatura',
     tabPlaceholder:
       'e|----------------|\nB|----------------|\nG|----------------|\nD|----------------|\nA|----------------|\nE|----------------|',
     tabHint: 'Texto plano: conserva espacios, guiones y saltos de línea.',
+    tabLegacyNotice:
+      'Esta tablatura antigua está en texto plano. Crea una versión visual para editarla.',
+    tabConvert: 'Crear tablatura visual',
+    tabConvertHint:
+      'Al guardar, la tablatura visual sustituirá al texto antiguo.',
     keyLabel: 'Tonalidad',
     keyNone: 'Sin tonalidad',
     techniquesLabel: 'Técnicas',

@@ -434,13 +434,18 @@ export const en: Dict = {
     editTitle: 'Edit lick',
     editorEyebrow: 'Lick',
     editorDescription:
-      'Write the tablature the way you want to read it. Spaces are preserved.',
+      'Place the notes on the grid and add frets and techniques.',
     titleLabel: 'Title',
     titlePlaceholder: 'A minor phrase',
     tabLabel: 'Tablature',
     tabPlaceholder:
       'e|----------------|\nB|----------------|\nG|----------------|\nD|----------------|\nA|----------------|\nE|----------------|',
     tabHint: 'Plain text: spaces, dashes and line breaks are preserved.',
+    tabLegacyNotice:
+      'This old tab is plain text. Create a visual version to edit it.',
+    tabConvert: 'Create visual tab',
+    tabConvertHint:
+      'When you save, the visual tab will replace the old text.',
     keyLabel: 'Key',
     keyNone: 'No key',
     techniquesLabel: 'Techniques',

@@ -1,6 +1,8 @@
 import type { BpmLogEntry, GuitarLick } from "../../types/lick.ts";
+import type { RepertoireTab } from "../../types/practice.ts";
 import { normalizeMusicalKey } from "./keys.ts";
 import { normalizeTechniques } from "./techniques.ts";
+import { normalizeTab } from "../repertoire-tab.ts";
 import { MAX_BPM, MIN_BPM } from "../metronome-tempo.ts";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -42,6 +44,11 @@ function normalizeBpmEntry(
   return { id, bpm, date, ...(notes ? { notes } : {}) };
 }
 
+function normalizeStoredTab(value: unknown): RepertoireTab | undefined {
+  if (!isRecord(value) || !Array.isArray(value.notes)) return undefined;
+  return normalizeTab(value as unknown as RepertoireTab);
+}
+
 function normalizeHistory(value: unknown): BpmLogEntry[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -76,11 +83,15 @@ export function normalizeLick(value: unknown): GuitarLick | null {
   const key = normalizeMusicalKey(value.key);
   const techniques = normalizeTechniques(value.techniques);
   const targetBpm = normalizeLickBpm(value.targetBpm);
+  const tab = normalizeStoredTab(value.tab);
+  const tabContent =
+    typeof value.tabContent === "string" ? value.tabContent : undefined;
 
   return {
     id: value.id,
     title: typeof value.title === "string" ? value.title : "",
-    tabContent: typeof value.tabContent === "string" ? value.tabContent : "",
+    ...(tab ? { tab } : {}),
+    ...(tabContent !== undefined ? { tabContent } : {}),
     ...(key ? { key } : {}),
     techniques,
     ...(associatedSongId ? { associatedSongId } : {}),

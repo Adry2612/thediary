@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { SelectField } from "@/components/ui/SelectField";
-import { TextArea, TextField } from "@/components/ui/Field";
+import { TextField } from "@/components/ui/Field";
+import { LickTab } from "@/components/licks/LickTab";
+import { TabEditor } from "@/components/repertoire/TabEditor";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { createId } from "@/lib/create-id";
 import { normalizeMusicalKey, MUSICAL_KEYS } from "@/lib/licks/keys";
@@ -12,8 +14,9 @@ import {
   normalizeTechniques,
 } from "@/lib/licks/techniques";
 import { MAX_BPM, MIN_BPM } from "@/lib/metronome-tempo";
+import { normalizeTab } from "@/lib/repertoire-tab";
 import type { GuitarLick, TechniqueId } from "@/types/lick";
-import type { RepertoireItem } from "@/types/practice";
+import type { RepertoireItem, RepertoireTab } from "@/types/practice";
 
 export function LickEditorModal({
   lick,
@@ -29,7 +32,9 @@ export function LickEditorModal({
   const text = useI18nSection("licks");
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [title, setTitle] = useState(lick?.title ?? "");
-  const [tabContent, setTabContent] = useState(lick?.tabContent ?? "");
+  const hasLegacyTab = Boolean(lick && !lick.tab && lick.tabContent?.trim());
+  const [tab, setTab] = useState<RepertoireTab>(() => normalizeTab(lick?.tab));
+  const [useVisualTab, setUseVisualTab] = useState(!hasLegacyTab);
   const [key, setKey] = useState(lick?.key ?? "");
   const [techniques, setTechniques] = useState<TechniqueId[]>(
     lick?.techniques ?? [],
@@ -91,7 +96,10 @@ export function LickEditorModal({
     onSave({
       id: lick?.id ?? createId(),
       title: trimmedTitle,
-      tabContent,
+      ...(useVisualTab ? { tab: normalizeTab(tab) } : {}),
+      ...(!useVisualTab && lick?.tabContent
+        ? { tabContent: lick.tabContent }
+        : {}),
       ...(normalizedKey ? { key: normalizedKey } : {}),
       techniques: normalizeTechniques(techniques),
       ...(associatedSongId ? { associatedSongId } : {}),
@@ -161,20 +169,41 @@ export function LickEditorModal({
             />
           </label>
 
-          <label className="block text-xs text-muted sm:col-span-2">
-            {text.tabLabel}
-            <TextArea
-              value={tabContent}
-              onChange={(event) => setTabContent(event.target.value)}
-              placeholder={text.tabPlaceholder}
-              wrap="off"
-              spellCheck={false}
-              className="mt-1 min-h-56 font-mono text-xs leading-6"
-            />
-            <span className="mt-1 block text-[11px] text-muted">
-              {text.tabHint}
-            </span>
-          </label>
+          <div className="sm:col-span-2">
+            {useVisualTab ? (
+              <>
+                {hasLegacyTab ? (
+                  <p className="mb-2 text-[11px] text-muted">
+                    {text.tabConvertHint}
+                  </p>
+                ) : null}
+                <TabEditor value={tab} onChange={setTab} defaultOpen />
+              </>
+            ) : (
+              <div>
+                <p className="text-xs text-muted">{text.tabLabel}</p>
+                <p className="mt-1 text-[11px] text-muted">
+                  {text.tabLegacyNotice}
+                </p>
+                <LickTab
+                  content={lick?.tabContent}
+                  emptyLabel={text.tabEmpty}
+                  ariaLabel={text.tabTitle}
+                  maxLines={10}
+                  className="mt-2"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="field"
+                  className="mt-3"
+                  onClick={() => setUseVisualTab(true)}
+                >
+                  {text.tabConvert}
+                </Button>
+              </div>
+            )}
+          </div>
 
           <div className="block text-xs text-muted">
             {text.keyLabel}

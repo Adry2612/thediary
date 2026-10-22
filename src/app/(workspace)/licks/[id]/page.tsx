@@ -129,6 +129,7 @@ export default function LickDetailPage({ params }: Props) {
           {text.tabTitle}
         </h2>
         <LickTab
+          tab={lick.tab}
           content={lick.tabContent}
           emptyLabel={text.tabEmpty}
           ariaLabel={`${text.tabTitle}: ${title}`}

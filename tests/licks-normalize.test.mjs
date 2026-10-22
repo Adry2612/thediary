@@ -20,6 +20,37 @@ test("keeps a valid lick", () => {
   assert.equal(lick.practiceCount, 2);
 });
 
+test("normalizes a structured tab and keeps legacy text as fallback", () => {
+  const lick = normalizeLick({
+    ...base,
+    tab: {
+      tuning: "EADGBE",
+      measures: 1,
+      subdivision: 4,
+      notes: [
+        { string: 0, column: 0, fret: 5 },
+        { string: 9, column: 0, fret: 99 },
+      ],
+    },
+  });
+
+  assert.ok(lick);
+  assert.equal(lick.tab?.tuning, "EADGBE");
+  assert.deepEqual(lick.tab?.notes, [{ string: 0, column: 0, fret: 5 }]);
+  assert.equal(lick.tabContent, "e|---|");
+});
+
+test("drops a malformed structured tab without losing the legacy text", () => {
+  const lick = normalizeLick({
+    ...base,
+    tab: { notes: null },
+  });
+
+  assert.ok(lick);
+  assert.equal(lick.tab, undefined);
+  assert.equal(lick.tabContent, "e|---|");
+});
+
 test("drops only invalid values, not the lick", () => {
   const lick = normalizeLick({
     ...base,
