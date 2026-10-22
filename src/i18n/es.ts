@@ -412,7 +412,7 @@ export const es: Dict = {
     summaryKeys: 'Tonalidades en uso',
     emptyTitle: 'Tu laboratorio empieza aquí.',
     emptyDescription:
-      'Guarda una frase, un ejercicio o una idea rápida con su tablatura en texto.',
+      'Guarda una frase, un ejercicio o una idea rápida con una tablatura visual.',
     noResults: 'No hay licks para',
     noResultsDescription: 'Prueba con otro título o guarda una idea nueva.',
     untitled: 'Sin título',
@@ -440,6 +440,9 @@ export const es: Dict = {
     editorEyebrow: 'Lick',
     editorDescription:
       'Coloca las notas en la rejilla y añade trastes y técnicas.',
+    quickTabEyebrow: 'Apuntes rápidos',
+    quickTabNotice:
+      'Este editor es para ideas y apuntes: notas, trastes y técnicas. Para una tablatura más elaborada, hazla en Guitar Pro o tu editor favorito y luego impórtala.',
     titleLabel: 'Título',
     titlePlaceholder: 'Frase en La menor',
     tabLabel: 'Tablatura',

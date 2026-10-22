@@ -407,7 +407,7 @@ export const en: Dict = {
     summaryKeys: 'Keys in use',
     emptyTitle: 'Your lab starts here.',
     emptyDescription:
-      'Save a phrase, an exercise or a quick idea with its plain-text tablature.',
+      'Save a phrase, an exercise or a quick idea with a visual tab.',
     noResults: 'No licks for',
     noResultsDescription: 'Try another title or save a new idea.',
     untitled: 'Untitled',
@@ -435,6 +435,9 @@ export const en: Dict = {
     editorEyebrow: 'Lick',
     editorDescription:
       'Place the notes on the grid and add frets and techniques.',
+    quickTabEyebrow: 'Quick notes',
+    quickTabNotice:
+      'This editor is for ideas and notes: frets, strings and techniques. For a more elaborate tab, make it in Guitar Pro or your favourite editor and import it.',
     titleLabel: 'Title',
     titlePlaceholder: 'A minor phrase',
     tabLabel: 'Tablature',

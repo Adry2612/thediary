@@ -6,6 +6,7 @@ import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/Field";
 import { LickTab } from "@/components/licks/LickTab";
 import { TabEditor } from "@/components/repertoire/TabEditor";
+import { EditIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { createId } from "@/lib/create-id";
 import { normalizeMusicalKey, MUSICAL_KEYS } from "@/lib/licks/keys";
@@ -156,7 +157,7 @@ export function LickEditorModal({
           </button>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block text-xs text-muted sm:col-span-2">
             {text.titleLabel}
             <TextField
@@ -172,6 +173,20 @@ export function LickEditorModal({
           <div className="sm:col-span-2">
             {useVisualTab ? (
               <>
+                <div
+                  role="note"
+                  className="mb-3 flex items-start gap-3 rounded-lg border border-accent-green-fg/30 bg-accent-green-bg/25 p-3 sm:p-4"
+                >
+                  <EditIcon className="mt-0.5 size-4 shrink-0 text-accent-green-fg" />
+                  <div className="min-w-0">
+                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-green-fg">
+                      {text.quickTabEyebrow}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted">
+                      {text.quickTabNotice}
+                    </p>
+                  </div>
+                </div>
                 {hasLegacyTab ? (
                   <p className="mb-2 text-[11px] text-muted">
                     {text.tabConvertHint}
