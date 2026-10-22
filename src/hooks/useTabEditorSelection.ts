@@ -79,8 +79,8 @@ export function useTabEditorSelection({
     } else {
       setAnchor(cell);
       setFocus(cell);
-      setDragging(true);
     }
+    setDragging(true);
     gridRef.current?.focus();
   }
 
@@ -151,6 +151,7 @@ export function useTabEditorSelection({
     gridRef,
     focus,
     buffer,
+    dragging,
     selectedCells,
     isCellSelected,
     startSelection,

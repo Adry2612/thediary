@@ -1,13 +1,18 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/Button";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
+import { TabTechniquePicker } from "@/components/repertoire/TabTechniquePicker";
 import {
-  BEND_AMOUNT_LABELS,
-  canApplyTabTechniqueToSelection,
   clearTabNote,
   getAvailableTabColumns,
   getTabCellCenterX,
@@ -20,17 +25,13 @@ import {
   LABEL_WIDTH,
   MAX_FRET,
   MIN_MEASURES,
-  setTabBendAmounts,
   setTabMeasures,
   setTabSubdivision,
   STRING_ROW_HEIGHT,
-  TAB_BEND_AMOUNTS,
   TAB_EDITOR_MAX_MEASURES,
   TAB_TECHNIQUES,
   tabSystemTechniques,
   tabTechniqueGlyphs,
-  tabTechniqueSelectionState,
-  toggleTabTechniques,
 } from "@/lib/repertoire-tab";
 import { parseTuningNotes, STRING_COUNT } from "@/lib/chords";
 import type { RepertoireTab, RepertoireTabNote } from "@/types/practice";
@@ -54,7 +55,15 @@ export function TabEditor({
 }: TabEditorProps) {
   const text = useI18nSection("repertoire");
   const measureObserverRef = useRef<ResizeObserver | null>(null);
+  const techniquesPanelRef = useRef<HTMLDivElement>(null);
+  const wasDraggingRef = useRef(false);
   const [gridWidth, setGridWidth] = useState(0);
+  const [techniquesOpen, setTechniquesOpen] = useState(false);
+  const [techniquesPosition, setTechniquesPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   // La rejilla se mide a sí misma: cuántos compases caben por sistema según el ancho.
   // Se usa un ref de callback porque la rejilla solo existe cuando la sección está abierta.
   const measureRef = useCallback((node: HTMLDivElement | null) => {
@@ -72,6 +81,7 @@ export function TabEditor({
     gridRef,
     focus,
     buffer,
+    dragging,
     selectedCells,
     isCellSelected,
     startSelection,
@@ -123,9 +133,120 @@ export function TabEditor({
   const fretFieldValue =
     buffer !== "" ? buffer : currentFret !== undefined ? String(currentFret) : "";
 
-  const hasSelectionNotes = selectedCells.some((cell) =>
-    noteByCell.has(`${cell.string}:${cell.column}`),
-  );
+  const techniquesAnchor = useMemo(() => {
+    const focusKey = `${focus.string}:${focus.column}`;
+    if (noteByCell.has(focusKey)) return focus;
+    return (
+      selectedCells.find((cell) =>
+        noteByCell.has(`${cell.string}:${cell.column}`),
+      ) ?? focus
+    );
+  }, [focus, selectedCells, noteByCell]);
+
+  function closeTechniques() {
+    setTechniquesOpen(false);
+    setTechniquesPosition(null);
+  }
+
+  // Al teclear un traste el panel estorba: se cierra y deja editar la celda.
+  useEffect(() => {
+    if (buffer === "") return;
+    closeTechniques();
+  }, [buffer]);
+
+  // Un clic o un arrastre abren el selector solo al soltar y si hay notas.
+  useEffect(() => {
+    const wasDragging = wasDraggingRef.current;
+    wasDraggingRef.current = dragging;
+    if (!wasDragging || dragging) return;
+
+    const hasNotes = selectedCells.some((cell) =>
+      noteByCell.has(`${cell.string}:${cell.column}`),
+    );
+    if (hasNotes) {
+      setTechniquesOpen(true);
+    } else {
+      setTechniquesOpen(false);
+    }
+  }, [dragging, selectedCells, noteByCell]);
+
+  // Si la selección se queda sin notas (borrar, vaciar, etc.), se cierra.
+  useEffect(() => {
+    if (!techniquesOpen) return;
+    const hasNotes = selectedCells.some((cell) =>
+      noteByCell.has(`${cell.string}:${cell.column}`),
+    );
+    if (!hasNotes) closeTechniques();
+  }, [techniquesOpen, selectedCells, noteByCell]);
+
+  // Un clic fuera del selector o de la rejilla lo cierra.
+  useEffect(() => {
+    if (!techniquesOpen) return;
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (techniquesPanelRef.current?.contains(target)) return;
+      if (gridRef.current?.contains(target)) return;
+      closeTechniques();
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [techniquesOpen, gridRef]);
+
+  // Escape cierra solo el selector, no el diálogo que lo contiene.
+  useEffect(() => {
+    if (!techniquesOpen) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeTechniques();
+      gridRef.current?.focus();
+    }
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  }, [techniquesOpen, gridRef]);
+
+  const updateTechniquesPosition = useCallback(() => {
+    if (!techniquesOpen) return;
+    const grid = gridRef.current;
+    if (!grid) return;
+    const cell = grid.querySelector<HTMLElement>(
+      `[data-tab-cell="${techniquesAnchor.string}:${techniquesAnchor.column}"]`,
+    );
+    if (!cell) {
+      setTechniquesPosition({
+        top: 8,
+        left: 0,
+        width: Math.min(techniquesPanelRef.current?.offsetWidth ?? 320, 320),
+      });
+      return;
+    }
+
+    const gridRect = grid.getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
+    const width = Math.min(
+      techniquesPanelRef.current?.offsetWidth ?? 320,
+      320,
+      gridRect.width,
+    );
+    const center = cellRect.left - gridRect.left + cellRect.width / 2;
+    const maxLeft = Math.max(0, gridRect.width - width);
+    setTechniquesPosition({
+      top: cellRect.bottom - gridRect.top + 8,
+      left: Math.min(Math.max(0, center - width / 2), maxLeft),
+      width,
+    });
+  }, [
+    techniquesOpen,
+    techniquesAnchor.string,
+    techniquesAnchor.column,
+    gridRef,
+  ]);
+
+  useEffect(() => {
+    updateTechniquesPosition();
+  }, [updateTechniquesPosition, gridWidth, value.notes]);
 
   return (
     <CollapsibleSection
@@ -203,94 +324,29 @@ export function TabEditor({
 
       <p className="mt-3 text-xs text-muted">{text.tabHint}</p>
 
-      <div className="mt-3 rounded-lg border border-line bg-canvas/40 p-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-            {text.techniquesTitle}
-          </h3>
-          <span className="text-[11px] text-muted">{text.techniquesHint}</span>
-        </div>
-
-        {!hasSelectionNotes ?
-          <p className="mt-2 text-xs text-muted">{text.techniquesNoNote}</p>
-        : null}
-
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {TAB_TECHNIQUES.map((technique) => {
-            const label = text[technique.labelKey] ?? technique.id;
-            const state = tabTechniqueSelectionState(
-              value,
-              selectedCells,
-              technique.id,
-            );
-            const canToggle =
-              state !== "none" ||
-              canApplyTabTechniqueToSelection(
-                value,
-                selectedCells,
-                technique.id,
-              );
-            const needsPrevious =
-              technique.isTransition && !canToggle;
-            return (
-              <button
-                key={technique.id}
-                type="button"
-                disabled={!canToggle}
-                aria-pressed={state === "all" ? true : state === "some" ? "mixed" : false}
-                title={
-                  needsPrevious ?
-                    text.techniquesNeedsPrevious
-                  : `${label} [${technique.shortcut}]`
-                }
-                onClick={() =>
-                  onChange(toggleTabTechniques(value, selectedCells, technique.id))
-                }
-                className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition disabled:cursor-not-allowed disabled:opacity-40 ${
-                  state === "all" ?
-                    "border-accent-green-fg bg-accent-green-bg/40 text-ink"
-                  : state === "some" ?
-                    "border-accent-green-fg/60 bg-accent-green-bg/20 text-ink"
-                  : "border-line text-muted hover:bg-white/5 hover:text-ink"
-                }`}
-              >
-                <span className="font-mono text-[10px] font-semibold text-accent-green-fg">
-                  {technique.glyph}
-                </span>
-                <span>{label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {selectedNote?.bend ?
-          <label className="mt-2 block text-[11px] text-muted">
-            {text.techniqueBendAmount}
-            <SelectField
-              className="mt-1 w-28"
-              value={String(selectedNote.bend.semitones)}
-              ariaLabel={text.techniqueBendAmount}
-              onChange={(next) =>
-                onChange(setTabBendAmounts(value, selectedCells, Number(next)))
-              }
-              options={TAB_BEND_AMOUNTS.map((amount) => ({
-                value: String(amount),
-                label: BEND_AMOUNT_LABELS[String(amount)] ?? String(amount),
-              }))}
-            />
-          </label>
-        : null}
-      </div>
-
-      <div
-        ref={gridRef}
-        tabIndex={0}
-        role="grid"
-        aria-label={text.tabTitle}
-        onKeyDown={handleGridKeyDown}
-        onBlur={commitBuffer}
-        className="mt-3 rounded-lg border border-line bg-canvas/40 p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/40"
-      >
+      <div className="relative mt-3">
+        <div
+          ref={gridRef}
+          tabIndex={0}
+          role="grid"
+          aria-label={text.tabTitle}
+          onKeyDown={(event) => {
+            if (
+              event.key === "Enter" &&
+              buffer === "" &&
+              selectedCells.some((cell) =>
+                noteByCell.has(`${cell.string}:${cell.column}`),
+              )
+            ) {
+              event.preventDefault();
+              setTechniquesOpen(true);
+              return;
+            }
+            handleGridKeyDown(event);
+          }}
+          onBlur={commitBuffer}
+          className="rounded-lg border border-line bg-canvas/40 p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/40"
+        >
         <div ref={measureRef} className="w-full">
           {systems.map((system) => {
             const techniques = tabSystemTechniques(value, system);
@@ -397,6 +453,7 @@ export function TabEditor({
                         key={column}
                         type="button"
                         tabIndex={-1}
+                        data-tab-cell={`${stringIndex}:${column}`}
                         data-selected={isSelected ? "true" : undefined}
                         onPointerDown={(event) => {
                           event.preventDefault();
@@ -510,6 +567,31 @@ export function TabEditor({
             );
           })}
         </div>
+      </div>
+
+      {techniquesOpen ? (
+        <div
+          ref={techniquesPanelRef}
+          className="absolute z-30"
+          style={{
+            top: techniquesPosition?.top ?? 0,
+            left: techniquesPosition?.left ?? 0,
+            width: techniquesPosition?.width,
+            visibility: techniquesPosition ? "visible" : "hidden",
+          }}
+        >
+          <TabTechniquePicker
+            value={value}
+            selectedCells={selectedCells}
+            selectedNote={selectedNote}
+            onChange={onChange}
+            onClose={() => {
+              closeTechniques();
+              gridRef.current?.focus();
+            }}
+          />
+        </div>
+      ) : null}
       </div>
     </CollapsibleSection>
   );
