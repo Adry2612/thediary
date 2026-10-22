@@ -12,6 +12,7 @@ export function LickTab({
   maxLines,
   maxMeasures,
   variant,
+  playheadColumn,
   className = "",
 }: {
   tab?: RepertoireTab;
@@ -21,6 +22,7 @@ export function LickTab({
   maxLines?: number;
   maxMeasures?: number;
   variant?: "compact" | "full";
+  playheadColumn?: number | null;
   className?: string;
 }) {
   if (tab && tab.notes.length > 0) {
@@ -30,6 +32,7 @@ export function LickTab({
         ariaLabel={ariaLabel}
         maxMeasures={maxMeasures}
         variant={variant}
+        playheadColumn={playheadColumn}
         className={className}
       />
     );

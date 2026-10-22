@@ -20,12 +20,14 @@ export function TabView({
   ariaLabel,
   maxMeasures,
   variant = "full",
+  playheadColumn,
   className = "",
 }: {
   tab: RepertoireTab;
   ariaLabel: string;
   maxMeasures?: number;
   variant?: TabViewVariant;
+  playheadColumn?: number | null;
   className?: string;
 }) {
   const compact = variant === "compact";
@@ -101,10 +103,18 @@ export function TabView({
                 <span
                   key={column}
                   style={{ width: cellWidth, height: rowHeight }}
+                  data-playhead={
+                    playheadColumn === column ? "true" : undefined
+                  }
+                  aria-current={
+                    playheadColumn === column ? "true" : undefined
+                  }
                   className={`flex shrink-0 flex-col items-center justify-center overflow-hidden border-b border-line/60 font-mono tabular-nums text-ink ${
                     column > 0 && column % tab.subdivision === 0
                       ? "border-l border-line"
                       : ""
+                  } ${
+                    playheadColumn === column ? "bg-accent-green-bg/15" : ""
                   }`}
                 >
                   <span

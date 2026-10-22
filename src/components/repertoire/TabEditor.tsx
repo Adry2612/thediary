@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
+import { TabPlaybackBar } from "@/components/repertoire/TabPlaybackBar";
 import { TabTechniquePicker } from "@/components/repertoire/TabTechniquePicker";
 import {
   clearTabNote,
@@ -44,6 +45,8 @@ interface TabEditorProps {
   title?: string;
   description?: string;
   defaultOpen?: boolean;
+  /** Tempo inicial de reproducción; no modifica el BPM objetivo del lick. */
+  bpm?: number;
 }
 
 export function TabEditor({
@@ -52,12 +55,14 @@ export function TabEditor({
   title,
   description,
   defaultOpen = false,
+  bpm,
 }: TabEditorProps) {
   const text = useI18nSection("repertoire");
   const measureObserverRef = useRef<ResizeObserver | null>(null);
   const techniquesPanelRef = useRef<HTMLDivElement>(null);
   const wasDraggingRef = useRef(false);
   const [gridWidth, setGridWidth] = useState(0);
+  const [playheadColumn, setPlayheadColumn] = useState<number | null>(null);
   const [techniquesOpen, setTechniquesOpen] = useState(false);
   const [techniquesPosition, setTechniquesPosition] = useState<{
     top: number;
@@ -324,6 +329,13 @@ export function TabEditor({
 
       <p className="mt-3 text-xs text-muted">{text.tabHint}</p>
 
+      <TabPlaybackBar
+        tab={value}
+        initialBpm={bpm}
+        onPlayheadChange={setPlayheadColumn}
+        className="mt-3"
+      />
+
       <div className="relative mt-3">
         <div
           ref={gridRef}
@@ -437,6 +449,7 @@ export function TabEditor({
                     const isActive =
                       focus.string === stringIndex && focus.column === column;
                     const isSelected = isCellSelected(stringIndex, column);
+                    const isPlayhead = playheadColumn === column;
                     const note = noteByCell.get(`${stringIndex}:${column}`);
                     const display =
                       isActive && buffer !== "" ?
@@ -455,6 +468,8 @@ export function TabEditor({
                         tabIndex={-1}
                         data-tab-cell={`${stringIndex}:${column}`}
                         data-selected={isSelected ? "true" : undefined}
+                        data-playhead={isPlayhead ? "true" : undefined}
+                        aria-current={isPlayhead ? "true" : undefined}
                         onPointerDown={(event) => {
                           event.preventDefault();
                           startSelection(
@@ -477,6 +492,8 @@ export function TabEditor({
                             "bg-accent-green-bg/40 ring-1 ring-inset ring-accent-green-fg"
                           : isSelected ?
                             "bg-accent-green-bg/20"
+                          : isPlayhead ?
+                            "bg-accent-green-bg/15"
                           : "hover:bg-white/5"
                         }`}
                       >

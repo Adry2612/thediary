@@ -192,7 +192,12 @@ export function LickEditorModal({
                     {text.tabConvertHint}
                   </p>
                 ) : null}
-                <TabEditor value={tab} onChange={setTab} defaultOpen />
+                <TabEditor
+                  value={tab}
+                  onChange={setTab}
+                  defaultOpen
+                  bpm={Number(targetBpm) || undefined}
+                />
               </>
             ) : (
               <div>

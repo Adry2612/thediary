@@ -8,6 +8,7 @@ import { LickBpmPanel } from "@/components/licks/LickBpmPanel";
 import { LickEditorModal } from "@/components/licks/LickEditorModal";
 import { LickTab } from "@/components/licks/LickTab";
 import { TechniqueBadges } from "@/components/licks/TechniqueBadges";
+import { TabPlaybackBar } from "@/components/repertoire/TabPlaybackBar";
 import { BackLink } from "@/components/ui/BackLink";
 import { Button } from "@/components/ui/Button";
 import { EditIcon, TrashIcon } from "@/components/ui/icons";
@@ -33,6 +34,7 @@ export default function LickDetailPage({ params }: Props) {
   const saveLick = usePracticeStore((state) => state.saveLick);
   const deleteLick = usePracticeStore((state) => state.deleteLick);
   const [editing, setEditing] = useState(false);
+  const [playheadColumn, setPlayheadColumn] = useState<number | null>(null);
   const today = useMemo(() => new Date(), []);
   const lick = licks.find((candidate) => candidate.id === id);
 
@@ -128,11 +130,20 @@ export default function LickDetailPage({ params }: Props) {
         <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">
           {text.tabTitle}
         </h2>
+        {lick.tab && lick.tab.notes.length > 0 ? (
+          <TabPlaybackBar
+            tab={lick.tab}
+            initialBpm={lick.currentBpm ?? lick.targetBpm ?? 90}
+            onPlayheadChange={setPlayheadColumn}
+            className="mt-4"
+          />
+        ) : null}
         <LickTab
           tab={lick.tab}
           content={lick.tabContent}
           emptyLabel={text.tabEmpty}
           ariaLabel={`${text.tabTitle}: ${title}`}
+          playheadColumn={playheadColumn}
           className="mt-3"
         />
       </section>
