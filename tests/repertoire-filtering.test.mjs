@@ -36,7 +36,6 @@ const items = [
 const emptyStats = new Map();
 const defaultFilters = {
   query: "",
-  kind: "all",
   progress: "all",
   sort: "original",
 };
@@ -75,12 +74,11 @@ test("searches song title, artist, and part names without accent sensitivity", (
   assert.deepEqual(artistResults.map((item) => item.id), ["song-2"]);
 });
 
-test("combines kind and learning-status filters", () => {
+test("filters by learning status and never lists licks", () => {
   const result = getFilteredRepertoireItems(
     items,
     {
       ...defaultFilters,
-      kind: "song",
       progress: "learned",
     },
     emptyStats,
@@ -117,23 +115,19 @@ test("sorts by title, artist, and total linked practice time", () => {
 
   assert.deepEqual(byTitle.map((item) => item.id), [
     "song-1",
-    "lick-1",
     "song-2",
   ]);
   assert.deepEqual(byPractice.map((item) => item.id), [
     "song-2",
     "song-1",
-    "lick-1",
   ]);
   assert.deepEqual(byRecent.map((item) => item.id), [
-    "lick-1",
     "song-2",
     "song-1",
   ]);
   assert.deepEqual(byArtist.map((item) => item.id), [
     "song-1",
     "song-2",
-    "lick-1",
   ]);
 });
 
@@ -149,7 +143,7 @@ test("sorts songs by artist and keeps songs without an artist after named artist
   ];
   const result = getFilteredRepertoireItems(
     itemsWithUncreditedSong,
-    { ...defaultFilters, kind: "song", sort: "artist" },
+    { ...defaultFilters, sort: "artist" },
     emptyStats,
   );
 
@@ -179,7 +173,7 @@ test("returns the four most recently updated repertoire items without reordering
 
   assert.deepEqual(
     recentItems.map((item) => item.id),
-    ["song-4", "song-3", "lick-1", "song-2"],
+    ["song-4", "song-3", "song-2", "song-1"],
   );
   assert.deepEqual(sourceItems.map((item) => item.id), [
     "song-2",

@@ -3,6 +3,8 @@ import { normalizeRepertoireDifficulty } from "../lib/repertoire-item.ts";
 import type { RepertoireItem } from "@/types/practice";
 import type { WeeklyRoutineSchedule } from "@/lib/weekly-routine-schedule";
 import type { PersistedPracticeState } from "@/stores/practiceStorage";
+import { migrateRepertoireLicks } from "../lib/licks/migration.ts";
+import { normalizeLicks } from "../lib/licks/normalize.ts";
 
 interface NormalizePracticeStorageStateInput {
   state: Partial<PersistedPracticeState> | undefined;
@@ -27,12 +29,19 @@ export function normalizePracticeStorageState({
   normalizeGoals,
   normalizeSchedule,
 }: NormalizePracticeStorageStateInput): PersistedPracticeState {
+  const repertoireItems = Array.isArray(state?.repertoireItems)
+    ? state.repertoireItems.map(normalizeStoredRepertoireItem)
+    : [];
+  const migration = migrateRepertoireLicks(
+    repertoireItems,
+    normalizeLicks(state?.licks),
+  );
+
   return {
     history: Array.isArray(state?.history) ? state.history : [],
     templates: Array.isArray(state?.templates) ? state.templates : [],
-    repertoireItems: Array.isArray(state?.repertoireItems)
-      ? state.repertoireItems.map(normalizeStoredRepertoireItem)
-      : [],
+    repertoireItems: migration.repertoireItems,
+    licks: migration.licks,
     customChords: Array.isArray(state?.customChords) ? state.customChords : [],
     weeklySchedule: normalizeSchedule(state?.weeklySchedule),
     practiceGoals: normalizeGoals(state?.practiceGoals),

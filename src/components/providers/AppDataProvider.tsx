@@ -236,6 +236,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         history: state.history,
         templates: state.templates,
         repertoireItems: state.repertoireItems,
+        licks: state.licks,
         customChords: state.customChords,
         weeklySchedule: state.weeklySchedule,
         practiceGoals: state.practiceGoals,
@@ -244,6 +245,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         history: previousState.history,
         templates: previousState.templates,
         repertoireItems: previousState.repertoireItems,
+        licks: previousState.licks,
         customChords: previousState.customChords,
         weeklySchedule: previousState.weeklySchedule,
         practiceGoals: previousState.practiceGoals,
@@ -445,6 +447,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         : [],
       repertoireItems: Array.isArray(rawGuestState?.repertoireItems)
         ? rawGuestState.repertoireItems
+        : [],
+      licks: Array.isArray(rawGuestState?.licks)
+        ? rawGuestState.licks
         : [],
       customChords: Array.isArray(rawGuestState?.customChords)
         ? rawGuestState.customChords

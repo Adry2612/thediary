@@ -70,7 +70,6 @@ export function RepertoireItemCard({
   item,
   practiceStats,
   itemPractice,
-  showKind = true,
   onSave,
   onDelete,
   detail = false,
@@ -79,7 +78,6 @@ export function RepertoireItemCard({
   item: RepertoireItem;
   practiceStats: Map<string, RepertoirePartPracticeStats> | undefined;
   itemPractice?: RepertoireItemPracticeStats;
-  showKind?: boolean;
   onSave: (item: RepertoireItem) => void;
   onDelete: (itemId: string) => void;
   detail?: boolean;
@@ -309,27 +307,17 @@ export function RepertoireItemCard({
               </span>
             }
             <span className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted'>
-              {showKind && (
-                <span className='uppercase tracking-[0.08em]'>
-                  {item.kind === 'song' ? text.song : text.lick}
-                </span>
-              )}
               {hasArtist && (
                 <>
-                  {showKind && <span aria-hidden='true'>·</span>}
                   {artistNode}
+                  <span aria-hidden='true'>·</span>
                 </>
               )}
               {item.difficulty && (
                 <>
-                  {(showKind || hasArtist) && (
-                    <span aria-hidden='true'>·</span>
-                  )}
                   <span>{getDifficultyLabel(text, item.difficulty)}</span>
+                  <span aria-hidden='true'>·</span>
                 </>
-              )}
-              {(showKind || hasArtist || item.difficulty) && (
-                <span aria-hidden='true'>·</span>
               )}
               <span>
                 {item.parts.length} {text.parts}

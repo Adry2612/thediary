@@ -23,6 +23,7 @@ test("uses safe defaults when persisted state is absent", () => {
     history: [],
     templates: [],
     repertoireItems: [],
+    licks: [],
     customChords: [],
     weeklySchedule: DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
     practiceGoals: DEFAULT_PRACTICE_GOALS,
@@ -32,7 +33,16 @@ test("uses safe defaults when persisted state is absent", () => {
 test("preserves valid collections and normalizes optional persisted settings", () => {
   const history = [{ id: "session-1" }];
   const templates = [{ id: "template-1" }];
-  const repertoireItems = [{ id: "item-1" }];
+  const repertoireItems = [{ id: "item-1", kind: "song" }];
+  const licks = [{
+    id: "lick-1",
+    title: "Frase",
+    tabContent: "",
+    techniques: [],
+    bpmHistory: [],
+    createdAt: "2000-01-01T00:00:00.000Z",
+    practiceCount: 0,
+  }];
   const customChords = [{ id: "chord-1", name: "Cadd9" }];
 
   assert.deepEqual(
@@ -41,6 +51,7 @@ test("preserves valid collections and normalizes optional persisted settings", (
         history,
         templates,
         repertoireItems,
+        licks,
         customChords,
         weeklySchedule: { 1: "routine-1", 2: " " },
         practiceGoals: { dailyMinutes: 90, weeklyDays: 3 },
@@ -51,6 +62,17 @@ test("preserves valid collections and normalizes optional persisted settings", (
       history,
       templates,
       repertoireItems,
+      licks: [
+        {
+          id: "lick-1",
+          title: "Frase",
+          tabContent: "",
+          techniques: [],
+          bpmHistory: [],
+          createdAt: "2000-01-01T00:00:00.000Z",
+          practiceCount: 0,
+        },
+      ],
       customChords,
       weeklySchedule: {
         0: null,
@@ -73,6 +95,7 @@ test("replaces malformed collections and settings with defaults", () => {
         history: null,
         templates: {},
         repertoireItems: null,
+        licks: null,
         customChords: null,
         weeklySchedule: null,
         practiceGoals: { dailyMinutes: -1, weeklyDays: 10 },
@@ -83,6 +106,7 @@ test("replaces malformed collections and settings with defaults", () => {
       history: [],
       templates: [],
       repertoireItems: [],
+      licks: [],
       customChords: [],
       weeklySchedule: DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
       practiceGoals: DEFAULT_PRACTICE_GOALS,

@@ -13,7 +13,6 @@ export type RepertoireItemPracticeStats = {
 
 export interface RepertoireOverview {
   songCount: number;
-  lickCount: number;
   learnedCount: number;
   partCount: number;
   totalSeconds: number;
@@ -101,8 +100,8 @@ export function getRepertoireOverview(
 ): RepertoireOverview {
   return items.reduce<RepertoireOverview>(
     (overview, item) => {
-      if (item.kind === "song") overview.songCount += 1;
-      if (item.kind === "lick") overview.lickCount += 1;
+      if (item.kind !== "song") return overview;
+      overview.songCount += 1;
 
       for (const part of item.parts) {
         overview.partCount += 1;
@@ -114,7 +113,6 @@ export function getRepertoireOverview(
     },
     {
       songCount: 0,
-      lickCount: 0,
       learnedCount: 0,
       partCount: 0,
       totalSeconds: 0,

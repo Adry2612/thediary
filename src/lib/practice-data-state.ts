@@ -12,6 +12,7 @@ export function hasPracticeData(state: PersistedPracticeState): boolean {
     state.history.length > 0 ||
     state.templates.length > 0 ||
     state.repertoireItems.length > 0 ||
+    state.licks.length > 0 ||
     state.customChords.length > 0 ||
     Object.values(state.weeklySchedule).some(
       (routineId) => routineId !== null,
@@ -34,6 +35,7 @@ export function hasPracticeStateChanged(
     current.history !== previous.history ||
     current.templates !== previous.templates ||
     current.repertoireItems !== previous.repertoireItems ||
+    current.licks !== previous.licks ||
     current.customChords !== previous.customChords ||
     current.weeklySchedule !== previous.weeklySchedule ||
     current.practiceGoals !== previous.practiceGoals
@@ -51,6 +53,7 @@ export function toPersistedSnapshot(
     history: state.history,
     templates: state.templates,
     repertoireItems: state.repertoireItems,
+    licks: state.licks,
     customChords: state.customChords,
     weeklySchedule: state.weeklySchedule,
     practiceGoals: state.practiceGoals,

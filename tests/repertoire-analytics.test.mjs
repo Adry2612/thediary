@@ -117,9 +117,8 @@ test("summarizes repertoire items, learned parts, and linked practice time", () 
 
   assert.deepEqual(getRepertoireOverview(items, practiceStats), {
     songCount: 1,
-    lickCount: 1,
     learnedCount: 1,
-    partCount: 3,
+    partCount: 2,
     totalSeconds: 300,
   });
 });

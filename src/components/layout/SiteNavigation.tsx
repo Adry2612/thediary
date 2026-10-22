@@ -12,6 +12,7 @@ const NAVIGATION = [
   { href: '/metronome', label: 'metronome' },
   { href: '/recordings', label: 'recordings' },
   { href: '/repertoire', label: 'repertoire' },
+  { href: '/licks', label: 'licks' },
 ];
 
 export function SiteNavigation() {
