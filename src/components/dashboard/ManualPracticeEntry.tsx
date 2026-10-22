@@ -9,28 +9,12 @@ import { createManualPracticeRecord } from "@/lib/manual-practice";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import { PRACTICE_SKILLS, type PracticeSkill } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
-import { createId } from "@/lib/create-id";
-
-type ManualPracticeBlockDraft = {
-  id: string;
-  name: string;
-  durationMinutes: string;
-  skill: PracticeSkill;
-};
-
-function createBlockDraft(): ManualPracticeBlockDraft {
-  return {
-    id: createId(),
-    name: "",
-    durationMinutes: "30",
-    skill: "technique",
-  };
-}
-
-function toLocalDateTimeInputValue(date: Date) {
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return localDate.toISOString().slice(0, 16);
-}
+import {
+  createManualPracticeBlockDraft,
+  manualPracticeBlocksFromDrafts,
+  toLocalDateTimeInputValue,
+  type ManualPracticeBlockDraft,
+} from "@/lib/manual-practice";
 
 export function ManualPracticeEntry() {
   const manual = useI18nSection("manualPractice");
@@ -42,7 +26,7 @@ export function ManualPracticeEntry() {
   const [startedAtLocal, setStartedAtLocal] = useState(() =>
     toLocalDateTimeInputValue(new Date()),
   );
-  const [blocks, setBlocks] = useState(() => [createBlockDraft()]);
+  const [blocks, setBlocks] = useState(() => [createManualPracticeBlockDraft()]);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const totalMinutes = blocks.reduce((total, block) => {
@@ -78,16 +62,12 @@ export function ManualPracticeEntry() {
         createManualPracticeRecord({
           title,
           startedAtLocal,
-          blocks: blocks.map((block) => ({
-            name: block.name,
-            durationMinutes: Number(block.durationMinutes),
-            skill: block.skill,
-          })),
+          blocks: manualPracticeBlocksFromDrafts(blocks),
           notes,
         }),
       );
       setTitle("");
-      setBlocks([createBlockDraft()]);
+      setBlocks([createManualPracticeBlockDraft()]);
       setNotes("");
       dialogRef.current?.close();
     } catch (saveError) {
@@ -230,7 +210,7 @@ export function ManualPracticeEntry() {
               </div>
               <Button
                 type="button"
-                onClick={() => setBlocks((current) => [...current, createBlockDraft()])}
+                onClick={() => setBlocks((current) => [...current, createManualPracticeBlockDraft()])}
                 className="mt-3 h-11 px-4"
               >
                  {manual.addBlock}

@@ -7,7 +7,17 @@ export const PRACTICE_SKILLS = [
 
 export type PracticeSkill = (typeof PRACTICE_SKILLS)[number];
 
-export type PracticeResourceKind = "songsterr" | "guitarpro" | "pdf" | "audio" | "youtube" | "spotify" | "tab";
+export const PRACTICE_RESOURCE_KINDS = [
+  "songsterr",
+  "guitarpro",
+  "pdf",
+  "audio",
+  "youtube",
+  "spotify",
+  "tab",
+] as const;
+
+export type PracticeResourceKind = (typeof PRACTICE_RESOURCE_KINDS)[number];
 
 export interface PracticeResource {
   id: string;
@@ -22,6 +32,9 @@ export interface PracticeResource {
 export type RepertoireItemKind = "song" | "lick";
 
 export type GuitarType = "electric" | "acoustic";
+
+/** Dificultad con la que se estudia un elemento del repertorio. */
+export type RepertoireDifficulty = "beginner" | "intermediate" | "advanced";
 
 /** Forma de un acorde: un traste por cuerda, de la 6ª (grave) a la 1ª (aguda). */
 export interface ChordShape {
@@ -145,6 +158,8 @@ export interface RepertoireItem {
   capo?: number;
   /** Tipo de guitarra para filtrado */
   guitarType?: GuitarType;
+  /** Dificultad para estudiarla (opcional). */
+  difficulty?: RepertoireDifficulty;
   /** Enlace opcional de YouTube */
   youtubeUrl?: string;
   /** Enlace opcional de Spotify */

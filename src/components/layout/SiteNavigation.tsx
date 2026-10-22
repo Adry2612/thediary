@@ -12,6 +12,7 @@ const NAVIGATION = [
   { href: '/metronome', label: 'metronome' },
   { href: '/recordings', label: 'recordings' },
   { href: '/repertoire', label: 'repertoire' },
+  { href: '/licks', label: 'licks' },
 ];
 
 export function SiteNavigation() {
@@ -88,12 +89,13 @@ export function SiteNavigation() {
         aria-label={navigation.main}
         className='mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-6 px-5 sm:px-8'
       >
-        <div
+        <Link
+          href='/'
           data-tour-target='brand'
-          className='shrink-0 font-sans text-xl font-semibold tracking-[-0.02em] text-ink'
+          className='shrink-0 rounded-md font-sans text-xl font-semibold tracking-[-0.02em] text-ink transition hover:text-ink/80 focus-visible:outline-offset-4 focus-visible:outline-ink/60'
         >
           {app.name}
-        </div>
+        </Link>
         <ul className='hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto md:flex'>
           {renderNavigationItems()}
         </ul>

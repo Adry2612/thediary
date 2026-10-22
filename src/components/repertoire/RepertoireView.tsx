@@ -3,14 +3,17 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
+import { ForgottenRepertoireWidget } from '@/components/repertoire/ForgottenRepertoireWidget';
 import { SelectField } from '@/components/ui/SelectField';
 import { TextField } from '@/components/ui/Field';
 import { PlusIcon } from '@/components/ui/icons';
 import { formatPracticeDuration } from '@/lib/dashboard-data';
 import {
+  getRepertoireItemPracticeStats,
   getRepertoireOverview,
   getRepertoirePracticeStats,
 } from '@/lib/repertoire-analytics';
+import { getForgottenRepertoireItem } from '@/lib/repertoire-forgotten';
 import {
   getFilteredRepertoireItems,
   isRepertoireProgressFilter,
@@ -20,19 +23,12 @@ import {
 } from '@/lib/repertoire-filtering';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { useRouter } from 'next/navigation';
-import type { RepertoireItemKind, GuitarType } from '@/types/practice';
+import type { GuitarType } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { RepertoireSkeleton } from '@/components/ui/Skeletons';
 
-type RepertoireFilter = 'all' | RepertoireItemKind;
 type GuitarTypeFilter = 'all' | GuitarType;
 type FutureLearnFilter = 'all' | 'future' | 'current';
-
-const FILTERS: { value: RepertoireFilter; label: string }[] = [
-  { value: 'all', label: 'Todo' },
-  { value: 'song', label: 'Canciones' },
-  { value: 'lick', label: 'Licks' },
-];
 
 const GUITAR_TYPE_FILTERS: { value: GuitarTypeFilter; label: string }[] = [
   { value: 'all', label: 'Todas' },
@@ -65,11 +61,6 @@ const SORT_OPTIONS: { value: RepertoireSortOrder; label: string }[] = [
 
 export function RepertoireView() {
   const text = useI18nSection('repertoire');
-  const filters = [
-    { value: 'all' as const, label: text.all },
-    { value: 'song' as const, label: text.allSongs },
-    { value: 'lick' as const, label: text.allLicks },
-  ];
   const guitarFilters = [
     { value: 'all' as const, label: text.allGuitars },
     { value: 'electric' as const, label: text.electric },
@@ -103,7 +94,6 @@ export function RepertoireView() {
   );
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const persistenceError = usePracticeStore((state) => state.persistenceError);
-  const [filter, setFilter] = useState<RepertoireFilter>('all');
   const [guitarTypeFilter, setGuitarTypeFilter] =
     useState<GuitarTypeFilter>('all');
   const [futureLearnFilter, setFutureLearnFilter] =
@@ -116,45 +106,50 @@ export function RepertoireView() {
     () => getRepertoirePracticeStats(history),
     [history],
   );
+  const itemPracticeStats = useMemo(
+    () => getRepertoireItemPracticeStats(history),
+    [history],
+  );
+  const today = useMemo(() => new Date(), []);
+  const forgotten = useMemo(
+    () => getForgottenRepertoireItem(items, itemPracticeStats, today),
+    [items, itemPracticeStats, today],
+  );
   const visibleItems = useMemo(
     () =>
       getFilteredRepertoireItems(
         items,
         {
           query: searchQuery,
-          kind: filter,
           progress: progressFilter,
           sort: sortOrder,
           guitarType: guitarTypeFilter,
           futureLearn: futureLearnFilter,
         },
-        practiceStats,
+        itemPracticeStats,
       ),
     [
-      filter,
-      guitarTypeFilter,
       futureLearnFilter,
+      guitarTypeFilter,
+      itemPracticeStats,
       items,
-      practiceStats,
       progressFilter,
       searchQuery,
       sortOrder,
     ],
   );
   const overview = useMemo(
-    () => getRepertoireOverview(items, practiceStats),
-    [items, practiceStats],
+    () => getRepertoireOverview(items, itemPracticeStats),
+    [items, itemPracticeStats],
   );
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
-    filter !== 'all' ||
     guitarTypeFilter !== 'all' ||
     futureLearnFilter !== 'all' ||
     progressFilter !== 'all';
 
   function clearFilters() {
     setSearchQuery('');
-    setFilter('all');
     setGuitarTypeFilter('all');
     setFutureLearnFilter('all');
     setProgressFilter('all');
@@ -189,11 +184,10 @@ export function RepertoireView() {
 
       <section
         aria-label={text.summary}
-        className='mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4'
+        className='mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4'
       >
         {[
           { label: text.songs, value: overview.songCount },
-          { label: text.licks, value: overview.lickCount },
           {
             label: text.learnedParts,
             value: `${overview.learnedCount}/${overview.partCount}`,
@@ -216,6 +210,12 @@ export function RepertoireView() {
           </article>
         ))}
       </section>
+
+      {forgotten ? (
+        <div className='mb-5'>
+          <ForgottenRepertoireWidget forgotten={forgotten} />
+        </div>
+      ) : null}
 
       <div className='flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-surface p-5 sm:p-6'>
         <p className='max-w-xl text-sm text-muted'>{text.newItemDescription}</p>
@@ -327,23 +327,6 @@ export function RepertoireView() {
         </div>
 
         <div className='mt-4 flex flex-wrap items-center justify-between gap-3'>
-          <div
-            className='flex max-w-full gap-1 overflow-x-auto rounded-lg border border-line p-1'
-            role='group'
-            aria-label={text.typeFilter}
-          >
-            {filters.map((option) => (
-              <button
-                key={option.value}
-                type='button'
-                aria-pressed={filter === option.value}
-                onClick={() => setFilter(option.value)}
-                className={`shrink-0 rounded-md px-3 py-2 text-xs transition ${filter === option.value ? 'bg-ink text-canvas' : 'text-muted hover:text-ink'}`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
           {hasHydrated && (
             <p
               className='text-xs text-muted'
@@ -368,6 +351,7 @@ export function RepertoireView() {
                 <RepertoireItemCard
                   item={item}
                   practiceStats={practiceStats.get(item.id)}
+                  itemPractice={itemPracticeStats.get(item.id)}
                   onSave={saveRepertoireItem}
                   onDelete={deleteRepertoireItem}
                   onOpen={(selectedItem) =>

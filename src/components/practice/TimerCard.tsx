@@ -19,6 +19,8 @@ type TimerCardProps = {
   setPracticeStartSound: (sound: PracticeSound) => void;
   practiceEndSound: PracticeSound;
   setPracticeEndSound: (sound: PracticeSound) => void;
+  /** Artista del bloque de repertorio que se está practicando, si lo tiene. */
+  artist?: string;
 };
 
 export function TimerCard({
@@ -31,6 +33,7 @@ export function TimerCard({
   setPracticeStartSound,
   practiceEndSound,
   setPracticeEndSound,
+  artist,
 }: TimerCardProps) {
   const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
   const [isOptionsDialogOpen, setIsOptionsDialogOpen] = useState(false);
@@ -108,6 +111,11 @@ export function TimerCard({
           <h2 className="w-full text-center font-sans text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">
             {currentPhase?.name ?? timerText.endPractice}
           </h2>
+          {currentPhase && artist?.trim() && (
+            <p className="mt-2 w-full text-center text-sm text-muted">
+              {artist.trim()}
+            </p>
+          )}
         </div>
         {currentPhase?.exercises && currentPhase.exercises.length > 0 && (
           <ul className="mt-4 flex flex-wrap justify-center gap-2">

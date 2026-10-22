@@ -6,40 +6,22 @@ import { TextField } from '@/components/ui/Field';
 import { SelectField } from '@/components/ui/SelectField';
 import { ChordChartEditor } from '@/components/repertoire/ChordChartEditor';
 import { TabEditor } from '@/components/repertoire/TabEditor';
-import { getPracticeFileKind } from '@/lib/practice-templates';
-import { savePracticeAsset } from '@/lib/practice-library';
-import type { PracticeAsset } from '@/lib/practice-library';
-import { saveCloudPracticeAsset } from '@/lib/supabase/practice-files';
-import { createRepertoireItem } from '@/lib/repertoire-item';
+import { createRepertoireItem, REPERTOIRE_DIFFICULTIES } from '@/lib/repertoire-item';
+import { getDifficultyLabel } from '@/lib/difficulty-labels';
 import { emptyChordChart, normalizeChordChart } from '@/lib/repertoire-chord-chart';
 import { normalizeTab } from '@/lib/repertoire-tab';
 import { parseTuningNotes } from '@/lib/chords';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import type {
   RepertoireItem,
-  RepertoireItemKind,
   GuitarType,
+  RepertoireDifficulty,
 } from '@/types/practice';
-import { useAppData } from '@/components/providers/AppDataProvider';
 import { PracticeResourceEditor } from '@/components/practice/PracticeResourceEditor';
 import type { PracticeResource } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { createId as createIdentifier } from '@/lib/create-id';
-
-const COMMON_TUNINGS = [
-  'E Standard (EADGBE)',
-  'Drop D (DADGBE)',
-  'Drop C (CGCFAD)',
-  'D Standard (DGCFAD)',
-  'C Standard (CFA#D#GC)',
-  'Open G (DGDGBD)',
-  'Open D (DADF#AD)',
-  'Open E (EBEG#BE)',
-  'DADGAD',
-  'Half Step Down (Eb Ab Db Gb Bb eb)',
-  'Full Step Down (D G C F A D)',
-  'Otra...',
-] as const;
+import { COMMON_TUNINGS } from '@/lib/repertoire-item';
 
 function createId() {
   return createIdentifier();
@@ -51,14 +33,11 @@ export function RepertoireSongForm({
   onCreated?: (itemId: string) => void;
 }) {
   const text = useI18nSection('repertoire');
-  const { user, isReady } = useAppData();
   const saveRepertoireItem = usePracticeStore(
     (state) => state.saveRepertoireItem,
   );
-  const [kind, setKind] = useState<RepertoireItemKind>('song');
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
-  const [guitarProFile, setGuitarProFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +45,7 @@ export function RepertoireSongForm({
   const [customTuning, setCustomTuning] = useState('');
   const [capo, setCapo] = useState('');
   const [guitarType, setGuitarType] = useState<GuitarType | ''>('');
+  const [difficulty, setDifficulty] = useState<RepertoireDifficulty | ''>('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [spotifyUrl, setSpotifyUrl] = useState('');
   const [isFutureLearn, setIsFutureLearn] = useState(false);
@@ -95,13 +75,6 @@ export function RepertoireSongForm({
       return;
     }
     if (
-      guitarProFile &&
-      getPracticeFileKind(guitarProFile.name) !== 'guitarpro'
-    ) {
-      setError(text.adjustFilters);
-      return;
-    }
-    if (
       !validateUrl(youtubeUrl, [
         'www.youtube.com',
         'youtube.com',
@@ -128,35 +101,7 @@ export function RepertoireSongForm({
     setIsSaving(true);
     setError(null);
     const itemId = createId();
-    let guitarPro: RepertoireItem['guitarPro'];
     try {
-      if (kind === 'lick' && guitarProFile) {
-        if (!isReady) {
-          throw new Error(
-            'Espera a que se carguen tus datos antes de subir archivos.',
-          );
-        }
-        const assetId = createId();
-        const asset: PracticeAsset = {
-          id: assetId,
-          fileName: guitarProFile.name,
-          kind: 'guitarpro',
-          blob: guitarProFile,
-        };
-        if (user) {
-          await saveCloudPracticeAsset(user.id, asset);
-        } else {
-          await savePracticeAsset(asset);
-        }
-        guitarPro = {
-          id: createId(),
-          title: cleanTitle,
-          kind: 'guitarpro',
-          fileName: guitarProFile.name,
-          assetId,
-        };
-      }
-
       const normalizedChart = normalizeChordChart(chordChart);
       const savedTab = normalizeTab(tab, finalTuning || undefined);
 
@@ -164,13 +109,13 @@ export function RepertoireSongForm({
         createRepertoireItem({
           id: itemId,
           initialPartId: createId(),
-          kind,
+          kind: 'song',
           title: cleanTitle,
           artist,
-          guitarPro,
           tuning: finalTuning || undefined,
           capo: capoNum,
           guitarType: guitarType || undefined,
+          difficulty: difficulty || undefined,
           youtubeUrl: youtubeUrl.trim() || undefined,
           spotifyUrl: spotifyUrl.trim() || undefined,
           isFutureLearn: isFutureLearn || undefined,
@@ -197,61 +142,28 @@ export function RepertoireSongForm({
   return (
     <form onSubmit={(event) => void addItem(event)} className='mt-6'>
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end'>
-        <div className='block text-xs text-muted'>
-          {text.typeFilter}
-          <SelectField
-            className='mt-1'
-            value={kind}
-            ariaLabel={text.typeFilter}
-            onChange={(value) => setKind(value as RepertoireItemKind)}
-            options={[
-              { value: 'song', label: text.songs },
-              { value: 'lick', label: text.licks },
-            ]}
-          />
-        </div>
-
         <label className='block text-xs text-muted'>
-          {kind === 'song' ? text.songs : text.licks}
+          {text.songs}
           <TextField
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             maxLength={100}
-            placeholder={
-              kind === 'song' ? text.titlePlaceholder : text.lickPlaceholder
-            }
+            placeholder={text.titlePlaceholder}
             required
             className='mt-1'
           />
         </label>
 
-        {kind === 'song' ? (
-          <label className='block text-xs text-muted'>
-            {text.artist}
-            <TextField
-              value={artist}
-              onChange={(event) => setArtist(event.target.value)}
-              maxLength={100}
-              placeholder={text.artistPlaceholder}
-              className='mt-1'
-            />
-          </label>
-        ) : (
-          <label className='block cursor-pointer text-xs text-muted'>
-            {text.guitarProOptional}
-            <span className='mt-1 flex h-12 items-center truncate rounded-md border border-line px-4 text-sm text-muted transition-colors hover:border-white/20'>
-              {guitarProFile?.name ?? text.selectGuitarPro}
-            </span>
-            <input
-              type='file'
-              accept='.gp,.gpx,.gp3,.gp4,.gp5'
-              className='sr-only'
-              onChange={(event) =>
-                setGuitarProFile(event.target.files?.[0] ?? null)
-              }
-            />
-          </label>
-        )}
+        <label className='block text-xs text-muted'>
+          {text.artist}
+          <TextField
+            value={artist}
+            onChange={(event) => setArtist(event.target.value)}
+            maxLength={100}
+            placeholder={text.artistPlaceholder}
+            className='mt-1'
+          />
+        </label>
 
         <div className='sm:col-span-2 lg:col-span-4'>
           <PracticeResourceEditor
@@ -327,6 +239,25 @@ export function RepertoireSongForm({
                   { value: '', label: text.unspecified },
                   { value: 'electric', label: text.electric },
                   { value: 'acoustic', label: text.acoustic },
+                ]}
+              />
+            </label>
+
+            <label className='block text-xs text-muted'>
+              {text.difficulty}
+              <SelectField
+                className='mt-1'
+                value={difficulty}
+                ariaLabel={text.difficulty}
+                onChange={(value) =>
+                  setDifficulty(value as RepertoireDifficulty | '')
+                }
+                options={[
+                  { value: '', label: text.difficultyNone },
+                  ...REPERTOIRE_DIFFICULTIES.map((value) => ({
+                    value,
+                    label: getDifficultyLabel(text, value),
+                  })),
                 ]}
               />
             </label>

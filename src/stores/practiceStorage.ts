@@ -9,6 +9,7 @@ import type {
   SessionRecord,
   UserChord,
 } from "@/types/practice";
+import type { GuitarLick } from "@/types/lick";
 import { DEFAULT_PRACTICE_GOALS } from "@/lib/practice-goals";
 import { DEFAULT_WEEKLY_ROUTINE_SCHEDULE } from "@/lib/weekly-routine-schedule";
 import type { WeeklyRoutineSchedule } from "@/lib/weekly-routine-schedule";
@@ -22,6 +23,7 @@ export type PersistedPracticeState = {
   history: SessionRecord[];
   templates: PracticeTemplate[];
   repertoireItems: RepertoireItem[];
+  licks: GuitarLick[];
   customChords: UserChord[];
   weeklySchedule: WeeklyRoutineSchedule;
   practiceGoals: PracticeGoals;
@@ -97,6 +99,7 @@ export function createLocalPracticeStorage(): PracticeStorageAdapter {
           history: [],
           templates: [],
           repertoireItems: [],
+          licks: [],
           customChords: [],
           weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
           practiceGoals: { ...DEFAULT_PRACTICE_GOALS },

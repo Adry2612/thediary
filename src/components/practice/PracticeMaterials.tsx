@@ -80,7 +80,7 @@ function GuitarProViewer({
   return (
     <div className='min-h-64 overflow-auto bg-white p-4 text-zinc-900'>
       {isLoading && (
-        <p className='text-sm text-zinc-600'>Cargando tablatura…</p>
+        <p className='text-sm text-muted'>Cargando tablatura…</p>
       )}
       {error && <p className='text-sm text-red-800'>{error}</p>}
       <div ref={setContainer} />

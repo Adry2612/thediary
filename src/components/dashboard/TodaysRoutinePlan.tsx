@@ -18,10 +18,10 @@ export function TodaysRoutinePlan({
   if (!hasHydrated) {
     return (
       <section className='enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8'>
-        <p className='text-xs uppercase tracking-[0.12em] text-zinc-500'>
+        <p className='text-xs uppercase tracking-[0.12em] text-muted'>
            {weekdayLabel} · {home.todayPlan}
         </p>
-        <p className='mt-4 text-sm text-zinc-500'>
+        <p className='mt-4 text-sm text-muted'>
            {home.loadingRoutine}
         </p>
       </section>
@@ -31,7 +31,7 @@ export function TodaysRoutinePlan({
   if (!routine) {
     return (
       <section className='enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8'>
-        <p className='text-xs uppercase tracking-[0.12em] text-zinc-500'>
+        <p className='text-xs uppercase tracking-[0.12em] text-muted'>
            {weekdayLabel} · {home.todayPlan}
         </p>
         <div className='mt-3 flex flex-wrap items-center justify-between gap-4'>
@@ -39,7 +39,7 @@ export function TodaysRoutinePlan({
             <h2 className='font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8'>
                {home.noRoutine}
             </h2>
-            <p className='mt-2 text-sm text-zinc-500'>
+            <p className='mt-2 text-sm text-muted'>
                {home.noRoutineDescription}
             </p>
           </div>
@@ -60,7 +60,7 @@ export function TodaysRoutinePlan({
     <section className='enter rounded-xl border border-zinc-800 bg-zinc-900 p-5 sm:p-6'>
       <div className='mb-4 flex flex-wrap items-end justify-between gap-3 mb-8'>
         <div>
-          <p className='text-xs uppercase tracking-[0.12em] text-zinc-500'>
+          <p className='text-xs uppercase tracking-[0.12em] text-muted'>
              {weekdayLabel} · {home.todayPlan}
           </p>
           <h2 className='mt-2 break-words font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8'>

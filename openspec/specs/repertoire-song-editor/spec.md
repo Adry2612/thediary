@@ -49,33 +49,37 @@ The system SHALL let the user keep the lyrics of a song as one editable block of
 - **WHEN** two chords are anchored close together
 - **THEN** the app shifts the drawing of the later one so the names stay readable without changing its anchor
 
-### Requirement: Chord selector over the fretboard
+### Requirement: The chord is drawn on a vertical fretboard
 
-The system SHALL provide a visual chord selector that draws the chord on a vertical fretboard, SHALL show it through a window of five frets that the user can move along the neck without changing the drawn shape, SHALL keep that window still while the user marks frets, SHALL keep the fretboard centred in the chord box, SHALL offer a chord finder opened from a compact trigger that shows the finder over the page without resizing the chord box, and SHALL offer a manually editable shape that starts with every string open. The position control SHALL sit above the fretboard diagram so it keeps its place when the diagram changes height.
-
-#### Scenario: The position control keeps its place
-- **WHEN** the drawn shape uses more or fewer frets
-- **THEN** the position control stays above the diagram without moving
+The system SHALL draw the selected chord on a vertical fretboard of six strings and SHALL keep that fretboard centred in the chord box.
 
 #### Scenario: User picks a chord from the library
 - **WHEN** the user picks a chord in the chord finder
 - **THEN** the app draws its shape on the fretboard
 
+#### Scenario: The fretboard stays centred
+- **WHEN** the chord box shows the arrows that move the fret window
+- **THEN** the fretboard stays centred in the chord box
+
+### Requirement: The user can edit the shape by hand
+
+The system SHALL let the user mark a fret on a string or mark a string as open or muted, SHALL start a shape that has none with every string open, and SHALL store the edited shape with the chord.
+
 #### Scenario: User edits the shape
 - **WHEN** the user marks a fret on a string, or marks a string as open or muted
 - **THEN** the app updates the drawn shape and stores it with the chord
 
+#### Scenario: A new chord starts with the strings open
+- **WHEN** the user starts drawing a chord that has no shape yet
+- **THEN** every string starts open and the user mutes the ones that should not sound
+
+### Requirement: The fretboard shows a window of five frets that can be moved
+
+The system SHALL show the chord through a window of five frets and SHALL label the base fret of that window, SHALL let the user move the window along the neck without changing the drawn shape, and SHALL keep the window still while the user marks frets.
+
 #### Scenario: Fret window
 - **WHEN** a chord uses frets far from the nut
 - **THEN** the diagram shows them inside a window of five frets and labels its base fret
-
-#### Scenario: The finder opens from a compact trigger
-- **WHEN** the user opens the chord finder
-- **THEN** it opens from a compact trigger in the chord box instead of a full-width control
-
-#### Scenario: Opening the finder does not resize the chord box
-- **WHEN** the chord finder opens or closes
-- **THEN** the chord box keeps its size and the fretboard does not move
 
 #### Scenario: A shape beyond the first frets can be drawn
 - **WHEN** the user draws a chord whose shape uses frets that are not in the window
@@ -89,13 +93,25 @@ The system SHALL provide a visual chord selector that draws the chord on a verti
 - **WHEN** the user picks a name or another position
 - **THEN** the window moves to show the frets of that shape
 
-#### Scenario: The fretboard stays centred
-- **WHEN** the chord box shows the arrows that move the fret window
-- **THEN** the fretboard stays centred in the chord box
+### Requirement: The chord finder opens from a compact trigger
 
-#### Scenario: A new chord starts with the strings open
-- **WHEN** the user starts drawing a chord that has no shape yet
-- **THEN** every string starts open and the user mutes the ones that should not sound
+The system SHALL offer a chord finder opened from a compact trigger inside the chord box, SHALL show it over the page, and SHALL keep the size of the chord box while the finder opens and closes.
+
+#### Scenario: The finder opens from a compact trigger
+- **WHEN** the user opens the chord finder
+- **THEN** it opens from a compact trigger in the chord box instead of a full-width control
+
+#### Scenario: Opening the finder does not resize the chord box
+- **WHEN** the chord finder opens or closes
+- **THEN** the chord box keeps its size and the fretboard does not move
+
+### Requirement: The position control keeps its place above the diagram
+
+The system SHALL place the position control above the fretboard diagram so that it stays in place when the diagram changes height.
+
+#### Scenario: The position control keeps its place
+- **WHEN** the drawn shape uses more or fewer frets
+- **THEN** the position control stays above the diagram without moving
 
 ### Requirement: Tab editor
 

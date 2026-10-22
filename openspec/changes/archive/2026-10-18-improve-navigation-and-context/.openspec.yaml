@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-10-17
+goal: Orientar al usuario dentro de la app (el logo lleva al inicio y toda vista
+  anidada tiene una flecha para volver) y mostrar el artista de la canción bajo
+  su nombre mientras se practica

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { PracticeSessionDetails } from "@/components/dashboard/PracticeSessionDetails";
+import { BackLink } from "@/components/ui/BackLink";
 import { SessionEditor } from "@/components/dashboard/SessionEditor";
 import { PracticeRecordingItem } from "@/components/practice/PracticeRecordingItem";
 import { getLocalDateKey } from "@/lib/local-date";
@@ -114,12 +114,7 @@ export function PracticeDayDetail({ dateKey }: PracticeDayDetailProps) {
 
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
-      <Link
-        href="/dashboard"
-        className="text-sm text-muted underline underline-offset-4 hover:text-ink"
-      >
-        Volver al dashboard
-      </Link>
+      <BackLink href="/dashboard">Volver al dashboard</BackLink>
       <header className="mt-8">
         <p className="font-mono text-xs uppercase tracking-[0.12em] text-muted">
           Detalle de práctica

@@ -19,6 +19,52 @@ export type ManualPracticeInput = {
   notes: string;
 };
 
+/**
+ * Bloque tal como se edita en el formulario de práctica manual: la duración es
+ * el texto del campo, no un número, y lleva id para que React pueda seguir la
+ * fila mientras se escribe.
+ *
+ * Es la forma editable de `ManualPracticeInput["blocks"]`;
+ * `manualPracticeBlocksFromDrafts` hace el paso de una a otra.
+ */
+export type ManualPracticeBlockDraft = {
+  id: string;
+  name: string;
+  durationMinutes: string;
+  skill: PracticeSkill;
+};
+
+/** Bloque nuevo, con los valores con los que abre el formulario. */
+export function createManualPracticeBlockDraft(): ManualPracticeBlockDraft {
+  return {
+    id: createId(),
+    name: "",
+    durationMinutes: "30",
+    skill: "technique",
+  };
+}
+
+/**
+ * Valor local `AAAA-MM-DDTHH:MM` que pide un input `datetime-local`. Resta el
+ * desplazamiento del huso para que el campo muestre la hora del reloj del
+ * usuario y no la de UTC.
+ */
+export function toLocalDateTimeInputValue(date: Date): string {
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return localDate.toISOString().slice(0, 16);
+}
+
+/** Pasa los bloques editados a los bloques que valida `createManualPracticeRecord`. */
+export function manualPracticeBlocksFromDrafts(
+  blocks: ManualPracticeBlockDraft[],
+): ManualPracticeInput["blocks"] {
+  return blocks.map(({ name, durationMinutes, skill }) => ({
+    name,
+    durationMinutes: Number(durationMinutes),
+    skill,
+  }));
+}
+
 export function createManualPracticeRecord(
   input: ManualPracticeInput,
 ): SessionRecord {

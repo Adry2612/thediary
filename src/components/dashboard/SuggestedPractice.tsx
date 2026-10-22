@@ -17,7 +17,7 @@ export function SuggestedPractice() {
       style={{ "--index": 2 } as CSSProperties}
     >
       <div className="max-w-lg">
-        <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+        <p className="text-xs uppercase tracking-[0.12em] text-muted">
            {home.directAccess}
         </p>
         <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">

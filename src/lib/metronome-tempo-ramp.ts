@@ -5,7 +5,7 @@ export type TempoRampIntervalUnit = "bars" | "seconds" | "minutes";
 export function isTempoRampIntervalUnit(
   value: string,
 ): value is TempoRampIntervalUnit {
-  return Object.hasOwn(MAX_INTERVAL_BY_UNIT, value);
+  return Object.hasOwn(MAX_TEMPO_RAMP_INTERVAL_BY_UNIT, value);
 }
 
 export interface TempoRampSettings {
@@ -24,7 +24,7 @@ export const DEFAULT_TEMPO_RAMP_SETTINGS: TempoRampSettings = {
   maximumBpm: MAX_BPM,
 };
 
-const MAX_INTERVAL_BY_UNIT: Record<TempoRampIntervalUnit, number> = {
+export const MAX_TEMPO_RAMP_INTERVAL_BY_UNIT: Record<TempoRampIntervalUnit, number> = {
   bars: 64,
   seconds: 3_600,
   minutes: 60,
@@ -43,7 +43,7 @@ export function normalizeTempoRampSettings(
     intervalValue: clampInteger(
       settings.intervalValue,
       1,
-      MAX_INTERVAL_BY_UNIT[settings.intervalUnit],
+      MAX_TEMPO_RAMP_INTERVAL_BY_UNIT[settings.intervalUnit],
     ),
     intervalUnit: settings.intervalUnit,
     incrementBpm: clampInteger(settings.incrementBpm, 1, 20),

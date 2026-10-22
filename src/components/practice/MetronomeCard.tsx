@@ -66,9 +66,9 @@ export function MetronomeCard({
     >
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm uppercase tracking-[0.05em] text-muted">
+          <h2 className="text-sm uppercase tracking-[0.05em] text-muted">
              {text.title}
-          </h3>
+          </h2>
           <div className="mt-1 flex items-center gap-2 font-mono text-xs text-muted">
             <span
               aria-hidden="true"
@@ -147,6 +147,7 @@ export function MetronomeCard({
           {Array.from({ length: meter.beatsPerMeasure }, (_, beat) => (
             <div key={beat} className="flex flex-col items-center gap-2">
               <span
+                role='img'
                  aria-label={`${text.beat} ${beat + 1}${activeBeat === beat ? `, ${text.activeBeat}` : ""}`}
                 className={`size-3 rounded-full transition duration-100 ${
                   activeBeat === beat

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createRepertoireItem } from "../src/lib/repertoire-item.ts";
+import { COMMON_TUNINGS, createRepertoireItem } from "../src/lib/repertoire-item.ts";
 
 test("creates a song with a trimmed artist and its default part", () => {
   const item = createRepertoireItem({
@@ -66,4 +66,11 @@ test("creates a lick with an optional Guitar Pro resource and no artist", () => 
     updatedAt: "2026-10-08T12:00:00.000Z",
   });
   assert.equal(Object.hasOwn(item, "artist"), false);
+});
+
+test("offers the common tunings with the free-text option last", () => {
+  assert.equal(COMMON_TUNINGS.length, 12);
+  assert.equal(COMMON_TUNINGS[0], "E Standard (EADGBE)");
+  assert.equal(COMMON_TUNINGS[COMMON_TUNINGS.length - 1], "Otra...");
+  assert.ok(COMMON_TUNINGS.includes("DADGAD"));
 });

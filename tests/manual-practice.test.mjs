@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createManualPracticeRecord } from "../src/lib/manual-practice.ts";
+import {
+  createManualPracticeBlockDraft,
+  createManualPracticeRecord,
+  manualPracticeBlocksFromDrafts,
+  toLocalDateTimeInputValue,
+} from "../src/lib/manual-practice.ts";
 
 test("creates a historical session from its blocks, duration, skills, and notes", () => {
   const record = createManualPracticeRecord({
@@ -119,4 +124,52 @@ test("rejects invalid dates, empty blocks, invalid durations, and unknown skills
       }),
     /nombre del bloque/i,
   );
+});
+
+test("opens a new block with an id, half an hour and a skill", () => {
+  const block = createManualPracticeBlockDraft();
+
+  assert.equal(typeof block.id, "string");
+  assert.ok(block.id.length > 0);
+  assert.equal(block.name, "");
+  assert.equal(block.durationMinutes, "30");
+  assert.equal(block.skill, "technique");
+});
+
+test("gives every new block its own id", () => {
+  assert.notEqual(createManualPracticeBlockDraft().id, createManualPracticeBlockDraft().id);
+});
+
+test("writes the local clock time for a datetime-local field", () => {
+  assert.equal(toLocalDateTimeInputValue(new Date(2026, 2, 5, 9, 7)), "2026-03-05T09:07");
+  assert.equal(toLocalDateTimeInputValue(new Date(2026, 11, 31, 23, 59)), "2026-12-31T23:59");
+  assert.equal(toLocalDateTimeInputValue(new Date(2026, 0, 1, 0, 0)), "2026-01-01T00:00");
+});
+
+test("turns edited blocks into the blocks the record validates", () => {
+  const blocks = manualPracticeBlocksFromDrafts([
+    { id: "a", name: "Escalas", durationMinutes: "15", skill: "technique" },
+    { id: "b", name: "Oído", durationMinutes: "", skill: "theory" },
+  ]);
+
+  assert.deepEqual(blocks, [
+    { name: "Escalas", durationMinutes: 15, skill: "technique" },
+    { name: "Oído", durationMinutes: 0, skill: "theory" },
+  ]);
+});
+
+test("records a session built from an untouched draft form", () => {
+  const block = createManualPracticeBlockDraft();
+  const record = createManualPracticeRecord({
+    title: "",
+    startedAtLocal: "2026-10-07T18:30",
+    blocks: manualPracticeBlocksFromDrafts([
+      { ...block, name: "Rutina" },
+    ]),
+    notes: "",
+  });
+
+  assert.equal(record.title, "Práctica manual");
+  assert.equal(record.durationSeconds, 30 * 60);
+  assert.equal(record.phases[0].skill, "technique");
 });

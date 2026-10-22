@@ -10,6 +10,8 @@ import {
 } from "../weekly-routine-schedule.ts";
 import type { PersistedPracticeState } from "@/stores/practiceStorage";
 import type { SessionRecord, PracticeTemplate, RepertoireItem, UserChord } from "@/types/practice";
+import { migrateRepertoireLicks } from "../licks/migration.ts";
+import { normalizeLicks } from "../licks/normalize.ts";
 import { getSupabaseClient } from "./client.ts";
 
 interface PracticeDataRow {
@@ -43,6 +45,13 @@ function hasNonDefaultGoals(goals: PracticeGoals): boolean {
 
 export function normalizePracticeData(value: unknown): PersistedPracticeState {
   const state = isRecord(value) ? value : {};
+  const migration = migrateRepertoireLicks(
+    Array.isArray(state.repertoireItems)
+      ? (state.repertoireItems as RepertoireItem[])
+      : [],
+    normalizeLicks(state.licks),
+  );
+
   return {
     history: Array.isArray(state.history)
       ? (state.history as SessionRecord[])
@@ -50,9 +59,8 @@ export function normalizePracticeData(value: unknown): PersistedPracticeState {
     templates: Array.isArray(state.templates)
       ? (state.templates as PracticeTemplate[])
       : [],
-    repertoireItems: Array.isArray(state.repertoireItems)
-      ? (state.repertoireItems as RepertoireItem[])
-      : [],
+    repertoireItems: migration.repertoireItems,
+    licks: migration.licks,
     customChords: Array.isArray(state.customChords)
       ? (state.customChords as UserChord[])
       : [],
@@ -75,6 +83,7 @@ export function mergePracticeData(
     ),
     templates: mergeById(remote.templates, local.templates),
     repertoireItems: mergeById(remote.repertoireItems, local.repertoireItems),
+    licks: mergeById(remote.licks, local.licks),
     customChords: mergeById(remote.customChords, local.customChords),
     weeklySchedule: hasAssignedRoutine(local.weeklySchedule)
       ? local.weeklySchedule
@@ -137,6 +146,7 @@ export function createEmptyPracticeData(): PersistedPracticeState {
     history: [],
     templates: [],
     repertoireItems: [],
+    licks: [],
     customChords: [],
     weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
     practiceGoals: { ...DEFAULT_PRACTICE_GOALS },

@@ -6,6 +6,7 @@ import { translations } from "../src/i18n/translations.ts";
 test("uses the same translation structure in Spanish and English", () => {
   assert.deepEqual(Object.keys(translations.es), Object.keys(translations.en));
   assert.deepEqual(Object.keys(translations.es.landing), Object.keys(translations.en.landing));
+  assert.deepEqual(Object.keys(translations.es.licks), Object.keys(translations.en.licks));
 });
 
 test("returns the translated text for nested keys", () => {

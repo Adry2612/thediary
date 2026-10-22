@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PracticePlanBuilder } from '@/components/practice/PracticePlanBuilder';
 import { SavedPracticeRoutines } from '@/components/practice/SavedPracticeRoutines';
 import { Button } from '@/components/ui/Button';
+import { ArrowLeftIcon } from '@/components/ui/icons';
 import { createPracticePlanFromSession } from '@/lib/practice-launch';
 import { getPracticePlanDuration } from '@/lib/practice-plan';
 import { useActivePracticeSessionStore } from '@/stores/useActivePracticeSessionStore';
@@ -90,6 +91,9 @@ export function PracticeWorkspace({
       name: item.title,
       durationMinutes: 1,
       skill: 'repertoire',
+      // Vincular el elemento es lo que hace que su tiempo practicado cuente
+      // cuando la práctica se completa (la parte se deja sin elegir).
+      repertoireItemId: item.id,
       resources: item.guitarPro ? [item.guitarPro] : undefined,
     };
     setDraftPlan({ name: item.title, phases: [phase] });
@@ -260,8 +264,9 @@ export function PracticeWorkspace({
                   setIsBuilding(false);
                   setEditingTemplateId(null);
                 }}
-                className='self-start text-sm text-muted underline underline-offset-4 hover:text-ink'
+                className='inline-flex items-center gap-1.5 self-start text-sm text-muted underline underline-offset-4 hover:text-ink'
               >
+                <ArrowLeftIcon className='size-4 shrink-0' />
                 {text.backToRoutines}
               </button>
               <PracticePlanBuilder

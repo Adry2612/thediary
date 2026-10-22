@@ -46,6 +46,15 @@ export function TrashIcon({ className, ...props }: IconProps) {
   );
 }
 
+export function ArrowLeftIcon({ className, ...props }: IconProps) {
+  return (
+    <StrokeIcon className={className} {...props}>
+      <path d="M19 12H5" />
+      <path d="m11 18-6-6 6-6" />
+    </StrokeIcon>
+  );
+}
+
 export function SplitViewIcon({ className, ...props }: IconProps) {
   return (
     <StrokeIcon className={className} {...props}>

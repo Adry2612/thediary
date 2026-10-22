@@ -1,9 +1,7 @@
-import type { RepertoirePartPracticeStats } from "@/lib/repertoire-analytics";
 import type {
-  RepertoireItem,
-  RepertoireItemKind,
-  GuitarType,
-} from "@/types/practice";
+  RepertoireItemPracticeStats,
+} from "./repertoire-analytics.ts";
+import type { RepertoireItem, GuitarType } from "@/types/practice";
 
 export type RepertoireProgressFilter = "all" | "learning" | "learned";
 export type RepertoireSortOrder =
@@ -43,17 +41,13 @@ export function isRepertoireSortOrder(
 
 export type RepertoireItemFilters = {
   query: string;
-  kind: "all" | RepertoireItemKind;
   progress: RepertoireProgressFilter;
   sort: RepertoireSortOrder;
   guitarType: GuitarTypeFilter;
   futureLearn: FutureLearnFilter;
 };
 
-type PracticeStatsByItem = Map<
-  string,
-  Map<string, RepertoirePartPracticeStats>
->;
+type ItemPracticeStatsByItem = Map<string, RepertoireItemPracticeStats>;
 
 function normalizeSearchText(value: string) {
   return value
@@ -88,14 +82,9 @@ function matchesProgress(
 
 function getPracticeSeconds(
   item: RepertoireItem,
-  practiceStats: PracticeStatsByItem,
+  practiceStats: ItemPracticeStatsByItem,
 ) {
-  return item.parts.reduce(
-    (total, part) =>
-      total +
-      (practiceStats.get(item.id)?.get(part.id)?.practiceSeconds ?? 0),
-    0,
-  );
+  return practiceStats.get(item.id)?.practiceSeconds ?? 0;
 }
 
 function compareTitles(first: RepertoireItem, second: RepertoireItem) {
@@ -115,9 +104,6 @@ function compareByRecentUpdate(
 }
 
 function compareArtists(first: RepertoireItem, second: RepertoireItem) {
-  if (first.kind !== second.kind) return first.kind === "song" ? -1 : 1;
-  if (first.kind === "lick") return compareTitles(first, second);
-
   const firstArtist = first.artist?.trim();
   const secondArtist = second.artist?.trim();
   if (!firstArtist && secondArtist) return 1;
@@ -133,7 +119,7 @@ function compareArtists(first: RepertoireItem, second: RepertoireItem) {
 function sortItems(
   items: RepertoireItem[],
   sort: RepertoireSortOrder,
-  practiceStats: PracticeStatsByItem,
+  practiceStats: ItemPracticeStatsByItem,
 ) {
   if (sort === "original") return items;
   if (sort === "title") return items.slice().sort(compareTitles);
@@ -163,11 +149,11 @@ function matchesFutureLearn(item: RepertoireItem, filter: FutureLearnFilter) {
 export function getFilteredRepertoireItems(
   items: RepertoireItem[],
   filters: RepertoireItemFilters,
-  practiceStats: PracticeStatsByItem,
+  practiceStats: ItemPracticeStatsByItem,
 ) {
   const filteredItems = items.filter(
     (item) =>
-      (filters.kind === "all" || item.kind === filters.kind) &&
+      item.kind === "song" &&
       matchesProgress(item, filters.progress) &&
       matchesSearch(item, filters.query) &&
       matchesGuitarType(item, filters.guitarType) &&
@@ -177,5 +163,8 @@ export function getFilteredRepertoireItems(
 }
 
 export function getRecentRepertoireItems(items: RepertoireItem[]) {
-  return items.slice().sort(compareByRecentUpdate).slice(0, 4);
+  return items
+    .filter((item) => item.kind === "song")
+    .sort(compareByRecentUpdate)
+    .slice(0, 4);
 }

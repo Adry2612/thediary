@@ -8,6 +8,11 @@ import {
   type RepertoireItem,
   type UserChord,
 } from "@/types/practice";
+import type { GuitarLick } from "@/types/lick";
+import {
+  markLickPracticed as markLickPracticedNow,
+  recordLickBpm as recordBpmForLick,
+} from "@/lib/licks/progress";
 import {
   createLocalPracticeStorage,
   type PersistedPracticeState,
@@ -34,6 +39,7 @@ type PracticeStoreState = {
   history: SessionRecord[];
   templates: PracticeTemplate[];
   repertoireItems: RepertoireItem[];
+  licks: GuitarLick[];
   customChords: UserChord[];
   weeklySchedule: WeeklyRoutineSchedule;
   practiceGoals: PracticeGoals;
@@ -51,6 +57,10 @@ type PracticeStoreState = {
   setPracticeGoals: (goals: PracticeGoals) => void;
   saveRepertoireItem: (item: RepertoireItem) => void;
   deleteRepertoireItem: (itemId: string) => void;
+  saveLick: (lick: GuitarLick) => void;
+  deleteLick: (lickId: string) => void;
+  recordLickBpm: (lickId: string, bpm: number, notes?: string) => boolean;
+  markLickPracticed: (lickId: string) => void;
   saveCustomChord: (chord: UserChord) => void;
   deleteCustomChord: (chordId: string) => void;
   setHasHydrated: (hasHydrated: boolean) => void;
@@ -63,6 +73,7 @@ export const usePracticeStore = create<PracticeStoreState>()(
       history: [],
       templates: [],
       repertoireItems: [],
+      licks: [],
       customChords: [],
       weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
       practiceGoals: { ...DEFAULT_PRACTICE_GOALS },
@@ -133,6 +144,40 @@ export const usePracticeStore = create<PracticeStoreState>()(
           ),
           persistenceError: null,
         })),
+      saveLick: (lick) =>
+        set((state) => ({
+          licks: [
+            ...state.licks.filter((candidate) => candidate.id !== lick.id),
+            lick,
+          ],
+          persistenceError: null,
+        })),
+      deleteLick: (lickId) =>
+        set((state) => ({
+          licks: state.licks.filter((lick) => lick.id !== lickId),
+          persistenceError: null,
+        })),
+      recordLickBpm: (lickId, bpm, notes) => {
+        let recorded = false;
+        set((state) => ({
+          licks: state.licks.map((lick) => {
+            if (lick.id !== lickId) return lick;
+            const next = recordBpmForLick(lick, bpm, notes);
+            if (!next) return lick;
+            recorded = true;
+            return next;
+          }),
+          persistenceError: null,
+        }));
+        return recorded;
+      },
+      markLickPracticed: (lickId) =>
+        set((state) => ({
+          licks: state.licks.map((lick) =>
+            lick.id === lickId ? markLickPracticedNow(lick) : lick,
+          ),
+          persistenceError: null,
+        })),
       saveCustomChord: (chord) =>
         set((state) => ({
           customChords: [
@@ -163,6 +208,7 @@ export const usePracticeStore = create<PracticeStoreState>()(
           history: state.history,
           templates: state.templates,
           repertoireItems: state.repertoireItems,
+          licks: state.licks,
           customChords: state.customChords,
           weeklySchedule: state.weeklySchedule,
           practiceGoals: state.practiceGoals,
@@ -198,6 +244,7 @@ export function getPersistedPracticeState(): PersistedPracticeState {
     history,
     templates,
     repertoireItems,
+    licks,
     customChords,
     weeklySchedule,
     practiceGoals,
@@ -206,6 +253,7 @@ export function getPersistedPracticeState(): PersistedPracticeState {
     history,
     templates,
     repertoireItems,
+    licks,
     customChords,
     weeklySchedule,
     practiceGoals,

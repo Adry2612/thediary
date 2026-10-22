@@ -5,9 +5,16 @@ export type RepertoirePartPracticeStats = {
   sessionCount: number;
 };
 
+/** Tiempo practicado de un elemento, con o sin partes concretas. */
+export type RepertoireItemPracticeStats = {
+  practiceSeconds: number;
+  sessionCount: number;
+  /** Inicio de la sesión más reciente que practicó el elemento. */
+  lastPracticedAt?: string;
+};
+
 export interface RepertoireOverview {
   songCount: number;
-  lickCount: number;
   learnedCount: number;
   partCount: number;
   totalSeconds: number;
@@ -56,27 +63,65 @@ export function getRepertoirePracticeStats(
   return statsByItem;
 }
 
+/**
+ * Tiempo practicado por elemento: cuenta cualquier fase completada que nombre
+ * el elemento, aunque no elija una parte concreta. Es la cifra que se muestra
+ * en la biblioteca; la de `getRepertoirePracticeStats` sigue siendo por parte.
+ */
+export function getRepertoireItemPracticeStats(
+  history: SessionRecord[],
+): Map<string, RepertoireItemPracticeStats> {
+  const statsByItem = new Map<string, RepertoireItemPracticeStats>();
+
+  for (const session of history) {
+    const practicedItems = new Set<string>();
+    for (const phase of session.phases ?? []) {
+      if (phase.elapsedSeconds <= 0 || !phase.repertoireItemId) continue;
+
+      const stats = statsByItem.get(phase.repertoireItemId) ?? {
+        practiceSeconds: 0,
+        sessionCount: 0,
+      };
+      stats.practiceSeconds += phase.elapsedSeconds;
+      statsByItem.set(phase.repertoireItemId, stats);
+      practicedItems.add(phase.repertoireItemId);
+    }
+
+    for (const itemId of practicedItems) {
+      const stats = statsByItem.get(itemId);
+      if (!stats) continue;
+      stats.sessionCount += 1;
+      if (
+        !stats.lastPracticedAt ||
+        Date.parse(session.startedAt) > Date.parse(stats.lastPracticedAt)
+      ) {
+        stats.lastPracticedAt = session.startedAt;
+      }
+    }
+  }
+
+  return statsByItem;
+}
+
 export function getRepertoireOverview(
   items: RepertoireItem[],
-  practiceStats: Map<string, Map<string, RepertoirePartPracticeStats>>,
+  practiceStats: Map<string, RepertoireItemPracticeStats>,
 ): RepertoireOverview {
   return items.reduce<RepertoireOverview>(
     (overview, item) => {
-      if (item.kind === "song") overview.songCount += 1;
-      if (item.kind === "lick") overview.lickCount += 1;
+      if (item.kind !== "song") return overview;
+      overview.songCount += 1;
 
       for (const part of item.parts) {
         overview.partCount += 1;
         if (part.learned) overview.learnedCount += 1;
-        overview.totalSeconds +=
-          practiceStats.get(item.id)?.get(part.id)?.practiceSeconds ?? 0;
       }
+      overview.totalSeconds += practiceStats.get(item.id)?.practiceSeconds ?? 0;
 
       return overview;
     },
     {
       songCount: 0,
-      lickCount: 0,
       learnedCount: 0,
       partCount: 0,
       totalSeconds: 0,

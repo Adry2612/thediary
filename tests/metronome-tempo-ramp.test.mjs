@@ -4,6 +4,7 @@ import {
   DEFAULT_TEMPO_RAMP_SETTINGS,
   getTempoRampIntervalSeconds,
   increaseTempoWithinLimit,
+  MAX_TEMPO_RAMP_INTERVAL_BY_UNIT,
   normalizeTempoRampSettings,
 } from "../src/lib/metronome-tempo-ramp.ts";
 
@@ -58,4 +59,12 @@ test("clamps user-provided ramp values to supported ranges", () => {
 test("does not increment beyond the configured tempo maximum", () => {
   assert.equal(increaseTempoWithinLimit(118, 5, 120), 120);
   assert.equal(increaseTempoWithinLimit(120, 5, 120), 120);
+});
+
+test("caps each interval unit at the value its field accepts", () => {
+  assert.deepEqual(MAX_TEMPO_RAMP_INTERVAL_BY_UNIT, {
+    bars: 64,
+    seconds: 3600,
+    minutes: 60,
+  });
 });

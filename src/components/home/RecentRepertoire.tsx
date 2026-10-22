@@ -30,7 +30,7 @@ export function RecentRepertoire({
     <section className="enter h-full rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted">
              {home.savedLibrary}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
@@ -46,7 +46,7 @@ export function RecentRepertoire({
       </div>
 
       {!hasHydrated ? (
-        <p className="mt-5 text-sm text-zinc-500">
+        <p className="mt-5 text-sm text-muted">
            {home.loadingSaved}
         </p>
       ) : recentItems.length > 0 ? (
@@ -64,12 +64,12 @@ export function RecentRepertoire({
                   <p className="break-words font-medium leading-tight text-zinc-100">
                     {item.title}
                   </p>
-                  <p className="mt-1 truncate text-sm text-zinc-500">
+                  <p className="mt-1 truncate text-sm text-muted">
                      {item.kind === "song" ? home.song ?? home.savedLibrary : home.lick ?? home.recentRepertoire}
                     {item.artist ? ` · ${item.artist}` : ""}
                   </p>
                 </div>
-                <div className="shrink-0 text-right font-mono text-xs text-zinc-500">
+                <div className="shrink-0 text-right font-mono text-xs text-muted">
                   <p>
                      {learnedParts}/{item.parts.length} {home.learnedParts}
                   </p>

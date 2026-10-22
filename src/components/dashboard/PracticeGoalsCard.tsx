@@ -4,19 +4,7 @@ import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
 import { adjustPracticeGoal } from "@/lib/practice-goals";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import { useI18nSection } from "@/i18n/I18nProvider";
-
-type GoalControl = {
-  key: string;
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  unit: string;
-  ariaLabel: string;
-  adjust: (direction: -1 | 1) => void;
-  onChange: (value: number) => void;
-};
+import type { GoalControl } from "@/types/dashboard";
 
 export function PracticeGoalsCard() {
   const dashboard = useI18nSection("dashboard");
@@ -63,13 +51,13 @@ export function PracticeGoalsCard() {
   return (
     <section className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
       <div>
-        <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+        <p className="text-xs uppercase tracking-[0.12em] text-muted">
            {dashboard.goals}
         </p>
         <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
            {dashboard.practiceTime}
         </h2>
-        <p className="mt-2 max-w-2xl text-sm text-zinc-500">
+        <p className="mt-2 max-w-2xl text-sm text-muted">
            {dashboard.goalsDescription}
         </p>
       </div>
@@ -80,7 +68,7 @@ export function PracticeGoalsCard() {
             key={goal.key}
             className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-5"
           >
-            <p className="text-xs uppercase tracking-[0.08em] text-zinc-500">
+            <p className="text-xs uppercase tracking-[0.08em] text-muted">
               {goal.label}
             </p>
             <div className="mt-3 flex items-center justify-between gap-3">
@@ -113,7 +101,7 @@ export function PracticeGoalsCard() {
                 +
               </button>
             </div>
-            <p className="mt-3 text-center text-xs text-zinc-600">
+            <p className="mt-3 text-center text-xs text-muted">
                {dashboard.editHint}
             </p>
           </div>

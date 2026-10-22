@@ -174,13 +174,17 @@ export function AdjustableNumber({
           ref={displayButtonRef}
           type="button"
           onClick={beginEditing}
-          aria-label={`${ariaLabel}: ${value}. Pulsa para editar o desplázate para ajustar`}
+          aria-label={`${ariaLabel}: ${value}${unit ? ` ${unit}` : ""}. Pulsa para editar o desplázate para ajustar`}
           title="Pulsa para editar; desplázate sobre la cifra para ajustar"
           className="flex w-full items-baseline justify-center gap-2 whitespace-nowrap font-mono tabular-nums transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-green-fg"
         >
           <span key={value} className="number-value-change">
             {value}
           </span>
+          {/* El espacio explícito mantiene el texto visible y el nombre
+              accesible alineados (WCAG 2.5.3): el nodo en blanco no se pinta
+              como item de flex, pero sí cuenta como texto visible. */}
+          {" "}
           {unit && (
             <span className="shrink-0 text-sm text-muted">{unit}</span>
           )}

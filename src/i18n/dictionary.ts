@@ -10,6 +10,7 @@ export type Dict = {
     metronome: string;
     recordings: string;
     repertoire: string;
+    licks: string;
     settings: string;
   };
   common: { settings: string; openMenu: string; closeMenu: string };
@@ -137,6 +138,7 @@ export type Dict = {
   metronome: Record<string, string>;
   recordings: Record<string, string>;
   repertoire: Record<string, string>;
+  licks: Record<string, string>;
   tutorial?: { steps: Array<{ title: string; description: string }>; progress: string; saveError: string; skip: string; previous: string; next: string; finish: string };
   dashboard: {
     eyebrow: string;

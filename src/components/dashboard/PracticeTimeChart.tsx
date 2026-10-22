@@ -1,30 +1,14 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { formatPracticeDuration } from "@/lib/dashboard-data";
+import { formatExactDuration, formatTotal } from "@/lib/format";
 import { getPracticeTimeBuckets } from "@/lib/practice-analytics";
 import { getContainedTooltipPosition } from "@/lib/practice-chart-tooltip";
 import type { PracticeChartPeriod } from "@/lib/practice-analytics";
 import { SelectField } from "@/components/ui/SelectField";
 import type { SessionRecord } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
-
-function formatTotal(seconds: number) {
-  return formatPracticeDuration(seconds / 60);
-}
-
-function formatExactDuration(seconds: number) {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  return `${minutes} min ${remainingSeconds} s`;
-}
-
-type ChartTooltip = {
-  label: string;
-  duration: string;
-  left: number;
-  top: number;
-};
+import type { ChartTooltip } from "@/types/dashboard";
 
 export function PracticeTimeChart({
   history,
@@ -87,19 +71,19 @@ export function PracticeTimeChart({
     >
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <p className="text-xs uppercase tracking-[0.12em] text-zinc-500">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted">
              {dashboard.recordedTimeTitle}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
              {dashboard.practiceRhythm}
           </h2>
-          <p className="mt-2 text-sm text-zinc-500">
+          <p className="mt-2 text-sm text-muted">
             {period === "week"
               ? dashboard.weekTime
               : period === "month" ? dashboard.monthTimeChart : dashboard.yearTime}
           </p>
         </div>
-        <div className="min-w-32 text-xs text-zinc-500">
+        <div className="min-w-32 text-xs text-muted">
            {dashboard.period}
           <SelectField
             className="mt-1"
@@ -117,7 +101,7 @@ export function PracticeTimeChart({
         <span className="font-mono text-2xl leading-tight font-medium tabular-nums tracking-normal text-zinc-100 sm:text-3xl">
           {formatTotal(totalSeconds)}
         </span>
-         <span className="text-xs text-zinc-500">{dashboard.inPeriod}</span>
+         <span className="text-xs text-muted">{dashboard.inPeriod}</span>
       </div>
 
       <div className="mt-5 min-h-0 flex-1 overflow-x-auto">
@@ -180,7 +164,7 @@ export function PracticeTimeChart({
                     }}
                   />
                 </div>
-                <span className="max-w-full truncate font-mono text-[10px] text-zinc-500">
+                <span className="max-w-full truncate font-mono text-[10px] text-muted">
                   {bucket.label}
                 </span>
               </li>
@@ -194,14 +178,14 @@ export function PracticeTimeChart({
           className="pointer-events-none absolute z-50 w-44 border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-300 shadow-lg"
           style={{ left: tooltip.left, top: tooltip.top }}
         >
-          <span className="block text-zinc-500">{tooltip.label}</span>
+          <span className="block text-muted">{tooltip.label}</span>
           <span className="mt-1 block font-mono text-sm tabular-nums text-zinc-100">
             {tooltip.duration}
           </span>
         </div>
       )}
       {maximumSeconds === 0 && (
-        <p className="mt-4 text-center text-sm text-zinc-500">
+        <p className="mt-4 text-center text-sm text-muted">
            {dashboard.emptyChart}
         </p>
       )}

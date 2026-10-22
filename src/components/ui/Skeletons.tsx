@@ -303,3 +303,30 @@ export function GenericPageSkeleton() {
     </main>
   );
 }
+
+export function LicksSkeleton() {
+  return (
+    <main
+      aria-busy='true'
+      aria-label='Cargando licks'
+      className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'
+    >
+      <SkeletonHeader />
+      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        {Array.from({ length: 4 }, (_, index) => (
+          <SkeletonCard key={index} />
+        ))}
+      </div>
+      <div className='mt-5 grid gap-5 xl:grid-cols-2'>
+        <Skeleton className='h-56 rounded-xl' />
+        <Skeleton className='h-56 rounded-xl' />
+      </div>
+      <Skeleton className='mt-5 h-72 w-full rounded-xl' />
+      <div className='mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
+        {Array.from({ length: 3 }, (_, index) => (
+          <SkeletonCard key={index} className='h-72' />
+        ))}
+      </div>
+    </main>
+  );
+}

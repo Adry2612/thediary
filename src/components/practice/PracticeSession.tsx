@@ -39,6 +39,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const sessionSavedRef = useRef(false);
   const completionHandledRef = useRef(false);
   const addSession = usePracticeStore((state) => state.addSession);
+  const repertoireItems = usePracticeStore((state) => state.repertoireItems);
   const clearActiveSession = useActivePracticeSessionStore(
     (state) => state.clearActiveSession,
   );
@@ -163,6 +164,11 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
 
   const nextPhase = phases[timer.currentPhaseIndex + 1];
   const currentPhase = phases[timer.currentPhaseIndex];
+  // Si el bloque que se está practicando pertenece al repertorio, su artista
+  // se muestra bajo el nombre de la canción.
+  const currentRepertoireItem = currentPhase?.repertoireItemId
+    ? repertoireItems.find((item) => item.id === currentPhase.repertoireItemId)
+    : undefined;
 
   const timerCard = (
     <TimerCard
@@ -174,6 +180,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
       setPracticeStartSound={setPracticeStartSound}
       practiceEndSound={practiceEndSound}
       setPracticeEndSound={setPracticeEndSound}
+      artist={currentRepertoireItem?.artist}
     />
   );
   const metronomeCard = (

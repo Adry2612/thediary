@@ -965,3 +965,139 @@ export function groupTabSystems(
   }
   return systems;
 }
+
+/*
+ * Geometría del editor de tablatura.
+ *
+ * El editor mide su rejilla y decide cuántas columnas caben, dónde cae el
+ * centro de cada celda y qué rectángulo está seleccionado. Es cálculo puro, así
+ * que vive aquí y no dentro del componente: se puede probar sin montar la
+ * rejilla.
+ */
+
+/** Ancho de la columna con los nombres de las cuerdas. */
+export const LABEL_WIDTH = 34;
+/** Alto de cada fila de cuerda (h-9). */
+export const STRING_ROW_HEIGHT = 36;
+/** Ancho mínimo de celda que buscamos al decidir cuántos compases caben. */
+export const MIN_CELL_WIDTH = 22;
+/** Suelo del ancho de celda: por debajo de esto no se puede estrechar más. */
+export const MIN_CELL_WIDTH_FLOOR = 8;
+/**
+ * Compases que el editor deja añadir con sus botones. Es un tope de interfaz,
+ * más bajo que el del modelo de la tablatura (`MAX_MEASURES`), que admite hasta
+ * 64 compases.
+ */
+export const TAB_EDITOR_MAX_MEASURES = 16;
+/** Etiqueta corta de cada cantidad de bend admitida. */
+export const BEND_AMOUNT_LABELS: Record<string, string> = {
+  "0.25": "¼",
+  "0.5": "½",
+  "1": "1",
+  "1.5": "1½",
+  "2": "2",
+};
+
+/**
+ * Cuerdas de la más aguda (arriba) a la más grave (abajo), como en una tab
+ * real.
+ */
+export function getTabStringOrder(): number[] {
+  return Array.from(
+    { length: STRING_COUNT },
+    (_, index) => STRING_COUNT - 1 - index,
+  );
+}
+
+/** Ancho útil de la rejilla, descontada la columna de nombres. */
+function getTabGridAvailableWidth(gridWidth: number): number {
+  return Math.max(0, gridWidth - LABEL_WIDTH);
+}
+
+/**
+ * Columnas que caben en el ancho medido, sin bajar de la subdivisión: por
+ * debajo de un compás no se puede partir.
+ */
+export function getAvailableTabColumns(
+  gridWidth: number,
+  subdivision: number,
+): number {
+  return Math.max(
+    subdivision,
+    Math.floor(getTabGridAvailableWidth(gridWidth) / MIN_CELL_WIDTH),
+  );
+}
+
+/**
+ * Ancho de celda: el reparto del ancho útil entre las columnas del sistema más
+ * lleno, con el suelo que evita celdas impracticables.
+ */
+export function getTabCellWidth(
+  gridWidth: number,
+  fullColumns: number,
+): number {
+  return Math.max(
+    MIN_CELL_WIDTH_FLOOR,
+    Math.floor(getTabGridAvailableWidth(gridWidth) / fullColumns),
+  );
+}
+
+/**
+ * Centro horizontal de una celda dentro de su sistema. La capa de anotaciones
+ * usa la misma geometría que la rejilla: las celdas tienen ancho fijo y no hay
+ * separación entre ellas.
+ */
+export function getTabCellCenterX(
+  indexInSystem: number,
+  cellWidth: number,
+): number {
+  return LABEL_WIDTH + indexInSystem * cellWidth + cellWidth / 2;
+}
+
+/** Centro vertical de una fila de cuerda, para la capa de anotaciones. */
+export function getTabStringRowY(rowIndex: number): number {
+  return rowIndex * STRING_ROW_HEIGHT + STRING_ROW_HEIGHT / 2;
+}
+
+/** Rectángulo de celdas que cubre de `anchor` a `focus`, ambas incluidas. */
+export interface TabSelectionBounds {
+  minString: number;
+  maxString: number;
+  minColumn: number;
+  maxColumn: number;
+}
+
+/** Rectángulo que cubre de `anchor` a `focus`, sin importar en qué orden. */
+export function getTabSelectionBounds(
+  anchor: TabCell,
+  focus: TabCell,
+): TabSelectionBounds {
+  return {
+    minString: Math.min(anchor.string, focus.string),
+    maxString: Math.max(anchor.string, focus.string),
+    minColumn: Math.min(anchor.column, focus.column),
+    maxColumn: Math.max(anchor.column, focus.column),
+  };
+}
+
+/** Si una celda cae dentro del rectángulo de selección. */
+export function isTabCellSelected(
+  bounds: TabSelectionBounds,
+  string: number,
+  column: number,
+): boolean {
+  return (
+    string >= bounds.minString &&
+    string <= bounds.maxString &&
+    column >= bounds.minColumn &&
+    column <= bounds.maxColumn
+  );
+}
+
+/** Celda dentro de los límites de la rejilla. */
+export function clampTabCell(cell: TabCell, columnCount: number): TabCell {
+  return {
+    string: clamp(cell.string, 0, STRING_COUNT - 1),
+    column: clamp(cell.column, 0, Math.max(0, columnCount - 1)),
+  };
+}

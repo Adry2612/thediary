@@ -6,17 +6,30 @@ import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import {
+  BEND_AMOUNT_LABELS,
   canApplyTabTechniqueToSelection,
+  clampTabCell,
   clearTabNote,
+  getAvailableTabColumns,
+  getTabCellCenterX,
+  getTabCellWidth,
   getTabColumns,
+  getTabSelectionBounds,
+  getTabStringOrder,
+  getTabStringRowY,
   getTabTechnique,
   groupTabSystems,
+  isTabCellSelected,
+  LABEL_WIDTH,
   MAX_FRET,
+  MIN_MEASURES,
   setTabBendAmounts,
   setTabMeasures,
   setTabNote,
   setTabSubdivision,
+  STRING_ROW_HEIGHT,
   TAB_BEND_AMOUNTS,
+  TAB_EDITOR_MAX_MEASURES,
   TAB_TECHNIQUES,
   tabCellsBetween,
   tabSystemTechniques,
@@ -31,32 +44,9 @@ import { isTabEditorEnabled } from "@/lib/feature-flags";
 import type { RepertoireTab, RepertoireTabNote } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
-const MIN_MEASURES = 1;
-const MAX_MEASURES = 16;
-/** Ancho de la columna con los nombres de las cuerdas. */
-const LABEL_WIDTH = 34;
-/** Alto de cada fila de cuerda (h-9). */
-const STRING_ROW_HEIGHT = 36;
-/** Ancho mínimo de celda que buscamos al decidir cuántos compases caben. */
-const MIN_CELL_WIDTH = 22;
-/** Suelo del ancho de celda: por debajo de esto no se puede estrechar más. */
-const MIN_CELL_WIDTH_FLOOR = 8;
-/** Etiqueta corta de cada cantidad de bend admitida. */
-const BEND_AMOUNT_LABELS: Record<string, string> = {
-  "0.25": "¼",
-  "0.5": "½",
-  "1": "1",
-  "1.5": "1½",
-  "2": "2",
-};
-
 interface TabEditorProps {
   value: RepertoireTab;
   onChange: (value: RepertoireTab) => void;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
 export function TabEditor({ value, onChange }: TabEditorProps) {
@@ -86,10 +76,7 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
     [value.tuning],
   );
   // De la cuerda más aguda (arriba) a la más grave (abajo), como en una tab real.
-  const stringOrder = useMemo(
-    () => Array.from({ length: STRING_COUNT }, (_, index) => STRING_COUNT - 1 - index),
-    [],
-  );
+  const stringOrder = useMemo(() => getTabStringOrder(), []);
   const fretByCell = useMemo(() => {
     const map = new Map<string, number>();
     for (const note of value.notes) {
@@ -105,17 +92,10 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
     return map;
   }, [value.notes]);
 
-  const availableWidth = Math.max(0, gridWidth - LABEL_WIDTH);
-  const availableColumns = Math.max(
-    value.subdivision,
-    Math.floor(availableWidth / MIN_CELL_WIDTH),
-  );
+  const availableColumns = getAvailableTabColumns(gridWidth, value.subdivision);
   const systems = groupTabSystems(value, availableColumns);
   const fullColumns = systems[0]?.columnCount ?? value.subdivision;
-  const cellWidth = Math.max(
-    MIN_CELL_WIDTH_FLOOR,
-    Math.floor(availableWidth / fullColumns),
-  );
+  const cellWidth = getTabCellWidth(gridWidth, fullColumns);
 
   const currentFret = fretByCell.get(`${focus.string}:${focus.column}`);
 
@@ -123,41 +103,28 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
   // tienen ancho fijo y no hay separación entre ellas, así que basta el índice
   // de la columna y el ancho de celda.
   function cellCenterX(indexInSystem: number): number {
-    return LABEL_WIDTH + indexInSystem * cellWidth + cellWidth / 2;
+    return getTabCellCenterX(indexInSystem, cellWidth);
   }
 
   function stringRowY(rowIndex: number): number {
-    return rowIndex * STRING_ROW_HEIGHT + STRING_ROW_HEIGHT / 2;
+    return getTabStringRowY(rowIndex);
   }
   const selectedNote = noteByCell.get(`${focus.string}:${focus.column}`);
   const fretFieldValue =
     buffer !== "" ? buffer : currentFret !== undefined ? String(currentFret) : "";
 
   const selectedCells = tabCellsBetween(anchor, focus);
-  const selectionBounds = {
-    minString: Math.min(anchor.string, focus.string),
-    maxString: Math.max(anchor.string, focus.string),
-    minColumn: Math.min(anchor.column, focus.column),
-    maxColumn: Math.max(anchor.column, focus.column),
-  };
+  const selectionBounds = getTabSelectionBounds(anchor, focus);
   const hasSelectionNotes = selectedCells.some((cell) =>
     noteByCell.has(`${cell.string}:${cell.column}`),
   );
 
   function isCellSelected(string: number, column: number): boolean {
-    return (
-      string >= selectionBounds.minString &&
-      string <= selectionBounds.maxString &&
-      column >= selectionBounds.minColumn &&
-      column <= selectionBounds.maxColumn
-    );
+    return isTabCellSelected(selectionBounds, string, column);
   }
 
   function clampCell(cell: TabCell): TabCell {
-    return {
-      string: clamp(cell.string, 0, STRING_COUNT - 1),
-      column: clamp(cell.column, 0, Math.max(0, columns - 1)),
-    };
+    return clampTabCell(cell, columns);
   }
 
   // Al soltar el puntero se termina el arrastre, aunque se suelte fuera de la rejilla.
@@ -291,7 +258,7 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
             type="button"
             size="field"
             aria-label={text.tabAddMeasure}
-            disabled={value.measures >= MAX_MEASURES}
+            disabled={value.measures >= TAB_EDITOR_MAX_MEASURES}
             onClick={() => onChange(setTabMeasures(value, value.measures + 1))}
           >
             +

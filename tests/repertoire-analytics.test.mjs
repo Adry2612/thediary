@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  getRepertoireItemPracticeStats,
   getRepertoireOverview,
   getRepertoirePracticeStats,
 } from "../src/lib/repertoire-analytics.ts";
@@ -12,10 +13,10 @@ const emptySkills = {
   improvisation: 0,
 };
 
-function createSession(id, phases) {
+function createSession(id, phases, startedAt = "2026-10-07T12:00:00.000Z") {
   return {
     id,
-    startedAt: "2026-10-07T12:00:00.000Z",
+    startedAt,
     durationSeconds: 2400,
     averageBpm: 90,
     skillSeconds: { ...emptySkills, repertoire: 2400 },
@@ -111,20 +112,103 @@ test("summarizes repertoire items, learned parts, and linked practice time", () 
     },
   ];
   const practiceStats = new Map([
-    [
-      "song-1",
-      new Map([
-        ["intro", { practiceSeconds: 120, sessionCount: 1 }],
-        ["solo", { practiceSeconds: 180, sessionCount: 2 }],
-      ]),
-    ],
+    ["song-1", { practiceSeconds: 300, sessionCount: 2 }],
   ]);
 
   assert.deepEqual(getRepertoireOverview(items, practiceStats), {
     songCount: 1,
-    lickCount: 1,
     learnedCount: 1,
-    partCount: 3,
+    partCount: 2,
     totalSeconds: 300,
   });
+});
+
+test("counts an item's time with or without a part and ignores unlinked phases", () => {
+  const history = [
+    createSession("session-1", [
+      {
+        id: "phase-1",
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 600,
+        repertoireItemId: "song-1",
+      },
+      {
+        id: "phase-2",
+        name: "Solo",
+        skill: "repertoire",
+        elapsedSeconds: 300,
+        repertoireItemId: "song-1",
+        repertoirePartId: "solo-1",
+      },
+      {
+        id: "phase-3",
+        name: "Ejercicio suelto",
+        skill: "technique",
+        elapsedSeconds: 500,
+      },
+    ], "2026-10-01T12:00:00.000Z"),
+    createSession("session-2", [
+      {
+        id: "phase-4",
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 300,
+        repertoireItemId: "song-1",
+      },
+    ], "2026-10-07T12:00:00.000Z"),
+  ];
+
+  const stats = getRepertoireItemPracticeStats(history);
+
+  assert.deepEqual(stats.get("song-1"), {
+    practiceSeconds: 1200,
+    sessionCount: 2,
+    lastPracticedAt: "2026-10-07T12:00:00.000Z",
+  });
+  assert.equal(stats.has("missing-item"), false);
+});
+
+test("keeps the newest practice date even when sessions arrive out of order", () => {
+  const history = [
+    createSession("later", [
+      {
+        id: "phase-1",
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 120,
+        repertoireItemId: "song-1",
+      },
+    ], "2026-10-10T12:00:00.000Z"),
+    createSession("earlier", [
+      {
+        id: "phase-2",
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 120,
+        repertoireItemId: "song-1",
+      },
+    ], "2026-10-01T12:00:00.000Z"),
+  ];
+
+  assert.equal(
+    getRepertoireItemPracticeStats(history).get("song-1")?.lastPracticedAt,
+    "2026-10-10T12:00:00.000Z",
+  );
+});
+
+test("does not count an item phase left untouched", () => {
+  const history = [
+    createSession("session-1", [
+      {
+        id: "phase-1",
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 0,
+        repertoireItemId: "song-1",
+      },
+    ]),
+  ];
+
+  assert.equal(getRepertoireItemPracticeStats(history).has("song-1"), false);
 });

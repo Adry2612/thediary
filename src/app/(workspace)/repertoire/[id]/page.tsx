@@ -1,10 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { use } from 'react';
 import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
 import { RepertoireSongEditor } from '@/components/repertoire/RepertoireSongEditor';
-import { getRepertoirePracticeStats } from '@/lib/repertoire-analytics';
+import { BackLink } from '@/components/ui/BackLink';
+import {
+  getRepertoireItemPracticeStats,
+  getRepertoirePracticeStats,
+} from '@/lib/repertoire-analytics';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { getDictionary } from '@/i18n/translations';
 
@@ -26,6 +29,7 @@ export default function RepertoireDetailPage({ params }: Props) {
   const { id: itemId } = use(params);
   const item = items.find((candidate) => candidate.id === itemId);
   const practiceStats = getRepertoirePracticeStats(history).get(itemId);
+  const itemPractice = getRepertoireItemPracticeStats(history).get(itemId);
 
   if (!hasHydrated) {
     return (
@@ -38,12 +42,7 @@ export default function RepertoireDetailPage({ params }: Props) {
   if (!item) {
     return (
       <main className='mx-auto max-w-5xl px-5 py-16 sm:px-8'>
-        <Link
-          href='/repertoire'
-          className='text-sm text-muted underline underline-offset-4'
-        >
-          {repertoireDetail.back}
-        </Link>
+        <BackLink href='/repertoire'>{repertoireDetail.back}</BackLink>
         <h1 className='mt-8 font-sans text-3xl font-semibold'>
           {repertoireDetail.notFound}
         </h1>
@@ -53,13 +52,17 @@ export default function RepertoireDetailPage({ params }: Props) {
 
   return (
     <main className='mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16'>
-      <RepertoireItemCard
-        item={item}
-        practiceStats={practiceStats}
-        onSave={saveRepertoireItem}
-        onDelete={deleteRepertoireItem}
-        detail
-      />
+      <BackLink href='/repertoire'>{repertoireDetail.back}</BackLink>
+      <div className='mt-6'>
+        <RepertoireItemCard
+          item={item}
+          practiceStats={practiceStats}
+          itemPractice={itemPractice}
+          onSave={saveRepertoireItem}
+          onDelete={deleteRepertoireItem}
+          detail
+        />
+      </div>
       <RepertoireSongEditor item={item} onSave={saveRepertoireItem} />
     </main>
   );

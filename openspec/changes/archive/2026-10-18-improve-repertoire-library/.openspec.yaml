@@ -1,0 +1,6 @@
+schema: spec-driven
+created: 2026-10-17
+goal: Hacer la biblioteca del repertorio navegable (filtro por artista y
+  dificultad, página por artista con imagen de cabecera), describir mejor cada
+  elemento (dificultad propia y distintivo en singular) y que el tiempo
+  practicado por elemento sea real

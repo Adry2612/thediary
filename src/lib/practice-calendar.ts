@@ -1,3 +1,4 @@
+import type { CalendarCell } from "../types/dashboard";
 import type {
   DailyStats,
   PracticeSkill,
@@ -20,11 +21,22 @@ export type PracticeWeekDay = {
   hasPractice: boolean;
 };
 
-function toDateKey(date: Date) {
+/**
+ * Clave de fecha local (`AAAA-MM-DD`) de un instante. Es local y no UTC a
+ * propósito: la práctica de la tarde en un huso al oeste de Greenwich debe
+ * contar en su día, no en el siguiente.
+ */
+export function toDateKey(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+/** Fecha local que corresponde a una clave `AAAA-MM-DD`. */
+export function parseDateKey(dateKey: string): Date {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
 function emptySkillMinutes(): Record<PracticeSkill, number> {
@@ -147,4 +159,83 @@ export function getPracticeWeekDays(
       hasPractice: sessions.length > 0,
     };
   });
+}
+
+/**
+ * Etiqueta de mes para cada columna de la rejilla anual. Solo la primera
+ * columna de un mes lleva nombre; el resto quedan vacías para no repetirlo.
+ */
+export function getMonthMarkers(
+  year: number,
+  weekCount: number,
+  firstWeekday: number,
+  locale: string,
+): string[] {
+  const markers = Array<string>(weekCount).fill("");
+  for (let monthIndex = 0; monthIndex < 12; monthIndex += 1) {
+    const dayOfYear =
+      (Date.UTC(year, monthIndex, 1) - Date.UTC(year, 0, 1)) / 86_400_000;
+    const weekIndex = Math.floor((firstWeekday + dayOfYear) / 7);
+    markers[weekIndex] = new Intl.DateTimeFormat(locale, {
+      month: "short",
+    })
+      .format(new Date(year, monthIndex, 1))
+      .replace(/\.$/, "");
+  }
+
+  return markers;
+}
+
+/**
+ * Celdas de la rejilla anual, de la primera a la última semana del año. Las
+ * posiciones que caen fuera del año son `null` para que la rejilla cuadre en
+ * columnas de siete.
+ */
+export function createCalendarCells(
+  year: number,
+  weekCount: number,
+  firstWeekday: number,
+  days: DailyStats[],
+  statsByDate: Map<string, DailyStats>,
+  sessionsByDate: Map<string, SessionRecord[]>,
+): CalendarCell[] {
+  const yearStart = new Date(year, 0, 1);
+  return Array.from({ length: weekCount * 7 }, (_, index) => {
+    const weekIndex = Math.floor(index / 7);
+    const weekdayIndex = index % 7;
+    const dayOffset = weekIndex * 7 + weekdayIndex - firstWeekday;
+    if (dayOffset < 0 || dayOffset >= days.length) return null;
+
+    const date = new Date(yearStart);
+    date.setDate(yearStart.getDate() + dayOffset);
+    const dateKey = toDateKey(date);
+    return {
+      dateKey,
+      stats: statsByDate.get(dateKey),
+      sessions: sessionsByDate.get(dateKey) ?? [],
+    };
+  });
+}
+
+/**
+ * Clave del día al que hay que desplazar el calendario al abrirse: la última
+ * sesión del año, o si no hay ninguna, el último día con minutos acumulados.
+ * `undefined` cuando el año no tiene práctica.
+ */
+export function getLatestPracticeDateKey(
+  history: SessionRecord[],
+  days: DailyStats[],
+  year: number,
+): string | undefined {
+  const yearSessions = history
+    .filter((session) => new Date(session.startedAt).getFullYear() === year)
+    .sort(
+      (a, b) =>
+        new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+    );
+  if (yearSessions[0]) return toDateKey(new Date(yearSessions[0].startedAt));
+
+  return [...days]
+    .filter((day) => day.totalMinutes > 0)
+    .sort((a, b) => b.dateKey.localeCompare(a.dateKey))[0]?.dateKey;
 }

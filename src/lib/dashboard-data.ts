@@ -69,12 +69,4 @@ export function getSkillPercentages(totals: SkillTotals): SkillTotals {
   );
 }
 
-export function formatPracticeDuration(totalMinutes: number): string {
-  const roundedMinutes = Math.round(totalMinutes);
-  const hours = Math.floor(roundedMinutes / 60);
-  const minutes = roundedMinutes % 60;
-
-  if (hours === 0) return `${minutes} min`;
-  if (minutes === 0) return `${hours} h`;
-  return `${hours} h ${minutes} min`;
-}
+export { formatPracticeDuration } from "./format.ts";

@@ -1,16 +1,6 @@
-import type { SessionRecord } from "@/types/practice";
 import { formatPracticeDuration } from "@/lib/dashboard-data";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
-
-export type PracticeTooltipDay = {
-  dateKey: string;
-  totalMinutes: number;
-  sessionCount: number;
-  sessions: SessionRecord[];
-  left: number;
-  top: number;
-  showBelow: boolean;
-};
+import type { PracticeTooltipDay } from "@/types/dashboard";
 
 function parseDateKey(dateKey: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
@@ -70,7 +60,7 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
       style={{ left: day.left, top: day.top }}
     >
       <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+        <p className="text-[10px] uppercase tracking-[0.12em] text-muted">
            {tooltip.summary}
         </p>
         <h3 className="mt-1 font-sans text-lg font-semibold capitalize leading-tight text-zinc-100">
@@ -99,11 +89,11 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
                   <p className="min-w-0 truncate text-sm font-medium text-zinc-200">
                      {session.title || tooltip.defaultTitle}
                   </p>
-                  <span className="shrink-0 font-mono text-[10px] text-zinc-500">
+                  <span className="shrink-0 font-mono text-[10px] text-muted">
                      {formatSessionTime(session.startedAt, locale)}
                   </span>
                 </div>
-                <p className="mt-1 font-mono text-xs text-zinc-500">
+                <p className="mt-1 font-mono text-xs text-muted">
                   {formatPracticeDuration(session.durationSeconds / 60)}
                   {session.averageBpm > 0 && ` · ${session.averageBpm} BPM`}
                 </p>
@@ -115,11 +105,11 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
                         className="text-xs leading-relaxed text-zinc-400"
                       >
                         <span>{phase.name}</span>
-                        <span className="ml-1 font-mono text-zinc-500">
+                        <span className="ml-1 font-mono text-muted">
                           {formatPracticeDuration(phase.elapsedSeconds / 60)}
                         </span>
                         {phase.notes && (
-                          <p className="mt-0.5 whitespace-pre-wrap text-zinc-500">
+                          <p className="mt-0.5 whitespace-pre-wrap text-muted">
                             {phase.notes}
                           </p>
                         )}
@@ -137,7 +127,7 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
           </ul>
         </>
       ) : (
-        <p className="mt-4 border-t border-zinc-800 pt-3 text-sm text-zinc-500">
+        <p className="mt-4 border-t border-zinc-800 pt-3 text-sm text-muted">
            {tooltip.noSessions}
         </p>
       )}
