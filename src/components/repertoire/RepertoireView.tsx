@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
+import { ForgottenRepertoireWidget } from '@/components/repertoire/ForgottenRepertoireWidget';
 import { SelectField } from '@/components/ui/SelectField';
 import { TextField } from '@/components/ui/Field';
 import { PlusIcon } from '@/components/ui/icons';
@@ -12,6 +13,7 @@ import {
   getRepertoireOverview,
   getRepertoirePracticeStats,
 } from '@/lib/repertoire-analytics';
+import { getForgottenRepertoireItem } from '@/lib/repertoire-forgotten';
 import {
   getFilteredRepertoireItems,
   isRepertoireProgressFilter,
@@ -108,6 +110,11 @@ export function RepertoireView() {
     () => getRepertoireItemPracticeStats(history),
     [history],
   );
+  const today = useMemo(() => new Date(), []);
+  const forgotten = useMemo(
+    () => getForgottenRepertoireItem(items, itemPracticeStats, today),
+    [items, itemPracticeStats, today],
+  );
   const visibleItems = useMemo(
     () =>
       getFilteredRepertoireItems(
@@ -203,6 +210,12 @@ export function RepertoireView() {
           </article>
         ))}
       </section>
+
+      {forgotten ? (
+        <div className='mb-5'>
+          <ForgottenRepertoireWidget forgotten={forgotten} />
+        </div>
+      ) : null}
 
       <div className='flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-surface p-5 sm:p-6'>
         <p className='max-w-xl text-sm text-muted'>{text.newItemDescription}</p>

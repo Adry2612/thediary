@@ -9,6 +9,8 @@ export type RepertoirePartPracticeStats = {
 export type RepertoireItemPracticeStats = {
   practiceSeconds: number;
   sessionCount: number;
+  /** Inicio de la sesión más reciente que practicó el elemento. */
+  lastPracticedAt?: string;
 };
 
 export interface RepertoireOverview {
@@ -87,7 +89,14 @@ export function getRepertoireItemPracticeStats(
 
     for (const itemId of practicedItems) {
       const stats = statsByItem.get(itemId);
-      if (stats) stats.sessionCount += 1;
+      if (!stats) continue;
+      stats.sessionCount += 1;
+      if (
+        !stats.lastPracticedAt ||
+        Date.parse(session.startedAt) > Date.parse(stats.lastPracticedAt)
+      ) {
+        stats.lastPracticedAt = session.startedAt;
+      }
     }
   }
 
