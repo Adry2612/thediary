@@ -33,7 +33,6 @@ import {
   toggleTabTechniques,
 } from "@/lib/repertoire-tab";
 import { parseTuningNotes, STRING_COUNT } from "@/lib/chords";
-import { isTabEditorEnabled } from "@/lib/feature-flags";
 import type { RepertoireTab, RepertoireTabNote } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { useTabEditorSelection } from "@/hooks/useTabEditorSelection";
@@ -41,9 +40,18 @@ import { useTabEditorSelection } from "@/hooks/useTabEditorSelection";
 interface TabEditorProps {
   value: RepertoireTab;
   onChange: (value: RepertoireTab) => void;
+  title?: string;
+  description?: string;
+  defaultOpen?: boolean;
 }
 
-export function TabEditor({ value, onChange }: TabEditorProps) {
+export function TabEditor({
+  value,
+  onChange,
+  title,
+  description,
+  defaultOpen = false,
+}: TabEditorProps) {
   const text = useI18nSection("repertoire");
   const measureObserverRef = useRef<ResizeObserver | null>(null);
   const [gridWidth, setGridWidth] = useState(0);
@@ -119,12 +127,12 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
     noteByCell.has(`${cell.string}:${cell.column}`),
   );
 
-  // La tablatura propia sigue en diseño: el código y los datos se conservan,
-  // pero la sección solo se muestra con la bandera activada.
-  if (!isTabEditorEnabled) return null;
-
   return (
-    <CollapsibleSection title={text.tabTitle} description={text.tabDescription}>
+    <CollapsibleSection
+      title={title ?? text.tabTitle}
+      description={description ?? text.tabDescription}
+      defaultOpen={defaultOpen}
+    >
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <div className="text-xs text-muted">
           {text.tabResolution}

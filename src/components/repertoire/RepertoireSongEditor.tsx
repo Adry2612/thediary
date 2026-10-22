@@ -2,6 +2,7 @@
 
 import { ChordChartEditor } from '@/components/repertoire/ChordChartEditor';
 import { TabEditor } from '@/components/repertoire/TabEditor';
+import { isTabEditorEnabled } from '@/lib/feature-flags';
 import { normalizeChordChart } from '@/lib/repertoire-chord-chart';
 import { normalizeTab } from '@/lib/repertoire-tab';
 import type { RepertoireItem } from '@/types/practice';
@@ -30,7 +31,9 @@ export function RepertoireSongEditor({
         value={chordChart}
         onChange={(next) => update({ chordChart: next })}
       />
-      <TabEditor value={tab} onChange={(next) => update({ tab: next })} />
+      {isTabEditorEnabled ? (
+        <TabEditor value={tab} onChange={(next) => update({ tab: next })} />
+      ) : null}
     </>
   );
 }
