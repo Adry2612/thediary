@@ -1,14 +1,29 @@
-import type { HTMLAttributes } from 'react';
+import type { HTMLAttributes } from "react";
+import {
+  SURFACE_PADDING_CLASSES,
+  SURFACE_TONE_CLASSES,
+  type SurfacePadding,
+  type SurfaceTone,
+} from "@/components/ui/surfaces";
 
-type BlockElement = 'article' | 'div' | 'fieldset' | 'section';
+type BlockElement = "article" | "div" | "fieldset" | "section";
 
 interface BlockProps extends HTMLAttributes<HTMLElement> {
   as?: BlockElement;
+  tone?: SurfaceTone;
+  padding?: SurfacePadding;
 }
 
+/**
+ * Superficie secundaria: esquina más corta y relleno más apretado que la
+ * tarjeta, para bloques dentro de una sección. Puede ser un `fieldset` para
+ * agrupar controles.
+ */
 export function Block({
-  as = 'section',
-  className = '',
+  as = "section",
+  tone = "light",
+  padding = "compact",
+  className = "",
   ...props
 }: BlockProps) {
   const Component = as;
@@ -16,7 +31,7 @@ export function Block({
   return (
     <Component
       {...props}
-      className={`rounded-lg border border-line bg-surface p-4 sm:p-6 ${className}`}
+      className={`rounded-lg border ${SURFACE_TONE_CLASSES[tone]} ${SURFACE_PADDING_CLASSES[padding]} ${className}`}
     />
   );
 }

@@ -7,7 +7,17 @@ export const PRACTICE_SKILLS = [
 
 export type PracticeSkill = (typeof PRACTICE_SKILLS)[number];
 
-export type PracticeResourceKind = "songsterr" | "guitarpro" | "pdf" | "audio" | "youtube" | "spotify" | "tab";
+export const PRACTICE_RESOURCE_KINDS = [
+  "songsterr",
+  "guitarpro",
+  "pdf",
+  "audio",
+  "youtube",
+  "spotify",
+  "tab",
+] as const;
+
+export type PracticeResourceKind = (typeof PRACTICE_RESOURCE_KINDS)[number];
 
 export interface PracticeResource {
   id: string;

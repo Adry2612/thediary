@@ -29,6 +29,25 @@ import {
   canApplyTabTechniqueToSelection,
   toggleTabTechnique,
 } from "../src/lib/repertoire-tab.ts";
+import {
+  BEND_AMOUNT_LABELS,
+  clampTabCell,
+  getAvailableTabColumns,
+  getTabCellCenterX,
+  getTabCellWidth,
+  getTabSelectionBounds,
+  getTabStringOrder,
+  getTabStringRowY,
+  isTabCellSelected,
+  LABEL_WIDTH,
+  MAX_MEASURES,
+  MIN_CELL_WIDTH,
+  MIN_CELL_WIDTH_FLOOR,
+  STRING_ROW_HEIGHT,
+  TAB_BEND_AMOUNTS,
+  TAB_EDITOR_MAX_MEASURES,
+} from "../src/lib/repertoire-tab.ts";
+import { STRING_COUNT } from "../src/lib/chords.ts";
 
 test("creates an empty tab with the song tuning", () => {
   const tab = createEmptyTab("Drop D (DADGBE)");
@@ -561,4 +580,112 @@ test("a selection without notes cannot receive a technique", () => {
   const cells = tabCellsBetween({ string: 0, column: 1 }, { string: 0, column: 3 });
   assert.equal(canApplyTabTechniqueToSelection(tab, cells, "palmMute"), false);
   assert.deepEqual(toggleTabTechniques(tab, cells, "palmMute").notes, []);
+});
+
+test("orders the strings from the thinnest to the thickest", () => {
+  assert.deepEqual(getTabStringOrder(), [5, 4, 3, 2, 1, 0]);
+  assert.equal(getTabStringOrder().length, STRING_COUNT);
+});
+
+test("the editor's measure limit stays below the model's", () => {
+  assert.equal(TAB_EDITOR_MAX_MEASURES, 16);
+  assert.ok(TAB_EDITOR_MAX_MEASURES < MAX_MEASURES);
+});
+
+test("labels every bend amount the editor accepts", () => {
+  for (const amount of TAB_BEND_AMOUNTS) {
+    assert.equal(typeof BEND_AMOUNT_LABELS[String(amount)], "string");
+  }
+});
+
+test("fits as many cells as the width allows, never fewer than a measure", () => {
+  // (100 - 34) / 22 = 3 columnas.
+  assert.equal(getAvailableTabColumns(100, 4), 4);
+  assert.equal(getAvailableTabColumns(1000, 4), 43);
+  assert.equal(getAvailableTabColumns(1000, 16), 43);
+  assert.equal(getAvailableTabColumns(0, 8), 8);
+  assert.equal(getAvailableTabColumns(LABEL_WIDTH - 10, 4), 4);
+});
+
+test("shares the width between the fullest system's columns", () => {
+  // (1000 - 34) / 43 = 22.
+  assert.equal(getTabCellWidth(1000, 43), 22);
+  assert.equal(getTabCellWidth(1000, 100), 9);
+  assert.equal(getTabCellWidth(1000, 200), MIN_CELL_WIDTH_FLOOR);
+  assert.equal(getTabCellWidth(0, 4), MIN_CELL_WIDTH_FLOOR);
+});
+
+test("the minimum cell width is what the fitting uses", () => {
+  const columns = getAvailableTabColumns(1000, 4);
+  const cellWidth = getTabCellWidth(1000, columns);
+
+  assert.ok(cellWidth >= MIN_CELL_WIDTH || cellWidth === MIN_CELL_WIDTH_FLOOR);
+  assert.equal(cellWidth, MIN_CELL_WIDTH);
+});
+
+test("centers a cell inside its column, after the label column", () => {
+  assert.equal(getTabCellCenterX(0, 20), LABEL_WIDTH + 10);
+  assert.equal(getTabCellCenterX(3, 20), LABEL_WIDTH + 70);
+});
+
+test("centers a string row inside its row height", () => {
+  assert.equal(getTabStringRowY(0), STRING_ROW_HEIGHT / 2);
+  assert.equal(getTabStringRowY(2), STRING_ROW_HEIGHT * 2 + STRING_ROW_HEIGHT / 2);
+});
+
+test("builds the selection rectangle regardless of the drag direction", () => {
+  const downRight = getTabSelectionBounds(
+    { string: 1, column: 2 },
+    { string: 4, column: 6 },
+  );
+  const upLeft = getTabSelectionBounds(
+    { string: 4, column: 6 },
+    { string: 1, column: 2 },
+  );
+
+  assert.deepEqual(downRight, {
+    minString: 1,
+    maxString: 4,
+    minColumn: 2,
+    maxColumn: 6,
+  });
+  assert.deepEqual(upLeft, downRight);
+  assert.deepEqual(
+    getTabSelectionBounds({ string: 3, column: 3 }, { string: 3, column: 3 }),
+    { minString: 3, maxString: 3, minColumn: 3, maxColumn: 3 },
+  );
+});
+
+test("includes the edges of the selection and excludes what is outside", () => {
+  const bounds = getTabSelectionBounds(
+    { string: 1, column: 2 },
+    { string: 4, column: 6 },
+  );
+
+  assert.equal(isTabCellSelected(bounds, 1, 2), true);
+  assert.equal(isTabCellSelected(bounds, 4, 6), true);
+  assert.equal(isTabCellSelected(bounds, 3, 4), true);
+  assert.equal(isTabCellSelected(bounds, 0, 4), false);
+  assert.equal(isTabCellSelected(bounds, 5, 4), false);
+  assert.equal(isTabCellSelected(bounds, 3, 7), false);
+  assert.equal(isTabCellSelected(bounds, 3, 1), false);
+});
+
+test("clamps a cell to the strings and columns that exist", () => {
+  assert.deepEqual(clampTabCell({ string: -3, column: -1 }, 10), {
+    string: 0,
+    column: 0,
+  });
+  assert.deepEqual(clampTabCell({ string: 99, column: 99 }, 10), {
+    string: STRING_COUNT - 1,
+    column: 9,
+  });
+  assert.deepEqual(clampTabCell({ string: 2, column: 4 }, 10), {
+    string: 2,
+    column: 4,
+  });
+  assert.deepEqual(clampTabCell({ string: 2, column: 4 }, 0), {
+    string: 2,
+    column: 0,
+  });
 });

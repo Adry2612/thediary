@@ -1,30 +1,14 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { formatPracticeDuration } from "@/lib/dashboard-data";
+import { formatExactDuration, formatTotal } from "@/lib/format";
 import { getPracticeTimeBuckets } from "@/lib/practice-analytics";
 import { getContainedTooltipPosition } from "@/lib/practice-chart-tooltip";
 import type { PracticeChartPeriod } from "@/lib/practice-analytics";
 import { SelectField } from "@/components/ui/SelectField";
 import type { SessionRecord } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
-
-function formatTotal(seconds: number) {
-  return formatPracticeDuration(seconds / 60);
-}
-
-function formatExactDuration(seconds: number) {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  return `${minutes} min ${remainingSeconds} s`;
-}
-
-type ChartTooltip = {
-  label: string;
-  duration: string;
-  left: number;
-  top: number;
-};
+import type { ChartTooltip } from "@/types/dashboard";
 
 export function PracticeTimeChart({
   history,

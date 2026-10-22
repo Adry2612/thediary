@@ -11,7 +11,7 @@ import { savePracticeAsset } from '@/lib/practice-library';
 import type { PracticeAsset } from '@/lib/practice-library';
 import { saveCloudPracticeAsset } from '@/lib/supabase/practice-files';
 import { createRepertoireItem, REPERTOIRE_DIFFICULTIES } from '@/lib/repertoire-item';
-import { getDifficultyLabel } from '@/components/repertoire/difficulty-labels';
+import { getDifficultyLabel } from '@/lib/difficulty-labels';
 import { emptyChordChart, normalizeChordChart } from '@/lib/repertoire-chord-chart';
 import { normalizeTab } from '@/lib/repertoire-tab';
 import { parseTuningNotes } from '@/lib/chords';
@@ -27,21 +27,7 @@ import { PracticeResourceEditor } from '@/components/practice/PracticeResourceEd
 import type { PracticeResource } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { createId as createIdentifier } from '@/lib/create-id';
-
-const COMMON_TUNINGS = [
-  'E Standard (EADGBE)',
-  'Drop D (DADGBE)',
-  'Drop C (CGCFAD)',
-  'D Standard (DGCFAD)',
-  'C Standard (CFA#D#GC)',
-  'Open G (DGDGBD)',
-  'Open D (DADF#AD)',
-  'Open E (EBEG#BE)',
-  'DADGAD',
-  'Half Step Down (Eb Ab Db Gb Bb eb)',
-  'Full Step Down (D G C F A D)',
-  'Otra...',
-] as const;
+import { COMMON_TUNINGS } from '@/lib/repertoire-item';
 
 function createId() {
   return createIdentifier();

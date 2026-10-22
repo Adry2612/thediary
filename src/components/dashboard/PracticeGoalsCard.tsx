@@ -4,19 +4,7 @@ import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
 import { adjustPracticeGoal } from "@/lib/practice-goals";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import { useI18nSection } from "@/i18n/I18nProvider";
-
-type GoalControl = {
-  key: string;
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  unit: string;
-  ariaLabel: string;
-  adjust: (direction: -1 | 1) => void;
-  onChange: (value: number) => void;
-};
+import type { GoalControl } from "@/types/dashboard";
 
 export function PracticeGoalsCard() {
   const dashboard = useI18nSection("dashboard");

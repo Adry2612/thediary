@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import {
   getPracticeTooltipPosition,
   PracticeDayTooltip,
-  type PracticeTooltipDay,
 } from "@/components/dashboard/PracticeDayTooltip";
+import type { PracticeTooltipDay } from "@/types/dashboard";
 import type { SessionRecord } from "@/types/practice";
 import { formatPracticeDuration } from "@/lib/dashboard-data";
 import type { PracticeWeekDay } from "@/lib/practice-calendar";

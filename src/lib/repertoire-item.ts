@@ -1,5 +1,24 @@
 import type { RepertoireItem, RepertoireItemKind, GuitarType, RepertoireDifficulty } from "../types/practice";
 
+/**
+ * Afinaciones que ofrecen los formularios de repertorio. La última opción no es
+ * una afinación: abre el campo para escribir una propia.
+ */
+export const COMMON_TUNINGS = [
+  "E Standard (EADGBE)",
+  "Drop D (DADGBE)",
+  "Drop C (CGCFAD)",
+  "D Standard (DGCFAD)",
+  "C Standard (CFA#D#GC)",
+  "Open G (DGDGBD)",
+  "Open D (DADF#AD)",
+  "Open E (EBEG#BE)",
+  "DADGAD",
+  "Half Step Down (Eb Ab Db Gb Bb eb)",
+  "Full Step Down (D G C F A D)",
+  "Otra...",
+] as const;
+
 /** Dificultades admitidas, de la más suave a la más exigente. */
 export const REPERTOIRE_DIFFICULTIES: RepertoireDifficulty[] = [
   "beginner",

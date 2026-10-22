@@ -14,6 +14,7 @@ import {
 } from "@/lib/metronome-meter";
 import {
   isTempoRampIntervalUnit,
+  MAX_TEMPO_RAMP_INTERVAL_BY_UNIT,
   type TempoRampSettings,
   type TempoRampIntervalUnit,
 } from "@/lib/metronome-tempo-ramp";
@@ -29,12 +30,6 @@ interface MetronomeSettingsProps {
   setMeterSignature: (signature: MetronomeMeterSignature) => void;
   setTempoRamp: (settings: TempoRampSettings) => void;
 }
-
-const TEMPO_RAMP_INTERVAL_MAX_VALUES: Record<TempoRampIntervalUnit, number> = {
-  bars: 64,
-  seconds: 3_600,
-  minutes: 60,
-};
 
 const SUBDIVISION_NOTE_POSITIONS: Record<number, number[]> = {
   1: [25],
@@ -332,7 +327,7 @@ export function MetronomeSettings({
                     <AdjustableNumber
                       value={tempoRamp.intervalValue}
                       min={1}
-                      max={TEMPO_RAMP_INTERVAL_MAX_VALUES[tempoRamp.intervalUnit]}
+                      max={MAX_TEMPO_RAMP_INTERVAL_BY_UNIT[tempoRamp.intervalUnit]}
                        ariaLabel={text.intervalAria}
                       className="mt-1 text-lg text-ink"
                       onChange={(intervalValue) =>

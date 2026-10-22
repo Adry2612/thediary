@@ -1,16 +1,6 @@
-import type { SessionRecord } from "@/types/practice";
 import { formatPracticeDuration } from "@/lib/dashboard-data";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
-
-export type PracticeTooltipDay = {
-  dateKey: string;
-  totalMinutes: number;
-  sessionCount: number;
-  sessions: SessionRecord[];
-  left: number;
-  top: number;
-  showBelow: boolean;
-};
+import type { PracticeTooltipDay } from "@/types/dashboard";
 
 function parseDateKey(dateKey: string) {
   const [year, month, day] = dateKey.split("-").map(Number);

@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import {
   getPracticeTooltipPosition,
   PracticeDayTooltip,
-  type PracticeTooltipDay,
 } from "@/components/dashboard/PracticeDayTooltip";
+import type { PracticeTooltipDay } from "@/types/dashboard";
 import type { DailyStats, SessionRecord } from "@/types/practice";
 import {
   getPracticeIntensityClass,

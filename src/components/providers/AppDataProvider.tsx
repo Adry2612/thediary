@@ -42,35 +42,12 @@ import {
   usePracticeStore,
 } from "@/stores/usePracticeStore";
 import type { SupabaseClient } from "@supabase/supabase-js";
-
-interface ImportedDataCounts {
-  sessions: number;
-  templates: number;
-  repertoireItems: number;
-  recordings: number;
-  assets: number;
-}
+import type {
+  AppDataContextValue,
+  ImportedDataCounts,
+} from "@/types/app-data";
 
 const PENDING_NEW_ACCOUNT_KEY = "guitar-practice-pending-new-account";
-
-interface AppDataContextValue {
-  client: SupabaseClient | null;
-  user: User | null;
-  isReady: boolean;
-  isConfigured: boolean;
-  configurationError: string | null;
-  dataError: string | null;
-  clearDataError: () => void;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<boolean>;
-  signOut: () => Promise<void>;
-  updatePassword: (password: string) => Promise<void>;
-  deleteAllPracticeData: () => Promise<void>;
-  retryCloudSync: () => Promise<void>;
-  showLocalImportOffer: boolean;
-  dismissLocalImportOffer: () => void;
-  importLocalData: () => Promise<ImportedDataCounts>;
-}
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
 
