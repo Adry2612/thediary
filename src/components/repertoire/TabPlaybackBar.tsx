@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/Field";
+import { SelectField } from "@/components/ui/SelectField";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { useTabPlayback } from "@/hooks/useTabPlayback";
 import {
@@ -37,10 +38,12 @@ export function TabPlaybackBar({
   const text = useI18nSection("repertoire");
   const [bpm, setBpm] = useState(() => safeBpm(initialBpm));
   const [bpmDraft, setBpmDraft] = useState(() => String(bpm));
+  const [program, setProgram] = useState(25);
   const { isPlaying, isLoading, playhead, play, stop, error } =
     useTabPlayback({
       tab,
       bpm,
+      program,
     });
 
   useEffect(() => {
@@ -130,8 +133,24 @@ export function TabPlaybackBar({
         />
       </label>
 
+      <label className="text-xs text-muted">
+        <span className="block">{text.tabPlaybackSound}</span>
+        <SelectField
+          className="mt-1 w-36"
+          value={String(program)}
+          ariaLabel={text.tabPlaybackSound}
+          disabled={isPlaying || isLoading}
+          onChange={(next) => setProgram(Number(next))}
+          options={[
+            { value: "25", label: text.tabSoundAcoustic },
+            { value: "24", label: text.tabSoundNylon },
+            { value: "27", label: text.tabSoundElectric },
+          ]}
+        />
+      </label>
+
       <span className="mb-1 rounded border border-line px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
-        MIDI · {text.tabPlaybackSound}
+        MIDI
       </span>
 
       {error ? (

@@ -74,9 +74,11 @@ interface PlaybackSession {
 export function useTabPlayback({
   tab,
   bpm,
+  program = 25,
 }: {
   tab: RepertoireTab;
   bpm: number;
+  program?: number;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -108,7 +110,7 @@ export function useTabPlayback({
       new OutputClass(),
       SYNTH_BUFFER_MS,
     );
-    synth.masterVolume = 0.85;
+    synth.masterVolume = 0.65;
     synth.isLooping = false;
     synthRef.current = synth;
     moduleRef.current = alphaTab;
@@ -200,7 +202,7 @@ export function useTabPlayback({
 
       const importer = new alphaTab.importer.AlphaTexImporter();
       const settings = new alphaTab.Settings();
-      importer.initFromString(buildTabAlphaTex(tab, bpm), settings);
+      importer.initFromString(buildTabAlphaTex(tab, bpm, program), settings);
       const score = importer.readScore();
       const midi = new alphaTab.midi.MidiFile();
       const handler = new alphaTab.midi.AlphaSynthMidiFileHandler(midi);
@@ -243,12 +245,12 @@ export function useTabPlayback({
         startingRef.current = false;
       }
     }
-  }, [bpm, ensureSynth, tab]);
+  }, [bpm, ensureSynth, program, tab]);
 
   // Cambiar el contenido o el tempo invalida el MIDI ya cargado.
   useEffect(() => {
     if (sessionRef.current || startingRef.current) stop();
-  }, [bpm, stop, tab]);
+  }, [bpm, program, stop, tab]);
 
   useEffect(() => {
     return () => {

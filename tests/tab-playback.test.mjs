@@ -50,7 +50,7 @@ test("genera compases, silencios y notas con la afinación de la tablatura", () 
   assert.match(tex, /\\tempo \(90\)/);
   assert.match(tex, /\\ts \(4 4\)/);
   assert.match(tex, /\\tuning \(E4 B3 G3 D3 A2 E2\)/);
-  assert.match(tex, /:4 3\.1 r\.4 :4 5\.6\{pm lr\} r\.4/);
+  assert.match(tex, /:4 3\.6 r\.4 :4 5\.1\{pm lr\} r\.4/);
 });
 
 test("marca los ligados en la nota de origen y respeta las técnicas", () => {
@@ -72,8 +72,8 @@ test("marca los ligados en la nota de origen y respeta las técnicas", () => {
     120,
   );
 
-  assert.match(tex, /3\.1\{h\}/);
-  assert.match(tex, /7\.2\{vw nh b \(0 2\)\}/);
+  assert.match(tex, /3\.6\{h\}/);
+  assert.match(tex, /7\.5\{vw nh b \(0 2\)\}/);
 });
 
 test("las técnicas de la tablatura se traducen a AlphaTex válido", () => {
@@ -136,11 +136,12 @@ test("la partitura generada se puede importar y usa guitarra acústica", () => {
   assert.equal(score.tempo, 100);
   assert.equal(score.tracks[0].playbackInfo.program, 25);
   assert.equal(staff.bars.length, 1);
+  const beats = staff.bars[0].voices[0].beats;
   assert.equal(
-    staff.bars[0].voices[0].beats.reduce(
-      (total, beat) => total + beat.notes.length,
-      0,
-    ),
+    beats.reduce((total, beat) => total + beat.notes.length, 0),
     2,
   );
+  // La cuerda 0 interna es la 6ª de alphaTab (E2), y la 5 es la 1ª (E4).
+  assert.equal(beats[0].notes[0].realValue, 40);
+  assert.equal(beats[2].notes[0].realValue, 67);
 });

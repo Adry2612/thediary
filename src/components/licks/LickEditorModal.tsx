@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/Field";
@@ -10,6 +10,7 @@ import { EditIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { createId } from "@/lib/create-id";
 import { normalizeMusicalKey, MUSICAL_KEYS } from "@/lib/licks/keys";
+import { detectTabKey } from "@/lib/licks/key-detection";
 import {
   LICK_TECHNIQUES,
   normalizeTechniques,
@@ -36,7 +37,9 @@ export function LickEditorModal({
   const hasLegacyTab = Boolean(lick && !lick.tab && lick.tabContent?.trim());
   const [tab, setTab] = useState<RepertoireTab>(() => normalizeTab(lick?.tab));
   const [useVisualTab, setUseVisualTab] = useState(!hasLegacyTab);
+  const detectedKey = useMemo(() => detectTabKey(tab), [tab]);
   const [key, setKey] = useState(lick?.key ?? "");
+  const [keyIsAuto, setKeyIsAuto] = useState(!lick?.key);
   const [techniques, setTechniques] = useState<TechniqueId[]>(
     lick?.techniques ?? [],
   );
@@ -61,6 +64,11 @@ export function LickEditorModal({
       document.body.style.overflow = previousOverflow;
     };
   }, []);
+
+  useEffect(() => {
+    if (!keyIsAuto) return;
+    setKey(detectedKey ?? "");
+  }, [detectedKey, keyIsAuto]);
 
   function toggleTechnique(id: TechniqueId) {
     setTechniques((current) =>
@@ -231,7 +239,10 @@ export function LickEditorModal({
               className="mt-1"
               value={key}
               ariaLabel={text.keyLabel}
-              onChange={setKey}
+              onChange={(next) => {
+                setKey(next);
+                setKeyIsAuto(false);
+              }}
               options={[
                 { value: "", label: text.keyNone },
                 ...MUSICAL_KEYS.map((option) => ({
@@ -240,6 +251,27 @@ export function LickEditorModal({
                 })),
               ]}
             />
+            {detectedKey ? (
+              <span
+                aria-live="polite"
+                className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted"
+              >
+                {text.keyDetected}:{" "}
+                <span className="font-mono text-ink">{detectedKey}</span>
+                {detectedKey !== key ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setKey(detectedKey);
+                      setKeyIsAuto(true);
+                    }}
+                    className="underline underline-offset-2 transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
+                  >
+                    {text.keyUseDetected}
+                  </button>
+                ) : null}
+              </span>
+            ) : null}
           </div>
 
           <div className="block text-xs text-muted">

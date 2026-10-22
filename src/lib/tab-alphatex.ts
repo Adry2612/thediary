@@ -1,3 +1,4 @@
+import { STRING_COUNT } from "./chords.ts";
 import { getTabColumns } from "./repertoire-tab.ts";
 import { getTabTuningMidi } from "./tab-playback.ts";
 import type { RepertoireTab, RepertoireTabNote } from "@/types/practice";
@@ -80,7 +81,9 @@ function noteToken(
   if (legato) effects.push(legato);
 
   const fret = note.dead ? "x" : String(note.fret);
-  const string = note.string + 1;
+  // En alphaTab la cuerda 1 es la más aguda; en nuestro modelo la 0 es la más
+  // grave. Hay que invertir el índice.
+  const string = STRING_COUNT - note.string;
   return `${fret}.${string}${effects.length > 0 ? `{${effects.join(" ")}}` : ""}`;
 }
 
@@ -89,7 +92,11 @@ function noteToken(
  * tablatura con su banco de sonidos (guitarra acústica, programa 25). No se usa
  * para editar ni para dibujar: el editor visual sigue siendo el de la app.
  */
-export function buildTabAlphaTex(tab: RepertoireTab, bpm: number): string {
+export function buildTabAlphaTex(
+  tab: RepertoireTab,
+  bpm: number,
+  program = 25,
+): string {
   const safeBpm =
     Number.isFinite(bpm) && bpm > 0 ? Math.round(bpm) : 90;
   const tuning = [...getTabTuningMidi(tab.tuning)]
@@ -111,7 +118,7 @@ export function buildTabAlphaTex(tab: RepertoireTab, bpm: number): string {
   const lines = [
     `\\tempo (${safeBpm})`,
     "\\ts (4 4)",
-    "\\instrument (25)",
+    `\\instrument (${program})`,
     `\\tuning (${tuning})`,
     ".",
   ];
