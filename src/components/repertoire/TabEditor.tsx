@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { TextField } from "@/components/ui/Field";
@@ -8,41 +8,35 @@ import { SelectField } from "@/components/ui/SelectField";
 import {
   BEND_AMOUNT_LABELS,
   canApplyTabTechniqueToSelection,
-  clampTabCell,
   clearTabNote,
   getAvailableTabColumns,
   getTabCellCenterX,
   getTabCellWidth,
   getTabColumns,
-  getTabSelectionBounds,
   getTabStringOrder,
   getTabStringRowY,
   getTabTechnique,
   groupTabSystems,
-  isTabCellSelected,
   LABEL_WIDTH,
   MAX_FRET,
   MIN_MEASURES,
   setTabBendAmounts,
   setTabMeasures,
-  setTabNote,
   setTabSubdivision,
   STRING_ROW_HEIGHT,
   TAB_BEND_AMOUNTS,
   TAB_EDITOR_MAX_MEASURES,
   TAB_TECHNIQUES,
-  tabCellsBetween,
   tabSystemTechniques,
   tabTechniqueGlyphs,
   tabTechniqueSelectionState,
   toggleTabTechniques,
-  type TabCell,
-  type TabTechniqueId,
 } from "@/lib/repertoire-tab";
 import { parseTuningNotes, STRING_COUNT } from "@/lib/chords";
 import { isTabEditorEnabled } from "@/lib/feature-flags";
 import type { RepertoireTab, RepertoireTabNote } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
+import { useTabEditorSelection } from "@/hooks/useTabEditorSelection";
 
 interface TabEditorProps {
   value: RepertoireTab;
@@ -51,11 +45,6 @@ interface TabEditorProps {
 
 export function TabEditor({ value, onChange }: TabEditorProps) {
   const text = useI18nSection("repertoire");
-  const [anchor, setAnchor] = useState<TabCell>({ string: 0, column: 0 });
-  const [focus, setFocus] = useState<TabCell>({ string: 0, column: 0 });
-  const [dragging, setDragging] = useState(false);
-  const [buffer, setBuffer] = useState("");
-  const gridRef = useRef<HTMLDivElement>(null);
   const measureObserverRef = useRef<ResizeObserver | null>(null);
   const [gridWidth, setGridWidth] = useState(0);
   // La rejilla se mide a sí misma: cuántos compases caben por sistema según el ancho.
@@ -71,6 +60,19 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
   }, []);
 
   const columns = getTabColumns(value);
+  const {
+    gridRef,
+    focus,
+    buffer,
+    selectedCells,
+    isCellSelected,
+    startSelection,
+    extendSelection,
+    handleGridKeyDown,
+    applyFretInput,
+    commitBuffer,
+  } = useTabEditorSelection({ value, columns, onChange });
+
   const tuningNotes = useMemo(
     () => parseTuningNotes(value.tuning),
     [value.tuning],
@@ -113,112 +115,9 @@ export function TabEditor({ value, onChange }: TabEditorProps) {
   const fretFieldValue =
     buffer !== "" ? buffer : currentFret !== undefined ? String(currentFret) : "";
 
-  const selectedCells = tabCellsBetween(anchor, focus);
-  const selectionBounds = getTabSelectionBounds(anchor, focus);
   const hasSelectionNotes = selectedCells.some((cell) =>
     noteByCell.has(`${cell.string}:${cell.column}`),
   );
-
-  function isCellSelected(string: number, column: number): boolean {
-    return isTabCellSelected(selectionBounds, string, column);
-  }
-
-  function clampCell(cell: TabCell): TabCell {
-    return clampTabCell(cell, columns);
-  }
-
-  // Al soltar el puntero se termina el arrastre, aunque se suelte fuera de la rejilla.
-  useEffect(() => {
-    if (!dragging) return;
-    const stop = () => setDragging(false);
-    window.addEventListener("pointerup", stop);
-    return () => window.removeEventListener("pointerup", stop);
-  }, [dragging]);
-
-  function commitBuffer() {
-    if (buffer === "") return;
-    const fret = Number(buffer);
-    setBuffer("");
-    if (Number.isFinite(fret) && fret >= 0 && fret <= MAX_FRET) {
-      onChange(setTabNote(value, focus.string, focus.column, fret));
-    }
-  }
-
-  function startSelection(string: number, column: number, extend: boolean) {
-    commitBuffer();
-    const cell = clampCell({ string, column });
-    if (extend) {
-      setFocus(cell);
-    } else {
-      setAnchor(cell);
-      setFocus(cell);
-      setDragging(true);
-    }
-    gridRef.current?.focus();
-  }
-
-  function extendSelection(string: number, column: number) {
-    if (!dragging) return;
-    setFocus(clampCell({ string, column }));
-  }
-
-  function handleGridKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const { key } = event;
-    if (/^[0-9]$/.test(key)) {
-      event.preventDefault();
-      setBuffer((current) => (current + key).slice(-2));
-      return;
-    }
-    if (key === "Backspace" || key === "Delete") {
-      event.preventDefault();
-      setBuffer("");
-      onChange(clearTabNote(value, focus.string, focus.column));
-      return;
-    }
-    if (key === "Enter") {
-      event.preventDefault();
-      commitBuffer();
-      return;
-    }
-    if (key.startsWith("Arrow")) {
-      event.preventDefault();
-      commitBuffer();
-      const rowStep = key === "ArrowUp" ? 1 : key === "ArrowDown" ? -1 : 0;
-      const columnStep = key === "ArrowRight" ? 1 : key === "ArrowLeft" ? -1 : 0;
-      const nextCell = clampCell({
-        string: focus.string + rowStep,
-        column: focus.column + columnStep,
-      });
-      if (event.shiftKey) {
-        setFocus(nextCell);
-      } else {
-        setAnchor(nextCell);
-        setFocus(nextCell);
-      }
-      return;
-    }
-    const technique = TAB_TECHNIQUES.find(
-      (entry) => entry.shortcut === key.toLowerCase(),
-    );
-    if (technique) {
-      event.preventDefault();
-      commitBuffer();
-      onChange(toggleTabTechniques(value, selectedCells, technique.id));
-    }
-  }
-
-  function applyFretInput(raw: string) {
-    const clean = raw.replace(/[^0-9]/g, "").slice(0, 2);
-    setBuffer(clean);
-    if (clean === "") {
-      onChange(clearTabNote(value, focus.string, focus.column));
-      return;
-    }
-    const fret = Number(clean);
-    if (fret >= 0 && fret <= MAX_FRET) {
-      onChange(setTabNote(value, focus.string, focus.column, fret));
-    }
-  }
 
   // La tablatura propia sigue en diseño: el código y los datos se conservan,
   // pero la sección solo se muestra con la bandera activada.

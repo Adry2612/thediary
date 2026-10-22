@@ -104,7 +104,7 @@
 
 ### 5.12 TabEditor
 
-- [ ] 5.12.1 Consume the wave-1 `repertoire-tab` constants and geometry and extract the selection state machine (anchor/focus/drag/buffer, pointer and keyboard handlers) into `useTabEditorSelection`; verification: with `NEXT_PUBLIC_TAB_EDITOR` enabled, mouse drag, shift-extend, keyboard navigation and technique toggling behave as before, and the early return that hides the editor when the flag is off is untouched.
+- [x] 5.12.1 Consume the wave-1 `repertoire-tab` constants and geometry and extract the selection state machine (anchor/focus/drag/buffer, pointer and keyboard handlers) into `useTabEditorSelection`; verification: with `NEXT_PUBLIC_TAB_EDITOR` enabled, mouse drag, shift-extend, keyboard navigation and technique toggling behave as before, and the early return that hides the editor when the flag is off is untouched.
 
 ### 5.13 Wave 4 group verification
 
