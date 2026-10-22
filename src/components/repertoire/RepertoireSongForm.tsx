@@ -6,6 +6,7 @@ import { TextField } from '@/components/ui/Field';
 import { SelectField } from '@/components/ui/SelectField';
 import { ChordChartEditor } from '@/components/repertoire/ChordChartEditor';
 import { TabEditor } from '@/components/repertoire/TabEditor';
+import { isTabEditorEnabled } from '@/lib/feature-flags';
 import { createRepertoireItem, REPERTOIRE_DIFFICULTIES } from '@/lib/repertoire-item';
 import { getDifficultyLabel } from '@/lib/difficulty-labels';
 import { emptyChordChart, normalizeChordChart } from '@/lib/repertoire-chord-chart';
@@ -294,7 +295,9 @@ export function RepertoireSongForm({
       </p>
 
       <ChordChartEditor value={chordChart} onChange={setChordChart} />
-      <TabEditor value={normalizedTab} onChange={setTab} />
+      {isTabEditorEnabled ? (
+        <TabEditor value={normalizedTab} onChange={setTab} />
+      ) : null}
 
       <Button
         type='submit'

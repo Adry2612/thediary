@@ -40,7 +40,9 @@ test("migrates a repertoire lick and removes it from the repertoire", () => {
   const lick = result.licks[0];
   assert.equal(lick.id, "legacy-lick");
   assert.equal(lick.title, "Pentatónica en Mi menor");
-  assert.match(lick.tabContent, /E \|5/);
+  assert.equal(lick.tab?.tuning, "EADGBE");
+  assert.deepEqual(lick.tab?.notes, [{ string: 0, column: 0, fret: 5 }]);
+  assert.equal(lick.tabContent, undefined);
   assert.equal(lick.key, undefined);
   assert.deepEqual(lick.techniques, []);
   assert.deepEqual(lick.bpmHistory, []);

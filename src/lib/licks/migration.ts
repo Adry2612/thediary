@@ -1,7 +1,7 @@
 import type { GuitarLick } from "../../types/lick.ts";
 import type { RepertoireItem } from "../../types/practice.ts";
 import { normalizeLicks } from "./normalize.ts";
-import { repertoireTabToText } from "./tab-text.ts";
+import { normalizeTab } from "../repertoire-tab.ts";
 
 export interface RepertoireLickMigration {
   repertoireItems: RepertoireItem[];
@@ -19,10 +19,14 @@ function migrateItem(
   item: RepertoireItem,
   now: Date,
 ): GuitarLick {
+  if (item.tab && !Array.isArray(item.tab.notes)) {
+    throw new Error("La tablatura del lick no tiene notas válidas");
+  }
+
   return {
     id: item.id,
     title: item.title,
-    tabContent: repertoireTabToText(item.tab),
+    tab: normalizeTab(item.tab, item.tuning),
     techniques: [],
     bpmHistory: [],
     createdAt:

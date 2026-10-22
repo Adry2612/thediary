@@ -1,3 +1,5 @@
+import type { RepertoireTab } from "./practice";
+
 /** Técnicas globales con las que se clasifica un lick completo. */
 export const TECHNIQUE_IDS = [
   "ALTERNATE_PICKING",
@@ -57,8 +59,13 @@ export interface BpmLogEntry {
 export interface GuitarLick {
   id: string;
   title: string;
-  /** Tablatura en texto plano, tal y como la escribió el usuario. */
-  tabContent: string;
+  /** Tablatura creada con el editor visual. */
+  tab?: RepertoireTab;
+  /**
+   * Tablatura antigua en texto plano. Solo se conserva como respaldo de los
+   * licks migrados o creados antes del editor estructurado.
+   */
+  tabContent?: string;
   /** Opcional: una idea rápida o un lick migrado puede no tenerla. */
   key?: MusicalKey;
   techniques: TechniqueId[];

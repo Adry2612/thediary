@@ -1,21 +1,44 @@
 "use client";
 
+import { TabView } from "@/components/repertoire/TabView";
 import { tokenizeTabLine } from "@/lib/licks/tab-highlight";
+import type { RepertoireTab } from "@/types/practice";
 
 export function LickTab({
+  tab,
   content,
   emptyLabel,
   ariaLabel,
   maxLines,
+  maxMeasures,
+  variant,
+  playheadColumn,
   className = "",
 }: {
-  content: string;
+  tab?: RepertoireTab;
+  content?: string;
   emptyLabel: string;
   ariaLabel: string;
   maxLines?: number;
+  maxMeasures?: number;
+  variant?: "compact" | "full";
+  playheadColumn?: number | null;
   className?: string;
 }) {
-  if (!content.trim()) {
+  if (tab && tab.notes.length > 0) {
+    return (
+      <TabView
+        tab={tab}
+        ariaLabel={ariaLabel}
+        maxMeasures={maxMeasures}
+        variant={variant}
+        playheadColumn={playheadColumn}
+        className={className}
+      />
+    );
+  }
+
+  if (!content?.trim()) {
     return (
       <p className={`rounded-lg border border-dashed border-line bg-canvas/60 px-4 py-6 text-sm text-muted ${className}`}>
         {emptyLabel}

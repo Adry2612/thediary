@@ -88,10 +88,13 @@ export function LickCard({
 
       <div className="mt-4 min-h-0 flex-1">
         <LickTab
+          tab={lick.tab}
           content={lick.tabContent}
           emptyLabel={text.tabEmpty}
           ariaLabel={`${text.tabTitle}: ${title}`}
           maxLines={6}
+          maxMeasures={1}
+          variant="compact"
           className="max-h-40"
         />
       </div>

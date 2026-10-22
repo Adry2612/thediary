@@ -6,6 +6,7 @@ import { useI18nSection } from "@/i18n/I18nProvider";
 interface CollapsibleSectionProps {
   title: string;
   description?: string;
+  defaultOpen?: boolean;
   children: ReactNode;
 }
 
@@ -17,10 +18,11 @@ interface CollapsibleSectionProps {
 export function CollapsibleSection({
   title,
   description,
+  defaultOpen = false,
   children,
 }: CollapsibleSectionProps) {
   const text = useI18nSection("repertoire");
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const panelId = useId();
 
   return (

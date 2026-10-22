@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { SelectField } from "@/components/ui/SelectField";
-import { TextArea, TextField } from "@/components/ui/Field";
+import { TextField } from "@/components/ui/Field";
+import { LickTab } from "@/components/licks/LickTab";
+import { TabEditor } from "@/components/repertoire/TabEditor";
+import { EditIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { createId } from "@/lib/create-id";
 import { normalizeMusicalKey, MUSICAL_KEYS } from "@/lib/licks/keys";
+import { detectTabKey } from "@/lib/licks/key-detection";
 import {
   LICK_TECHNIQUES,
   normalizeTechniques,
 } from "@/lib/licks/techniques";
 import { MAX_BPM, MIN_BPM } from "@/lib/metronome-tempo";
+import { normalizeTab } from "@/lib/repertoire-tab";
 import type { GuitarLick, TechniqueId } from "@/types/lick";
-import type { RepertoireItem } from "@/types/practice";
+import type { RepertoireItem, RepertoireTab } from "@/types/practice";
 
 export function LickEditorModal({
   lick,
@@ -29,8 +34,12 @@ export function LickEditorModal({
   const text = useI18nSection("licks");
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [title, setTitle] = useState(lick?.title ?? "");
-  const [tabContent, setTabContent] = useState(lick?.tabContent ?? "");
+  const hasLegacyTab = Boolean(lick && !lick.tab && lick.tabContent?.trim());
+  const [tab, setTab] = useState<RepertoireTab>(() => normalizeTab(lick?.tab));
+  const [useVisualTab, setUseVisualTab] = useState(!hasLegacyTab);
+  const detectedKey = useMemo(() => detectTabKey(tab), [tab]);
   const [key, setKey] = useState(lick?.key ?? "");
+  const [keyIsAuto, setKeyIsAuto] = useState(!lick?.key);
   const [techniques, setTechniques] = useState<TechniqueId[]>(
     lick?.techniques ?? [],
   );
@@ -55,6 +64,11 @@ export function LickEditorModal({
       document.body.style.overflow = previousOverflow;
     };
   }, []);
+
+  useEffect(() => {
+    if (!keyIsAuto) return;
+    setKey(detectedKey ?? "");
+  }, [detectedKey, keyIsAuto]);
 
   function toggleTechnique(id: TechniqueId) {
     setTechniques((current) =>
@@ -91,7 +105,10 @@ export function LickEditorModal({
     onSave({
       id: lick?.id ?? createId(),
       title: trimmedTitle,
-      tabContent,
+      ...(useVisualTab ? { tab: normalizeTab(tab) } : {}),
+      ...(!useVisualTab && lick?.tabContent
+        ? { tabContent: lick.tabContent }
+        : {}),
       ...(normalizedKey ? { key: normalizedKey } : {}),
       techniques: normalizeTechniques(techniques),
       ...(associatedSongId ? { associatedSongId } : {}),
@@ -148,7 +165,7 @@ export function LickEditorModal({
           </button>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block text-xs text-muted sm:col-span-2">
             {text.titleLabel}
             <TextField
@@ -161,20 +178,60 @@ export function LickEditorModal({
             />
           </label>
 
-          <label className="block text-xs text-muted sm:col-span-2">
-            {text.tabLabel}
-            <TextArea
-              value={tabContent}
-              onChange={(event) => setTabContent(event.target.value)}
-              placeholder={text.tabPlaceholder}
-              wrap="off"
-              spellCheck={false}
-              className="mt-1 min-h-56 font-mono text-xs leading-6"
-            />
-            <span className="mt-1 block text-[11px] text-muted">
-              {text.tabHint}
-            </span>
-          </label>
+          <div className="sm:col-span-2">
+            {useVisualTab ? (
+              <>
+                <div
+                  role="note"
+                  className="mb-3 flex items-start gap-3 rounded-lg border border-accent-green-fg/30 bg-accent-green-bg/25 p-3 sm:p-4"
+                >
+                  <EditIcon className="mt-0.5 size-4 shrink-0 text-accent-green-fg" />
+                  <div className="min-w-0">
+                    <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-green-fg">
+                      {text.quickTabEyebrow}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted">
+                      {text.quickTabNotice}
+                    </p>
+                  </div>
+                </div>
+                {hasLegacyTab ? (
+                  <p className="mb-2 text-[11px] text-muted">
+                    {text.tabConvertHint}
+                  </p>
+                ) : null}
+                <TabEditor
+                  value={tab}
+                  onChange={setTab}
+                  defaultOpen
+                  bpm={Number(targetBpm) || undefined}
+                />
+              </>
+            ) : (
+              <div>
+                <p className="text-xs text-muted">{text.tabLabel}</p>
+                <p className="mt-1 text-[11px] text-muted">
+                  {text.tabLegacyNotice}
+                </p>
+                <LickTab
+                  content={lick?.tabContent}
+                  emptyLabel={text.tabEmpty}
+                  ariaLabel={text.tabTitle}
+                  maxLines={10}
+                  className="mt-2"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="field"
+                  className="mt-3"
+                  onClick={() => setUseVisualTab(true)}
+                >
+                  {text.tabConvert}
+                </Button>
+              </div>
+            )}
+          </div>
 
           <div className="block text-xs text-muted">
             {text.keyLabel}
@@ -182,7 +239,10 @@ export function LickEditorModal({
               className="mt-1"
               value={key}
               ariaLabel={text.keyLabel}
-              onChange={setKey}
+              onChange={(next) => {
+                setKey(next);
+                setKeyIsAuto(false);
+              }}
               options={[
                 { value: "", label: text.keyNone },
                 ...MUSICAL_KEYS.map((option) => ({
@@ -191,6 +251,27 @@ export function LickEditorModal({
                 })),
               ]}
             />
+            {detectedKey ? (
+              <span
+                aria-live="polite"
+                className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted"
+              >
+                {text.keyDetected}:{" "}
+                <span className="font-mono text-ink">{detectedKey}</span>
+                {detectedKey !== key ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setKey(detectedKey);
+                      setKeyIsAuto(true);
+                    }}
+                    className="underline underline-offset-2 transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
+                  >
+                    {text.keyUseDetected}
+                  </button>
+                ) : null}
+              </span>
+            ) : null}
           </div>
 
           <div className="block text-xs text-muted">

@@ -29,11 +29,11 @@ type CalendarCell = {
   sessions: SessionRecord[];
 } | null;
 
-// Cada día es un objetivo de 24 px (WCAG 2.5.8) alrededor del cuadrado de 20
-// que pinta el calendario: quedan 4 px de separación sin reducir el área
-// interactiva. El ancho de las columnas y el desplazamiento que sigue a la
-// última práctica usan el objetivo, no el cuadrado.
-const DAY_TARGET_SIZE = 24;
+// Cada día es un objetivo de 20 px alrededor del cuadrado de 16 que pinta el
+// calendario: así se conservan el tamaño y los 4 px de separación originales.
+// El ancho de las columnas y el desplazamiento que sigue a la última práctica
+// usan el objetivo, no el cuadrado.
+const DAY_TARGET_SIZE = 20;
 
 function toDateKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -244,10 +244,10 @@ export function YearPracticeCalendar({
           <div className="flex gap-2">
             <div
               aria-hidden="true"
-              className="grid grid-rows-7 gap-0 font-mono text-[10px] leading-6 text-muted"
+              className="grid grid-rows-7 gap-0 font-mono text-[10px] leading-5 text-muted"
             >
               {weekdays.short.map((label, index) => (
-                <span key={index} className="h-6 w-6">
+                <span key={index} className="h-5 w-6">
                   {label}
                 </span>
               ))}
@@ -265,7 +265,7 @@ export function YearPracticeCalendar({
                   return (
                     <span
                       key={`empty-${index}`}
-                      className="size-6"
+                      className="size-5"
                       aria-hidden="true"
                     />
                   );
@@ -296,11 +296,11 @@ export function YearPracticeCalendar({
                         router.push(`/dashboard/practice/${cell.dateKey}`);
                       }
                     }}
-                    className={`group grid size-6 place-items-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-200 disabled:cursor-default disabled:opacity-30 ${cell.sessions.length > 0 ? "cursor-pointer" : ""}`}
+                    className={`group grid size-5 place-items-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-200 disabled:cursor-default disabled:opacity-30 ${cell.sessions.length > 0 ? "cursor-pointer" : ""}`}
                   >
                     <span
                       aria-hidden="true"
-                      className={`size-5 rounded-[3px] group-hover:outline group-hover:outline-1 group-hover:outline-zinc-400 ${getPracticeIntensityClass(minutes, dailyGoalMinutes)}`}
+                      className={`size-4 rounded-[3px] group-hover:outline group-hover:outline-1 group-hover:outline-zinc-400 ${getPracticeIntensityClass(minutes, dailyGoalMinutes)}`}
                     />
                   </button>
                 );

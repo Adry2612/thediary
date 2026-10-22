@@ -28,7 +28,8 @@ function noteToken(note: RepertoireTabNote | undefined): string {
 
 /**
  * Convierte una tablatura estructurada en texto plano legible. No es un
- * formato de ida y vuelta: es la instantánea que conserva una migración.
+ * formato de ida y vuelta: se usa como alternativa accesible y como
+ * instantánea de las tablaturas antiguas.
  */
 export function repertoireTabToText(
   tab: RepertoireTab | undefined | null,
