@@ -2,27 +2,33 @@
 
 import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/Button';
+import { ChevronIcon } from '@/components/ui/icons';
 import { TextField } from '@/components/ui/Field';
 import { SelectField } from '@/components/ui/SelectField';
 import { ChordChartEditor } from '@/components/repertoire/ChordChartEditor';
 import { TabEditor } from '@/components/repertoire/TabEditor';
-import { isTabEditorEnabled } from '@/lib/feature-flags';
-import { createRepertoireItem, REPERTOIRE_DIFFICULTIES } from '@/lib/repertoire-item';
-import { getDifficultyLabel } from '@/lib/difficulty-labels';
-import { emptyChordChart, normalizeChordChart } from '@/lib/repertoire-chord-chart';
-import { normalizeTab } from '@/lib/repertoire-tab';
-import { parseTuningNotes } from '@/lib/chords';
+import { isTabEditorEnabled } from '@/utils/feature-flags';
+import { createRepertoireItem, REPERTOIRE_DIFFICULTIES } from '@/utils/repertoire-item';
+import { getDifficultyLabel } from '@/utils/difficulty-labels';
+import { normalizeChordChart } from '@/utils/repertoire-chord-chart';
+import { normalizeTab } from '@/utils/repertoire-tab';
+import { parseTuningNotes } from '@/utils/chords';
+import {
+  isAllowedResourceUrl,
+  SPOTIFY_LINK_HOSTS,
+  YOUTUBE_LINK_HOSTS,
+} from '@/utils/practice-resource-links';
+import { parseRepertoireCapo } from '@/utils/repertoire-item-editing';
+import { useRepertoireSongDraft } from '@/hooks/useRepertoireSongDraft';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import type {
-  RepertoireItem,
   GuitarType,
   RepertoireDifficulty,
 } from '@/types/practice';
 import { PracticeResourceEditor } from '@/components/practice/PracticeResourceEditor';
-import type { PracticeResource } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
-import { createId as createIdentifier } from '@/lib/create-id';
-import { COMMON_TUNINGS } from '@/lib/repertoire-item';
+import { createId as createIdentifier } from '@/utils/create-id';
+import { COMMON_TUNINGS } from '@/utils/repertoire-item';
 
 function createId() {
   return createIdentifier();
@@ -37,36 +43,39 @@ export function RepertoireSongForm({
   const saveRepertoireItem = usePracticeStore(
     (state) => state.saveRepertoireItem,
   );
-  const [title, setTitle] = useState('');
-  const [artist, setArtist] = useState('');
+  const {
+    title,
+    setTitle,
+    artist,
+    setArtist,
+    tuning,
+    setTuning,
+    customTuning,
+    setCustomTuning,
+    capo,
+    setCapo,
+    guitarType,
+    setGuitarType,
+    difficulty,
+    setDifficulty,
+    youtubeUrl,
+    setYoutubeUrl,
+    spotifyUrl,
+    setSpotifyUrl,
+    isFutureLearn,
+    setIsFutureLearn,
+    resources,
+    setResources,
+    chordChart,
+    setChordChart,
+    tab,
+    setTab,
+    finalTuning,
+  } = useRepertoireSongDraft();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [tuning, setTuning] = useState('');
-  const [customTuning, setCustomTuning] = useState('');
-  const [capo, setCapo] = useState('');
-  const [guitarType, setGuitarType] = useState<GuitarType | ''>('');
-  const [difficulty, setDifficulty] = useState<RepertoireDifficulty | ''>('');
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [spotifyUrl, setSpotifyUrl] = useState('');
-  const [isFutureLearn, setIsFutureLearn] = useState(false);
-  const [resources, setResources] = useState<PracticeResource[]>([]);
-  const [chordChart, setChordChart] = useState(() => emptyChordChart());
-  const [tab, setTab] = useState(() =>
-    normalizeTab(undefined),
-  );
-
-  const finalTuning = tuning === 'Otra...' ? customTuning.trim() : tuning.trim();
   const normalizedTab = normalizeTab(tab, finalTuning || undefined);
-
-  function validateUrl(url: string, hosts: string[]): boolean {
-    if (!url.trim()) return true;
-    try {
-      return hosts.includes(new URL(url).hostname);
-    } catch {
-      return false;
-    }
-  }
 
   async function addItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,29 +84,20 @@ export function RepertoireSongForm({
       setError(`${text.title}: ${text.search}`);
       return;
     }
-    if (
-      !validateUrl(youtubeUrl, [
-        'www.youtube.com',
-        'youtube.com',
-        'youtu.be',
-        'www.youtu.be',
-      ])
-    ) {
+    if (!isAllowedResourceUrl(youtubeUrl, YOUTUBE_LINK_HOSTS)) {
       setError(text.adjustFilters);
       return;
     }
-    if (!validateUrl(spotifyUrl, ['open.spotify.com', 'spotify.com'])) {
+    if (!isAllowedResourceUrl(spotifyUrl, SPOTIFY_LINK_HOSTS)) {
       setError(text.adjustFilters);
       return;
     }
-    const capoNum = capo.trim() ? Number(capo) : undefined;
-    if (
-      capoNum !== undefined &&
-      (isNaN(capoNum) || capoNum < 0 || capoNum > 12)
-    ) {
+    const parsedCapo = parseRepertoireCapo(capo);
+    if (!parsedCapo.isValid) {
       setError(text.adjustFilters);
       return;
     }
+    const capoNum = parsedCapo.value;
 
     setIsSaving(true);
     setError(null);
@@ -176,14 +176,7 @@ export function RepertoireSongForm({
 
         <details className='group lg:col-span-4 mt-2'>
           <summary className='flex cursor-pointer items-center gap-2 text-sm text-muted transition-colors hover:text-ink'>
-            <svg
-              className='size-4 shrink-0 transition-transform duration-200 group-open:rotate-90'
-              viewBox='0 0 20 20'
-              fill='currentColor'
-              aria-hidden='true'
-            >
-              <path d='M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z' />
-            </svg>
+            <ChevronIcon className='group-open:rotate-90' />
             {text.extraConfig}
           </summary>
           <div className='mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>

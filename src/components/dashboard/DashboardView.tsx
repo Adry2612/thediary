@@ -12,27 +12,23 @@ import {
   formatPracticeDuration,
   makeDateKey,
   PRACTICE_SKILL_LABELS,
-} from '@/lib/dashboard-data';
+} from '@/utils/dashboard-data';
 import {
   getMonthlyHeatmapData,
   getPracticeStatistics,
   getSkillDistribution,
   getStreakCount,
-} from '@/lib/practice-analytics';
+} from '@/utils/practice-analytics';
 import {
   getPracticeWeekDays,
   getSessionsForWeek,
   getYearlyHeatmapData,
-} from '@/lib/practice-calendar';
+  parseDateKey,
+} from '@/utils/practice-calendar';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { useAppData } from '@/components/providers/AppDataProvider';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { DashboardSkeleton } from '@/components/ui/Skeletons';
-
-function parseDateKey(dateKey: string) {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
 
 type DashboardViewProps = {
   todayKey: string;
@@ -107,6 +103,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     technique: skillDistribution.categories.technique.minutes,
     theory: skillDistribution.categories.theory.minutes,
     repertoire: skillDistribution.categories.repertoire.minutes,
+    lick: skillDistribution.categories.lick.minutes,
     improvisation: skillDistribution.categories.improvisation.minutes,
   };
   const practiceStatistics = useMemo(

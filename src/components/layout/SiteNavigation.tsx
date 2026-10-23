@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useI18nSection } from '@/i18n/I18nProvider';
+import { SettingsIcon } from '@/components/ui/icons';
 
 const NAVIGATION = [
   { href: '/', label: 'home' },
@@ -138,14 +139,5 @@ export function SiteNavigation() {
         </div>
       )}
     </header>
-  );
-}
-
-function SettingsIcon() {
-  return (
-    <svg aria-hidden='true' viewBox='0 0 24 24' className='size-5' fill='none'>
-      <path d='M10.4 3.5h3.2l.5 2.1a6.9 6.9 0 0 1 1.5.9l2.1-.6 1.6 2.8-1.6 1.5a7 7 0 0 1 0 1.8l1.6 1.5-1.6 2.8-2.1-.6a6.9 6.9 0 0 1-1.5.9l-.5 2.1h-3.2l-.5-2.1a6.9 6.9 0 0 1-1.5-.9l-2.1.6-1.6-2.8 1.6-1.5a7 7 0 0 1 0-1.8L4.7 8.7l1.6-2.8 2.1.6a6.9 6.9 0 0 1 1.5-.9l.5-2.1Z' stroke='currentColor' strokeLinejoin='round' strokeWidth='1.5' />
-      <circle cx='12' cy='11.5' r='2.5' stroke='currentColor' strokeWidth='1.5' />
-    </svg>
   );
 }

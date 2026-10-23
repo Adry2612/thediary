@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { TextField } from "@/components/ui/Field";
-import { formatPracticeDuration } from "@/lib/dashboard-data";
+import { formatPracticeDuration } from "@/utils/dashboard-data";
 import {
   parseRepertoireBpm,
   updateRepertoirePart,
-} from "@/lib/repertoire-item-editing";
-import type { RepertoirePartPracticeStats } from "@/lib/repertoire-analytics";
+} from "@/utils/repertoire-item-editing";
+import type { RepertoirePartPracticeStats } from "@/utils/repertoire-analytics";
 import type { RepertoireItem, RepertoirePart } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 

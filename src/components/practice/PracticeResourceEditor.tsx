@@ -3,7 +3,7 @@
 import { AttachMaterialForm } from '@/components/practice/AttachMaterialForm';
 import { AttachMaterialMenu } from '@/components/practice/AttachMaterialMenu';
 import { usePracticeAttachment } from '@/hooks/usePracticeAttachment';
-import { RESOURCE_LABELS } from '@/lib/practice-resources';
+import { RESOURCE_LABELS } from '@/utils/practice-resources';
 import type { PracticePhase, PracticeResource } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
 

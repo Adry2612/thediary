@@ -4,7 +4,7 @@ import {
   getRepertoireItemPracticeStats,
   getRepertoireOverview,
   getRepertoirePracticeStats,
-} from "../src/lib/repertoire-analytics.ts";
+} from "../src/utils/repertoire-analytics.ts";
 
 const emptySkills = {
   technique: 0,

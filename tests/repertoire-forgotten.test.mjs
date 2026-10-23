@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getForgottenRepertoireItem } from "../src/lib/repertoire-forgotten.ts";
+import { getForgottenRepertoireItem } from "../src/utils/repertoire-forgotten.ts";
 
 const today = new Date(2026, 2, 15, 12);
 const iso = (year, month, day) =>

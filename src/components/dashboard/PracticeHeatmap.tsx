@@ -5,8 +5,10 @@ import {
   PRACTICE_SKILLS,
   PRACTICE_SKILL_LABELS,
   type PracticeDay,
-} from "@/lib/dashboard-data";
+} from "@/utils/dashboard-data";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
+import { formatDateLabel } from "@/utils/format";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 
 type PracticeHeatmapProps = {
   days: PracticeDay[];
@@ -24,15 +26,6 @@ function getIntensity(minutes: number) {
   if (minutes < 40) return "bg-[#3c5943]";
   if (minutes < 55) return "bg-[#5c8064]";
   return "bg-[#89a78b]";
-}
-
-function formatSelectedDate(dateKey: string, locale: string) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Intl.DateTimeFormat(locale, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date(year, month - 1, day));
 }
 
 export function PracticeHeatmap({
@@ -90,16 +83,7 @@ export function PracticeHeatmap({
              aria-label={calendar.previousMonth}
             className="flex size-10 items-center justify-center rounded-md border border-zinc-800 text-zinc-300 transition hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-300"
           >
-            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-              <path
-                d="m12.5 4.5-5 5.5 5 5.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ChevronLeftIcon />
           </button>
           <p className="min-w-32 text-center text-sm text-zinc-300">
             {monthLabel}
@@ -111,16 +95,7 @@ export function PracticeHeatmap({
              aria-label={calendar.nextMonth}
             className="flex size-10 items-center justify-center rounded-md border border-zinc-800 text-zinc-300 transition hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-300 disabled:cursor-not-allowed disabled:opacity-35"
           >
-            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-              <path
-                d="m7.5 4.5 5 5.5-5 5.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ChevronRightIcon />
           </button>
         </div>
       </div>
@@ -190,7 +165,7 @@ export function PracticeHeatmap({
              {calendar.selectedDay}
           </p>
           <h3 className="mt-1 text-zinc-200">
-             {formatSelectedDate(selectedDate, locale)}
+             {formatDateLabel(selectedDate, locale)}
           </h3>
         </div>
         {selectedDay && selectedDay.minutes > 0 ? (

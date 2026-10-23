@@ -5,11 +5,11 @@ import { LickTab } from "@/components/licks/LickTab";
 import { TechniqueBadges } from "@/components/licks/TechniqueBadges";
 import { EditIcon, TrashIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
-import { getLickProgress } from "@/lib/licks/progress";
+import { getLickProgress } from "@/utils/licks/progress";
 import {
   getLastPracticedLabel,
   getLickTitle,
-} from "@/lib/licks/presentation";
+} from "@/utils/licks/presentation";
 import type { GuitarLick } from "@/types/lick";
 import type { RepertoireItem } from "@/types/practice";
 

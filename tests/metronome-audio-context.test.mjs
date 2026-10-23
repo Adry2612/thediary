@@ -5,7 +5,7 @@ import {
   getOrCreateMetronomeAudioContext,
   resumeMetronomeAudioContext,
   suspendMetronomeAudioContext,
-} from "../src/lib/metronome-audio-context.ts";
+} from "../src/services/metronome-audio-context.ts";
 
 class FakeAudioContext {
   state = "suspended";

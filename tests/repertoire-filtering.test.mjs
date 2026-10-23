@@ -3,9 +3,10 @@ import test from "node:test";
 import {
   getFilteredRepertoireItems,
   getRecentRepertoireItems,
+  hasActiveRepertoireFilters,
   isRepertoireProgressFilter,
   isRepertoireSortOrder,
-} from "../src/lib/repertoire-filtering.ts";
+} from "../src/utils/repertoire-filtering.ts";
 
 const items = [
   {
@@ -182,4 +183,29 @@ test("returns the four most recently updated repertoire items without reordering
     "song-3",
     "song-4",
   ]);
+});
+
+test("reports active filters only when something narrows the list", () => {
+  const base = {
+    query: "",
+    progress: "all",
+    guitarType: "all",
+    futureLearn: "all",
+  };
+
+  assert.equal(hasActiveRepertoireFilters(base), false);
+  assert.equal(hasActiveRepertoireFilters({ ...base, query: "   " }), false);
+  assert.equal(hasActiveRepertoireFilters({ ...base, query: "luna" }), true);
+  assert.equal(
+    hasActiveRepertoireFilters({ ...base, progress: "learned" }),
+    true,
+  );
+  assert.equal(
+    hasActiveRepertoireFilters({ ...base, guitarType: "acoustic" }),
+    true,
+  );
+  assert.equal(
+    hasActiveRepertoireFilters({ ...base, futureLearn: "future" }),
+    true,
+  );
 });

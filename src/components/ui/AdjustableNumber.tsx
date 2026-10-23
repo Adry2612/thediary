@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { consumeWheelDelta } from "@/lib/wheel-adjustment";
+import { consumeWheelDelta } from "@/utils/wheel-adjustment";
 
 type AdjustableNumberProps = {
   value: number;

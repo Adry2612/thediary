@@ -1,52 +1,13 @@
-import { formatPracticeDuration } from "@/lib/dashboard-data";
+import { formatPracticeDuration } from "@/utils/dashboard-data";
+import { formatDateLabel } from "@/utils/format";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 import type { PracticeTooltipDay } from "@/types/dashboard";
-
-function parseDateKey(dateKey: string) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function formatDate(dateKey: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(parseDateKey(dateKey));
-}
 
 function formatSessionTime(startedAt: string, locale: string) {
   return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(startedAt));
-}
-
-export function getPracticeTooltipPosition(
-  element: HTMLElement,
-): Pick<PracticeTooltipDay, "left" | "top" | "showBelow"> {
-  const bounds = element.getBoundingClientRect();
-  const tooltipWidth = 288;
-  const left = Math.max(
-    12,
-    Math.min(
-      bounds.left + bounds.width / 2 - tooltipWidth / 2,
-      window.innerWidth - tooltipWidth - 12,
-    ),
-  );
-  const tooltipHeight = Math.min(window.innerHeight * 0.65, 440);
-  const showBelow = bounds.top < tooltipHeight + 12;
-  const belowTop = Math.min(
-    bounds.bottom + 10,
-    window.innerHeight - tooltipHeight - 12,
-  );
-
-  return {
-    left,
-    top: showBelow ? Math.max(12, belowTop) : bounds.top - 10,
-    showBelow,
-  };
 }
 
 export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
@@ -64,7 +25,7 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
            {tooltip.summary}
         </p>
         <h3 className="mt-1 font-sans text-lg font-semibold capitalize leading-tight text-zinc-100">
-           {formatDate(day.dateKey, locale)}
+           {formatDateLabel(day.dateKey, locale, true)}
         </h3>
       </div>
 

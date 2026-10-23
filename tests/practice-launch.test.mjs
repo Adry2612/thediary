@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createPracticePlanFromSession } from "../src/lib/practice-launch.ts";
+import { createPracticePlanFromSession, createQuickPracticePlan, createQuickRepertoirePlan, createTemplatePlan } from "../src/utils/practice-launch.ts";
 
 test("reconstructs a repeatable plan from a saved session without sharing mutable data", () => {
   const session = {
@@ -9,7 +9,7 @@ test("reconstructs a repeatable plan from a saved session without sharing mutabl
       {
         id: "phase-1",
         name: "Arpegios",
-        skill: "technique",
+        skill: "repertoire",
         elapsedSeconds: 65,
         exercises: ["Arpegios ascendentes"],
         resources: [
@@ -42,7 +42,7 @@ test("reconstructs a repeatable plan from a saved session without sharing mutabl
         id: "phase-1",
         name: "Arpegios",
         durationMinutes: 2,
-        skill: "technique",
+        skill: "repertoire",
         exercises: ["Arpegios ascendentes"],
         resources: [
           {
@@ -54,6 +54,7 @@ test("reconstructs a repeatable plan from a saved session without sharing mutabl
         ],
         repertoireItemId: "song-1",
         repertoirePartId: "part-1",
+        lickId: undefined,
       },
       {
         id: "phase-2",
@@ -64,6 +65,7 @@ test("reconstructs a repeatable plan from a saved session without sharing mutabl
         resources: undefined,
         repertoireItemId: undefined,
         repertoirePartId: undefined,
+        lickId: undefined,
       },
     ],
   });
@@ -78,4 +80,99 @@ test("reconstructs a repeatable plan from a saved session without sharing mutabl
 test("rejects sessions without recorded phases", () => {
   assert.equal(createPracticePlanFromSession({}), null);
   assert.equal(createPracticePlanFromSession({ phases: [] }), null);
+});
+
+test("builds the quick practice plan as one timed technique block", () => {
+  assert.deepEqual(
+    createQuickPracticePlan("Práctica rápida", "Bloque rápido", "phase-1"),
+    {
+      name: "Práctica rápida",
+      phases: [
+        {
+          id: "phase-1",
+          name: "Bloque rápido",
+          durationMinutes: 120,
+          skill: "technique",
+        },
+      ],
+      isCountUp: true,
+    },
+  );
+});
+
+test("builds a quick repertoire plan linked to the item and its material", () => {
+  const guitarPro = {
+    id: "resource-1",
+    title: "Canción.gp",
+    kind: "guitarpro",
+    assetId: "asset-1",
+  };
+  const plan = createQuickRepertoirePlan({
+    id: "song-1",
+    title: "Canción",
+    parts: [],
+    updatedAt: "2026-10-01T12:00:00.000Z",
+    guitarPro,
+    resources: [guitarPro],
+  });
+
+  assert.deepEqual(plan, {
+    name: "Canción",
+    phases: [
+      {
+        id: "quick-song-1",
+        name: "Canción",
+        durationMinutes: 1,
+        skill: "repertoire",
+        repertoireItemId: "song-1",
+        resources: [guitarPro],
+      },
+    ],
+    attachedResources: [guitarPro],
+    isCountUp: true,
+  });
+});
+
+test("reconstructs a lick block with its link", () => {
+  const plan = createPracticePlanFromSession({
+    title: "Sesión",
+    phases: [
+      {
+        id: "lick-phase",
+        name: "Frase",
+        skill: "lick",
+        elapsedSeconds: 60,
+        durationMinutes: 1,
+        lickId: "lick-1",
+      },
+    ],
+  });
+
+  assert.equal(plan?.phases[0].lickId, "lick-1");
+});
+
+test("copies a template plan without sharing the stored phases", () => {
+  const phases = [
+    {
+      id: "phase-1",
+      name: "Calentamiento",
+      durationMinutes: 5,
+      skill: "technique",
+    },
+  ];
+  const plan = createTemplatePlan({ id: "template-1", name: "Rutina", phases });
+
+  assert.deepEqual(plan, {
+    name: "Rutina",
+    phases: [
+      {
+        ...phases[0],
+        repertoireItemId: undefined,
+        repertoirePartId: undefined,
+        lickId: undefined,
+      },
+    ],
+    templateId: "template-1",
+  });
+  assert.notEqual(plan.phases, phases);
 });

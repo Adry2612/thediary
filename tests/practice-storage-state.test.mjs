@@ -3,11 +3,11 @@ import test from "node:test";
 import {
   DEFAULT_PRACTICE_GOALS,
   normalizePracticeGoals,
-} from "../src/lib/practice-goals.ts";
+} from "../src/utils/practice-goals.ts";
 import {
   DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
   normalizeWeeklyRoutineSchedule,
-} from "../src/lib/weekly-routine-schedule.ts";
+} from "../src/utils/weekly-routine-schedule.ts";
 import { normalizePracticeStorageState } from "../src/stores/normalizePracticeStorageState.ts";
 
 const normalizers = {
@@ -31,7 +31,15 @@ test("uses safe defaults when persisted state is absent", () => {
 });
 
 test("preserves valid collections and normalizes optional persisted settings", () => {
-  const history = [{ id: "session-1" }];
+  const history = [{
+    id: "session-1",
+    skillSeconds: {
+      technique: 60,
+      theory: 0,
+      repertoire: 0,
+      improvisation: 0,
+    },
+  }];
   const templates = [{ id: "template-1" }];
   const repertoireItems = [{ id: "item-1", kind: "song" }];
   const licks = [{
@@ -59,7 +67,16 @@ test("preserves valid collections and normalizes optional persisted settings", (
       ...normalizers,
     }),
     {
-      history,
+      history: [{
+        ...history[0],
+        skillSeconds: {
+          technique: 60,
+          theory: 0,
+          repertoire: 0,
+          lick: 0,
+          improvisation: 0,
+        },
+      }],
       templates,
       repertoireItems,
       licks: [
@@ -86,6 +103,31 @@ test("preserves valid collections and normalizes optional persisted settings", (
       practiceGoals: { dailyMinutes: 90, weeklyDays: 3 },
     },
   );
+});
+
+test("fills the lick category in sessions saved before it existed", () => {
+  const [session] = normalizePracticeStorageState({
+    state: {
+      history: [{
+        id: "session-1",
+        skillSeconds: {
+          technique: 60,
+          theory: 0,
+          repertoire: 0,
+          improvisation: 30,
+        },
+      }],
+    },
+    ...normalizers,
+  }).history;
+
+  assert.deepEqual(session.skillSeconds, {
+    technique: 60,
+    theory: 0,
+    repertoire: 0,
+    lick: 0,
+    improvisation: 30,
+  });
 });
 
 test("replaces malformed collections and settings with defaults", () => {

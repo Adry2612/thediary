@@ -1,203 +1,100 @@
 'use client';
 
-import { useState } from 'react';
-import type { FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Field';
-import { useAppData } from '@/components/providers/AppDataProvider';
 import { AccountSkeleton } from '@/components/ui/Skeletons';
+import { useAccountView } from '@/hooks/useAccountView';
+import { useI18nSection } from '@/i18n/I18nProvider';
 
 export function AccountView() {
-  const {
-    user,
-    isReady,
-    isConfigured,
-    configurationError,
-    dataError,
-    signIn,
-    signUp,
-    retryCloudSync,
-    showLocalImportOffer,
-    dismissLocalImportOffer,
-    importLocalData,
-  } = useAppData();
-  const router = useRouter();
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isWorking, setIsWorking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const account = useI18nSection('account');
+  const view = useAccountView(account);
 
-  async function submitCredentials(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsWorking(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      if (isCreatingAccount) {
-        const hasSession = await signUp(email.trim(), password);
-        setMessage(
-          hasSession ? 'Cuenta creada.' : (
-            'Cuenta creada. Revisa tu correo para confirmar la dirección antes de iniciar sesión.'
-          ),
-        );
-      } else {
-        await signIn(email.trim(), password);
-        router.replace('/');
-      }
-    } catch (authError) {
-      setError(
-        authError instanceof Error ?
-          authError.message
-        : 'No se pudo completar la operación de cuenta.',
-      );
-    } finally {
-      setIsWorking(false);
-    }
-  }
-
-  async function handleImport() {
-    if (
-      !window.confirm(
-        'Se fusionarán los datos locales de este navegador con tu cuenta. Los datos locales seguirán guardados en este dispositivo.',
-      )
-    ) {
-      return;
-    }
-
-    setIsWorking(true);
-    setError(null);
-    setMessage(null);
-    try {
-      const counts = await importLocalData();
-      setMessage(
-        `Importación completada: ${counts.sessions} sesiones, ${counts.templates} rutinas, ${counts.repertoireItems} elementos de repertorio, ${counts.recordings} grabaciones y ${counts.assets} archivos.`,
-      );
-    } catch (importError) {
-      setError(
-        importError instanceof Error ?
-          importError.message
-        : 'No se pudieron importar los datos locales.',
-      );
-    } finally {
-      setIsWorking(false);
-    }
-  }
-
-  async function handleRetrySync() {
-    setIsWorking(true);
-    setError(null);
-    try {
-      await retryCloudSync();
-      setMessage('La sincronización se completó correctamente.');
-    } catch (syncError) {
-      setError(
-        syncError instanceof Error ?
-          syncError.message
-        : 'No se pudieron sincronizar tus datos.',
-      );
-    } finally {
-      setIsWorking(false);
-    }
-  }
-
-  if (!isReady) {
+  if (!view.isReady) {
     return <AccountSkeleton />;
   }
 
   return (
     <main className='mx-auto max-w-3xl px-5 py-12 sm:px-8'>
-      <p className='text-xs uppercase tracking-[0.12em] text-muted'>Cuenta</p>
-      <h1
-        className='mt-2 font-sans text-3xl font-semibold tracking-tight'
-      >
-        Tus datos y sincronización
+      <p className='text-xs uppercase tracking-[0.12em] text-muted'>
+        {account.eyebrow}
+      </p>
+      <h1 className='mt-2 font-sans text-3xl font-semibold tracking-tight'>
+        {account.title}
       </h1>
 
-      {configurationError && (
+      {view.configurationError && (
         <p
           className='mt-6 rounded-lg border border-red-400/30 bg-red-400/5 p-4 text-sm text-red-200'
           role='alert'
         >
-          {configurationError}
+          {view.configurationError}
         </p>
       )}
 
-      {!isConfigured && !configurationError && (
+      {!view.isConfigured && !view.configurationError && (
         <section className='mt-6 rounded-xl border border-line bg-surface p-6'>
-          <h2 className='text-lg font-medium'>
-            Supabase aún no está conectado
-          </h2>
+          <h2 className='text-lg font-medium'>{account.notConfiguredTitle}</h2>
           <p className='mt-2 text-sm text-muted'>
-            Puedes seguir usando la app en modo local. Para activar cuentas y
-            sincronización, sigue los pasos de configuración del proyecto.
+            {account.notConfiguredDescription}
           </p>
           <Link
             href='/account#configuracion'
             className='mt-4 inline-block text-sm underline underline-offset-4'
           >
-            Ver la configuración necesaria
+            {account.configLink}
           </Link>
         </section>
       )}
 
-      {isConfigured && user && (
+      {view.isConfigured && view.user && (
         <section className='mt-6 rounded-xl border border-line bg-surface p-6'>
           <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-            Sesión iniciada
+            {account.signedIn}
           </p>
-          <p className='mt-2 text-sm'>{user.email}</p>
-          <p className='mt-2 text-sm text-muted'>
-            Tus datos se guardan en tu cuenta y se sincronizan al hacer cambios.
-            Los archivos están en almacenamiento privado.
-          </p>
-          {dataError && (
+          <p className='mt-2 text-sm'>{view.user.email}</p>
+          <p className='mt-2 text-sm text-muted'>{account.dataDescription}</p>
+          {view.dataError && (
             <div className='mt-4 rounded-md border border-red-400/30 bg-red-400/5 p-4'>
               <p className='text-sm text-red-200'>
-                No se pudo completar la sincronización. Al reintentar se
-                fusionarán los datos guardados en este dispositivo con los de la
-                nube.
+                {account.syncErrorDescription}
               </p>
               <Button
                 type='button'
                 variant='ghost'
-                disabled={isWorking}
-                onClick={() => void handleRetrySync()}
+                disabled={view.isWorking}
+                onClick={() => void view.retrySync()}
                 className='mt-3'
               >
-                Reintentar sincronización
+                {account.retrySync}
               </Button>
             </div>
           )}
-          {showLocalImportOffer && (
+          {view.showLocalImportOffer && (
             <div className='mt-6 rounded-lg border border-accent-green-fg/25 bg-accent-green-bg/30 p-4'>
               <p className='text-sm font-medium text-ink'>
-                Hay datos guardados en este dispositivo
+                {account.localDataTitle}
               </p>
               <p className='mt-1 text-sm text-muted'>
-                Si quieres, puedes importarlos una vez a esta cuenta. Los datos
-                locales no se borrarán.
+                {account.localDataDescription}
               </p>
               <div className='mt-4 flex flex-wrap gap-3'>
                 <Button
                   type='button'
                   variant='primary'
-                  disabled={!isReady || isWorking}
-                  onClick={() => void handleImport()}
+                  disabled={!view.isReady || view.isWorking}
+                  onClick={() => void view.importLocal()}
                 >
-                  {isWorking ? 'Importando…' : 'Importar datos locales'}
+                  {view.isWorking ? account.importing : account.importLocal}
                 </Button>
                 <Button
                   type='button'
                   variant='ghost'
-                  disabled={isWorking}
-                  onClick={dismissLocalImportOffer}
+                  disabled={view.isWorking}
+                  onClick={view.dismissLocalImportOffer}
                 >
-                  Ahora no
+                  {account.notNow}
                 </Button>
               </div>
             </div>
@@ -205,132 +102,121 @@ export function AccountView() {
         </section>
       )}
 
-      {isConfigured && !user && (
+      {view.isConfigured && !view.user && (
         <section
           className={`mt-6 overflow-hidden rounded-xl border bg-surface ${
-            isCreatingAccount ? 'border-accent-green-fg/25' : 'border-line'
+            view.isCreatingAccount ?
+              'border-accent-green-fg/25'
+            : 'border-line'
           }`}
         >
           <div
             role='group'
-            aria-label='Tipo de acceso'
+            aria-label={account.authType}
             className='grid grid-cols-2 border-b border-line bg-canvas/70 p-1'
           >
             <button
               type='button'
-              aria-pressed={!isCreatingAccount}
-              disabled={isWorking}
-              onClick={() => {
-                setIsCreatingAccount(false);
-                setError(null);
-                setMessage(null);
-              }}
+              aria-pressed={!view.isCreatingAccount}
+              disabled={view.isWorking}
+              onClick={() => view.selectMode(false)}
               className={`rounded-md px-4 py-3 text-sm transition ${
-                !isCreatingAccount ?
+                !view.isCreatingAccount ?
                   'bg-white/10 text-ink'
                 : 'text-muted hover:text-ink'
               }`}
             >
-              Iniciar sesión
+              {account.loginTab}
             </button>
             <button
               type='button'
-              aria-pressed={isCreatingAccount}
-              disabled={isWorking}
-              onClick={() => {
-                setIsCreatingAccount(true);
-                setError(null);
-                setMessage(null);
-              }}
+              aria-pressed={view.isCreatingAccount}
+              disabled={view.isWorking}
+              onClick={() => view.selectMode(true)}
               className={`rounded-md px-4 py-3 text-sm transition ${
-                isCreatingAccount ?
+                view.isCreatingAccount ?
                   'bg-accent-green-bg text-accent-green-fg'
                 : 'text-muted hover:text-ink'
               }`}
             >
-              Crear cuenta
+              {account.createTab}
             </button>
           </div>
           <div className='p-6 sm:p-8'>
             <p className='text-xs uppercase tracking-[0.12em] text-muted'>
-              {isCreatingAccount ? 'Nueva cuenta' : 'Acceso a tu cuenta'}
+              {view.isCreatingAccount ?
+                account.newAccountEyebrow
+              : account.accessEyebrow}
             </p>
             <h2 className='mt-2 text-xl font-medium'>
-              {isCreatingAccount ? 'Empieza tu diario' : 'Qué bueno verte'}
+              {view.isCreatingAccount ?
+                account.newAccountTitle
+              : account.welcomeTitle}
             </h2>
             <p className='mt-2 text-sm text-muted'>
-              {isCreatingAccount ?
-                'Crea una cuenta para guardar y sincronizar tu práctica entre dispositivos.'
-              : 'Inicia sesión para recuperar tu historial y continuar practicando.'
-              }
+              {view.isCreatingAccount ?
+                account.newAccountDescription
+              : account.loginDescription}
             </p>
             <form
-              onSubmit={(event) => void submitCredentials(event)}
+              onSubmit={(event) => void view.submitCredentials(event)}
               className='mt-6 grid gap-4'
             >
               <label className='block text-xs text-muted'>
-                Correo electrónico
+                {account.email}
                 <TextField
                   type='email'
                   autoComplete='email'
                   required
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  value={view.email}
+                  onChange={(event) => view.setEmail(event.target.value)}
                   className='mt-1'
                 />
               </label>
               <label className='block text-xs text-muted'>
-                Contraseña
+                {account.password}
                 <TextField
                   type='password'
                   autoComplete={
-                    isCreatingAccount ? 'new-password' : 'current-password'
+                    view.isCreatingAccount ? 'new-password' : 'current-password'
                   }
                   minLength={8}
                   required
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  value={view.password}
+                  onChange={(event) => view.setPassword(event.target.value)}
                   className='mt-1'
                 />
               </label>
               <Button
                 type='submit'
                 variant='primary'
-                disabled={isWorking}
+                disabled={view.isWorking}
               >
-                {isWorking ?
-                  'Un momento…'
-                : isCreatingAccount ?
-                  'Crear cuenta'
-                : 'Iniciar sesión'}
+                {view.isWorking ?
+                  account.working
+                : view.isCreatingAccount ?
+                  account.createAccount
+                : account.signIn
+                }
               </Button>
             </form>
           </div>
         </section>
       )}
 
-      {error && (
-        <p
-          className='mt-4 text-sm text-red-300'
-          role='alert'
-        >
-          {error}
+      {view.error && (
+        <p className='mt-4 text-sm text-red-300' role='alert'>
+          {view.error}
         </p>
       )}
-      {dataError && (
-        <p
-          className='mt-4 text-sm text-red-300'
-          role='alert'
-        >
-          No se pudieron sincronizar los cambios con Supabase: {dataError}
+      {view.dataError && (
+        <p className='mt-4 text-sm text-red-300' role='alert'>
+          {account.syncChangesError} {view.dataError}
         </p>
       )}
-      {message && (
-        <p
-          className='mt-4 text-sm text-accent-green-fg'
-          role='status'
-        >
-          {message}
+      {view.message && (
+        <p className='mt-4 text-sm text-accent-green-fg' role='status'>
+          {view.message}
         </p>
       )}
     </main>

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { TUTORIAL_STEPS } from "../src/lib/tutorial-steps.ts";
+import { TUTORIAL_STEPS } from "../src/utils/tutorial-steps.ts";
 
 test("tutorial keeps all five app tour stops", () => {
   assert.deepEqual(

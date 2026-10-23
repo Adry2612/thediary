@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { RESOURCE_LABELS } from "../src/lib/practice-resources.ts";
+import { RESOURCE_LABELS } from "../src/utils/practice-resources.ts";
 import { PRACTICE_RESOURCE_KINDS } from "../src/types/practice.ts";
 
 test("names every kind of material, with no gaps and no extras", () => {

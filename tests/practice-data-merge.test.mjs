@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   mergePracticeData,
   normalizePracticeData,
-} from "../src/lib/supabase/practice-data.ts";
+} from "../src/services/supabase/practice-data.ts";
 
 function customChord(id, name) {
   return { id, name, shape: { frets: [null, 3, 2, 0, 1, 0] } };
@@ -43,6 +43,40 @@ test("normalizing a state without saved chords yields an empty collection", () =
   const state = normalizePracticeData({ history: [] });
 
   assert.deepEqual(state.customChords, []);
+});
+
+test("normalizing an old session fills the lick skill and keeps lick links", () => {
+  const state = normalizePracticeData({
+    history: [
+      {
+        id: "old-session",
+        skillSeconds: {
+          technique: 60,
+          theory: 0,
+          repertoire: 0,
+          improvisation: 30,
+        },
+        phases: [
+          {
+            id: 1,
+            name: "Lick",
+            skill: "lick",
+            elapsedSeconds: 60,
+            lickId: "lick-1",
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.deepEqual(state.history[0].skillSeconds, {
+    technique: 60,
+    theory: 0,
+    repertoire: 0,
+    lick: 0,
+    improvisation: 30,
+  });
+  assert.equal(state.history[0].phases?.[0].lickId, "lick-1");
 });
 
 function lick(id, title) {

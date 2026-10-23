@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createPracticeAudioRecording } from "../src/lib/practice-recording.ts";
-import { normalizePracticeRecording } from "../src/lib/practice-library.ts";
+import { createPracticeAudioRecording } from "../src/utils/practice-recording.ts";
+import { normalizePracticeRecording } from "../src/services/practice-library.ts";
 
 test("creates a recording with its session, phase, duration, and audio metadata", () => {
   const blob = new Blob(["audio"], { type: "audio/webm" });

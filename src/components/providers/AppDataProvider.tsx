@@ -11,16 +11,17 @@ import {
   type ReactNode,
 } from "react";
 import type { User } from "@supabase/supabase-js";
-import { DEFAULT_PRACTICE_GOALS } from "@/lib/practice-goals";
+import { errorMessage } from "@/utils/error-message";
+import {
+  hasPracticeData,
+  hasPracticeStateChanged,
+  toPersistedSnapshot,
+} from "@/utils/practice-data-state";
 import {
   deleteAllCloudPracticeFiles,
   importLocalPracticeFiles,
-} from "@/lib/supabase/practice-files";
-import {
-  clearLocalPracticeLibrary,
-  listPracticeAssets,
-  listPracticeRecordings,
-} from "@/lib/practice-library";
+} from "@/services/supabase/practice-files";
+import { clearLocalPracticeLibrary, listPracticeAssets, listPracticeRecordings } from "@/services/practice-library";
 import {
   createEmptyPracticeData,
   deleteCloudPracticeData,
@@ -28,14 +29,14 @@ import {
   mergePracticeData,
   normalizePracticeData,
   saveCloudPracticeData,
-} from "@/lib/supabase/practice-data";
-import { getSupabaseClient } from "@/lib/supabase/client";
+} from "@/services/supabase/practice-data";
+import { getSupabaseClient } from "@/services/supabase/client";
 import {
   clearPracticeStorageNamespace,
   readPracticeStorageNamespace,
   setPracticeStorageNamespace,
-  type PersistedPracticeState,
 } from "@/stores/practiceStorage";
+import type { PersistedPracticeState } from "@/types/practice-storage";
 import {
   getPersistedPracticeState,
   replacePracticeState,
@@ -51,22 +52,6 @@ const PENDING_NEW_ACCOUNT_KEY = "guitar-practice-pending-new-account";
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
 
-function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
-}
-
-function hasPracticeData(state: PersistedPracticeState): boolean {
-  return (
-    state.history.length > 0 ||
-    state.templates.length > 0 ||
-    state.repertoireItems.length > 0 ||
-    state.customChords.length > 0 ||
-    Object.values(state.weeklySchedule).some((routineId) => routineId !== null) ||
-    state.practiceGoals.dailyMinutes !== DEFAULT_PRACTICE_GOALS.dailyMinutes ||
-    state.practiceGoals.weeklyDays !== DEFAULT_PRACTICE_GOALS.weeklyDays
-  );
-}
-
 async function hasGuestLocalData(): Promise<boolean> {
   const guestState = normalizePracticeData(
     readPracticeStorageNamespace("guest"),
@@ -78,20 +63,6 @@ async function hasGuestLocalData(): Promise<boolean> {
     listPracticeRecordings(),
   ]);
   return assets.length > 0 || recordings.length > 0;
-}
-
-function hasPracticeStateChanged(
-  current: PersistedPracticeState,
-  previous: PersistedPracticeState,
-): boolean {
-  return (
-    current.history !== previous.history ||
-    current.templates !== previous.templates ||
-    current.repertoireItems !== previous.repertoireItems ||
-    current.customChords !== previous.customChords ||
-    current.weeklySchedule !== previous.weeklySchedule ||
-    current.practiceGoals !== previous.practiceGoals
-  );
 }
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
@@ -169,7 +140,30 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         if (userId && client) {
           const cloudState = await loadCloudPracticeData(userId);
           if (!isMounted) return;
-          if (cloudState) {
+
+          // Lo practicado como invitado no debe perderse al iniciar sesión: se
+          // fusiona con la cuenta (el invitado manda si un id se repite) y se
+          // sube antes de vaciar el espacio local de invitado.
+          const guestState = normalizePracticeData(
+            readPracticeStorageNamespace("guest"),
+          );
+          const shouldImportGuest = hasPracticeData(guestState);
+          if (shouldImportGuest) {
+            const mergedState = mergePracticeData(
+              cloudState ?? createEmptyPracticeData(),
+              guestState,
+            );
+            await saveCloudPracticeData(userId, mergedState);
+            if (!isMounted) return;
+            replacePracticeState(mergedState);
+            clearPracticeStorageNamespace("guest");
+            window.localStorage.removeItem(PENDING_NEW_ACCOUNT_KEY);
+            setShowLocalImportOffer(false);
+            setNewAccountUserId(null);
+            // Los archivos pueden tardar; el estado ya está a salvo y las
+            // grabaciones se siguen leyendo del almacén local mientras suben.
+            void importLocalPracticeFiles(userId).catch(() => undefined);
+          } else if (cloudState) {
             replacePracticeState(cloudState);
           } else {
             const cachedState = getPersistedPracticeState();
@@ -232,24 +226,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = usePracticeStore.subscribe((state, previousState) => {
       if (applyingRemoteState.current) return;
-      const currentData: PersistedPracticeState = {
-        history: state.history,
-        templates: state.templates,
-        repertoireItems: state.repertoireItems,
-        licks: state.licks,
-        customChords: state.customChords,
-        weeklySchedule: state.weeklySchedule,
-        practiceGoals: state.practiceGoals,
-      };
-      const previousData: PersistedPracticeState = {
-        history: previousState.history,
-        templates: previousState.templates,
-        repertoireItems: previousState.repertoireItems,
-        licks: previousState.licks,
-        customChords: previousState.customChords,
-        weeklySchedule: previousState.weeklySchedule,
-        practiceGoals: previousState.practiceGoals,
-      };
+      const currentData = toPersistedSnapshot(state);
+      const previousData = toPersistedSnapshot(previousState);
       if (!hasPracticeStateChanged(currentData, previousData)) return;
 
       if (pendingCloudSave.current) clearTimeout(pendingCloudSave.current);

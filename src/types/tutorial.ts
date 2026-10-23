@@ -42,3 +42,8 @@ export type TutorialText = {
   next: string;
   finish: string;
 };
+
+/** Lo que el tutorial expone al resto de la aplicación. */
+export interface TutorialContextValue {
+  openTutorial: () => void;
+}

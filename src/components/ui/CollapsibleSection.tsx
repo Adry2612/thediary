@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
+import { ChevronIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 interface CollapsibleSectionProps {
@@ -37,16 +38,7 @@ export function CollapsibleSection({
             onClick={() => setOpen((current) => !current)}
             className="inline-flex items-center gap-2 text-left transition hover:text-ink/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
           >
-            <svg
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-              className={`size-4 shrink-0 text-muted transition-transform duration-200 ${
-                open ? "rotate-90" : ""
-              }`}
-            >
-              <path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" />
-            </svg>
+            <ChevronIcon open={open} className="text-muted" />
             <span>{title}</span>
           </button>
         </h2>

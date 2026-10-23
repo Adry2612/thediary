@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   readTutorialProgress,
   saveTutorialProgress,
-} from "../src/lib/tutorial-progress.ts";
+} from "../src/utils/tutorial-progress.ts";
 
 function createStorage(initialValues = []) {
   const values = new Map(initialValues);

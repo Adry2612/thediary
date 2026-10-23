@@ -1,6 +1,6 @@
 "use client";
 
-import { getFretWindow, STRING_COUNT } from "@/lib/chords";
+import { getFretWindow, STRING_COUNT } from "@/utils/chords";
 import type { ChordShape } from "@/types/practice";
 
 interface FretboardDiagramProps {

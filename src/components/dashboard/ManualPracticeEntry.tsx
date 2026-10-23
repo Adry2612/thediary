@@ -5,7 +5,7 @@ import type { FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextArea, TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
-import { createManualPracticeRecord } from "@/lib/manual-practice";
+import { createManualPracticeRecord } from "@/utils/manual-practice";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import { PRACTICE_SKILLS, type PracticeSkill } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
@@ -14,7 +14,7 @@ import {
   manualPracticeBlocksFromDrafts,
   toLocalDateTimeInputValue,
   type ManualPracticeBlockDraft,
-} from "@/lib/manual-practice";
+} from "@/utils/manual-practice";
 
 export function ManualPracticeEntry() {
   const manual = useI18nSection("manualPractice");

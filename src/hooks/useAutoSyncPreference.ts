@@ -5,7 +5,7 @@ import {
   readAutoSyncPreference,
   setAutoSyncPreference,
   subscribeAutoSyncPreference,
-} from "@/lib/cloud-sync/auto-sync-preference";
+} from "@/services/cloud-sync/auto-sync-preference";
 
 export function useAutoSyncPreference() {
   const [enabled, setEnabledState] = useState(false);

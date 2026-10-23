@@ -8,7 +8,7 @@ import {
   findSavedChord,
   formatChordName,
   parseChordName,
-} from "@/lib/chords";
+} from "@/utils/chords";
 import type { UserChord } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 

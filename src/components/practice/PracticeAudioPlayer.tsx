@@ -1,6 +1,7 @@
 'use client';
 
 import { RangeSlider } from '@/components/ui/RangeSlider';
+import { PauseIcon, PlayIcon } from '@/components/ui/icons';
 import { usePracticeAudioPlayer } from '@/hooks/usePracticeAudioPlayer';
 import { useI18nSection } from '@/i18n/I18nProvider';
 
@@ -81,26 +82,8 @@ export function PracticeAudioPlayer({
           className='flex size-10 shrink-0 items-center justify-center border border-line text-ink transition hover:bg-white/5 focus-visible:outline-accent-green-fg'
         >
           {isPlaying ?
-            <svg
-              viewBox='0 0 16 16'
-              className='size-4'
-              aria-hidden='true'
-            >
-              <path
-                d='M4 3h3v10H4zM9 3h3v10H9z'
-                fill='currentColor'
-              />
-            </svg>
-          : <svg
-              viewBox='0 0 16 16'
-              className='size-4'
-              aria-hidden='true'
-            >
-              <path
-                d='M4 2.5 13 8l-9 5.5z'
-                fill='currentColor'
-              />
-            </svg>
+            <PauseIcon />
+          : <PlayIcon />
           }
         </button>
         <span className='w-12 shrink-0 text-right font-mono text-xs tabular-nums text-muted'>

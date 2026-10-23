@@ -1,10 +1,11 @@
-import type { PracticeGoals } from "@/lib/practice-goals";
-import { normalizeRepertoireDifficulty } from "../lib/repertoire-item.ts";
+import type { PracticeGoals } from "@/utils/practice-goals";
+import { normalizeRepertoireDifficulty } from "../utils/repertoire-item.ts";
 import type { RepertoireItem } from "@/types/practice";
-import type { WeeklyRoutineSchedule } from "@/lib/weekly-routine-schedule";
-import type { PersistedPracticeState } from "@/stores/practiceStorage";
-import { migrateRepertoireLicks } from "../lib/licks/migration.ts";
-import { normalizeLicks } from "../lib/licks/normalize.ts";
+import type { WeeklyRoutineSchedule } from "@/utils/weekly-routine-schedule";
+import type { PersistedPracticeState } from "@/types/practice-storage";
+import { migrateRepertoireLicks } from "../utils/licks/migration.ts";
+import { normalizeLicks } from "../utils/licks/normalize.ts";
+import { normalizeSessionRecord } from "../utils/practice-session-record.ts";
 
 interface NormalizePracticeStorageStateInput {
   state: Partial<PersistedPracticeState> | undefined;
@@ -38,7 +39,9 @@ export function normalizePracticeStorageState({
   );
 
   return {
-    history: Array.isArray(state?.history) ? state.history : [],
+    history: Array.isArray(state?.history)
+      ? state.history.map(normalizeSessionRecord)
+      : [],
     templates: Array.isArray(state?.templates) ? state.templates : [],
     repertoireItems: migration.repertoireItems,
     licks: migration.licks,

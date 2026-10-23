@@ -5,7 +5,7 @@ import {
   getMetronomeScaleZone,
   getTempoMarking,
   METRONOME_SCALE_ZONE_COLORS,
-} from "@/lib/metronome-scale";
+} from "@/utils/metronome-scale";
 import { MAX_BPM, MIN_BPM } from "@/hooks/useMetronome";
 import { useI18nSection } from "@/i18n/I18nProvider";
 

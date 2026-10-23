@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   getMetronomeScaleZone,
   getTempoMarking,
-} from "../src/lib/metronome-scale.ts";
+} from "../src/utils/metronome-scale.ts";
 
 test("tempo scale uses warning colors at both ends", () => {
   assert.equal(getMetronomeScaleZone(0), "edge");

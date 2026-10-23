@@ -2,21 +2,28 @@ import Link from "next/link";
 import {
   formatPracticeDuration,
   PRACTICE_SKILL_LABELS,
-} from "@/lib/dashboard-data";
-import { formatClock } from "@/lib/format";
-import { getLinkedPartLabel } from "@/lib/practice-session-details";
+} from "@/utils/dashboard-data";
+import { formatClock } from "@/utils/format";
+import {
+  getLinkedLickLabel,
+  getLinkedRepertoirePartName,
+  getPracticeBlockTitle,
+} from "@/utils/practice-session-details";
+import type { GuitarLick } from "@/types/lick";
 import type { RepertoireItem, SessionPhaseRecord } from "@/types/practice";
 
 interface PracticeSessionPhasesProps {
   sessionId: string;
   phases: SessionPhaseRecord[] | undefined;
   repertoireItems: RepertoireItem[];
+  licks: GuitarLick[];
 }
 
 export function PracticeSessionPhases({
   sessionId,
   phases,
   repertoireItems,
+  licks,
 }: PracticeSessionPhasesProps) {
   return (
     <section
@@ -55,12 +62,18 @@ export function PracticeSessionPhases({
             </thead>
             <tbody>
               {phases.map((phase, index) => {
-                const linkedPart = getLinkedPartLabel(phase, repertoireItems);
+                const title = getPracticeBlockTitle(phase, repertoireItems);
+                const linkedPart = getLinkedRepertoirePartName(
+                  phase,
+                  repertoireItems,
+                );
+                const linkedLick = getLinkedLickLabel(phase, licks);
                 const hasDetails =
                   Boolean(phase.exercises?.length) ||
                   Boolean(phase.resources?.length) ||
                   Boolean(phase.notes) ||
-                  linkedPart !== null;
+                  linkedPart !== null ||
+                  linkedLick !== null;
 
                 return (
                   <tr
@@ -71,7 +84,7 @@ export function PracticeSessionPhases({
                       scope="row"
                       className="px-3 py-4 text-sm font-medium text-ink sm:px-5"
                     >
-                      <span className="block break-words">{phase.name}</span>
+                      <span className="block break-words">{title}</span>
                       <span className="mt-1 block text-xs font-normal text-muted">
                         {PRACTICE_SKILL_LABELS[phase.skill]}
                       </span>
@@ -84,8 +97,14 @@ export function PracticeSessionPhases({
                           )}
                           {linkedPart && (
                             <p>
-                              <span className="text-ink">Repertorio:</span>{" "}
+                              <span className="text-ink">Parte:</span>{" "}
                               {linkedPart}
+                            </p>
+                          )}
+                          {linkedLick && (
+                            <p>
+                              <span className="text-ink">Lick:</span>{" "}
+                              {linkedLick}
                             </p>
                           )}
                           {phase.resources && phase.resources.length > 0 && (

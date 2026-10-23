@@ -6,7 +6,7 @@ import {
   normalizeChordChart,
   removeChordFromLine,
   setChordOnLine,
-} from "../src/lib/repertoire-chord-chart.ts";
+} from "../src/utils/repertoire-chord-chart.ts";
 
 let counter = 0;
 function createId() {

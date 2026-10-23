@@ -3,7 +3,7 @@ import test from "node:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getCloudProviderConfigurations } from "../src/lib/cloud-sync/config.ts";
+import { getCloudProviderConfigurations } from "../src/services/cloud-sync/config.ts";
 
 const PROVIDER_KEYS = [
   "GOOGLE_DRIVE_CLIENT_ID",

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { formatPracticeDuration } from "@/lib/dashboard-data";
-import { getPracticePlanDuration } from "@/lib/practice-plan";
+import { formatPracticeDuration } from "@/utils/dashboard-data";
+import { getPracticePlanDuration } from "@/utils/practice-plan";
 import type { PracticeTemplate } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 

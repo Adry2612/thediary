@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { exchangeOAuthCode, isCloudSyncProvider } from "@/lib/cloud-sync/oauth";
+import { exchangeOAuthCode, isCloudSyncProvider } from "@/services/cloud-sync/oauth";
 import {
   cloudTokenCookieNames,
   serializeCloudTokenSessionCookies,
-} from "@/lib/cloud-sync/session";
+} from "@/services/cloud-sync/session";
 
 export async function GET(
   request: Request,

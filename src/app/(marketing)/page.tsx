@@ -1,5 +1,5 @@
 import { HomeView } from "@/components/home/HomeView";
-import { getLocalDateKey } from "@/lib/local-date";
+import { getLocalDateKey } from "@/utils/local-date";
 
 export const dynamic = "force-dynamic";
 

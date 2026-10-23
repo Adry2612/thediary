@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { reconcileCloudRecordings } from "../src/lib/cloud-sync/catalog.ts";
-import { synchronizePracticeRecording } from "../src/lib/cloud-sync/sync-recording.ts";
+import { reconcileCloudRecordings } from "../src/services/cloud-sync/catalog.ts";
+import { synchronizePracticeRecording } from "../src/services/cloud-sync/sync-recording.ts";
 
 test("integrates upload, retry, and remote catalog recovery without losing local audio", async () => {
   const saved = [];

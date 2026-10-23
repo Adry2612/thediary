@@ -5,7 +5,7 @@ import {
   assignRoutineToWeekday,
   normalizeWeeklyRoutineSchedule,
   removeRoutineFromSchedule,
-} from "../src/lib/weekly-routine-schedule.ts";
+} from "../src/utils/weekly-routine-schedule.ts";
 
 test("normalizes missing and malformed weekday assignments", () => {
   assert.deepEqual(

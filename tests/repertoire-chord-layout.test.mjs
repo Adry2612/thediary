@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   layoutChordChart,
   wrapLyricLine,
-} from "../src/lib/repertoire-chord-layout.ts";
+} from "../src/utils/repertoire-chord-layout.ts";
 
 function line(text, chords = [], id = "line-1") {
   return { id, text, chords };

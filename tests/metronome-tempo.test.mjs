@@ -4,7 +4,7 @@ import {
   clampMetronomeBpm,
   clampMetronomeVolume,
   getTapTempoUpdate,
-} from "../src/lib/metronome-tempo.ts";
+} from "../src/utils/metronome-tempo.ts";
 
 test("clamps the metronome tempo and volume to their supported ranges", () => {
   assert.equal(clampMetronomeBpm(10), 40);

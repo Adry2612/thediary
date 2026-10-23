@@ -81,6 +81,147 @@ export function SearchIcon({ className, ...props }: IconProps) {
   );
 }
 
+/**
+ * Chevron relleno de las secciones plegables. Gira con `open`, que es estado de
+ * la sección y no del icono; en un `<details>` el giro lo pone `group-open`.
+ */
+export function ChevronIcon({
+  open = false,
+  className = "",
+}: {
+  open?: boolean;
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      aria-hidden="true"
+      className={`size-4 shrink-0 transition-transform duration-200 ${open ? "rotate-90" : ""} ${className}`}
+    >
+      <path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" />
+    </svg>
+  );
+}
+
+/** Flecha fina de navegación entre periodos de los calendarios. */
+export function ChevronLeftIcon({ className, ...props }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      width={16}
+      height={16}
+      aria-hidden="true"
+      className={className}
+      {...props}
+    >
+      <path
+        d="m12.5 4.5-5 5.5 5 5.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon({ className, ...props }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      width={16}
+      height={16}
+      aria-hidden="true"
+      className={className}
+      {...props}
+    >
+      <path
+        d="m7.5 4.5 5 5.5-5 5.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function SettingsIcon({ className = "size-5", ...props }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      {...props}
+    >
+      <path
+        d="M10.4 3.5h3.2l.5 2.1a6.9 6.9 0 0 1 1.5.9l2.1-.6 1.6 2.8-1.6 1.5a7 7 0 0 1 0 1.8l1.6 1.5-1.6 2.8-2.1-.6a6.9 6.9 0 0 1-1.5.9l-.5 2.1h-3.2l-.5-2.1a6.9 6.9 0 0 1-1.5-.9l-2.1.6-1.6-2.8 1.6-1.5a7 7 0 0 1 0-1.8L4.7 8.7l1.6-2.8 2.1.6a6.9 6.9 0 0 1 1.5-.9l.5-2.1Z"
+        stroke="currentColor"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+      />
+      <circle
+        cx={12}
+        cy={11.5}
+        r={2.5}
+        stroke="currentColor"
+        strokeWidth={1.5}
+      />
+    </svg>
+  );
+}
+
+/** Papelera compacta de las filas de lista; `TrashIcon` es la de tamaño grande. */
+export function DeleteIcon({ className = "size-4", ...props }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+      {...props}
+    >
+      <path
+        d="M5 7h14m-9 4v6m4-6v6M9 7V5.5h6V7m-8 0 .8 12h8.4L17 7"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+      />
+    </svg>
+  );
+}
+
+export function PlayIcon({ className = "size-4", ...props }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className={className}
+      {...props}
+    >
+      <path d="M4 2.5 13 8l-9 5.5z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function PauseIcon({ className = "size-4", ...props }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className={className}
+      {...props}
+    >
+      <path d="M4 3h3v10H4zM9 3h3v10H9z" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function GoogleDriveIcon({ className = "size-5", ...props }: IconProps) {
   return (
     <svg

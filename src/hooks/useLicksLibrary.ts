@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { getForgottenLick } from "@/lib/licks/forgotten";
+import { getForgottenLick } from "@/utils/licks/forgotten";
 import {
   getLicksSummary,
   getSortedLicks,
   getVisibleLicks,
-} from "@/lib/licks/library";
-import { parseDateKey } from "@/lib/practice-calendar";
+} from "@/utils/licks/library";
+import { parseDateKey } from "@/utils/practice-calendar";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 
 /**

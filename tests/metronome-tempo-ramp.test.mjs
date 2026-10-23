@@ -6,7 +6,7 @@ import {
   increaseTempoWithinLimit,
   MAX_TEMPO_RAMP_INTERVAL_BY_UNIT,
   normalizeTempoRampSettings,
-} from "../src/lib/metronome-tempo-ramp.ts";
+} from "../src/utils/metronome-tempo-ramp.ts";
 
 test("defaults to a disabled, bar-based tempo ramp", () => {
   assert.deepEqual(DEFAULT_TEMPO_RAMP_SETTINGS, {

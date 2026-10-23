@@ -12,27 +12,25 @@ import type { GuitarLick } from "@/types/lick";
 import {
   markLickPracticed as markLickPracticedNow,
   recordLickBpm as recordBpmForLick,
-} from "@/lib/licks/progress";
-import {
-  createLocalPracticeStorage,
-  type PersistedPracticeState,
-} from "@/stores/practiceStorage";
-import { isSameChord } from "@/lib/chords";
+} from "@/utils/licks/progress";
+import { createLocalPracticeStorage } from "@/stores/practiceStorage";
+import type { PersistedPracticeState } from "@/types/practice-storage";
+import { isSameChord } from "@/utils/chords";
 import {
   assignRoutineToWeekday,
   DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
   normalizeWeeklyRoutineSchedule,
   removeRoutineFromSchedule,
-} from "@/lib/weekly-routine-schedule";
+} from "@/utils/weekly-routine-schedule";
 import type {
   WeekdayIndex,
   WeeklyRoutineSchedule,
-} from "@/lib/weekly-routine-schedule";
+} from "@/utils/weekly-routine-schedule";
 import {
   DEFAULT_PRACTICE_GOALS,
   normalizePracticeGoals,
   type PracticeGoals,
-} from "@/lib/practice-goals";
+} from "@/utils/practice-goals";
 import { normalizePracticeStorageState } from "@/stores/normalizePracticeStorageState";
 
 type PracticeStoreState = {
@@ -60,7 +58,7 @@ type PracticeStoreState = {
   saveLick: (lick: GuitarLick) => void;
   deleteLick: (lickId: string) => void;
   recordLickBpm: (lickId: string, bpm: number, notes?: string) => boolean;
-  markLickPracticed: (lickId: string) => void;
+  markLickPracticed: (lickId: string, practicedAt?: string) => void;
   saveCustomChord: (chord: UserChord) => void;
   deleteCustomChord: (chordId: string) => void;
   setHasHydrated: (hasHydrated: boolean) => void;
@@ -171,10 +169,15 @@ export const usePracticeStore = create<PracticeStoreState>()(
         }));
         return recorded;
       },
-      markLickPracticed: (lickId) =>
+      markLickPracticed: (lickId, practicedAt) =>
         set((state) => ({
           licks: state.licks.map((lick) =>
-            lick.id === lickId ? markLickPracticedNow(lick) : lick,
+            lick.id === lickId
+              ? markLickPracticedNow(
+                  lick,
+                  practicedAt ? new Date(practicedAt) : undefined,
+                )
+              : lick,
           ),
           persistenceError: null,
         })),

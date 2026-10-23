@@ -8,7 +8,7 @@ import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
 import { MetronomeSettings } from "@/components/practice/MetronomeSettings";
 import { MetronomeTempoSlider } from "@/components/practice/MetronomeTempoSlider";
 import { MAX_BPM, MIN_BPM, useMetronome } from "@/hooks/useMetronome";
-import { getMetronomeMeter } from "@/lib/metronome-meter";
+import { getMetronomeMeter } from "@/utils/metronome-meter";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 type MetronomeCardProps = {

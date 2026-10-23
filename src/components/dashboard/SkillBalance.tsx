@@ -6,7 +6,7 @@ import {
   PRACTICE_SKILL_LABELS,
   getSkillPercentages,
   type SkillTotals,
-} from "@/lib/dashboard-data";
+} from "@/utils/dashboard-data";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 export function SkillBalance({ totals }: { totals: SkillTotals }) {

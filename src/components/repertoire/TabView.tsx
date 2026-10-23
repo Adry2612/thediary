@@ -1,11 +1,11 @@
-import { parseTuningNotes } from "@/lib/chords";
+import { parseTuningNotes } from "@/utils/chords";
 import {
   getTabColumns,
   getTabStringOrder,
   isTabTechniqueActive,
   TAB_TECHNIQUES,
-} from "@/lib/repertoire-tab";
-import { repertoireTabToText } from "@/lib/licks/tab-text";
+} from "@/utils/repertoire-tab";
+import { repertoireTabToText } from "@/utils/licks/tab-text";
 import type { RepertoireTab, RepertoireTabNote } from "@/types/practice";
 
 type TabViewVariant = "compact" | "full";

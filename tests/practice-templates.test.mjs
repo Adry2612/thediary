@@ -5,7 +5,7 @@ import {
   isSupportedPracticeAudio,
   normalizeSongsterrUrl,
   validatePracticeTemplate,
-} from "../src/lib/practice-templates.ts";
+} from "../src/utils/practice-templates.ts";
 
 const validPhases = [
   { id: "phase-1", name: "Técnica", durationMinutes: 15, skill: "technique" },
@@ -36,6 +36,80 @@ test("rejects phases with an invalid duration or skill", () => {
 
 test("accepts a named plan with valid phases", () => {
   assert.equal(validatePracticeTemplate("Sesión", validPhases), null);
+});
+
+test("requires a song for a repertoire block", () => {
+  const repertoirePhase = {
+    id: "phase-1",
+    name: "Canción",
+    durationMinutes: 10,
+    skill: "repertoire",
+  };
+
+  assert.equal(
+    validatePracticeTemplate("Sesión", [repertoirePhase]),
+    "phase",
+  );
+  assert.equal(
+    validatePracticeTemplate("Sesión", [
+      { ...repertoirePhase, repertoireItemId: "song-1" },
+    ], {
+      repertoireItems: [{ id: "song-1", kind: "song", parts: [] }],
+    }),
+    null,
+  );
+});
+
+test("rejects a missing song or part in a repertoire block", () => {
+  const phase = {
+    id: "phase-1",
+    name: "Canción",
+    durationMinutes: 10,
+    skill: "repertoire",
+    repertoireItemId: "missing-song",
+  };
+
+  assert.equal(
+    validatePracticeTemplate("Sesión", [phase], {
+      repertoireItems: [{ id: "song-1", kind: "song", parts: [] }],
+    }),
+    "phase",
+  );
+  assert.equal(
+    validatePracticeTemplate("Sesión", [
+      { ...phase, repertoireItemId: "song-1", repertoirePartId: "missing-part" },
+    ], {
+      repertoireItems: [{
+        id: "song-1",
+        kind: "song",
+        parts: [{ id: "part-1" }],
+      }],
+    }),
+    "phase",
+  );
+});
+
+test("requires a lick for a lick block and checks that it exists", () => {
+  const lickPhase = {
+    id: "phase-1",
+    name: "Frase",
+    durationMinutes: 5,
+    skill: "lick",
+  };
+
+  assert.equal(validatePracticeTemplate("Sesión", [lickPhase]), "phase");
+  assert.equal(
+    validatePracticeTemplate("Sesión", [
+      { ...lickPhase, lickId: "lick-1" },
+    ], { licks: [{ id: "lick-1" }] }),
+    null,
+  );
+  assert.equal(
+    validatePracticeTemplate("Sesión", [
+      { ...lickPhase, lickId: "missing" },
+    ], { licks: [{ id: "lick-1" }] }),
+    "phase",
+  );
 });
 
 test("accepts secure Songsterr URLs but rejects unrelated or insecure links", () => {

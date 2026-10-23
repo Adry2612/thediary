@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   CloudProviderError,
   normalizeCloudProviderError,
-} from "../src/lib/cloud-sync/provider.ts";
+} from "../src/services/cloud-sync/provider.ts";
 
 test("normalizes provider network errors as retryable", () => {
   const error = normalizeCloudProviderError(new TypeError("offline"));

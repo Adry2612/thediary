@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildSelectEntries } from "../src/lib/select-options.ts";
+import { buildSelectEntries } from "../src/utils/select-options.ts";
 
 test("inserts a header before each group", () => {
   const entries = buildSelectEntries([

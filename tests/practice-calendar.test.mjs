@@ -9,13 +9,14 @@ import {
   getYearlyHeatmapData,
   parseDateKey,
   toDateKey,
-} from "../src/lib/practice-calendar.ts";
-import { formatDateLabel } from "../src/lib/format.ts";
+} from "../src/utils/practice-calendar.ts";
+import { formatDateLabel } from "../src/utils/format.ts";
 
 const emptySkills = {
   technique: 0,
   theory: 0,
   repertoire: 0,
+  lick: 0,
   improvisation: 0,
 };
 

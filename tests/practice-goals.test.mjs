@@ -5,7 +5,7 @@ import {
   adjustPracticeGoal,
   getPracticeIntensityLevel,
   normalizePracticeGoals,
-} from "../src/lib/practice-goals.ts";
+} from "../src/utils/practice-goals.ts";
 
 test("scales calendar intensity by the daily practice goal", () => {
   assert.equal(getPracticeIntensityLevel(0, 60), 0);

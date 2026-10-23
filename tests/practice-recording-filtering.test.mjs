@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   getFilteredPracticeRecordings,
+  getRecordingBlockOptions,
   getSessionPracticeRecordings,
   groupPracticeRecordingsByDate,
   groupPracticeRecordingsBySession,
   isPracticeRecordingSort,
-} from "../src/lib/practice-recording-filtering.ts";
+} from "../src/utils/practice-recording-filtering.ts";
 
 const recordings = [
   {
@@ -191,4 +192,12 @@ test("groups recordings by session id and preserves legacy name-and-day matching
       ["session-c", []],
     ],
   );
+});
+
+test("lists the blocks present in the recordings, in order and once each", () => {
+  assert.deepEqual(getRecordingBlockOptions(recordings, "Bloque"), [
+    { value: "1", label: "Bloque 1" },
+    { value: "2", label: "Bloque 2" },
+  ]);
+  assert.deepEqual(getRecordingBlockOptions([], "Bloque"), []);
 });

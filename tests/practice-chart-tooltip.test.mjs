@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getContainedTooltipPosition } from "../src/lib/practice-chart-tooltip.ts";
+import { getContainedTooltipPosition } from "../src/utils/practice-chart-tooltip.ts";
 
 test("keeps tooltip coordinates inside the chart at all edges", () => {
   assert.deepEqual(

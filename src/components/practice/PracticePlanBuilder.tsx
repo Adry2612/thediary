@@ -10,15 +10,16 @@ import {
   clonePracticePhases,
   createPracticePhase,
   getPracticePlanDuration,
-} from "@/lib/practice-plan";
+  normalizeRepertoirePhaseNames,
+} from "@/utils/practice-plan";
 import {
   validatePracticeTemplate,
   type PracticeTemplateValidationError,
-} from "@/lib/practice-templates";
+} from "@/utils/practice-templates";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import type { PracticePhase, PracticeTemplate } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
-import { createId } from "@/lib/create-id";
+import { createId } from "@/utils/create-id";
 
 interface PracticePlanBuilderProps {
   initialName?: string;
@@ -38,9 +39,13 @@ export function PracticePlanBuilder({
   const saveTemplate = usePracticeStore((state) => state.saveTemplate);
   const deleteTemplate = usePracticeStore((state) => state.deleteTemplate);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
+  const licks = usePracticeStore((state) => state.licks);
   const [name, setName] = useState(initialName);
   const [phases, setPhases] = useState(() =>
-    clonePracticePhases(initialPhases),
+    normalizeRepertoirePhaseNames(
+      clonePracticePhases(initialPhases),
+      repertoireItems,
+    ),
   );
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -58,9 +63,20 @@ export function PracticePlanBuilder({
     appliedTemplateRef.current = initialTemplateId;
     setSelectedTemplateId(template.id);
     setName(template.name);
-    setPhases(clonePracticePhases(template.phases));
+    setPhases(
+      normalizeRepertoirePhaseNames(
+        clonePracticePhases(template.phases),
+        repertoireItems,
+      ),
+    );
     setError(null);
-  }, [initialTemplateId, templates]);
+  }, [initialTemplateId, repertoireItems, templates]);
+
+  useEffect(() => {
+    setPhases((current) =>
+      normalizeRepertoirePhaseNames(current, repertoireItems),
+    );
+  }, [repertoireItems]);
 
   const updatePhase = useCallback(
     (phaseId: PracticePhase["id"], changes: Partial<PracticePhase>) => {
@@ -82,7 +98,12 @@ export function PracticePlanBuilder({
   function selectTemplate(template: PracticeTemplate) {
     setSelectedTemplateId(template.id);
     setName(template.name);
-    setPhases(clonePracticePhases(template.phases));
+    setPhases(
+      normalizeRepertoirePhaseNames(
+        clonePracticePhases(template.phases),
+        repertoireItems,
+      ),
+    );
     setError(null);
   }
 
@@ -94,13 +115,16 @@ export function PracticePlanBuilder({
   }
 
   function validateCurrentPlan() {
-    const validationError = validatePracticeTemplate(name, phases);
+    const validationError = validatePracticeTemplate(name, phases, {
+      repertoireItems,
+      licks,
+    });
     if (!validationError) {
       setError(null);
       return true;
     }
 
-    setError({ name: "Escribe un nombre de hasta 80 caracteres.", phases: "Añade al menos un bloque.", phase: "Revisa los nombres, minutos y categorías de los bloques." }[validationError]);
+    setError({ name: "Escribe un nombre de hasta 80 caracteres.", phases: "Añade al menos un bloque.", phase: "Revisa los nombres, minutos, categorías y vínculos de los bloques." }[validationError]);
     return false;
   }
 
@@ -111,7 +135,9 @@ export function PracticePlanBuilder({
     saveTemplate({
       id: templateId,
       name: name.trim(),
-      phases: clonePracticePhases(phases),
+      phases: clonePracticePhases(
+        normalizeRepertoirePhaseNames(phases, repertoireItems),
+      ),
       updatedAt: new Date().toISOString(),
     });
     setSelectedTemplateId(templateId);
@@ -119,7 +145,12 @@ export function PracticePlanBuilder({
 
   function handleStart() {
     if (!validateCurrentPlan()) return;
-    onStart(name.trim(), clonePracticePhases(phases));
+    onStart(
+      name.trim(),
+      clonePracticePhases(
+        normalizeRepertoirePhaseNames(phases, repertoireItems),
+      ),
+    );
   }
 
   function removeTemplate() {
@@ -187,6 +218,7 @@ export function PracticePlanBuilder({
             phase={phase}
             index={index}
             repertoireItems={repertoireItems}
+            licks={licks}
             onChange={updatePhase}
             onRemove={removePhase}
           />

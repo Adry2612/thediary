@@ -4,9 +4,9 @@ import {
   hasPracticeData,
   hasPracticeStateChanged,
   toPersistedSnapshot,
-} from "../src/lib/practice-data-state.ts";
-import { DEFAULT_PRACTICE_GOALS } from "../src/lib/practice-goals.ts";
-import { DEFAULT_WEEKLY_ROUTINE_SCHEDULE } from "../src/lib/weekly-routine-schedule.ts";
+} from "../src/utils/practice-data-state.ts";
+import { DEFAULT_PRACTICE_GOALS } from "../src/utils/practice-goals.ts";
+import { DEFAULT_WEEKLY_ROUTINE_SCHEDULE } from "../src/utils/weekly-routine-schedule.ts";
 
 function createEmptyState(overrides = {}) {
   return {

@@ -1,18 +1,15 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import {
-  getPracticeTooltipPosition,
-  PracticeDayTooltip,
-} from "@/components/dashboard/PracticeDayTooltip";
-import type { PracticeTooltipDay } from "@/types/dashboard";
+import { PracticeDayTooltip } from "@/components/dashboard/PracticeDayTooltip";
+import { usePracticeDayTooltip } from "@/hooks/usePracticeDayTooltip";
 import type { SessionRecord } from "@/types/practice";
-import { formatPracticeDuration } from "@/lib/dashboard-data";
-import type { PracticeWeekDay } from "@/lib/practice-calendar";
+import { formatPracticeDuration } from "@/utils/dashboard-data";
+import type { PracticeWeekDay } from "@/utils/practice-calendar";
 import {
   getPracticeIntensityClass,
   getPracticeIntensityLevel,
-} from "@/lib/practice-goals";
+} from "@/utils/practice-goals";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 type WeeklyPracticeSummaryProps = {
@@ -31,7 +28,7 @@ export function WeeklyPracticeSummary({
   const dashboard = useI18nSection("dashboard");
   const weekdays = useI18nSection("weekdays");
   const router = useRouter();
-  const [hoveredDay, setHoveredDay] = useState<PracticeTooltipDay | null>(null);
+  const { hoveredDay, showTooltip, hideTooltip } = usePracticeDayTooltip();
   const sessionsByDate = useMemo(() => {
     const grouped = new Map<string, SessionRecord[]>();
     for (const session of sessions) {
@@ -56,18 +53,17 @@ export function WeeklyPracticeSummary({
     weeklyGoalDays,
   );
 
-  function showTooltip(
+  function showDayTooltip(
     element: HTMLButtonElement,
     day: PracticeWeekDay,
   ) {
     if (!day.hasPractice) return;
 
-    setHoveredDay({
+    showTooltip(element, {
       dateKey: day.dateKey,
       totalMinutes: day.totalMinutes,
       sessionCount: day.sessionCount,
       sessions: sessionsByDate.get(day.dateKey) ?? [],
-      ...getPracticeTooltipPosition(element),
     });
   }
 
@@ -170,10 +166,10 @@ export function WeeklyPracticeSummary({
                       router.push(`/dashboard/practice/${day.dateKey}`);
                     }
                   }}
-                  onMouseEnter={(event) => showTooltip(event.currentTarget, day)}
-                  onMouseLeave={() => setHoveredDay(null)}
-                  onFocus={(event) => showTooltip(event.currentTarget, day)}
-                  onBlur={() => setHoveredDay(null)}
+                  onMouseEnter={(event) => showDayTooltip(event.currentTarget, day)}
+                  onMouseLeave={() => hideTooltip}
+                  onFocus={(event) => showDayTooltip(event.currentTarget, day)}
+                  onBlur={() => hideTooltip}
                   className={`flex min-h-20 w-full flex-col justify-between rounded-lg p-1.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-200 sm:min-h-28 sm:p-3 ${day.hasPractice ? `${getPracticeIntensityClass(day.totalMinutes, dailyGoalMinutes)} hover:brightness-110` : "bg-zinc-950/40 hover:bg-zinc-900/70"}`}
                 >
                   <span className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-2">

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getCloudProviderConfigurations } from "@/lib/cloud-sync/config";
-import type { CloudSyncProvider } from "@/lib/cloud-sync/types";
+import { getCloudProviderConfigurations } from "@/services/cloud-sync/config";
+import type { CloudSyncProvider } from "@/types/cloud-sync";
 
 export const dynamic = "force-dynamic";
 

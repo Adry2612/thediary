@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getWaveformLevels } from "@/lib/recording-waveform";
+import { getWaveformLevels } from "@/utils/recording-waveform";
 
 interface PracticeRecordingWaveformProps {
   stream: MediaStream | null;

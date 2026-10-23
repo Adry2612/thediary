@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { PracticeAudioPlayer } from '@/components/practice/PracticeAudioPlayer';
-import { PRACTICE_SKILL_LABELS } from '@/lib/dashboard-data';
-import type { PracticeAudioRecording } from '@/lib/practice-library';
-import { createCloudSyncReference, type CloudSyncProvider } from '@/lib/cloud-sync/types';
+import { PRACTICE_SKILL_LABELS } from '@/utils/dashboard-data';
+import type { PracticeAudioRecording } from "@/types/practice-library";
+import { createCloudSyncReference, type CloudSyncProvider } from '@/types/cloud-sync';
 import { useCloudRecordingSync } from '@/hooks/useCloudRecordingSync';
 import { CloudSyncProviderIcon, TrashIcon } from '@/components/ui/icons';
 import { useI18n, useI18nSection } from '@/i18n/I18nProvider';

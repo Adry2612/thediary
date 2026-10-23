@@ -6,7 +6,7 @@ import {
   encryptCloudTokenSession,
   readCloudTokenSession,
   serializeCloudTokenSessionCookies,
-} from "../src/lib/cloud-sync/session.ts";
+} from "../src/services/cloud-sync/session.ts";
 
 test("encrypts and decrypts OAuth sessions without exposing token plaintext", () => {
   const previous = process.env.CLOUD_SYNC_ENCRYPTION_KEY;

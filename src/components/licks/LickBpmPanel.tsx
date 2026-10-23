@@ -4,8 +4,8 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/Field";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
-import { formatLickDate } from "@/lib/licks/presentation";
-import { MAX_BPM, MIN_BPM } from "@/lib/metronome-tempo";
+import { formatLickDate } from "@/utils/licks/presentation";
+import { MAX_BPM, MIN_BPM } from "@/utils/metronome-tempo";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import type { GuitarLick } from "@/types/lick";
 

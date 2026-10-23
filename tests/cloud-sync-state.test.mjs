@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createCloudSyncReference } from "../src/lib/cloud-sync/types.ts";
-import { updateCloudSyncReference } from "../src/lib/cloud-sync/state.ts";
+import { createCloudSyncReference } from "../src/types/cloud-sync.ts";
+import { updateCloudSyncReference } from "../src/services/cloud-sync/state.ts";
 
 test("supports the normal recording synchronization lifecycle", () => {
   let state = createCloudSyncReference("google-drive", true, "2026-10-16T00:00:00.000Z");

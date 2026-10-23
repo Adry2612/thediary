@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { associateDayRecordings } from "../src/lib/practice-recording-filtering.ts";
+import { associateDayRecordings } from "../src/utils/practice-recording-filtering.ts";
 
 function recording(id, overrides = {}) {
   return {

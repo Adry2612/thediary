@@ -7,7 +7,7 @@ import { BackLink } from '@/components/ui/BackLink';
 import {
   getRepertoireItemPracticeStats,
   getRepertoirePracticeStats,
-} from '@/lib/repertoire-analytics';
+} from '@/utils/repertoire-analytics';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { getDictionary } from '@/i18n/translations';
 

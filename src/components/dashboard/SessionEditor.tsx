@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/Button";
 import { TextField, TextArea } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { TrashIcon } from "@/components/ui/icons";
-import { PRACTICE_SKILL_LABELS } from "@/lib/dashboard-data";
+import { PRACTICE_SKILL_LABELS } from "@/utils/dashboard-data";
 import {
   applySessionEdit,
   toEditableSession,
   type EditableSession,
   type EditableSessionBlock,
-} from "@/lib/practice-session-editing";
-import { createId } from "@/lib/create-id";
+} from "@/utils/practice-session-editing";
+import { createId } from "@/utils/create-id";
 import { PRACTICE_SKILLS, type SessionRecord } from "@/types/practice";
 
 interface SessionEditorProps {

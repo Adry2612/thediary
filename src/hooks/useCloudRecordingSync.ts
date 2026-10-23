@@ -1,20 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  listPracticeRecordings,
-  type PracticeAudioRecording,
-} from "@/lib/practice-library";
+import { listPracticeRecordings } from "@/services/practice-library";
+import type { PracticeAudioRecording } from "@/types/practice-library";
 import {
   CLOUD_SYNC_PROVIDERS,
   type CloudSyncErrorCode,
   type CloudSyncProvider,
-} from "@/lib/cloud-sync/types";
-import type { RemoteCloudRecording } from "@/lib/cloud-sync/provider";
+} from "@/types/cloud-sync";
+import type { RemoteCloudRecording } from "@/services/cloud-sync/provider";
 import {
   syncPendingRecordings as syncPendingBatch,
   type SyncBatchResult,
-} from "@/lib/cloud-sync/sync-batch";
+} from "@/services/cloud-sync/sync-batch";
 
 export interface CloudProviderStatus {
   provider: CloudSyncProvider;

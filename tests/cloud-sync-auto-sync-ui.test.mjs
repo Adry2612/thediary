@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   readAutoSyncPreference,
   setAutoSyncPreference,
-} from "../src/lib/cloud-sync/auto-sync-preference.ts";
+} from "../src/services/cloud-sync/auto-sync-preference.ts";
 
 async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
@@ -25,7 +25,8 @@ test("settings exposes an accessible automatic synchronization toggle", async ()
   const settings = await readSource(
     "../src/components/account/SettingsView.tsx",
   );
-  assert.match(settings, /aria-pressed=\{autoSyncEnabled\}/);
-  assert.match(settings, /setAutoSyncEnabled\(!autoSyncEnabled\)/);
+  const settingsHook = await readSource("../src/hooks/useSettingsView.ts");
+  assert.match(settings, /aria-pressed=\{view\.autoSync\.enabled\}/);
+  assert.match(settingsHook, /setAutoSyncEnabled\(!autoSyncEnabled\)/);
   assert.doesNotMatch(settings, /icloud/i);
 });

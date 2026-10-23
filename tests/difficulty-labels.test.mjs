@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   DIFFICULTY_LABEL_KEYS,
   getDifficultyLabel,
-} from "../src/lib/difficulty-labels.ts";
+} from "../src/utils/difficulty-labels.ts";
 
 const text = {
   difficultyBeginner: "Principiante",

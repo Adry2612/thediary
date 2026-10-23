@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import {
   buildSelectEntries,
   type SelectOption,
-} from "@/lib/select-options";
+} from "@/utils/select-options";
 
 export type { SelectOption };
 
@@ -61,11 +61,28 @@ export function SelectField({
         setIsOpen(false);
       }
     };
+    /**
+     * La lista es un portal con posición fija calculada al abrir. Si la página
+     * o un ancestro se desplaza, se quedaría flotando lejos del campo; cerrarla
+     * es más predecible que recalcular su posición en cada scroll.
+     */
+    const closeOnOutsideScroll = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Node && listboxRef.current?.contains(target)) {
+        return;
+      }
+      setIsOpen(false);
+    };
+    const closeOnResize = () => setIsOpen(false);
     document.addEventListener("pointerdown", closeOnOutsidePointer);
+    window.addEventListener("scroll", closeOnOutsideScroll, true);
+    window.addEventListener("resize", closeOnResize);
 
     return () => {
       cancelAnimationFrame(animationFrame);
       document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      window.removeEventListener("scroll", closeOnOutsideScroll, true);
+      window.removeEventListener("resize", closeOnResize);
     };
   }, [isOpen]);
 

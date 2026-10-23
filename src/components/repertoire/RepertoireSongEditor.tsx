@@ -2,9 +2,9 @@
 
 import { ChordChartEditor } from '@/components/repertoire/ChordChartEditor';
 import { TabEditor } from '@/components/repertoire/TabEditor';
-import { isTabEditorEnabled } from '@/lib/feature-flags';
-import { normalizeChordChart } from '@/lib/repertoire-chord-chart';
-import { normalizeTab } from '@/lib/repertoire-tab';
+import { isTabEditorEnabled } from '@/utils/feature-flags';
+import { normalizeChordChart } from '@/utils/repertoire-chord-chart';
+import { normalizeTab } from '@/utils/repertoire-tab';
 import type { RepertoireItem } from '@/types/practice';
 
 /**

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { tokenizeTabLine } from "../src/lib/licks/tab-highlight.ts";
+import { tokenizeTabLine } from "../src/utils/licks/tab-highlight.ts";
 
 test("tokenizing preserves every character", () => {
   const line = "e|--7h9---12--|";

@@ -7,15 +7,11 @@ import { TodaysRoutinePlan } from '@/components/dashboard/TodaysRoutinePlan';
 import { WeeklyRoutinePlanner } from '@/components/dashboard/WeeklyRoutinePlanner';
 import { PracticeGoalsCard } from '@/components/dashboard/PracticeGoalsCard';
 import { usePracticeStore } from '@/stores/usePracticeStore';
-import type { WeekdayIndex } from '@/lib/weekly-routine-schedule';
+import { parseDateKey } from '@/utils/practice-calendar';
+import type { WeekdayIndex } from '@/utils/weekly-routine-schedule';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { useAppData } from '@/components/providers/AppDataProvider';
 import { HomeSkeleton } from '@/components/ui/Skeletons';
-
-function parseDateKey(dateKey: string) {
-  const [year, month, day] = dateKey.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
 
 export function HomeView({ todayKey }: { todayKey: string }) {
   const home = useI18nSection('home');

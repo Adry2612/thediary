@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { GoogleDriveAdapter } from "@/lib/cloud-sync/google-drive";
-import { OneDriveAdapter } from "@/lib/cloud-sync/onedrive";
+import { GoogleDriveAdapter } from "@/services/cloud-sync/google-drive";
+import { OneDriveAdapter } from "@/services/cloud-sync/onedrive";
 import {
   cloudTokenCookieNames,
   readCloudTokenSession,
-} from "@/lib/cloud-sync/session";
-import { isCloudSyncProvider } from "@/lib/cloud-sync/oauth";
+} from "@/services/cloud-sync/session";
+import { isCloudSyncProvider } from "@/services/cloud-sync/oauth";
 
 export async function GET(
   request: Request,

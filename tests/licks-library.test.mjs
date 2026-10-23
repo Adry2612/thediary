@@ -5,7 +5,7 @@ import {
   getLicksSummary,
   getSortedLicks,
   getVisibleLicks,
-} from "../src/lib/licks/library.ts";
+} from "../src/utils/licks/library.ts";
 
 const base = {
   id: "lick",

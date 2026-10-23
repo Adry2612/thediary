@@ -5,28 +5,12 @@ import { PracticeSessionDetails } from "@/components/dashboard/PracticeSessionDe
 import { BackLink } from "@/components/ui/BackLink";
 import { SessionEditor } from "@/components/dashboard/SessionEditor";
 import { PracticeRecordingItem } from "@/components/practice/PracticeRecordingItem";
-import { getLocalDateKey } from "@/lib/local-date";
-import {
-  deletePracticeRecording,
-  listPracticeRecordings,
-  type PracticeAudioRecording,
-} from "@/lib/practice-library";
-import { associateDayRecordings } from "@/lib/practice-recording-filtering";
+import { getLocalDateKey } from "@/utils/local-date";
+import { formatDateLabel } from "@/utils/format";
+import { deletePracticeRecording, listPracticeRecordings } from "@/services/practice-library";
+import type { PracticeAudioRecording } from "@/types/practice-library";
+import { associateDayRecordings } from "@/utils/practice-recording-filtering";
 import { usePracticeStore } from "@/stores/usePracticeStore";
-
-function parseDateKey(dateKey: string) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function formatDate(dateKey: string) {
-  return new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(parseDateKey(dateKey));
-}
 
 interface PracticeDayDetailProps {
   dateKey: string;
@@ -35,6 +19,7 @@ interface PracticeDayDetailProps {
 export function PracticeDayDetail({ dateKey }: PracticeDayDetailProps) {
   const history = usePracticeStore((state) => state.history);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
+  const licks = usePracticeStore((state) => state.licks);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const updateSession = usePracticeStore((state) => state.updateSession);
   const deleteSession = usePracticeStore((state) => state.deleteSession);
@@ -120,7 +105,7 @@ export function PracticeDayDetail({ dateKey }: PracticeDayDetailProps) {
           Detalle de práctica
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-          {formatDate(dateKey)}
+          {formatDateLabel(dateKey, "es-ES", true)}
         </h1>
         {hasHydrated && (
           <p className="mt-3 text-base text-muted">
@@ -170,6 +155,7 @@ export function PracticeDayDetail({ dateKey }: PracticeDayDetailProps) {
                   }
                   recordingsLoading={!recordingsLoaded}
                   repertoireItems={repertoireItems}
+                  licks={licks}
                   onDeleteRecording={(recordingId) =>
                     void removeRecording(recordingId)
                   }

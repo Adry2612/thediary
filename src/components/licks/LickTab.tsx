@@ -1,7 +1,7 @@
 "use client";
 
 import { TabView } from "@/components/repertoire/TabView";
-import { tokenizeTabLine } from "@/lib/licks/tab-highlight";
+import { tokenizeTabLine } from "@/utils/licks/tab-highlight";
 import type { RepertoireTab } from "@/types/practice";
 
 export function LickTab({
