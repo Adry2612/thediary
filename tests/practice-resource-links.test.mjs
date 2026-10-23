@@ -3,7 +3,10 @@ import test from "node:test";
 import {
   extractSpotifyTrackId,
   extractYoutubeVideoId,
-} from "../src/lib/practice-resource-links.ts";
+  isAllowedResourceUrl,
+  SPOTIFY_LINK_HOSTS,
+  YOUTUBE_LINK_HOSTS,
+} from "../src/utils/practice-resource-links.ts";
 
 test("extracts YouTube ids from supported url shapes", () => {
   assert.equal(extractYoutubeVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ"), "dQw4w9WgXcQ");
@@ -20,4 +23,26 @@ test("extracts Spotify track ids", () => {
   );
   assert.equal(extractSpotifyTrackId("https://open.spotify.com/album/4uLU6hMCjMI75M1A2tKUQC"), null);
   assert.equal(extractSpotifyTrackId("nope"), null);
+});
+
+test("accepts only the hosts the repertoire form allows", () => {
+  assert.equal(isAllowedResourceUrl("", YOUTUBE_LINK_HOSTS), true);
+  assert.equal(isAllowedResourceUrl("   ", SPOTIFY_LINK_HOSTS), true);
+  assert.equal(
+    isAllowedResourceUrl("https://youtu.be/dQw4w9WgXcQ", YOUTUBE_LINK_HOSTS),
+    true,
+  );
+  assert.equal(
+    isAllowedResourceUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ", YOUTUBE_LINK_HOSTS),
+    true,
+  );
+  assert.equal(
+    isAllowedResourceUrl("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC", SPOTIFY_LINK_HOSTS),
+    true,
+  );
+  assert.equal(
+    isAllowedResourceUrl("https://evil.com/watch?v=dQw4w9WgXcQ", YOUTUBE_LINK_HOSTS),
+    false,
+  );
+  assert.equal(isAllowedResourceUrl("no es una url", YOUTUBE_LINK_HOSTS), false);
 });

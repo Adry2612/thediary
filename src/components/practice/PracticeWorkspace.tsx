@@ -1,17 +1,26 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { PracticePlanBuilder } from '@/components/practice/PracticePlanBuilder';
 import { SavedPracticeRoutines } from '@/components/practice/SavedPracticeRoutines';
 import { Button } from '@/components/ui/Button';
 import { ArrowLeftIcon } from '@/components/ui/icons';
-import { createPracticePlanFromSession } from '@/lib/practice-launch';
-import { getPracticePlanDuration } from '@/lib/practice-plan';
+import {
+  createPracticePlanFromSession,
+  createQuickPracticePlan,
+  createTemplatePlan,
+  type PracticeLaunchSession,
+} from '@/utils/practice-launch';
+import { getPracticePlanDuration } from '@/utils/practice-plan';
+import {
+  validatePracticeTemplate,
+} from '@/utils/practice-templates';
+import { useRequestedLaunch } from '@/hooks/useRequestedLaunch';
 import { useActivePracticeSessionStore } from '@/stores/useActivePracticeSessionStore';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import type { PracticePhase } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
-import { createId } from '@/lib/create-id';
+import { createId } from '@/utils/create-id';
 import { PracticeSkeleton } from '@/components/ui/Skeletons';
 
 export function PracticeWorkspace({
@@ -31,6 +40,7 @@ export function PracticeWorkspace({
   const templates = usePracticeStore((state) => state.templates);
   const history = usePracticeStore((state) => state.history);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
+  const licks = usePracticeStore((state) => state.licks);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const activeSession = useActivePracticeSessionStore(
     (state) => state.activeSession,
@@ -48,9 +58,6 @@ export function PracticeWorkspace({
     name: text.yourPractice,
     phases: initialPhases,
   });
-  const [templateLaunchError, setTemplateLaunchError] = useState<string | null>(
-    null,
-  );
   const [isBuilding, setIsBuilding] = useState(false);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(
     null,
@@ -62,124 +69,31 @@ export function PracticeWorkspace({
       requestedQuickRepertoireId ||
       (autoStartTemplate && requestedTemplateId),
   );
-  const launchedTemplateId = useRef<string | null>(null);
-  const launchedSessionId = useRef<string | null>(null);
-  const launchedQuickRepertoireId = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (
-      !requestedQuickRepertoireId ||
-      !hasHydrated ||
-      !activeSessionHydrated ||
-      activeSession ||
-      launchedQuickRepertoireId.current === requestedQuickRepertoireId
-    ) {
-      return;
-    }
-
-    launchedQuickRepertoireId.current = requestedQuickRepertoireId;
-    const item = repertoireItems.find(
-      (candidate) => candidate.id === requestedQuickRepertoireId,
-    );
-    if (!item) {
-      setTemplateLaunchError(text.templateNotFound);
-      return;
-    }
-
-    const phase: PracticePhase = {
-      id: `quick-${item.id}`,
-      name: item.title,
-      durationMinutes: 1,
-      skill: 'repertoire',
-      // Vincular el elemento es lo que hace que su tiempo practicado cuente
-      // cuando la práctica se completa (la parte se deja sin elegir).
-      repertoireItemId: item.id,
-      resources: item.guitarPro ? [item.guitarPro] : undefined,
-    };
-    setDraftPlan({ name: item.title, phases: [phase] });
-    setActiveSession({
-      id: createId(),
-      name: item.title,
-      phases: [phase],
-      attachedResources: item.resources,
-      isCountUp: true,
-    });
-    setTemplateLaunchError(null);
-  }, [
-    activeSession,
-    hasHydrated,
-    activeSessionHydrated,
-    repertoireItems,
-    requestedQuickRepertoireId,
-    setActiveSession,
-    text.templateNotFound,
-  ]);
-
-  useEffect(() => {
-    if (
-      requestedSessionId ||
-      requestedQuickRepertoireId ||
-      !autoStartTemplate ||
-      !requestedTemplateId ||
-      !hasHydrated ||
-      !activeSessionHydrated ||
-      activeSession
-    ) {
-      return;
-    }
-    if (launchedTemplateId.current === requestedTemplateId) return;
-
-    launchedTemplateId.current = requestedTemplateId;
-    const template = templates.find(
-      (candidate) => candidate.id === requestedTemplateId,
-    );
-    if (!template) {
-      setTemplateLaunchError(text.templateNotFound);
-      return;
-    }
-
-    const plan = { name: template.name, phases: template.phases };
-    setDraftPlan(plan);
-    setActiveSession({ id: createId(), ...plan });
-    setTemplateLaunchError(null);
-  }, [
-    autoStartTemplate,
-    activeSessionHydrated,
-    hasHydrated,
-    activeSession,
-    requestedSessionId,
-    requestedQuickRepertoireId,
+  const launchRequestedPlan = useCallback(
+    (plan: PracticeLaunchSession) => {
+      setDraftPlan({ name: plan.name, phases: plan.phases });
+      setActiveSession({ id: createId(), ...plan });
+    },
+    [setActiveSession],
+  );
+  const { templateLaunchError, setTemplateLaunchError } = useRequestedLaunch({
     requestedTemplateId,
-    setActiveSession,
-    templates,
-  ]);
-
-  useEffect(() => {
-    if (!requestedSessionId || !hasHydrated || !activeSessionHydrated || activeSession) return;
-    if (launchedSessionId.current === requestedSessionId) return;
-
-    launchedSessionId.current = requestedSessionId;
-    const session = history.find(
-      (candidate) => candidate.id === requestedSessionId,
-    );
-    const plan = session ? createPracticePlanFromSession(session) : null;
-    if (!plan) {
-      setTemplateLaunchError(text.repeatNotFound);
-      return;
-    }
-
-    setDraftPlan(plan);
-    setActiveSession({ id: createId(), ...plan });
-    setTemplateLaunchError(null);
-  }, [
-    activeSession,
-    activeSessionHydrated,
-    hasHydrated,
-    history,
     requestedSessionId,
-    setActiveSession,
-  ]);
-
+    requestedQuickRepertoireId,
+    autoStartTemplate,
+    hasHydrated,
+    activeSessionHydrated,
+    activeSession,
+    templates,
+    history,
+    repertoireItems,
+    licks,
+    templateNotFound: text.templateNotFound,
+    repeatNotFound: text.repeatNotFound,
+    invalidTemplate: text.invalidTemplate,
+    invalidRepeat: text.invalidRepeat,
+    launch: launchRequestedPlan,
+  });
   if (!hasHydrated || (isLaunching && !activePlan)) {
     return <PracticeSkeleton />;
   }
@@ -190,29 +104,30 @@ export function PracticeWorkspace({
       setTemplateLaunchError(text.templateNotFound);
       return;
     }
-    const plan = { name: template.name, phases: template.phases };
+    if (
+      validatePracticeTemplate(template.name, template.phases, {
+        repertoireItems,
+        licks,
+      })
+    ) {
+      setTemplateLaunchError(text.invalidTemplate);
+      return;
+    }
+    const plan = createTemplatePlan(template);
     setDraftPlan(plan);
     setTemplateLaunchError(null);
     setActiveSession({ id: createId(), ...plan });
   }
 
   function startQuickPractice() {
-    const phases: PracticePhase[] = [
-      {
-        id: createId(),
-        name: text.quickBlockName,
-        durationMinutes: 120,
-        skill: 'technique',
-      },
-    ];
-    setDraftPlan({ name: text.quickPracticeTitle, phases });
+    const plan = createQuickPracticePlan(
+      text.quickPracticeTitle,
+      text.quickBlockName,
+      createId(),
+    );
+    setDraftPlan({ name: plan.name, phases: plan.phases });
     setTemplateLaunchError(null);
-    setActiveSession({
-      id: createId(),
-      name: text.quickPracticeTitle,
-      phases,
-      isCountUp: true,
-    });
+    setActiveSession({ id: createId(), ...plan });
   }
 
   function openBuilder(templateId: string | null) {

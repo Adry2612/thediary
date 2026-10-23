@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   getKeyDistribution,
   getTechniqueDistribution,
-} from "../src/lib/licks/distribution.ts";
+} from "../src/utils/licks/distribution.ts";
 
 const base = {
   id: "lick",

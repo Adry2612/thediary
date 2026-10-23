@@ -5,15 +5,17 @@ import Link from 'next/link';
 import { EditIcon, TrashIcon } from '@/components/ui/icons';
 import { PracticeRecordingItem } from '@/components/practice/PracticeRecordingItem';
 import { PracticeSessionPhases } from '@/components/dashboard/PracticeSessionPhases';
-import { formatClock } from '@/lib/format';
-import type { PracticeAudioRecording } from '@/lib/practice-library';
+import { formatClock } from '@/utils/format';
+import type { PracticeAudioRecording } from "@/types/practice-library";
 import type { RepertoireItem, SessionRecord } from '@/types/practice';
+import type { GuitarLick } from '@/types/lick';
 
 interface PracticeSessionDetailsProps {
   session: SessionRecord;
   sessionRecordings: PracticeAudioRecording[];
   recordingsLoading?: boolean;
   repertoireItems: RepertoireItem[];
+  licks: GuitarLick[];
   onDeleteRecording: (recordingId: string) => void;
   onEdit?: (session: SessionRecord) => void;
   onDelete?: (sessionId: string) => void;
@@ -31,6 +33,7 @@ export function PracticeSessionDetails({
   sessionRecordings,
   recordingsLoading = false,
   repertoireItems,
+  licks,
   onDeleteRecording,
   onEdit,
   onDelete,
@@ -111,6 +114,7 @@ export function PracticeSessionDetails({
         sessionId={session.id}
         phases={session.phases}
         repertoireItems={repertoireItems}
+        licks={licks}
       />
 
       <section

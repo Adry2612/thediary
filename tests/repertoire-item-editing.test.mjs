@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildRepertoireDetailsUpdate,
   buildRepertoireExtraConfigUpdates,
   createRepertoirePart,
   hasRepertoireExtraConfigChanges,
   parseRepertoireBpm,
+  parseRepertoireCapo,
   updateRepertoirePart,
-} from "../src/lib/repertoire-item-editing.ts";
-import { createRepertoireItem } from "../src/lib/repertoire-item.ts";
+} from "../src/utils/repertoire-item-editing.ts";
+import { createRepertoireItem } from "../src/utils/repertoire-item.ts";
 
 const UPDATED_AT = "2026-10-18T10:00:00.000Z";
 
@@ -183,6 +185,24 @@ test("parses optional part BPM values within the supported range", () => {
   assert.deepEqual(parseRepertoireBpm("401"), { isValid: false, value: null });
 });
 
+test("parses the capo within the supported range", () => {
+  assert.deepEqual(parseRepertoireCapo(""), { isValid: true, value: undefined });
+  assert.deepEqual(parseRepertoireCapo("0"), { isValid: true, value: 0 });
+  assert.deepEqual(parseRepertoireCapo("12"), { isValid: true, value: 12 });
+  assert.deepEqual(parseRepertoireCapo("13"), {
+    isValid: false,
+    value: undefined,
+  });
+  assert.deepEqual(parseRepertoireCapo("-1"), {
+    isValid: false,
+    value: undefined,
+  });
+  assert.deepEqual(parseRepertoireCapo("abc"), {
+    isValid: false,
+    value: undefined,
+  });
+});
+
 test("creates a new repertoire part with its default learning and BPM state", () => {
   assert.deepEqual(createRepertoirePart("part-2", 2), {
     id: "part-2",
@@ -216,6 +236,75 @@ test("updates only the selected part and refreshes the item timestamp", () => {
         { ...item.parts[1], learned: true },
       ],
       updatedAt: "2026-10-08T12:00:00.000Z",
+    },
+  );
+});
+
+test("reverts a title that was left empty instead of saving it", () => {
+  const item = createItem();
+
+  assert.deepEqual(
+    buildRepertoireDetailsUpdate(
+      { title: "   ", artist: "Artista" },
+      item,
+      UPDATED_AT,
+    ),
+    { kind: "empty-title" },
+  );
+});
+
+test("saves nothing when the title and artist do not change", () => {
+  const item = createItem();
+
+  assert.deepEqual(
+    buildRepertoireDetailsUpdate(
+      { title: " Canción ", artist: " Artista " },
+      item,
+      UPDATED_AT,
+    ),
+    { kind: "unchanged" },
+  );
+  assert.deepEqual(
+    buildRepertoireDetailsUpdate(
+      { title: "Canción", artist: "" },
+      createItem({ artist: undefined }),
+      UPDATED_AT,
+    ),
+    { kind: "unchanged" },
+  );
+});
+
+test("saves the trimmed title and artist, dropping an empty artist", () => {
+  const item = createItem();
+
+  assert.deepEqual(
+    buildRepertoireDetailsUpdate(
+      { title: "  Otra canción  ", artist: "  Otro artista  " },
+      item,
+      UPDATED_AT,
+    ),
+    {
+      kind: "save",
+      updates: {
+        title: "Otra canción",
+        artist: "Otro artista",
+        updatedAt: UPDATED_AT,
+      },
+    },
+  );
+  assert.deepEqual(
+    buildRepertoireDetailsUpdate(
+      { title: "Otra canción", artist: "   " },
+      item,
+      UPDATED_AT,
+    ),
+    {
+      kind: "save",
+      updates: {
+        title: "Otra canción",
+        artist: undefined,
+        updatedAt: UPDATED_AT,
+      },
     },
   );
 });

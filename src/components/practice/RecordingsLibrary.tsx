@@ -1,195 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PracticeRecordingItem } from "@/components/practice/PracticeRecordingItem";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { RecordingsListSkeleton } from "@/components/ui/Skeletons";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/Field";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
-import {
-  getFilteredPracticeRecordings,
-  isPracticeRecordingSort,
-  groupPracticeRecordingsByDate,
-  type PracticeRecordingFilters,
-} from "@/lib/practice-recording-filtering";
-import {
-  deletePracticeRecording,
-  listPracticeRecordings,
-  type PracticeAudioRecording,
-} from "@/lib/practice-library";
-import { mergeRemoteCatalog } from "@/lib/cloud-sync/catalog";
-import { RECORDING_SAVED_EVENT } from "@/lib/practice-events";
-import { useCloudRecordingSync } from "@/hooks/useCloudRecordingSync";
-
-const INITIAL_FILTERS: PracticeRecordingFilters = {
-  phaseOrder: "",
-  phaseName: "",
-  sort: "newest",
-};
-function formatDateLabel(dateKey: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(`${dateKey}T12:00:00`));
-}
+import { useRecordingsLibrary } from "@/hooks/useRecordingsLibrary";
+import { formatDateLabel } from "@/utils/format";
+import { isPracticeRecordingSort } from "@/utils/practice-recording-filtering";
 
 export function RecordingsLibrary() {
   const { locale } = useI18n();
   const text = useI18nSection("recordings");
-  const [recordings, setRecordings] = useState<PracticeAudioRecording[]>([]);
-  const [filters, setFilters] =
-    useState<PracticeRecordingFilters>(INITIAL_FILTERS);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCatalogLoaded, setIsCatalogLoaded] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
   const {
-    statuses: cloudStatuses,
-    isLoading: isLoadingProviders,
-    listRemoteRecordings,
-  } = useCloudRecordingSync();
-
-  const loadRecordings = useCallback(async (): Promise<PracticeAudioRecording[]> => {
-    const savedRecordings = await listPracticeRecordings();
-    setRecordings(savedRecordings);
-    setLoadError(null);
-    return savedRecordings;
-  }, []);
-
-  useEffect(() => {
-    let isActive = true;
-    void loadRecordings()
-      .catch((error: unknown) => {
-        if (!isActive) return;
-        setLoadError(
-          error instanceof Error
-            ? error.message
-            : "No se pudieron cargar las grabaciones.",
-        );
-      })
-      .finally(() => {
-        if (isActive) setIsLoading(false);
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [loadRecordings]);
-
-  useEffect(() => {
-    function reload() {
-      void loadRecordings().catch(() => undefined);
-    }
-    function reloadWhenVisible() {
-      if (document.visibilityState === "visible") reload();
-    }
-
-    window.addEventListener(RECORDING_SAVED_EVENT, reload);
-    window.addEventListener("focus", reload);
-    document.addEventListener("visibilitychange", reloadWhenVisible);
-    return () => {
-      window.removeEventListener(RECORDING_SAVED_EVENT, reload);
-      window.removeEventListener("focus", reload);
-      document.removeEventListener("visibilitychange", reloadWhenVisible);
-    };
-  }, [loadRecordings]);
-
-  useEffect(() => {
-    const connectedProviders = cloudStatuses.filter((status) => status.connected);
-    if (connectedProviders.length === 0 || isLoading) return;
-    let active = true;
-    void Promise.all(
-      connectedProviders.map(async ({ provider }) => {
-        try {
-          return { provider, recordings: await listRemoteRecordings(provider) };
-        } catch {
-          return { provider, recordings: [] };
-        }
-      }),
-    ).then((catalogs) => {
-      if (!active) return;
-      setRecordings((current) =>
-        catalogs.reduce(
-          (merged, catalog) => mergeRemoteCatalog(merged, catalog.provider, catalog.recordings),
-          current,
-        ),
-      );
-    }).finally(() => {
-      if (active) setIsCatalogLoaded(true);
-    });
-    return () => {
-      active = false;
-    };
-  }, [cloudStatuses, isLoading, listRemoteRecordings]);
-
-  const blockOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          recordings
-            .map((recording) => recording.phaseOrder)
-            .filter((order): order is number => order !== undefined),
-        ),
-      )
-        .sort((left, right) => left - right)
-        .map((order) => ({
-          value: String(order),
-          label: `${text.block} ${order}`,
-        })),
-    [recordings],
-  );
-  const filteredRecordings = useMemo(
-    () => getFilteredPracticeRecordings(recordings, filters),
-    [filters, recordings],
-  );
-  const recordingGroups = useMemo(
-    () =>
-      groupPracticeRecordingsByDate(
-        filteredRecordings,
-        filters.sort === "oldest" ? "oldest" : "newest",
-      ),
-    [filteredRecordings, filters.sort],
-  );
-
-  function updateFilter<Key extends keyof PracticeRecordingFilters>(
-    key: Key,
-    value: PracticeRecordingFilters[Key],
-  ) {
-    setFilters((current) => ({ ...current, [key]: value }));
-  }
-
-  async function removeRecording(recordingId: string) {
-    try {
-      await deletePracticeRecording(recordingId);
-      setRecordings((current) =>
-        current.filter((recording) => recording.id !== recordingId),
-      );
-      setDeleteError(null);
-    } catch (error) {
-      setDeleteError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo eliminar la grabación.",
-      );
-    }
-  }
-
-  function updateRecording(updatedRecording: PracticeAudioRecording) {
-    setRecordings((current) =>
-      current.map((recording) =>
-        recording.id === updatedRecording.id ? updatedRecording : recording,
-      ),
-    );
-  }
-
-  // Solo esperamos a la nube si hay algún proveedor conectado; así el skeleton
-  // de la lista no bloquea toda la pantalla mientras llega el catálogo remoto.
-  const isCloudPending =
-    isLoadingProviders ||
-    (cloudStatuses.some((status) => status.connected) && !isCatalogLoaded);
+    recordings,
+    filters,
+    updateFilter,
+    clearFilters,
+    blockOptions,
+    filteredRecordings,
+    recordingGroups,
+    isLoading,
+    loadError,
+    deleteError,
+    removeRecording,
+    updateRecording,
+    isCloudPending,
+  } = useRecordingsLibrary(text.block);
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
@@ -301,7 +140,7 @@ export function RecordingsLibrary() {
                   className="font-sans text-2xl font-semibold capitalize tracking-tight text-ink sm:text-3xl"
                 >
                   {group.dateKey
-                    ? formatDateLabel(group.dateKey, locale)
+                    ? formatDateLabel(group.dateKey, locale, true)
                     : text.unavailableDate}
                 </h2>
                 <span className="font-mono text-xs text-muted">
@@ -328,36 +167,40 @@ export function RecordingsLibrary() {
       ) : isCloudPending ? (
         <RecordingsListSkeleton label={text.loadingCloudRecordings} rows={2} />
       ) : recordings.length > 0 ? (
-        <section className="mt-8 border-y border-line py-8">
-          <h2 className="text-lg font-semibold text-ink">
-            {text.noMatches}
-          </h2>
-          <p className="mt-2 text-sm text-muted">
-            {text.tryOther}
-          </p>
-          <button
-            type="button"
-            onClick={() => setFilters(INITIAL_FILTERS)}
-            className="mt-4 text-sm text-ink underline underline-offset-4"
-          >
-            {text.clear}
-          </button>
-        </section>
+        <EmptyState
+          as="section"
+          variant="plain"
+          size="compact"
+          className="mt-8 border-y border-line py-8"
+          title={text.noMatches}
+          description={text.tryOther}
+          action={
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-sm text-ink underline underline-offset-4"
+            >
+              {text.clear}
+            </button>
+          }
+        />
       ) : (
-        <section className="mt-8 border-y border-line py-8">
-          <h2 className="text-lg font-semibold text-ink">
-            {text.emptyTitle}
-          </h2>
-          <p className="mt-2 text-sm text-muted">
-            {text.emptyDescription}
-          </p>
-          <Link
-            href="/practice"
-            className="mt-4 inline-flex text-sm text-ink underline underline-offset-4"
-          >
-            {text.goPractice}
-          </Link>
-        </section>
+        <EmptyState
+          as="section"
+          variant="plain"
+          size="compact"
+          className="mt-8 border-y border-line py-8"
+          title={text.emptyTitle}
+          description={text.emptyDescription}
+          action={
+            <Link
+              href="/practice"
+              className="inline-flex text-sm text-ink underline underline-offset-4"
+            >
+              {text.goPractice}
+            </Link>
+          }
+        />
       )}
     </main>
   );

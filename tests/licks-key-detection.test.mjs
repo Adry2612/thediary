@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { detectTabKey } from "../src/lib/licks/key-detection.ts";
+import { detectTabKey } from "../src/utils/licks/key-detection.ts";
 
 function tab(notes, tuning = "EADGBE") {
   return { tuning, measures: 2, subdivision: 8, notes };

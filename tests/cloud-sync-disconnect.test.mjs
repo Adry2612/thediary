@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { GoogleDriveAdapter } from "../src/lib/cloud-sync/google-drive.ts";
-import { OneDriveAdapter } from "../src/lib/cloud-sync/onedrive.ts";
+import { GoogleDriveAdapter } from "../src/services/cloud-sync/google-drive.ts";
+import { OneDriveAdapter } from "../src/services/cloud-sync/onedrive.ts";
 
 test("disconnecting Google Drive revokes the session without deleting Drive files", async () => {
   const requests = [];

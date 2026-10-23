@@ -2,8 +2,8 @@ import { useI18nSection } from "@/i18n/I18nProvider";
 import {
   getKeyDistribution,
   getTechniqueDistribution,
-} from "@/lib/licks/distribution";
-import { LICK_CHART_COLORS } from "@/lib/licks/presentation";
+} from "@/utils/licks/distribution";
+import { LICK_CHART_COLORS } from "@/utils/licks/presentation";
 import type { GuitarLick } from "@/types/lick";
 
 function groupLabel(

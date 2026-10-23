@@ -4,13 +4,13 @@ import {
   MUSICAL_KEYS,
   isMusicalKey,
   normalizeMusicalKey,
-} from "../src/lib/licks/keys.ts";
+} from "../src/utils/licks/keys.ts";
 import {
   LICK_TECHNIQUES,
   getLickTechnique,
   isTechniqueId,
   normalizeTechniques,
-} from "../src/lib/licks/techniques.ts";
+} from "../src/utils/licks/techniques.ts";
 import { TECHNIQUE_IDS } from "../src/types/lick.ts";
 
 test("the key catalogue has the twelve roots in major and minor", () => {

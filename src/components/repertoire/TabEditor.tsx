@@ -33,8 +33,8 @@ import {
   TAB_TECHNIQUES,
   tabSystemTechniques,
   tabTechniqueGlyphs,
-} from "@/lib/repertoire-tab";
-import { parseTuningNotes, STRING_COUNT } from "@/lib/chords";
+} from "@/utils/repertoire-tab";
+import { parseTuningNotes, STRING_COUNT } from "@/utils/chords";
 import type { RepertoireTab, RepertoireTabNote } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { useTabEditorSelection } from "@/hooks/useTabEditorSelection";

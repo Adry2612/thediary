@@ -17,7 +17,7 @@ import {
   tabCellsBetween,
   toggleTabTechniques,
   type TabCell,
-} from "@/lib/repertoire-tab";
+} from "@/utils/repertoire-tab";
 import type { RepertoireTab } from "@/types/practice";
 
 interface UseTabEditorSelectionOptions {

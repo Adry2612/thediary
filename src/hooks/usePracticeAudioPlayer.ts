@@ -5,8 +5,9 @@ import type { SyntheticEvent } from "react";
 import {
   activateExclusiveAudio,
   releaseExclusiveAudio,
-} from "@/lib/practice-audio-playback";
-import { getPlaybackDurationSeconds } from "@/lib/recording-duration";
+} from "@/utils/practice-audio-playback";
+import { getPlaybackDurationSeconds } from "@/utils/recording-duration";
+import { enablePlaybackAudioSession } from "@/services/audio-session";
 
 interface UsePracticeAudioPlayerOptions {
   src: string;
@@ -70,6 +71,7 @@ export function usePracticeAudioPlayer({
     }
 
     audio.volume = showVolumeControl ? volume : 1;
+    enablePlaybackAudioSession();
     activateExclusiveAudio(audio);
     try {
       await audio.play();

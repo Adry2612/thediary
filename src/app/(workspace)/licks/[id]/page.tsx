@@ -17,7 +17,7 @@ import {
   findLinkedSong,
   getLastPracticedLabel,
   getLickTitle,
-} from "@/lib/licks/presentation";
+} from "@/utils/licks/presentation";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 
 interface Props {

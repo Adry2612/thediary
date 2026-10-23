@@ -4,7 +4,7 @@ import {
   getMetronomeMeter,
   getMetronomeSubdivisionOptions,
   METRONOME_METERS,
-} from "../src/lib/metronome-meter.ts";
+} from "../src/utils/metronome-meter.ts";
 
 test("includes the displayed compound meters and the existing 4/4 meter", () => {
   assert.deepEqual(

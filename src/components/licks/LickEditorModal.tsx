@@ -8,15 +8,15 @@ import { LickTab } from "@/components/licks/LickTab";
 import { TabEditor } from "@/components/repertoire/TabEditor";
 import { EditIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
-import { createId } from "@/lib/create-id";
-import { normalizeMusicalKey, MUSICAL_KEYS } from "@/lib/licks/keys";
-import { detectTabKey } from "@/lib/licks/key-detection";
+import { createId } from "@/utils/create-id";
+import { normalizeMusicalKey, MUSICAL_KEYS } from "@/utils/licks/keys";
+import { detectTabKey } from "@/utils/licks/key-detection";
 import {
   LICK_TECHNIQUES,
   normalizeTechniques,
-} from "@/lib/licks/techniques";
-import { MAX_BPM, MIN_BPM } from "@/lib/metronome-tempo";
-import { normalizeTab } from "@/lib/repertoire-tab";
+} from "@/utils/licks/techniques";
+import { MAX_BPM, MIN_BPM } from "@/utils/metronome-tempo";
+import { normalizeTab } from "@/utils/repertoire-tab";
 import type { GuitarLick, TechniqueId } from "@/types/lick";
 import type { RepertoireItem, RepertoireTab } from "@/types/practice";
 

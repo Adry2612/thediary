@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import type { PracticePhase, PracticeResource } from "@/types/practice";
+import { normalizePracticePhaseLinks } from "../utils/practice-plan.ts";
 
 const ACTIVE_SESSION_STORAGE_KEY = "thediary.active-practice-session";
 
@@ -15,7 +16,10 @@ function readStoredSession(): ActivePracticeSession | null {
     if (!session?.id || !session.name || !Array.isArray(session.phases)) {
       return null;
     }
-    return session;
+    return {
+      ...session,
+      phases: session.phases.map(normalizePracticePhaseLinks),
+    };
   } catch {
     return null;
   }
@@ -36,6 +40,8 @@ export interface ActivePracticeSession {
   phases: PracticePhase[];
   attachedResources?: PracticeResource[];
   isCountUp?: boolean;
+  /** Rutina guardada de la que salió la sesión, si la hubo. */
+  templateId?: string;
 }
 
 interface ActivePracticeSessionState {
@@ -46,6 +52,10 @@ interface ActivePracticeSessionState {
   hydrateActiveSession: () => void;
   setSplitView: (isSplitView: boolean) => void;
   addAttachedResource: (resource: PracticeResource) => void;
+  updatePhase: (
+    phaseId: PracticePhase["id"],
+    changes: Partial<PracticePhase>,
+  ) => void;
   clearActiveSession: () => void;
 }
 
@@ -74,6 +84,18 @@ export const useActivePracticeSessionStore =
         persistSession(nextSession);
         return { activeSession: nextSession };
       }),
+  updatePhase: (phaseId, changes) =>
+    set(({ activeSession }) => {
+      if (!activeSession) return {};
+      const nextSession = {
+        ...activeSession,
+        phases: activeSession.phases.map((phase) =>
+          phase.id === phaseId ? { ...phase, ...changes } : phase,
+        ),
+      };
+      persistSession(nextSession);
+      return { activeSession: nextSession };
+    }),
   clearActiveSession: () => {
     persistSession(null);
     set({ activeSession: null, isSplitView: false });

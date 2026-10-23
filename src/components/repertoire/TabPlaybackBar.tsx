@@ -3,14 +3,13 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/Field";
-import { SelectField } from "@/components/ui/SelectField";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { useTabPlayback } from "@/hooks/useTabPlayback";
 import {
   clampMetronomeBpm,
   MAX_BPM,
   MIN_BPM,
-} from "@/lib/metronome-tempo";
+} from "@/utils/metronome-tempo";
 import type { RepertoireTab } from "@/types/practice";
 
 function safeBpm(value?: number) {
@@ -20,9 +19,9 @@ function safeBpm(value?: number) {
 }
 
 /**
- * Controles de reproducción MIDI para una tablatura estructurada. El tempo es
- * independiente del BPM objetivo del lick: sirve para escuchar y practicar más
- * despacio sin modificar sus datos.
+ * Controles de reproducción visual de una tablatura. El tempo es independiente
+ * del BPM objetivo del lick: sirve para seguir la tablatura más despacio sin
+ * modificar sus datos. No reproduce audio.
  */
 export function TabPlaybackBar({
   tab,
@@ -38,13 +37,7 @@ export function TabPlaybackBar({
   const text = useI18nSection("repertoire");
   const [bpm, setBpm] = useState(() => safeBpm(initialBpm));
   const [bpmDraft, setBpmDraft] = useState(() => String(bpm));
-  const [program, setProgram] = useState(25);
-  const { isPlaying, isLoading, playhead, play, stop, error } =
-    useTabPlayback({
-      tab,
-      bpm,
-      program,
-    });
+  const { isPlaying, playhead, play, stop } = useTabPlayback({ tab, bpm });
 
   useEffect(() => {
     const next = safeBpm(initialBpm);
@@ -79,25 +72,15 @@ export function TabPlaybackBar({
         size="field"
         variant={isPlaying ? "primary" : "ghost"}
         disabled={!canPlay}
-        aria-busy={isLoading}
         aria-pressed={isPlaying}
-        aria-label={
-          isLoading ? `${text.tabPlaybackLoading}. ${text.tabStop}`
-          : isPlaying ? text.tabStop
-          : text.tabPlay
-        }
-        title={isLoading ? text.tabStop : undefined}
+        aria-label={isPlaying ? text.tabStop : text.tabPlay}
         onClick={() => {
-          if (isPlaying || isLoading) stop();
-          else void play();
+          if (isPlaying) stop();
+          else play();
         }}
       >
-        <span aria-hidden="true">
-          {isLoading ? "…" : isPlaying ? "■" : "▶"}
-        </span>
-        {isLoading ? text.tabPlaybackLoading
-        : isPlaying ? text.tabStop
-        : text.tabPlay}
+        <span aria-hidden="true">{isPlaying ? "■" : "▶"}</span>
+        {isPlaying ? text.tabStop : text.tabPlay}
       </Button>
 
       <label className="text-xs text-muted">
@@ -108,7 +91,7 @@ export function TabPlaybackBar({
           max={MAX_BPM}
           value={bpmDraft}
           aria-label={text.tabPlaybackBpm}
-          disabled={isPlaying || isLoading}
+          disabled={isPlaying}
           onChange={(event) => {
             const next = event.target.value.replace(/\D/g, "").slice(0, 3);
             setBpmDraft(next);
@@ -132,32 +115,6 @@ export function TabPlaybackBar({
           className="mt-1 w-20"
         />
       </label>
-
-      <label className="text-xs text-muted">
-        <span className="block">{text.tabPlaybackSound}</span>
-        <SelectField
-          className="mt-1 w-36"
-          value={String(program)}
-          ariaLabel={text.tabPlaybackSound}
-          disabled={isPlaying || isLoading}
-          onChange={(next) => setProgram(Number(next))}
-          options={[
-            { value: "25", label: text.tabSoundAcoustic },
-            { value: "24", label: text.tabSoundNylon },
-            { value: "27", label: text.tabSoundElectric },
-          ]}
-        />
-      </label>
-
-      <span className="mb-1 rounded border border-line px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
-        MIDI
-      </span>
-
-      {error ? (
-        <p role="alert" className="mb-1 text-xs text-red-300">
-          {text.tabPlaybackError}
-        </p>
-      ) : null}
     </div>
   );
 }

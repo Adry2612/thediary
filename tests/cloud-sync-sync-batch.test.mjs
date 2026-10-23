@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { syncPendingRecordings } from "../src/lib/cloud-sync/sync-batch.ts";
+import { syncPendingRecordings } from "../src/services/cloud-sync/sync-batch.ts";
 
 function recording(id) {
   return {

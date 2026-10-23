@@ -6,12 +6,13 @@ import {
   getPracticeTimeBuckets,
   getSkillDistribution,
   getStreakCount,
-} from "../src/lib/practice-analytics.ts";
+} from "../src/utils/practice-analytics.ts";
 
 const emptySkills = {
   technique: 0,
   theory: 0,
   repertoire: 0,
+  lick: 0,
   improvisation: 0,
 };
 
@@ -124,6 +125,7 @@ test("aggregates daily session time, average BPM, and skill minutes for a month"
       technique: 15,
       theory: 20,
       repertoire: 0,
+      lick: 0,
       improvisation: 0,
     },
   });
@@ -151,6 +153,7 @@ test("distributes skill time within an inclusive date range", () => {
         technique: { minutes: 20, percentage: 67 },
         theory: { minutes: 0, percentage: 0 },
         repertoire: { minutes: 10, percentage: 33 },
+        lick: { minutes: 0, percentage: 0 },
         improvisation: { minutes: 0, percentage: 0 },
       },
     },

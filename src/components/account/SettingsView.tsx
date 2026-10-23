@@ -1,91 +1,20 @@
 'use client';
 
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useAppData } from '@/components/providers/AppDataProvider';
-import { useTutorial } from '@/components/tutorial/TutorialProvider';
+import { ChangePasswordDialog } from '@/components/account/ChangePasswordDialog';
+import { DeletePracticeDataDialog } from '@/components/account/DeletePracticeDataDialog';
 import { SelectField } from '@/components/ui/SelectField';
 import { CloudSyncProviderIcon } from '@/components/ui/icons';
+import { useSettingsView } from '@/hooks/useSettingsView';
 import { useI18n, useI18nSection } from '@/i18n/I18nProvider';
 import { type Locale } from '@/i18n/translations';
-import { useCloudRecordingSync } from '@/hooks/useCloudRecordingSync';
-import { useAutoSyncPreference } from '@/hooks/useAutoSyncPreference';
-import type { CloudSyncProvider } from '@/lib/cloud-sync/types';
-
-type DialogName = 'password' | 'delete' | null;
-
-function describeError(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
-}
+import { useTutorial } from '@/components/tutorial/TutorialProvider';
 
 export function SettingsView() {
   const { locale, setLocale } = useI18n();
   const settings = useI18nSection('settings');
-  const { user, signOut, updatePassword, deleteAllPracticeData } = useAppData();
   const { openTutorial } = useTutorial();
-  const {
-    statuses: cloudStatuses,
-    isLoading: isLoadingCloud,
-    connect: connectCloud,
-    disconnect: disconnectCloud,
-  } = useCloudRecordingSync();
-  const { enabled: autoSyncEnabled, setEnabled: setAutoSyncEnabled } =
-    useAutoSyncPreference();
-  const router = useRouter();
-  const [dialog, setDialog] = useState<DialogName>(null);
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const [signOutError, setSignOutError] = useState<string | null>(null);
-  const [cloudError, setCloudError] = useState<string | null>(null);
-  const [workingProvider, setWorkingProvider] =
-    useState<CloudSyncProvider | null>(null);
-  const [connectedProvider, setConnectedProvider] =
-    useState<CloudSyncProvider | null>(null);
-
-  async function handleSignOut() {
-    setIsSigningOut(true);
-    setSignOutError(null);
-    try {
-      await signOut();
-      router.replace('/account');
-    } catch (error) {
-      setSignOutError(describeError(error, settings.signOut));
-    } finally {
-      setIsSigningOut(false);
-    }
-  }
-
-  async function handleDisconnectCloud(provider: CloudSyncProvider) {
-    setWorkingProvider(provider);
-    setCloudError(null);
-    try {
-      await disconnectCloud(provider);
-    } catch (error) {
-      setCloudError(
-        error instanceof Error ? error.message : settings.providerUnavailable,
-      );
-    } finally {
-      setWorkingProvider(null);
-    }
-  }
-
-  async function handleConnectCloud(provider: CloudSyncProvider) {
-    setWorkingProvider(provider);
-    setCloudError(null);
-    try {
-      await connectCloud(provider);
-      setConnectedProvider(provider);
-    } catch (error) {
-      const label =
-        provider === 'google-drive' ? settings.googleDrive : settings.onedrive;
-      setCloudError(
-        `${settings.connectionFailed} ${label}. ${error instanceof Error ? error.message : ''}`,
-      );
-    } finally {
-      setWorkingProvider(null);
-    }
-  }
+  const view = useSettingsView(settings);
 
   return (
     <main className='mx-auto max-w-3xl px-5 py-12 sm:px-8'>
@@ -108,23 +37,23 @@ export function SettingsView() {
           <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
             <div>
               <p className='text-xs uppercase tracking-[0.08em] text-muted'>
-                Cuenta
+                {settings.account}
               </p>
               <h2
                 id='settings-account-title'
                 className='mt-2 text-lg font-medium text-ink'
               >
-                {user?.email ?? settings.guest}
+                {view.user?.email ?? settings.guest}
               </h2>
               <p className='mt-2 max-w-lg text-sm leading-6 text-muted'>
-                {user ? settings.accountSaved : settings.accountPrompt}
+                {view.user ? settings.accountSaved : settings.accountPrompt}
               </p>
             </div>
             <Link
               href='/account'
               className='inline-flex min-h-11 shrink-0 items-center justify-center rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5'
             >
-              {user ? settings.accountSync : settings.signIn}
+              {view.user ? settings.accountSync : settings.signIn}
             </Link>
           </div>
         </section>
@@ -176,66 +105,33 @@ export function SettingsView() {
             {settings.cloudSyncDescription}
           </p>
           <div className='mt-4 grid gap-3 sm:grid-cols-2'>
-            {cloudStatuses.map((status) => {
-              const label =
-                status.provider === 'google-drive' ?
-                  settings.googleDrive
-                : settings.onedrive;
-              return (
-                <div
-                  key={status.provider}
-                  className='rounded-md border border-line p-4'
+            {view.cloud.cards.map((card) => (
+              <div
+                key={card.provider}
+                className='rounded-md border border-line p-4'
+              >
+                <p className='flex items-center gap-2 text-sm font-medium text-ink'>
+                  <CloudSyncProviderIcon
+                    provider={card.provider}
+                    className='size-5'
+                  />
+                  {card.label}
+                </p>
+                <p className='mt-1 text-xs text-muted'>{card.statusText}</p>
+                <button
+                  type='button'
+                  disabled={card.isDisabled}
+                  onClick={() => void view.cloud.toggle(card)}
+                  className={`mt-3 inline-flex min-h-10 items-center gap-2 rounded-md border px-3 text-sm transition hover:bg-white/5 disabled:opacity-50 ${
+                    card.isHighlighted ?
+                      'border-accent-green-fg/50 bg-accent-green-bg/30 text-accent-green-fg'
+                    : 'border-line text-ink'
+                  }`}
                 >
-                  <p className='flex items-center gap-2 text-sm font-medium text-ink'>
-                    <CloudSyncProviderIcon
-                      provider={status.provider}
-                      className='size-5'
-                    />
-                    {label}
-                  </p>
-                  <p className='mt-1 text-xs text-muted'>
-                    {!status.enabled ?
-                      settings.providerUnavailable
-                    : status.connected ?
-                      `${settings.connected}${status.accountLabel ? ` · ${status.accountLabel}` : ''}`
-                    : settings.syncNotConnected}
-                  </p>
-                  <button
-                    type='button'
-                    disabled={isLoadingCloud || workingProvider !== null}
-                    onClick={() => {
-                      if (!status.enabled) {
-                        const label =
-                          status.provider === 'google-drive' ?
-                            settings.googleDrive
-                          : settings.onedrive;
-                        setCloudError(
-                          `${settings.connectionFailed} ${label}: ${settings.providerUnavailable}`,
-                        );
-                        return;
-                      }
-                      if (status.connected)
-                        void handleDisconnectCloud(status.provider);
-                      else void handleConnectCloud(status.provider);
-                    }}
-                    className={`mt-3 inline-flex min-h-10 items-center gap-2 rounded-md border px-3 text-sm transition hover:bg-white/5 disabled:opacity-50 ${
-                      (
-                        connectedProvider === status.provider &&
-                        status.connected
-                      ) ?
-                        'border-accent-green-fg/50 bg-accent-green-bg/30 text-accent-green-fg'
-                      : 'border-line text-ink'
-                    }`}
-                  >
-                    {connectedProvider === status.provider && status.connected ?
-                      settings.connectionSuccess
-                    : status.connected ?
-                      settings.disconnect
-                    : settings.connect}
-                  </button>
-                </div>
-              );
-            })}
+                  {card.actionLabel}
+                </button>
+              </div>
+            ))}
           </div>
           <div className='mt-4 flex flex-col gap-3 rounded-md border border-line p-4 sm:flex-row sm:items-center sm:justify-between'>
             <div>
@@ -248,15 +144,15 @@ export function SettingsView() {
             </div>
             <button
               type='button'
-              aria-pressed={autoSyncEnabled}
-              onClick={() => setAutoSyncEnabled(!autoSyncEnabled)}
+              aria-pressed={view.autoSync.enabled}
+              onClick={view.autoSync.toggle}
               className={`mt-3 min-h-10 shrink-0 rounded-md border px-3 text-sm transition hover:bg-white/5 sm:mt-0 ${
-                autoSyncEnabled ?
+                view.autoSync.enabled ?
                   'border-accent-green-fg/50 bg-accent-green-bg/30 text-accent-green-fg'
                 : 'border-line text-ink'
               }`}
             >
-              {autoSyncEnabled ?
+              {view.autoSync.enabled ?
                 settings.cloudAutoSyncToggleOn
               : settings.cloudAutoSyncToggleOff}
             </button>
@@ -264,12 +160,9 @@ export function SettingsView() {
           <p className='mt-3 text-xs text-muted'>
             {settings.remoteFilesRemain}
           </p>
-          {cloudError && (
-            <p
-              className='mt-3 text-sm text-accent-red-fg'
-              role='alert'
-            >
-              {cloudError}
+          {view.cloud.error && (
+            <p className='mt-3 text-sm text-accent-red-fg' role='alert'>
+              {view.cloud.error}
             </p>
           )}
         </section>
@@ -301,7 +194,7 @@ export function SettingsView() {
           </div>
         </section>
 
-        {user && (
+        {view.user && (
           <>
             <section
               aria-labelledby='settings-security-title'
@@ -322,7 +215,7 @@ export function SettingsView() {
                 </p>
                 <button
                   type='button'
-                  onClick={() => setDialog('password')}
+                  onClick={() => view.openDialog('password')}
                   className='min-h-11 shrink-0 rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5'
                 >
                   {settings.changePassword}
@@ -349,19 +242,18 @@ export function SettingsView() {
                 </p>
                 <button
                   type='button'
-                  disabled={isSigningOut}
-                  onClick={() => void handleSignOut()}
+                  disabled={view.signOut.isWorking}
+                  onClick={() => void view.signOut.submit()}
                   className='min-h-11 shrink-0 rounded-md border border-line px-4 text-sm text-ink transition hover:bg-white/5 disabled:opacity-50'
                 >
-                  {isSigningOut ? `${settings.signOut}…` : settings.signOut}
+                  {view.signOut.isWorking ?
+                    `${settings.signOut}…`
+                  : settings.signOut}
                 </button>
               </div>
-              {signOutError && (
-                <p
-                  className='mt-3 text-sm text-accent-red-fg'
-                  role='alert'
-                >
-                  {signOutError}
+              {view.signOut.error && (
+                <p className='mt-3 text-sm text-accent-red-fg' role='alert'>
+                  {view.signOut.error}
                 </p>
               )}
             </section>
@@ -387,7 +279,7 @@ export function SettingsView() {
             </p>
             <button
               type='button'
-              onClick={() => setDialog('delete')}
+              onClick={() => view.openDialog('delete')}
               style={{ backgroundColor: 'var(--color-accent-red-button)' }}
               className='min-h-11 shrink-0 rounded-md px-4 text-sm font-medium text-white hover:opacity-90 focus-visible:outline-offset-2 focus-visible:outline-accent-red-fg'
             >
@@ -452,291 +344,14 @@ export function SettingsView() {
         </section>
       </div>
 
-      {dialog === 'password' && (
-        <ChangePasswordDialog
-          onClose={() => setDialog(null)}
-          onUpdate={updatePassword}
-        />
-      )}
-      {dialog === 'delete' && (
-        <DeletePracticeDataDialog
-          onClose={() => setDialog(null)}
-          onDelete={deleteAllPracticeData}
-        />
-      )}
+      <ChangePasswordDialog
+        open={view.dialog === 'password'}
+        onClose={view.closeDialog}
+      />
+      <DeletePracticeDataDialog
+        open={view.dialog === 'delete'}
+        onClose={view.closeDialog}
+      />
     </main>
-  );
-}
-
-interface ModalProps {
-  title: string;
-  description: string;
-  onClose: () => void;
-  children: ReactNode;
-  busy: boolean;
-}
-
-function Modal({ title, description, onClose, children, busy }: ModalProps) {
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !busy) onClose();
-    }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [busy, onClose]);
-
-  return createPortal(
-    <div
-      className='fixed inset-0 z-50 grid place-items-center bg-black/60 p-4'
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !busy) onClose();
-      }}
-    >
-      <section
-        aria-labelledby='settings-dialog-title'
-        aria-describedby='settings-dialog-description'
-        aria-modal='true'
-        role='dialog'
-        className='w-full max-w-md rounded-xl border border-line bg-surface p-6'
-      >
-        <h2
-          id='settings-dialog-title'
-          className='text-lg font-semibold text-ink'
-        >
-          {title}
-        </h2>
-        <p
-          id='settings-dialog-description'
-          className='mt-2 text-sm leading-6 text-muted'
-        >
-          {description}
-        </p>
-        {children}
-      </section>
-    </div>,
-    document.body,
-  );
-}
-
-interface ChangePasswordDialogProps {
-  onClose: () => void;
-  onUpdate: (password: string) => Promise<void>;
-}
-
-function ChangePasswordDialog({
-  onClose,
-  onUpdate,
-}: ChangePasswordDialogProps) {
-  const [password, setPassword] = useState('');
-  const [confirmation, setConfirmation] = useState('');
-  const [isWorking, setIsWorking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isComplete, setIsComplete] = useState(false);
-
-  async function submitPassword(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (password !== confirmation) {
-      setError('Las contraseñas no coinciden.');
-      return;
-    }
-
-    setIsWorking(true);
-    setError(null);
-    try {
-      await onUpdate(password);
-      setIsComplete(true);
-    } catch (updateError) {
-      setError(describeError(updateError, 'No se pudo cambiar la contraseña.'));
-    } finally {
-      setIsWorking(false);
-    }
-  }
-
-  return (
-    <Modal
-      title='Cambiar contraseña'
-      description='Escribe una contraseña nueva para tu cuenta.'
-      onClose={onClose}
-      busy={isWorking}
-    >
-      {isComplete ?
-        <div className='mt-5'>
-          <p
-            className='text-sm text-accent-green-fg'
-            role='status'
-          >
-            La contraseña se ha actualizado.
-          </p>
-          <button
-            type='button'
-            onClick={onClose}
-            className='mt-5 rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-canvas transition hover:bg-white'
-          >
-            Cerrar
-          </button>
-        </div>
-      : <form
-          onSubmit={(event) => void submitPassword(event)}
-          className='mt-5'
-        >
-          <label
-            className='block text-sm text-ink'
-            htmlFor='new-password'
-          >
-            Nueva contraseña
-          </label>
-          <input
-            id='new-password'
-            type='password'
-            autoComplete='new-password'
-            minLength={6}
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className='mt-2 h-11 w-full rounded-md border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink/50'
-          />
-          <label
-            className='mt-4 block text-sm text-ink'
-            htmlFor='confirm-password'
-          >
-            Repite la contraseña
-          </label>
-          <input
-            id='confirm-password'
-            type='password'
-            autoComplete='new-password'
-            minLength={6}
-            required
-            value={confirmation}
-            onChange={(event) => setConfirmation(event.target.value)}
-            className='mt-2 h-11 w-full rounded-md border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink/50'
-          />
-          {error && (
-            <p
-              className='mt-3 text-sm text-accent-red-fg'
-              role='alert'
-            >
-              {error}
-            </p>
-          )}
-          <div className='mt-6 flex justify-end gap-3'>
-            <button
-              type='button'
-              disabled={isWorking}
-              onClick={onClose}
-              className='rounded-md border border-line px-4 py-2.5 text-sm text-ink transition hover:bg-white/5 disabled:opacity-50'
-            >
-              Cancelar
-            </button>
-            <button
-              type='submit'
-              disabled={isWorking}
-              className='rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-canvas transition hover:bg-white disabled:opacity-50'
-            >
-              {isWorking ? 'Guardando…' : 'Actualizar contraseña'}
-            </button>
-          </div>
-        </form>
-      }
-    </Modal>
-  );
-}
-
-interface DeletePracticeDataDialogProps {
-  onClose: () => void;
-  onDelete: () => Promise<void>;
-}
-
-function DeletePracticeDataDialog({
-  onClose,
-  onDelete,
-}: DeletePracticeDataDialogProps) {
-  const [confirmation, setConfirmation] = useState('');
-  const [isWorking, setIsWorking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isComplete, setIsComplete] = useState(false);
-
-  async function deleteData() {
-    setIsWorking(true);
-    setError(null);
-    try {
-      await onDelete();
-      setIsComplete(true);
-    } catch (deleteError) {
-      setError(
-        describeError(deleteError, 'No se pudieron borrar todos los datos.'),
-      );
-    } finally {
-      setIsWorking(false);
-    }
-  }
-
-  return (
-    <Modal
-      title='¿Seguro que quieres eliminar tus datos?'
-      description='Se borrarán definitivamente tus sesiones, rutinas, repertorio, grabaciones y materiales de Supabase, además de los datos de práctica locales de este navegador. La cuenta seguirá activa y no se podrá recuperar el contenido eliminado.'
-      onClose={onClose}
-      busy={isWorking}
-    >
-      {isComplete ?
-        <div className='mt-5'>
-          <p
-            className='text-sm text-accent-green-fg'
-            role='status'
-          >
-            Se eliminaron tus datos de práctica. Tu cuenta sigue activa.
-          </p>
-          <button
-            type='button'
-            onClick={onClose}
-            className='mt-5 rounded-md bg-ink px-4 py-2.5 text-sm font-medium text-canvas transition hover:bg-white'
-          >
-            Cerrar
-          </button>
-        </div>
-      : <div className='mt-5'>
-          <label
-            className='block text-sm text-ink'
-            htmlFor='delete-confirmation'
-          >
-            Escribe <strong>BORRAR</strong> para confirmar
-          </label>
-          <input
-            id='delete-confirmation'
-            type='text'
-            autoComplete='off'
-            value={confirmation}
-            onChange={(event) => setConfirmation(event.target.value)}
-            className='mt-2 h-11 w-full rounded-md border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink/50'
-          />
-          {error && (
-            <p
-              className='mt-3 text-sm text-accent-red-fg'
-              role='alert'
-            >
-              {error}
-            </p>
-          )}
-          <div className='mt-6 flex justify-end gap-3'>
-            <button
-              type='button'
-              disabled={isWorking}
-              onClick={onClose}
-              className='rounded-md border border-line px-4 py-2.5 text-sm text-ink transition hover:bg-white/5 disabled:opacity-50'
-            >
-              Cancelar
-            </button>
-            <button
-              type='button'
-              disabled={isWorking || confirmation !== 'BORRAR'}
-              onClick={() => void deleteData()}
-              className='rounded-md bg-accent-red-fg px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50'
-            >
-              {isWorking ? 'Borrando…' : 'Eliminar datos'}
-            </button>
-          </div>
-        </div>
-      }
-    </Modal>
   );
 }

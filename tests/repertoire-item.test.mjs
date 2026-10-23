@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { COMMON_TUNINGS, createRepertoireItem } from "../src/lib/repertoire-item.ts";
+import { COMMON_TUNINGS, createRepertoireItem } from "../src/utils/repertoire-item.ts";
 
 test("creates a song with a trimmed artist and its default part", () => {
   const item = createRepertoireItem({

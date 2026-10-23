@@ -1,63 +1,32 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
+import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
 import { ForgottenRepertoireWidget } from '@/components/repertoire/ForgottenRepertoireWidget';
 import { SelectField } from '@/components/ui/SelectField';
 import { TextField } from '@/components/ui/Field';
-import { PlusIcon } from '@/components/ui/icons';
-import { formatPracticeDuration } from '@/lib/dashboard-data';
+import { PlusIcon, SearchIcon } from '@/components/ui/icons';
+import { formatPracticeDuration } from '@/utils/dashboard-data';
 import {
   getRepertoireItemPracticeStats,
   getRepertoireOverview,
   getRepertoirePracticeStats,
-} from '@/lib/repertoire-analytics';
-import { getForgottenRepertoireItem } from '@/lib/repertoire-forgotten';
+} from '@/utils/repertoire-analytics';
+import { getForgottenRepertoireItem } from '@/utils/repertoire-forgotten';
 import {
   getFilteredRepertoireItems,
   isRepertoireProgressFilter,
   isRepertoireSortOrder,
-  type RepertoireProgressFilter,
-  type RepertoireSortOrder,
-} from '@/lib/repertoire-filtering';
+  type FutureLearnFilter,
+  type GuitarTypeFilter,
+} from '@/utils/repertoire-filtering';
+import { useRepertoireFilters } from '@/hooks/useRepertoireFilters';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { useRouter } from 'next/navigation';
-import type { GuitarType } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { RepertoireSkeleton } from '@/components/ui/Skeletons';
-
-type GuitarTypeFilter = 'all' | GuitarType;
-type FutureLearnFilter = 'all' | 'future' | 'current';
-
-const GUITAR_TYPE_FILTERS: { value: GuitarTypeFilter; label: string }[] = [
-  { value: 'all', label: 'Todas' },
-  { value: 'electric', label: 'Eléctrica' },
-  { value: 'acoustic', label: 'Acústica' },
-];
-
-const FUTURE_LEARN_FILTERS: { value: FutureLearnFilter; label: string }[] = [
-  { value: 'all', label: 'Todo el repertorio' },
-  { value: 'current', label: 'En aprendizaje' },
-  { value: 'future', label: 'Aprender en el futuro' },
-];
-
-const PROGRESS_FILTERS: {
-  value: RepertoireProgressFilter;
-  label: string;
-}[] = [
-  { value: 'all', label: 'Todos los estados' },
-  { value: 'learning', label: 'Por aprender' },
-  { value: 'learned', label: 'Aprendidos' },
-];
-
-const SORT_OPTIONS: { value: RepertoireSortOrder; label: string }[] = [
-  { value: 'original', label: 'Orden original' },
-  { value: 'recent', label: 'Actualizados recientemente' },
-  { value: 'title', label: 'Título: A–Z' },
-  { value: 'artist', label: 'Artista/banda: A–Z' },
-  { value: 'practice', label: 'Más practicados' },
-];
 
 export function RepertoireView() {
   const text = useI18nSection('repertoire');
@@ -94,14 +63,20 @@ export function RepertoireView() {
   );
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const persistenceError = usePracticeStore((state) => state.persistenceError);
-  const [guitarTypeFilter, setGuitarTypeFilter] =
-    useState<GuitarTypeFilter>('all');
-  const [futureLearnFilter, setFutureLearnFilter] =
-    useState<FutureLearnFilter>('all');
-  const [progressFilter, setProgressFilter] =
-    useState<RepertoireProgressFilter>('all');
-  const [sortOrder, setSortOrder] = useState<RepertoireSortOrder>('original');
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    guitarTypeFilter,
+    setGuitarTypeFilter,
+    futureLearnFilter,
+    setFutureLearnFilter,
+    progressFilter,
+    setProgressFilter,
+    sortOrder,
+    setSortOrder,
+    searchQuery,
+    setSearchQuery,
+    hasActiveFilters,
+    clearFilters,
+  } = useRepertoireFilters();
   const practiceStats = useMemo(
     () => getRepertoirePracticeStats(history),
     [history],
@@ -142,19 +117,6 @@ export function RepertoireView() {
     () => getRepertoireOverview(items, itemPracticeStats),
     [items, itemPracticeStats],
   );
-  const hasActiveFilters =
-    searchQuery.trim().length > 0 ||
-    guitarTypeFilter !== 'all' ||
-    futureLearnFilter !== 'all' ||
-    progressFilter !== 'all';
-
-  function clearFilters() {
-    setSearchQuery('');
-    setGuitarTypeFilter('all');
-    setFutureLearnFilter('all');
-    setProgressFilter('all');
-    setSortOrder('original');
-  }
 
   if (!hasHydrated) {
     return <RepertoireSkeleton />;
@@ -197,17 +159,13 @@ export function RepertoireView() {
             value: formatPracticeDuration(overview.totalSeconds / 60),
           },
         ].map((metric) => (
-          <article
+          <MetricCard
             key={metric.label}
-            className='rounded-lg border border-line bg-surface p-4 sm:p-5'
-          >
-            <p className='text-xs uppercase tracking-[0.1em] text-muted'>
-              {metric.label}
-            </p>
-            <p className='mt-3 font-mono text-xs leading-6 tabular-nums tracking-normal sm:text-sm sm:leading-7'>
-              {metric.value}
-            </p>
-          </article>
+            as='article'
+            tone='light'
+            label={metric.label}
+            value={String(metric.value)}
+          />
         ))}
       </section>
 
@@ -240,30 +198,11 @@ export function RepertoireView() {
           </div>
         </div>
 
-        <div className='mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(16rem,1fr)_minmax(12rem,0.7fr)_minmax(14rem,0.8fr)_minmax(12rem,0.7fr)_minmax(14rem,0.8fr)]'>
-          <label className='block text-xs text-muted sm:col-span-2 xl:col-span-1'>
+        <div className='mt-5 rounded-xl border border-line bg-surface p-4 sm:p-5'>
+          <label className='block text-xs text-muted'>
             {text.search}
             <span className='relative mt-1 block'>
-              <svg
-                aria-hidden='true'
-                viewBox='0 0 20 20'
-                className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted'
-              >
-                <circle
-                  cx='8.5'
-                  cy='8.5'
-                  r='5.5'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='1.5'
-                />
-                <path
-                  d='m12.5 12.5 4 4'
-                  stroke='currentColor'
-                  strokeLinecap='round'
-                  strokeWidth='1.5'
-                />
-              </svg>
+              <SearchIcon className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted' />
               <TextField
                 type='search'
                 value={searchQuery}
@@ -274,60 +213,69 @@ export function RepertoireView() {
               />
             </span>
           </label>
-          <div className='text-xs text-muted'>
-            <span className='block'>{text.progress}</span>
-            <SelectField
-              className='mt-1'
-              value={progressFilter}
-              ariaLabel={text.progress}
-              onChange={(value) => {
-                if (isRepertoireProgressFilter(value)) {
-                  setProgressFilter(value);
-                }
-              }}
-              options={progressFilters}
-            />
-          </div>
-          <div className='text-xs text-muted'>
-            <span className='block'>{text.sort}</span>
-            <SelectField
-              className='mt-1'
-              value={sortOrder}
-              ariaLabel={text.sort}
-              onChange={(value) => {
-                if (isRepertoireSortOrder(value)) setSortOrder(value);
-              }}
-              options={sortOptions}
-            />
-          </div>
-          <div className='text-xs text-muted'>
-            <span className='block'>{text.guitar}</span>
-            <SelectField
-              className='mt-1'
-              value={guitarTypeFilter}
-              ariaLabel={text.guitar}
-              onChange={(value) =>
-                setGuitarTypeFilter(value as GuitarTypeFilter)
-              }
-              options={guitarFilters}
-            />
-          </div>
-          <div className='text-xs text-muted'>
-            <span className='block'>{text.list}</span>
-            <SelectField
-              className='mt-1'
-              value={futureLearnFilter}
-              ariaLabel={text.list}
-              onChange={(value) =>
-                setFutureLearnFilter(value as FutureLearnFilter)
-              }
-              options={futureFilters}
-            />
-          </div>
-        </div>
 
-        <div className='mt-4 flex flex-wrap items-center justify-between gap-3'>
-          {hasHydrated && (
+          <div className='mt-3 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-start'>
+            <div className='min-w-0 text-xs text-muted sm:w-56'>
+              <span className='block text-[10px] uppercase tracking-[0.12em]'>
+                {text.progress}
+              </span>
+              <SelectField
+                className='mt-1'
+                value={progressFilter}
+                ariaLabel={text.progress}
+                onChange={(value) => {
+                  if (isRepertoireProgressFilter(value)) {
+                    setProgressFilter(value);
+                  }
+                }}
+                options={progressFilters}
+              />
+            </div>
+            <div className='min-w-0 text-xs text-muted sm:w-48'>
+              <span className='block text-[10px] uppercase tracking-[0.12em]'>
+                {text.sort}
+              </span>
+              <SelectField
+                className='mt-1'
+                value={sortOrder}
+                ariaLabel={text.sort}
+                onChange={(value) => {
+                  if (isRepertoireSortOrder(value)) setSortOrder(value);
+                }}
+                options={sortOptions}
+              />
+            </div>
+            <div className='min-w-0 text-xs text-muted sm:w-40'>
+              <span className='block text-[10px] uppercase tracking-[0.12em]'>
+                {text.guitar}
+              </span>
+              <SelectField
+                className='mt-1'
+                value={guitarTypeFilter}
+                ariaLabel={text.guitar}
+                onChange={(value) =>
+                  setGuitarTypeFilter(value as GuitarTypeFilter)
+                }
+                options={guitarFilters}
+              />
+            </div>
+            <div className='min-w-0 text-xs text-muted sm:w-56'>
+              <span className='block text-[10px] uppercase tracking-[0.12em]'>
+                {text.list}
+              </span>
+              <SelectField
+                className='mt-1'
+                value={futureLearnFilter}
+                ariaLabel={text.list}
+                onChange={(value) =>
+                  setFutureLearnFilter(value as FutureLearnFilter)
+                }
+                options={futureFilters}
+              />
+            </div>
+          </div>
+
+          <div className='mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3'>
             <p
               className='text-xs text-muted'
               role='status'
@@ -336,7 +284,16 @@ export function RepertoireView() {
               {visibleItems.length} de {items.length}{' '}
               {items.length === 1 ? text.item : text.items}
             </p>
-          )}
+            {items.length > 0 && hasActiveFilters && (
+              <button
+                type='button'
+                onClick={clearFilters}
+                className='text-xs text-muted underline decoration-line underline-offset-4 transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60'
+              >
+                {text.clear}
+              </button>
+            )}
+          </div>
         </div>
 
         {!hasHydrated ?

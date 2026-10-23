@@ -3,11 +3,11 @@ import test from "node:test";
 import {
   activateExclusiveAudio,
   releaseExclusiveAudio,
-} from "../src/lib/practice-audio-playback.ts";
+} from "../src/utils/practice-audio-playback.ts";
 import {
   getPlaybackDurationSeconds,
   getRecordingDurationSeconds,
-} from "../src/lib/recording-duration.ts";
+} from "../src/utils/recording-duration.ts";
 
 test("stops the previously active audio before another player starts", () => {
   const paused = [];

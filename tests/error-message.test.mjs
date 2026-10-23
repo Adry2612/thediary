@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { errorMessage } from "../src/lib/error-message.ts";
+import { errorMessage } from "../src/utils/error-message.ts";
 
 test("returns the message of an Error", () => {
   assert.equal(errorMessage(new Error("Sin conexión"), "algo falló"), "Sin conexión");

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { GoogleDriveAdapter } from "@/lib/cloud-sync/google-drive";
-import { OneDriveAdapter } from "@/lib/cloud-sync/onedrive";
-import { isCloudSyncProvider } from "@/lib/cloud-sync/oauth";
-import { getProviderAvailability } from "@/lib/cloud-sync/server";
+import { GoogleDriveAdapter } from "@/services/cloud-sync/google-drive";
+import { OneDriveAdapter } from "@/services/cloud-sync/onedrive";
+import { isCloudSyncProvider } from "@/services/cloud-sync/oauth";
+import { getProviderAvailability } from "@/services/cloud-sync/server";
 import { randomBytes } from "node:crypto";
 
 export async function GET(

@@ -4,14 +4,24 @@ import {
   formatClock,
   formatDateLabel,
   formatExactDuration,
+  formatOvertime,
   formatPracticeDuration,
   formatTotal,
-} from "../src/lib/format.ts";
+  getTimerAction,
+  getTimerDisplaySeconds,
+} from "../src/utils/format.ts";
 
 test("formats a clock as minutes and seconds", () => {
   assert.equal(formatClock(0), "00:00");
   assert.equal(formatClock(65), "01:05");
   assert.equal(formatClock(3_600), "60:00");
+});
+
+test("formats overtime only when the block has exceeded its time", () => {
+  assert.equal(formatOvertime(0), "");
+  assert.equal(formatOvertime(-5), "");
+  assert.equal(formatOvertime(5), "+00:05");
+  assert.equal(formatOvertime(65), "+01:05");
 });
 
 test("formats a rounded duration in the short form of the app", () => {
@@ -49,4 +59,16 @@ test("formats practice minutes in hours and minutes, rounded", () => {
   assert.equal(formatPracticeDuration(60), "1 h");
   assert.equal(formatPracticeDuration(65), "1 h 5 min");
   assert.equal(formatPracticeDuration(150), "2 h 30 min");
+});
+
+test("picks the timer action in the same order as the button did", () => {
+  assert.equal(getTimerAction(true, true, 30), "pause");
+  assert.equal(getTimerAction(false, true, 30), "blockFinished");
+  assert.equal(getTimerAction(false, false, 0), "start");
+  assert.equal(getTimerAction(false, false, 0.5), "continue");
+});
+
+test("shows the elapsed or the remaining seconds depending on the mode", () => {
+  assert.equal(getTimerDisplaySeconds(true, 42, 78), 42);
+  assert.equal(getTimerDisplaySeconds(false, 42, 78), 78);
 });

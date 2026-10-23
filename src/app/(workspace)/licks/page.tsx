@@ -1,5 +1,5 @@
 import { LicksView } from "@/components/licks/LicksView";
-import { getLocalDateKey } from "@/lib/local-date";
+import { getLocalDateKey } from "@/utils/local-date";
 
 export const dynamic = "force-dynamic";
 

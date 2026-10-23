@@ -1,116 +1,24 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
 import { RangeSlider } from "@/components/ui/RangeSlider";
 import { SelectField } from "@/components/ui/SelectField";
-import { MAX_BPM, MIN_BPM } from "@/lib/metronome-tempo";
+import { SubdivisionNotation } from "@/components/practice/SubdivisionNotation";
+import { useDialogModal } from "@/hooks/useDialogModal";
+import { MAX_BPM, MIN_BPM } from "@/utils/metronome-tempo";
 import {
   getMetronomeMeter,
   getMetronomeSubdivisionOptions,
   isMetronomeMeterSignature,
   METRONOME_METERS,
-  type MetronomeMeterSignature,
-} from "@/lib/metronome-meter";
+} from "@/utils/metronome-meter";
 import {
   isTempoRampIntervalUnit,
   MAX_TEMPO_RAMP_INTERVAL_BY_UNIT,
-  type TempoRampSettings,
-  type TempoRampIntervalUnit,
-} from "@/lib/metronome-tempo-ramp";
+} from "@/utils/metronome-tempo-ramp";
 import { useI18nSection } from "@/i18n/I18nProvider";
-
-interface MetronomeSettingsProps {
-  subdivision: number;
-  volume: number;
-  meterSignature: MetronomeMeterSignature;
-  tempoRamp: TempoRampSettings;
-  setSubdivision: (subdivision: number) => void;
-  setVolume: (volume: number) => void;
-  setMeterSignature: (signature: MetronomeMeterSignature) => void;
-  setTempoRamp: (settings: TempoRampSettings) => void;
-}
-
-const SUBDIVISION_NOTE_POSITIONS: Record<number, number[]> = {
-  1: [25],
-  2: [19, 33],
-  3: [14, 26, 38],
-  4: [12, 22, 32, 42],
-};
-
-function SubdivisionNotation({
-  subdivision,
-  isDotted,
-  isHalfNote,
-  isTuplet,
-}: {
-  subdivision: number;
-  isDotted: boolean;
-  isHalfNote: boolean;
-  isTuplet: boolean;
-}) {
-  const notePositions = SUBDIVISION_NOTE_POSITIONS[subdivision];
-  const firstNote = notePositions[0];
-  const lastNote = notePositions[notePositions.length - 1];
-
-  return (
-    <svg
-      viewBox="0 0 56 38"
-      aria-hidden="true"
-      className="size-10 text-inherit"
-    >
-      {notePositions.map((position) => (
-        <g key={position}>
-          <ellipse
-            cx={position}
-            cy="26"
-            rx="4.5"
-            ry="3"
-            transform={`rotate(-20 ${position} 26)`}
-            fill={isHalfNote ? "none" : "currentColor"}
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-          <path
-            d={`M ${position + 4} 24 V 7`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-        </g>
-      ))}
-      {subdivision > 1 && (
-        <path
-          d={`M ${firstNote + 4} 7 L ${lastNote + 4} 11`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        />
-      )}
-      {subdivision === 4 && (
-        <path
-          d={`M ${firstNote + 4} 11 L ${lastNote + 4} 15`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        />
-      )}
-      {isTuplet && (
-        <text
-          x="26"
-          y="8"
-          textAnchor="middle"
-          className="fill-current font-mono text-[8px]"
-        >
-          3
-        </text>
-      )}
-      {isDotted && (
-        <circle cx={firstNote + 12} cy="25" r="1.5" fill="currentColor" />
-      )}
-    </svg>
-  );
-}
+import type { MetronomeSettingsProps } from "@/types/metronome";
 
 export function MetronomeSettings({
   subdivision,
@@ -125,7 +33,10 @@ export function MetronomeSettings({
   const text = useI18nSection("metronome");
   const [isOpen, setIsOpen] = useState(false);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
-  const settingsDialogRef = useRef<HTMLDialogElement>(null);
+  const { dialogRef: settingsDialogRef, handleCancel } = useDialogModal(
+    isOpen,
+    () => setIsOpen(false),
+  );
   const subdivisionGroupId = useId();
   const meter = getMetronomeMeter(meterSignature);
   const subdivisionOptions = getMetronomeSubdivisionOptions(meter);
@@ -134,22 +45,6 @@ export function MetronomeSettings({
     { value: "seconds", label: "Seg." },
     { value: "minutes", label: "Min." },
   ];
-
-  useEffect(() => {
-    const dialog = settingsDialogRef.current;
-    if (!dialog) return;
-    if (isOpen && !dialog.open) dialog.showModal();
-    if (!isOpen && dialog.open) dialog.close();
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isOpen]);
 
   return (
     <>
@@ -187,10 +82,7 @@ export function MetronomeSettings({
       <dialog
         ref={settingsDialogRef}
         aria-labelledby="metronome-settings-title"
-        onCancel={(event) => {
-          event.preventDefault();
-          setIsOpen(false);
-        }}
+        onCancel={handleCancel}
         onClose={() => {
           setIsOpen(false);
           settingsButtonRef.current?.focus();

@@ -2,12 +2,12 @@
 
 import { useId, type ReactNode } from "react";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
-import { getLickProgress } from "@/lib/licks/progress";
+import { getLickProgress } from "@/utils/licks/progress";
 import {
   formatLickDate,
   formatShortLickDate,
   getLickTitle,
-} from "@/lib/licks/presentation";
+} from "@/utils/licks/presentation";
 import type { GuitarLick } from "@/types/lick";
 
 const CHART_WIDTH = 640;

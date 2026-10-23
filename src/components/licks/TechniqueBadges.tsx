@@ -1,5 +1,5 @@
 import { useI18nSection } from "@/i18n/I18nProvider";
-import { getLickTechnique } from "@/lib/licks/techniques";
+import { getLickTechnique } from "@/utils/licks/techniques";
 import type { TechniqueId } from "@/types/lick";
 
 export function TechniqueBadges({

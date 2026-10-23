@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getPendingRecordings } from "../src/lib/cloud-sync/pending-recordings.ts";
+import { getPendingRecordings } from "../src/services/cloud-sync/pending-recordings.ts";
 
 function recording(id, { withBlob = true, size = 4 } = {}) {
   return {

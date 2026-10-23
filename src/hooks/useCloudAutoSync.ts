@@ -5,8 +5,8 @@ import {
   useCloudRecordingSync,
   type CloudProviderStatus,
 } from "@/hooks/useCloudRecordingSync";
-import { readAutoSyncPreference } from "@/lib/cloud-sync/auto-sync-preference";
-import type { CloudSyncProvider } from "@/lib/cloud-sync/types";
+import { readAutoSyncPreference } from "@/services/cloud-sync/auto-sync-preference";
+import type { CloudSyncProvider } from "@/types/cloud-sync";
 
 const AUTO_SYNC_LOCK_NAME = "thediary-cloud-auto-sync";
 

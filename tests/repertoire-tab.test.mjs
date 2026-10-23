@@ -28,7 +28,7 @@ import {
   toggleTabTechniques,
   canApplyTabTechniqueToSelection,
   toggleTabTechnique,
-} from "../src/lib/repertoire-tab.ts";
+} from "../src/utils/repertoire-tab.ts";
 import {
   BEND_AMOUNT_LABELS,
   clampTabCell,
@@ -46,8 +46,8 @@ import {
   STRING_ROW_HEIGHT,
   TAB_BEND_AMOUNTS,
   TAB_EDITOR_MAX_MEASURES,
-} from "../src/lib/repertoire-tab.ts";
-import { STRING_COUNT } from "../src/lib/chords.ts";
+} from "../src/utils/repertoire-tab.ts";
+import { STRING_COUNT } from "../src/utils/chords.ts";
 
 test("creates an empty tab with the song tuning", () => {
   const tab = createEmptyTab("Drop D (DADGBE)");

@@ -4,11 +4,11 @@ import Link from "next/link";
 import { SelectField } from "@/components/ui/SelectField";
 import {
   WEEKDAY_INDEXES,
-} from "@/lib/weekly-routine-schedule";
+} from "@/utils/weekly-routine-schedule";
 import type {
   WeekdayIndex,
   WeeklyRoutineSchedule,
-} from "@/lib/weekly-routine-schedule";
+} from "@/utils/weekly-routine-schedule";
 import type { PracticeTemplate } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 

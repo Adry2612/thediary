@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createPracticeSessionRecord } from "../src/lib/practice-session-record.ts";
+import { createPracticeSessionRecord } from "../src/utils/practice-session-record.ts";
 
 test("builds a saved session from timer results and phase metadata", () => {
   const phases = [
@@ -20,6 +20,7 @@ test("builds a saved session from timer results and phase metadata", () => {
       ],
       repertoireItemId: "song-1",
       repertoirePartId: "part-1",
+      lickId: "lick-1",
     },
   ];
   const result = {
@@ -30,6 +31,7 @@ test("builds a saved session from timer results and phase metadata", () => {
       technique: 600,
       theory: 0,
       repertoire: 120,
+      lick: 0,
       improvisation: 0,
     },
     phases: [
@@ -77,12 +79,55 @@ test("builds a saved session from timer results and phase metadata", () => {
         notes: "Mantenerlo lento.",
         repertoireItemId: "song-1",
         repertoirePartId: "part-1",
+        lickId: "lick-1",
       },
     ],
   });
   assert.notEqual(record.phases?.[0].exercises, phases[0].exercises);
   assert.notEqual(record.phases?.[0].resources, phases[0].resources);
   assert.notEqual(record.phases?.[0].resources?.[0], phases[0].resources[0]);
+});
+
+test("uses the resolved block name from the phase metadata", () => {
+  const record = createPracticeSessionRecord({
+    id: "session-resolved-name",
+    title: "Sesión",
+    averageBpm: 0,
+    result: {
+      elapsedSeconds: 60,
+      startedAt: "2026-10-08T12:00:00.000Z",
+      completed: true,
+      skillSeconds: {
+        technique: 0,
+        theory: 0,
+        repertoire: 60,
+        lick: 0,
+        improvisation: 0,
+      },
+      phases: [
+        {
+          id: "r1",
+          name: "Nombre viejo",
+          skill: "repertoire",
+          elapsedSeconds: 60,
+          lickId: undefined,
+        },
+      ],
+    },
+    phases: [
+      {
+        id: "r1",
+        name: "Canción",
+        durationMinutes: 1,
+        skill: "repertoire",
+        repertoireItemId: "song-1",
+      },
+    ],
+    notes: "",
+    phaseNotes: {},
+  });
+
+  assert.equal(record.phases?.[0].name, "Canción");
 });
 
 test("omits blank session and phase notes", () => {
@@ -98,6 +143,7 @@ test("omits blank session and phase notes", () => {
         technique: 60,
         theory: 0,
         repertoire: 0,
+        lick: 0,
         improvisation: 0,
       },
       phases: [

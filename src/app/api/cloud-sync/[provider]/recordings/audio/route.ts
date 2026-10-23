@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { GoogleDriveAdapter } from "@/lib/cloud-sync/google-drive";
-import { OneDriveAdapter } from "@/lib/cloud-sync/onedrive";
-import { readCloudTokenSession } from "@/lib/cloud-sync/session";
-import { isCloudSyncProvider } from "@/lib/cloud-sync/oauth";
+import { GoogleDriveAdapter } from "@/services/cloud-sync/google-drive";
+import { OneDriveAdapter } from "@/services/cloud-sync/onedrive";
+import { readCloudTokenSession } from "@/services/cloud-sync/session";
+import { isCloudSyncProvider } from "@/services/cloud-sync/oauth";
 import {
   normalizeCloudProviderError,
   type CloudProviderAdapter,
-} from "@/lib/cloud-sync/provider";
+} from "@/services/cloud-sync/provider";
 
 /**
  * Sirve el audio de una grabación gestionada en la nube. Los archivos de Google

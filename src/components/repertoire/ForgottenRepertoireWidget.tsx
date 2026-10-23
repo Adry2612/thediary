@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useI18nSection } from "@/i18n/I18nProvider";
-import type { ForgottenRepertoireItem } from "@/lib/repertoire-forgotten";
+import type { ForgottenRepertoireItem } from "@/utils/repertoire-forgotten";
 
 function formatDaysAgo(text: Record<string, string>, days: number) {
   return days === 1

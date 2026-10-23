@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   applySessionEdit,
   toEditableSession,
-} from "../src/lib/practice-session-editing.ts";
+} from "../src/utils/practice-session-editing.ts";
 
 function session(overrides = {}) {
   return {
@@ -13,7 +13,13 @@ function session(overrides = {}) {
     durationSeconds: 1_500,
     averageBpm: 90,
     completed: true,
-    skillSeconds: { technique: 900, theory: 0, repertoire: 600, improvisation: 0 },
+    skillSeconds: {
+      technique: 900,
+      theory: 0,
+      repertoire: 600,
+      lick: 0,
+      improvisation: 0,
+    },
     notes: "Buena sesión",
     phases: [
       { id: 1, name: "Técnica", skill: "technique", elapsedSeconds: 900, durationMinutes: 15 },
@@ -49,10 +55,38 @@ test("derives duration and skill totals from the edited blocks", () => {
     technique: 1_200,
     theory: 300,
     repertoire: 0,
+    lick: 0,
     improvisation: 0,
   });
   assert.equal(updated.phases.length, 2);
   assert.equal(updated.title, "Rutina de tarde");
+});
+
+test("keeps block links and details when a saved session is edited", () => {
+  const original = session({
+    phases: [{
+      id: 1,
+      name: "Frase",
+      skill: "lick",
+      elapsedSeconds: 60,
+      durationMinutes: 1,
+      lickId: "lick-1",
+      repertoireItemId: "song-1",
+      repertoirePartId: "part-1",
+      exercises: ["Dos notas por cuerda"],
+      resources: [{ id: "r1", title: "Base", kind: "audio", assetId: "a1" }],
+    }],
+  });
+  const draft = toEditableSession(original);
+  draft.blocks[0] = { ...draft.blocks[0], actualMinutes: 2 };
+
+  const updated = applySessionEdit(original, draft);
+
+  assert.equal(updated.phases[0].lickId, "lick-1");
+  assert.equal(updated.phases[0].repertoireItemId, "song-1");
+  assert.equal(updated.phases[0].repertoirePartId, "part-1");
+  assert.deepEqual(updated.phases[0].exercises, ["Dos notas por cuerda"]);
+  assert.equal(updated.phases[0].resources?.[0].title, "Base");
 });
 
 test("drops the blocks and keeps the previous skill split when all are removed", () => {

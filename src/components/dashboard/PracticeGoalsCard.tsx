@@ -1,7 +1,7 @@
 "use client";
 
 import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
-import { adjustPracticeGoal } from "@/lib/practice-goals";
+import { adjustPracticeGoal } from "@/utils/practice-goals";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import type { GoalControl } from "@/types/dashboard";

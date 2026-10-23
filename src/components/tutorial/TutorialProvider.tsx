@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -17,55 +16,19 @@ import {
   readTutorialProgress,
   saveTutorialProgress,
   type TutorialProgress,
-} from "@/lib/tutorial-progress";
-import { TUTORIAL_STEPS, type TutorialStep } from "@/lib/tutorial-steps";
+} from "@/utils/tutorial-progress";
+import { TUTORIAL_STEPS, type TutorialStep } from "@/utils/tutorial-steps";
+import { errorMessage } from "@/utils/error-message";
+import { SPOTLIGHT_PADDING } from "@/utils/tutorial-layout";
+import { useTutorialSpotlight } from "@/hooks/useTutorialSpotlight";
+import type {
+  PendingTutorialTransition,
+  TutorialContextValue,
+  TutorialText,
+} from "@/types/tutorial";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
-type TutorialText = {
-  steps: Array<{ title: string; description: string }>;
-  progress: string;
-  saveError: string;
-  skip: string;
-  previous: string;
-  next: string;
-  finish: string;
-};
-
-interface TargetBounds {
-  top: number;
-  left: number;
-  right: number;
-  bottom: number;
-  width: number;
-  height: number;
-}
-
-interface ViewportSize {
-  width: number;
-  height: number;
-}
-
-interface PendingTutorialTransition {
-  pathname: string;
-  stepIndex: number;
-  resolve: () => void;
-  timeoutId: number;
-  visualTransition: boolean;
-}
-
-const SPOTLIGHT_PADDING = { top: 28, horizontal: 24, bottom: 24 };
-
-interface TutorialContextValue {
-  openTutorial: () => void;
-}
-
 const TutorialContext = createContext<TutorialContextValue | null>(null);
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "No se pudo guardar el estado del tutorial.";
-}
 
 export function TutorialProvider({ children }: { children: ReactNode }) {
   const tutorialText = useI18nSection("tutorial")!;
@@ -83,7 +46,9 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         setIsOpen(true);
       }
     } catch (error) {
-      setStorageError(getErrorMessage(error));
+      setStorageError(
+        errorMessage(error, "No se pudo guardar el estado del tutorial."),
+      );
       setIsOpen(true);
     }
   }, []);
@@ -99,7 +64,9 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
       saveTutorialProgress(window.localStorage, progress);
       setStorageError(null);
     } catch (error) {
-      setStorageError(getErrorMessage(error));
+      setStorageError(
+        errorMessage(error, "No se pudo guardar el estado del tutorial."),
+      );
       console.error("No se pudo guardar el progreso del tutorial.", error);
     } finally {
       setIsOpen(false);
@@ -261,242 +228,21 @@ function TutorialDialog({
   onNext: () => void;
   onPrevious: () => void;
 }) {
-  const pathname = usePathname();
-  const dialogRef = useRef<HTMLElement>(null);
-  const [targetBounds, setTargetBounds] = useState<TargetBounds | null>(null);
-  const [readyStepIndex, setReadyStepIndex] = useState<number | null>(null);
-  const [viewport, setViewport] = useState<ViewportSize>({
-    width: 0,
-    height: 0,
-  });
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        if (isTransitioning) return;
-        event.preventDefault();
-        onClose();
-        return;
-      }
-
-      const dialog = dialogRef.current;
-      if (event.key !== "Tab" || !dialog) return;
-
-      const focusableElements = Array.from(
-        dialog.querySelectorAll<HTMLElement>(
-        'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
-        ),
-      );
-      if (focusableElements.length === 0) {
-        event.preventDefault();
-        dialog.focus();
-        return;
-      }
-
-      const activeIndex = focusableElements.findIndex(
-        (element) => element === document.activeElement,
-      );
-      if (activeIndex === -1) {
-        event.preventDefault();
-        const boundary = event.shiftKey
-          ? focusableElements[focusableElements.length - 1]
-          : focusableElements[0];
-        boundary.focus();
-        return;
-      }
-
-      if (event.shiftKey && activeIndex === 0) {
-        event.preventDefault();
-        focusableElements[focusableElements.length - 1].focus();
-      } else if (!event.shiftKey && activeIndex === focusableElements.length - 1) {
-        event.preventDefault();
-        focusableElements[0].focus();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isTransitioning, onClose]);
-
-  useEffect(() => {
-    const updateViewport = () => {
-      setViewport({ width: window.innerWidth, height: window.innerHeight });
-    };
-
-    updateViewport();
-    window.addEventListener("resize", updateViewport);
-    return () => window.removeEventListener("resize", updateViewport);
-  }, []);
-
-  useEffect(() => {
-    if (stepIndex === 0 || !step.target) {
-      setTargetBounds(null);
-      setReadyStepIndex(stepIndex);
-      return;
-    }
-    if (step.href && pathname !== step.href) {
-      setTargetBounds(null);
-      setReadyStepIndex(null);
-      return;
-    }
-
-    let currentTarget: HTMLElement | null = null;
-    let hasScrolledToTarget = false;
-    const resizeObserver = new ResizeObserver(updateTargetBounds);
-
-    function updateTargetBounds() {
-      const nextTarget = document.querySelector<HTMLElement>(
-        `[data-tour-target="${step.target}"]`,
-      );
-      const targetChanged = nextTarget !== currentTarget;
-      if (targetChanged) {
-        resizeObserver.disconnect();
-        currentTarget = nextTarget;
-        hasScrolledToTarget = false;
-        if (currentTarget) {
-          resizeObserver.observe(currentTarget);
-        }
-      }
-
-      if (!currentTarget) {
-        setTargetBounds(null);
-        setReadyStepIndex(null);
-        return;
-      }
-
-      if (!hasScrolledToTarget) {
-        hasScrolledToTarget = true;
-        currentTarget.scrollIntoView({
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-            .matches
-            ? "auto"
-            : "smooth",
-          block: "nearest",
-          inline: "nearest",
-        });
-      }
-
-      const bounds = currentTarget.getBoundingClientRect();
-      const updateBounds = () =>
-        setTargetBounds((previousBounds) => {
-          if (
-            previousBounds &&
-            Math.abs(previousBounds.top - bounds.top) < 0.5 &&
-            Math.abs(previousBounds.left - bounds.left) < 0.5 &&
-            Math.abs(previousBounds.width - bounds.width) < 0.5 &&
-            Math.abs(previousBounds.height - bounds.height) < 0.5
-          ) {
-            return previousBounds;
-          }
-          return {
-            top: bounds.top,
-            left: bounds.left,
-            right: bounds.right,
-            bottom: bounds.bottom,
-            width: bounds.width,
-            height: bounds.height,
-          };
-        });
-
-      if (targetChanged) {
-        startTransition(() => {
-          updateBounds();
-          setReadyStepIndex(stepIndex);
-        });
-        return;
-      }
-      updateBounds();
-      setReadyStepIndex(stepIndex);
-    }
-
-    const mutationObserver = new MutationObserver(updateTargetBounds);
-    mutationObserver.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener("resize", updateTargetBounds);
-    window.addEventListener("scroll", updateTargetBounds, true);
-    updateTargetBounds();
-
-    return () => {
-      mutationObserver.disconnect();
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", updateTargetBounds);
-      window.removeEventListener("scroll", updateTargetBounds, true);
-    };
-  }, [pathname, step.href, step.target, stepIndex]);
-
-  useLayoutEffect(() => {
-    if (readyStepIndex === stepIndex) {
-      onTargetReady(stepIndex);
-    }
-  }, [onTargetReady, readyStepIndex, stepIndex]);
-
-  useLayoutEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (!targetBounds || !viewport.width || !viewport.height) {
-      dialog.style.top = "50%";
-      dialog.style.left = "50%";
-      dialog.style.transform = "translate(-50%, -50%)";
-      return;
-    }
-
-    const dialogBounds = dialog.getBoundingClientRect();
-    const horizontalMargin = 16;
-    const verticalMargin = 8;
-    const dialogGap = 16;
-    const targetLeft = targetBounds.left - SPOTLIGHT_PADDING.horizontal;
-    const targetTop = targetBounds.top - SPOTLIGHT_PADDING.top;
-    const targetRight = targetBounds.right + SPOTLIGHT_PADDING.horizontal;
-    const targetBottom = targetBounds.bottom + SPOTLIGHT_PADDING.bottom;
-    const left = Math.max(
-      horizontalMargin,
-      Math.min(
-        (targetLeft + targetRight) / 2 - dialogBounds.width / 2,
-        viewport.width - dialogBounds.width - horizontalMargin,
-      ),
-    );
-    const spaceAbove = targetTop - dialogGap - verticalMargin;
-    const spaceBelow = viewport.height - targetBottom - dialogGap - verticalMargin;
-    const fitsAbove = dialogBounds.height <= spaceAbove;
-    const fitsBelow = dialogBounds.height <= spaceBelow;
-    let top: number;
-    if (fitsBelow) {
-      top = targetBottom + dialogGap;
-    } else if (fitsAbove) {
-      top = targetTop - dialogBounds.height - dialogGap;
-    } else if (spaceAbove >= spaceBelow) {
-      top = verticalMargin;
-    } else {
-      top = Math.max(
-        verticalMargin,
-        viewport.height - dialogBounds.height - verticalMargin,
-      );
-    }
-
-    dialog.style.top = `${Math.round(top)}px`;
-    dialog.style.left = `${Math.round(left)}px`;
-    dialog.style.transform = "none";
-  }, [
-    step.description,
-    step.title,
-    stepIndex,
-    storageError,
-    targetBounds,
-    viewport,
-  ]);
+  const { dialogRef, targetBounds, viewport, hasSpotlight, hole } =
+    useTutorialSpotlight({
+      stepIndex,
+      target: step.target,
+      href: step.href,
+      isTransitioning,
+      onClose,
+      onTargetReady,
+      layoutKey: `${step.title}|${step.description}|${storageError ?? ""}`,
+    });
   const progress = ((stepIndex + 1) / stepCount) * 100;
-  const holeTop = targetBounds
-    ? Math.max(0, targetBounds.top - SPOTLIGHT_PADDING.top)
-    : 0;
-  const holeBottom = targetBounds
-    ? Math.min(viewport.height, targetBounds.bottom + SPOTLIGHT_PADDING.bottom)
-    : 0;
-  const holeLeft = targetBounds
-    ? Math.max(0, targetBounds.left - SPOTLIGHT_PADDING.horizontal)
-    : 0;
-  const holeRight = targetBounds
-    ? Math.min(viewport.width, targetBounds.right + SPOTLIGHT_PADDING.horizontal)
-    : 0;
-  const hasSpotlight = Boolean(targetBounds && viewport.width && viewport.height);
+  const holeTop = hole?.top ?? 0;
+  const holeBottom = hole?.bottom ?? 0;
+  const holeLeft = hole?.left ?? 0;
+  const holeRight = hole?.right ?? 0;
 
   return (
     <>

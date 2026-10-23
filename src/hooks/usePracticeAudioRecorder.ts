@@ -1,21 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getLocalDateKey } from "@/lib/local-date";
-import { createPracticeAudioRecording } from "@/lib/practice-recording";
-import { getRecordingDurationSeconds } from "@/lib/recording-duration";
-import {
-  deletePracticeRecording,
-  listPracticeRecordings,
-  savePracticeRecording,
-  type PracticeAudioRecording,
-} from "@/lib/practice-library";
+import { getLocalDateKey } from "@/utils/local-date";
+import { createPracticeAudioRecording } from "@/utils/practice-recording";
+import { getRecordingDurationSeconds } from "@/utils/recording-duration";
+import { deletePracticeRecording, listPracticeRecordings, savePracticeRecording } from "@/services/practice-library";
+import type { PracticeAudioRecording } from "@/types/practice-library";
 import {
   deleteCloudPracticeRecording,
   saveCloudPracticeRecording,
-} from "@/lib/supabase/practice-files";
-import { notifyRecordingSaved } from "@/lib/practice-events";
-import { getSessionPracticeRecordings } from "@/lib/practice-recording-filtering";
+} from "@/services/supabase/practice-files";
+import { notifyRecordingSaved } from "@/services/practice-events";
+import { getSessionPracticeRecordings } from "@/utils/practice-recording-filtering";
 import type { PracticeSkill } from "@/types/practice";
 import { useAppData } from "@/components/providers/AppDataProvider";
 

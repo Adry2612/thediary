@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { migrateRepertoireLicks } from "../src/lib/licks/migration.ts";
+import { migrateRepertoireLicks } from "../src/utils/licks/migration.ts";
 import { normalizePracticeStorageState } from "../src/stores/normalizePracticeStorageState.ts";
 import {
   DEFAULT_PRACTICE_GOALS,
   normalizePracticeGoals,
-} from "../src/lib/practice-goals.ts";
+} from "../src/utils/practice-goals.ts";
 import {
   DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
   normalizeWeeklyRoutineSchedule,
-} from "../src/lib/weekly-routine-schedule.ts";
+} from "../src/utils/weekly-routine-schedule.ts";
 
 function legacyLick(overrides = {}) {
   return {

@@ -12,7 +12,7 @@ import {
   tabTechniqueSelectionState,
   toggleTabTechniques,
   type TabCell,
-} from "@/lib/repertoire-tab";
+} from "@/utils/repertoire-tab";
 import type { RepertoireTab, RepertoireTabNote } from "@/types/practice";
 
 /**

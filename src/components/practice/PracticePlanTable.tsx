@@ -1,23 +1,11 @@
-import { formatPracticeDuration } from '@/lib/dashboard-data';
-import { getPracticePlanDuration } from '@/lib/practice-plan';
+import { formatPracticeDuration } from '@/utils/dashboard-data';
+import { getPracticePlanDuration } from '@/utils/practice-plan';
+import {
+  getLinkedRepertoirePartName,
+  getPracticeBlockTitle,
+} from '@/utils/practice-session-details';
 import type { PracticePhase, RepertoireItem } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
-
-function getLinkedPart(
-  phase: PracticePhase,
-  repertoireItems: RepertoireItem[],
-) {
-  if (!phase.repertoireItemId || !phase.repertoirePartId) return null;
-
-  const item = repertoireItems.find(
-    (candidate) => candidate.id === phase.repertoireItemId,
-  );
-  const part = item?.parts.find(
-    (candidate) => candidate.id === phase.repertoirePartId,
-  );
-
-  return item && part ? `${item.title} · ${part.name}` : null;
-}
 
 export function PracticePlanTable({
   phases,
@@ -66,7 +54,11 @@ export function PracticePlanTable({
           </thead>
           <tbody>
             {phases.map((phase, index) => {
-              const linkedPart = getLinkedPart(phase, repertoireItems);
+              const title = getPracticeBlockTitle(phase, repertoireItems);
+              const linkedPart = getLinkedRepertoirePartName(
+                phase,
+                repertoireItems,
+              );
               const resources = phase.resources ?? [];
               const exercises = phase.exercises ?? [];
               const hasDetails =
@@ -84,7 +76,7 @@ export function PracticePlanTable({
                     className='px-3 py-4 text-sm font-medium text-ink sm:px-5'
                   >
                     <span className='block break-words'>
-                       {phase.name || `${text.currentBlock} ${index + 1}`}
+                      {title || `${text.currentBlock} ${index + 1}`}
                     </span>
                     <span className='mt-1 block text-xs font-normal text-muted'>
                        {skills[phase.skill]}
@@ -101,7 +93,7 @@ export function PracticePlanTable({
                         )}
                         {linkedPart && (
                           <p>
-                             <span className='text-ink'>{text.repertoirePart}:</span>{' '}
+                            <span className='text-ink'>{text.repertoirePart}:</span>{' '}
                             {linkedPart}
                           </p>
                         )}

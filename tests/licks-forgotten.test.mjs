@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getForgottenLick } from "../src/lib/licks/forgotten.ts";
+import { getForgottenLick } from "../src/utils/licks/forgotten.ts";
 
 const today = new Date(2026, 2, 15, 12);
 const iso = (year, month, day) => new Date(year, month - 1, day, 12).toISOString();

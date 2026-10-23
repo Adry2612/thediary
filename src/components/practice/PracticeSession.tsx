@@ -8,49 +8,75 @@ import { MetronomeCard } from "@/components/practice/MetronomeCard";
 import { PracticeAudioRecorder } from "@/components/practice/PracticeAudioRecorder";
 import { SplitViewIcon } from "@/components/ui/icons";
 import { PracticeMaterials } from "@/components/practice/PracticeMaterials";
+import { LickTab } from "@/components/licks/LickTab";
+import { Card } from "@/components/ui/Card";
 import { TimerCard } from "@/components/practice/TimerCard";
 import { useMetronome } from "@/hooks/useMetronome";
 import { usePracticeTimer } from "@/hooks/usePracticeTimer";
-import { getLocalDateKey } from "@/lib/local-date";
-import { formatClock } from "@/lib/format";
-import { getTimeWeightedAverageBpm } from "@/lib/metronome-bpm";
-import { createPracticeSessionRecord } from "@/lib/practice-session-record";
+import { useSplitViewAvailability } from "@/hooks/useSplitViewAvailability";
+import { getLocalDateKey } from "@/utils/local-date";
+import { formatClock } from "@/utils/format";
+import {
+  addBpmSample,
+  getTimeWeightedAverageBpm,
+} from "@/utils/metronome-bpm";
+import {
+  getSessionStatus,
+} from "@/utils/practice-session-status";
+import { createPracticeSessionRecord } from "@/utils/practice-session-record";
+import { getPhaseMaterials } from "@/utils/practice-materials";
+import { normalizeRepertoirePhaseNames } from "@/utils/practice-plan";
+import {
+  getPracticeBlockTitle,
+} from "@/utils/practice-session-details";
+import { getRepertoireSongChanges } from "@/utils/practice-block-editor";
+import {
+  applyRoutineLinkChanges,
+  hasPracticeLinkChanges,
+} from "@/utils/practice-routine-update";
+import { getPracticedLickIds } from "@/utils/practice-lick-progress";
+import { getTechniqueLabels } from "@/utils/licks/presentation";
 import {
   useActivePracticeSessionStore,
   type ActivePracticeSession,
 } from "@/stores/useActivePracticeSessionStore";
 import { usePracticeStore } from "@/stores/usePracticeStore";
-import type { PracticePhase, PracticeTimerResult } from "@/types/practice";
+import type { PracticeTimerResult } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
-
-function getSessionStatus(isCompleted: boolean, isRunning: boolean): string {
-  if (isCompleted) return "Práctica finalizada";
-  if (isRunning) return "Práctica en curso";
-  return "Práctica en pausa";
-}
 
 export function PracticeSession({ session }: { session: ActivePracticeSession }) {
   const text = useI18nSection("practice");
+  const licksText = useI18nSection("licks");
   const { id: sessionId, name, phases } = session;
   const [isCompleted, setIsCompleted] = useState(false);
   const [pendingResult, setPendingResult] =
     useState<PracticeTimerResult | null>(null);
-  const [canUseSplitView, setCanUseSplitView] = useState(false);
   const sessionSavedRef = useRef(false);
   const completionHandledRef = useRef(false);
   const addSession = usePracticeStore((state) => state.addSession);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
+  const licks = usePracticeStore((state) => state.licks);
+  const templates = usePracticeStore((state) => state.templates);
+  const saveTemplate = usePracticeStore((state) => state.saveTemplate);
+  const markLickPracticed = usePracticeStore(
+    (state) => state.markLickPracticed,
+  );
+  const sourceTemplate = session.templateId
+    ? templates.find((template) => template.id === session.templateId)
+    : undefined;
+  const routineHasChanges = sourceTemplate
+    ? hasPracticeLinkChanges(phases, sourceTemplate.phases)
+    : false;
   const clearActiveSession = useActivePracticeSessionStore(
     (state) => state.clearActiveSession,
   );
-  const isSplitView = useActivePracticeSessionStore(
-    (state) => state.isSplitView,
+  const setActiveSession = useActivePracticeSessionStore(
+    (state) => state.setActiveSession,
   );
-  const setSplitView = useActivePracticeSessionStore(
-    (state) => state.setSplitView,
-  );
-  const addAttachedResource = useActivePracticeSessionStore(
-    (state) => state.addAttachedResource,
+  const { canUseSplitView, isSplitView, toggleSplitView } =
+    useSplitViewAvailability();
+  const updatePhase = useActivePracticeSessionStore(
+    (state) => state.updatePhase,
   );
   const pathname = usePathname();
   const isPracticeRoute = pathname === "/practice";
@@ -95,48 +121,48 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   }, [metronomeBpm, timer.startedAt]);
   const recordBpmChange = useCallback(
     (bpm: number) => {
-      const elapsedSeconds = timerElapsedSecondsRef.current;
-      const previousSample = bpmSamplesRef.current.at(-1);
-      if (previousSample?.elapsedSeconds === elapsedSeconds) {
-        bpmSamplesRef.current[bpmSamplesRef.current.length - 1] = {
-          elapsedSeconds,
-          bpm,
-        };
-        return;
-      }
-
-      bpmSamplesRef.current.push({ elapsedSeconds, bpm });
+      bpmSamplesRef.current = addBpmSample(
+        bpmSamplesRef.current,
+        timerElapsedSecondsRef.current,
+        bpm,
+      );
     },
     [],
   );
   useEffect(() => () => stopMetronome(), [stopMetronome]);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(min-width: 1024px)');
-    const updateSplitViewAvailability = () =>
-      setCanUseSplitView(mediaQuery.matches);
-
-    updateSplitViewAvailability();
-    mediaQuery.addEventListener('change', updateSplitViewAvailability);
-    return () =>
-      mediaQuery.removeEventListener('change', updateSplitViewAvailability);
-  }, []);
+    if (!isPracticeRoute) return;
+    // Safari móvil puede conservar la posición de la página anterior al
+    // navegar; se vuelve al principio ahora y tras el primer layout.
+    window.scrollTo(0, 0);
+    const frame = window.requestAnimationFrame(() => window.scrollTo(0, 0));
+    return () => window.cancelAnimationFrame(frame);
+  }, [isPracticeRoute, sessionId]);
 
   useEffect(() => {
-    if (!canUseSplitView && isSplitView) setSplitView(false);
-  }, [canUseSplitView, isSplitView, setSplitView]);
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [sessionId]);
+    // Una sesión antigua pudo guardar un nombre distinto al de su canción. Se
+    // corrige la sesión activa para que listas, diálogo final y actualización
+    // de rutina usen siempre el título real; la clave estructural del
+    // temporizador no cambia, así que el tiempo no se reinicia.
+    const normalized = normalizeRepertoirePhaseNames(phases, repertoireItems);
+    if (normalized === phases) return;
+    setActiveSession({ ...session, phases: normalized });
+  }, [phases, repertoireItems, session, setActiveSession]);
 
   function saveCompletedSession(
     sessionNotes: string,
     phaseNotes: Record<number, string>,
+    updateRoutine = false,
   ) {
     if (!pendingResult || sessionSavedRef.current) return;
 
     sessionSavedRef.current = true;
+    const phasesForRecord = phases.map((phase) => ({
+      ...phase,
+      name: getPracticeBlockTitle(phase, repertoireItems),
+      resources: getPhaseMaterials(phase, repertoireItems),
+    }));
     addSession(
       createPracticeSessionRecord({
         id: sessionId,
@@ -146,11 +172,28 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
           pendingResult.elapsedSeconds,
         ),
         result: pendingResult,
-        phases,
+        phases: phasesForRecord,
         notes: sessionNotes,
         phaseNotes,
       }),
     );
+    for (const lickId of getPracticedLickIds(pendingResult.phases)) {
+      markLickPracticed(lickId, pendingResult.startedAt);
+    }
+    if (updateRoutine && session.templateId) {
+      const routine = usePracticeStore
+        .getState()
+        .templates.find((template) => template.id === session.templateId);
+      if (routine) {
+        saveTemplate(
+          applyRoutineLinkChanges(
+            routine,
+            phases,
+            new Date().toISOString(),
+          ),
+        );
+      }
+    }
     clearActiveSession();
     router.push(
       `/dashboard/practice/${getLocalDateKey(new Date(pendingResult.startedAt))}`,
@@ -164,11 +207,37 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
 
   const nextPhase = phases[timer.currentPhaseIndex + 1];
   const currentPhase = phases[timer.currentPhaseIndex];
+  const sessionStatus = getSessionStatus(isCompleted, timer.isRunning);
+  const sessionStatusLabel =
+    sessionStatus === "completed" ? text.completedStatus
+    : sessionStatus === "running" ? text.sessionStatus
+    : text.pausedStatus;
   // Si el bloque que se está practicando pertenece al repertorio, su artista
   // se muestra bajo el nombre de la canción.
   const currentRepertoireItem = currentPhase?.repertoireItemId
-    ? repertoireItems.find((item) => item.id === currentPhase.repertoireItemId)
+    ? repertoireItems.find(
+        (item) =>
+          item.id === currentPhase.repertoireItemId && item.kind === "song",
+      )
     : undefined;
+  const currentLick = currentPhase?.lickId
+    ? licks.find((lick) => lick.id === currentPhase.lickId)
+    : undefined;
+  const currentLickTechniques = currentLick
+    ? getTechniqueLabels(licksText, currentLick.techniques)
+    : [];
+  const repertoireSongs = repertoireItems.filter(
+    (item) => item.kind === "song",
+  );
+
+  function changeCurrentSong(songId: string) {
+    if (!currentPhase) return;
+    const nextSong = repertoireItems.find(
+      (item) => item.id === songId && item.kind === "song",
+    );
+    if (!nextSong) return;
+    updatePhase(currentPhase.id, getRepertoireSongChanges(nextSong));
+  }
 
   const timerCard = (
     <TimerCard
@@ -181,6 +250,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
       practiceEndSound={practiceEndSound}
       setPracticeEndSound={setPracticeEndSound}
       artist={currentRepertoireItem?.artist}
+      title={currentRepertoireItem?.title ?? currentPhase?.name}
+      repertoireSongs={repertoireSongs}
+      onChangeRepertoireSong={changeCurrentSong}
     />
   );
   const metronomeCard = (
@@ -206,7 +278,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
       </h2>
       {nextPhase ? (
         <div className="mt-4 border-t border-line pt-4">
-          <p className="font-medium">{nextPhase.name}</p>
+          <p className="font-medium">
+            {getPracticeBlockTitle(nextPhase, repertoireItems)}
+          </p>
           <p className="mt-1 font-mono text-xs text-muted">
             {nextPhase.durationMinutes} min
           </p>
@@ -219,13 +293,53 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
       )}
     </section>
   );
+  const lickMaterial = currentLick ? (
+    <Card className='p-5 sm:p-8'>
+      <p className='text-xs uppercase text-muted'>{text.lickMaterial}</p>
+      <h2 className='mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8'>
+        {currentLick.title}
+      </h2>
+      {currentLickTechniques.length > 0 && (
+        <p className='mt-2 text-xs text-muted'>
+          {text.lickTechniques}: {currentLickTechniques.join(' · ')}
+        </p>
+      )}
+      <LickTab
+        tab={currentLick.tab}
+        content={currentLick.tabContent}
+        emptyLabel={text.lickTabEmpty}
+        ariaLabel={text.lickTabAria}
+        className='mt-4'
+      />
+    </Card>
+  ) : null;
   const materials = (
-    <PracticeMaterials
-      phases={phases}
-      attachedResources={session.attachedResources}
-      onAttach={addAttachedResource}
-      splitView={isSplitView}
-    />
+    <>
+      {lickMaterial}
+      <PracticeMaterials
+        phases={
+          currentPhase
+            ? [
+                {
+                  ...currentPhase,
+                  name: getPracticeBlockTitle(currentPhase, repertoireItems),
+                  resources: getPhaseMaterials(currentPhase, repertoireItems),
+                },
+              ]
+            : []
+        }
+        attachedResources={[]}
+        onAttach={
+          currentPhase
+            ? (resource) =>
+                updatePhase(currentPhase.id, {
+                  resources: [...(currentPhase.resources ?? []), resource],
+                })
+            : undefined
+        }
+        splitView={isSplitView}
+      />
+    </>
   );
   const recorder = (
     <PracticeAudioRecorder
@@ -253,6 +367,8 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
       <PracticeCompletionDialog
         result={pendingResult}
         isVisible={isPracticeRoute}
+        routineName={sourceTemplate?.name}
+        canUpdateRoutine={routineHasChanges}
         onSave={saveCompletedSession}
         onDiscard={discardSession}
       />
@@ -268,7 +384,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={() => setSplitView(!isSplitView)}
+              onClick={toggleSplitView}
               className="inline-flex items-center gap-2 rounded-md border border-line px-3 py-2 text-xs text-muted transition hover:bg-white/5 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
             >
               <SplitViewIcon className="size-4" />
@@ -314,7 +430,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
             />
             <span className="min-w-0 flex-1">
               <span className="block text-[10px] uppercase tracking-[0.05em] text-muted sm:text-xs">
-                {getSessionStatus(isCompleted, timer.isRunning)}
+                {sessionStatusLabel}
               </span>
               <span className="block truncate text-sm font-medium text-ink sm:text-base">
                 {name}

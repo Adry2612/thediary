@@ -16,7 +16,7 @@ import {
   normalizeChordShape,
   setChordString,
   toggleChordFret,
-} from "@/lib/chords";
+} from "@/utils/chords";
 import type { ChordShape, UserChord } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 

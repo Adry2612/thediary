@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getScheduledMetronomeBeats } from "../src/lib/metronome-scheduler.ts";
+import { getScheduledMetronomeBeats } from "../src/utils/metronome-scheduler.ts";
 
 const noTempoRamp = {
   enabled: false,

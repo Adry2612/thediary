@@ -5,7 +5,7 @@ import {
   createManualPracticeRecord,
   manualPracticeBlocksFromDrafts,
   toLocalDateTimeInputValue,
-} from "../src/lib/manual-practice.ts";
+} from "../src/utils/manual-practice.ts";
 
 test("creates a historical session from its blocks, duration, skills, and notes", () => {
   const record = createManualPracticeRecord({
@@ -27,6 +27,7 @@ test("creates a historical session from its blocks, duration, skills, and notes"
     technique: 1500,
     theory: 0,
     repertoire: 1200,
+    lick: 0,
     improvisation: 0,
   });
   assert.equal(record.notes, "Trabajé despacio y con metrónomo.");

@@ -3,16 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextArea } from "@/components/ui/Field";
-import { formatClock } from "@/lib/format";
+import { formatClock } from "@/utils/format";
 import type { PracticeTimerResult } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 interface PracticeCompletionDialogProps {
   result: PracticeTimerResult | null;
   isVisible: boolean;
+  routineName?: string;
+  canUpdateRoutine?: boolean;
   onSave: (
     sessionNotes: string,
     phaseNotes: Record<number, string>,
+    updateRoutine: boolean,
   ) => void;
   onDiscard: () => void;
 }
@@ -20,6 +23,8 @@ interface PracticeCompletionDialogProps {
 export function PracticeCompletionDialog({
   result,
   isVisible,
+  routineName,
+  canUpdateRoutine = false,
   onSave,
   onDiscard,
 }: PracticeCompletionDialogProps) {
@@ -27,6 +32,7 @@ export function PracticeCompletionDialog({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [sessionNotes, setSessionNotes] = useState("");
   const [phaseNotes, setPhaseNotes] = useState<Record<number, string>>({});
+  const [updateRoutine, setUpdateRoutine] = useState(true);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -34,6 +40,10 @@ export function PracticeCompletionDialog({
 
     if (result && isVisible && !dialog.open) dialog.showModal();
     if ((!result || !isVisible) && dialog.open) dialog.close();
+  }, [isVisible, result]);
+
+  useEffect(() => {
+    if (result && isVisible) setUpdateRoutine(true);
   }, [isVisible, result]);
 
   return (
@@ -106,13 +116,31 @@ export function PracticeCompletionDialog({
             </div>
           </section>
         )}
+        {canUpdateRoutine && routineName && (
+          <label className="mt-6 flex items-start gap-2 rounded-lg border border-line bg-canvas/50 p-3 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={updateRoutine}
+              onChange={(event) => setUpdateRoutine(event.target.checked)}
+              className="mt-0.5 size-4 accent-accent-green-fg"
+            />
+            <span>
+              <span className="block font-medium">
+                {text.updateRoutine} «{routineName}»
+              </span>
+              <span className="mt-1 block text-xs text-muted">
+                {text.updateRoutineDescription}
+              </span>
+            </span>
+          </label>
+        )}
         <Button className="mt-6 w-full" onClick={onDiscard}>
           {text.exitWithoutSaving}
         </Button>
         <Button
           variant="primary"
           className="mt-3 w-full"
-          onClick={() => onSave(sessionNotes, phaseNotes)}
+          onClick={() => onSave(sessionNotes, phaseNotes, updateRoutine)}
         >
           {text.saveCompletion}
         </Button>

@@ -1,24 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PracticeMaterials } from '@/components/practice/PracticeMaterials';
 import { RepertoirePartEditor } from '@/components/repertoire/RepertoirePartEditor';
 import { Button } from '@/components/ui/Button';
+import { CheckboxField } from '@/components/ui/CheckboxField';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { TextField } from '@/components/ui/Field';
+import { ChevronIcon, DeleteIcon } from '@/components/ui/icons';
 import { SelectField } from '@/components/ui/SelectField';
-import { formatPracticeDuration } from '@/lib/dashboard-data';
+import { formatPracticeDuration } from '@/utils/dashboard-data';
 import type {
   RepertoireItemPracticeStats,
   RepertoirePartPracticeStats,
-} from '@/lib/repertoire-analytics';
-import { REPERTOIRE_DIFFICULTIES } from '@/lib/repertoire-item';
-import { getDifficultyLabel } from '@/lib/difficulty-labels';
+} from '@/utils/repertoire-analytics';
+import { REPERTOIRE_DIFFICULTIES } from '@/utils/repertoire-item';
+import { getDifficultyLabel } from '@/utils/difficulty-labels';
 import {
+  buildRepertoireDetailsUpdate,
+  buildRepertoireExtraConfigUpdates,
   createRepertoirePart,
-  parseRepertoireBpm,
+  hasRepertoireExtraConfigChanges,
   updateRepertoirePart,
-} from '@/lib/repertoire-item-editing';
+} from '@/utils/repertoire-item-editing';
 import type {
   PracticePhase,
   RepertoireItem,
@@ -26,44 +31,12 @@ import type {
   RepertoireDifficulty,
 } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
-import { createId as createIdentifier } from '@/lib/create-id';
-import { COMMON_TUNINGS } from '@/lib/repertoire-item';
+import { createId as createIdentifier } from '@/utils/create-id';
+import { COMMON_TUNINGS } from '@/utils/repertoire-item';
 import { useActivePracticeSessionStore } from '@/stores/useActivePracticeSessionStore';
 
 function createId() {
   return createIdentifier();
-}
-
-function ChevronIcon({ open = false }: { open?: boolean }) {
-  return (
-    <svg
-      viewBox='0 0 20 20'
-      fill='currentColor'
-      aria-hidden='true'
-      className={`size-4 shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
-    >
-      <path d='M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z' />
-    </svg>
-  );
-}
-
-function DeleteIcon() {
-  return (
-    <svg
-      viewBox='0 0 24 24'
-      fill='none'
-      aria-hidden='true'
-      className='size-4'
-    >
-      <path
-        d='M5 7h14m-9 4v6m4-6v6M9 7V5.5h6V7m-8 0 .8 12h8.4L17 7'
-        stroke='currentColor'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        strokeWidth='1.5'
-      />
-    </svg>
-  );
 }
 
 export function RepertoireItemCard({
@@ -93,8 +66,16 @@ export function RepertoireItemCard({
     (state) => state.clearActiveSession,
   );
   const [isExpanded, setIsExpanded] = useState(detail);
-  const [title, setTitle] = useState(item.title);
   const [artist, setArtist] = useState(item.artist ?? '');
+  /**
+   * El título es un `contentEditable`: si sus hijos se ataran al estado, cada
+   * pulsación reescribiría el nodo de texto y el cursor volvería al inicio.
+   * Los borradores viven en refs y el DOM se sincroniza solo cuando cambia
+   * `item` (al guardar o al llegar datos nuevos).
+   */
+  const titleRef = useRef<HTMLSpanElement>(null);
+  const titleDraftRef = useRef(item.title);
+  const artistDraftRef = useRef(item.artist ?? '');
 
   // Extra config state
   const [tuning, setTuning] = useState(item.tuning ?? '');
@@ -116,7 +97,8 @@ export function RepertoireItemCard({
   const [isQuickPracticeDialogOpen, setIsQuickPracticeDialogOpen] = useState(false);
 
   useEffect(() => {
-    setTitle(item.title);
+    titleDraftRef.current = item.title;
+    artistDraftRef.current = item.artist ?? '';
     setArtist(item.artist ?? '');
     setTuning(item.tuning ?? '');
     setCapo(item.capo?.toString() ?? '');
@@ -128,21 +110,18 @@ export function RepertoireItemCard({
   }, [item]);
 
   function saveDetails() {
-    const cleanTitle = title.trim();
-    const cleanArtist = artist.trim();
-    if (!cleanTitle) {
-      setTitle(item.title);
+    const result = buildRepertoireDetailsUpdate(
+      { title: titleDraftRef.current, artist: artistDraftRef.current },
+      item,
+      new Date().toISOString(),
+    );
+
+    if (result.kind === 'empty-title') {
+      titleDraftRef.current = item.title;
+      if (titleRef.current) titleRef.current.textContent = item.title;
       return;
     }
-    if (cleanTitle === item.title && cleanArtist === (item.artist ?? ''))
-      return;
-
-    onSave({
-      ...item,
-      title: cleanTitle,
-      artist: cleanArtist || undefined,
-      updatedAt: new Date().toISOString(),
-    });
+    if (result.kind === 'save') onSave({ ...item, ...result.updates });
   }
 
   /**
@@ -159,44 +138,23 @@ export function RepertoireItemCard({
       difficulty: RepertoireDifficulty | '';
     }> = {},
   ) {
-    const nextTuning = overrides.tuning ?? tuning;
-    const nextCustomTuning = overrides.customTuning ?? customTuning;
-    const nextCapo = overrides.capo ?? capo;
-    const nextGuitarType = overrides.guitarType ?? guitarType;
-    const nextDifficulty = overrides.difficulty ?? difficulty;
+    const updates = buildRepertoireExtraConfigUpdates(
+      {
+        tuning: overrides.tuning ?? tuning,
+        customTuning: overrides.customTuning ?? customTuning,
+        capo: overrides.capo ?? capo,
+        guitarType: overrides.guitarType ?? guitarType,
+        difficulty: overrides.difficulty ?? difficulty,
+        youtubeUrl,
+        spotifyUrl,
+        isFutureLearn,
+      },
+      item,
+      new Date().toISOString(),
+    );
 
-    const finalTuning =
-      nextTuning === 'Otra...' ? nextCustomTuning.trim() : nextTuning.trim();
-    const capoNum = nextCapo.trim() ? Number(nextCapo) : undefined;
-
-    if (
-      capoNum !== undefined &&
-      (isNaN(capoNum) || capoNum < 0 || capoNum > 12)
-    ) {
-      return;
-    }
-
-    const updates: Partial<RepertoireItem> = {
-      updatedAt: new Date().toISOString(),
-    };
-
-    if (finalTuning !== (item.tuning ?? ''))
-      updates.tuning = finalTuning || undefined;
-    if (capoNum !== item.capo) updates.capo = capoNum;
-    if (nextGuitarType !== (item.guitarType ?? ''))
-      updates.guitarType = nextGuitarType || undefined;
-    if (nextDifficulty !== (item.difficulty ?? ''))
-      updates.difficulty = nextDifficulty || undefined;
-    if (youtubeUrl.trim() !== (item.youtubeUrl ?? ''))
-      updates.youtubeUrl = youtubeUrl.trim() || undefined;
-    if (spotifyUrl.trim() !== (item.spotifyUrl ?? ''))
-      updates.spotifyUrl = spotifyUrl.trim() || undefined;
-    if (isFutureLearn !== (item.isFutureLearn ?? false))
-      updates.isFutureLearn = isFutureLearn || undefined;
-
-    if (Object.keys(updates).length > 1) {
-      onSave({ ...item, ...updates });
-    }
+    if (!updates || !hasRepertoireExtraConfigChanges(updates)) return;
+    onSave({ ...item, ...updates });
   }
 
   function addPart() {
@@ -244,9 +202,10 @@ export function RepertoireItemCard({
         aria-placeholder={text.artistSort}
         spellCheck={false}
         onClick={(event) => event.stopPropagation()}
-        onInput={(event) =>
-          setArtist(event.currentTarget.textContent ?? '')
-        }
+        onInput={(event) => {
+          artistDraftRef.current = event.currentTarget.textContent ?? '';
+          setArtist(artistDraftRef.current);
+        }}
         onBlur={saveDetails}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
@@ -256,7 +215,7 @@ export function RepertoireItemCard({
         }}
         className={`max-w-40 truncate outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 ${artist ? 'text-muted' : 'text-muted/60'}`}
       >
-        {artist}
+        {item.artist ?? ''}
       </span>
     : <span className='max-w-40 truncate'>{item.artist}</span>;
 
@@ -282,15 +241,17 @@ export function RepertoireItemCard({
           <span className='min-w-0 w-full'>
             {detail ?
               <span
+                ref={titleRef}
                 contentEditable
                 suppressContentEditableWarning
                 role='textbox'
                 aria-label={text.title}
                 spellCheck={false}
                 onClick={(event) => event.stopPropagation()}
-                onInput={(event) =>
-                  setTitle(event.currentTarget.textContent ?? '')
-                }
+                onInput={(event) => {
+                  titleDraftRef.current =
+                    event.currentTarget.textContent ?? '';
+                }}
                 onBlur={saveDetails}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
@@ -300,7 +261,7 @@ export function RepertoireItemCard({
                 }}
                 className='block w-full whitespace-normal break-words font-sans text-xl font-semibold leading-tight text-ink [overflow-wrap:anywhere] outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 sm:text-2xl'
               >
-                {title}
+                {item.title}
               </span>
             : <span className='block w-full whitespace-normal break-words font-sans text-xl font-semibold leading-tight text-ink [overflow-wrap:anywhere] sm:text-2xl'>
                 {item.title}
@@ -324,41 +285,20 @@ export function RepertoireItemCard({
               </span>
             </span>
             {detail && (
-              <label className='mt-3 flex w-fit cursor-pointer items-center gap-2 text-xs text-muted'>
-                <input
-                  type='checkbox'
-                  checked={isFutureLearn}
-                  onChange={(event) => {
-                    const checked = event.target.checked;
-                    setIsFutureLearn(checked);
-                    onSave({
-                      ...item,
-                      isFutureLearn: checked || undefined,
-                      updatedAt: new Date().toISOString(),
-                    });
-                  }}
-                  className='peer sr-only'
-                />
-                <span
-                  aria-hidden='true'
-                  className='flex size-4 items-center justify-center border border-muted text-transparent transition peer-checked:border-accent-green-fg peer-checked:bg-accent-green-fg peer-checked:text-canvas peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-green-fg'
-                >
-                  <svg
-                    viewBox='0 0 12 12'
-                    className='size-3'
-                    fill='none'
-                  >
-                    <path
-                      d='m2 6 2.5 2.5L10 3'
-                      stroke='currentColor'
-                      strokeWidth='1.5'
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    />
-                  </svg>
-                </span>
-                <span>{text.futureLearn}</span>
-              </label>
+              <CheckboxField
+                className='mt-3 w-fit text-xs text-muted'
+                checked={isFutureLearn}
+                label={text.futureLearn}
+                onChange={(event) => {
+                  const checked = event.target.checked;
+                  setIsFutureLearn(checked);
+                  onSave({
+                    ...item,
+                    isFutureLearn: checked || undefined,
+                    updatedAt: new Date().toISOString(),
+                  });
+                }}
+              />
             )}
           </span>
         </span>
@@ -563,40 +503,22 @@ export function RepertoireItemCard({
         </div>
       )}
       {isQuickPracticeDialogOpen && (
-        <dialog
-          open
-          aria-labelledby={`quick-practice-title-${item.id}`}
-          className='fixed inset-0 z-50 m-auto w-[calc(100%-2rem)] max-w-md border border-line bg-surface p-0 text-ink shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop:bg-black/70'
-        >
-          <div className='p-6 sm:p-8'>
-            <h2
-              id={`quick-practice-title-${item.id}`}
-              className='font-sans text-2xl font-semibold'
-            >
-              {practiceText.newPracticeTitle}
-            </h2>
-            <p className='mt-3 text-sm leading-6 text-muted'>
-              {practiceText.newPracticeDescription}
-            </p>
-            <div className='mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end'>
-              <Button onClick={() => setIsQuickPracticeDialogOpen(false)}>
-                {practiceText.cancelNewPractice}
-              </Button>
-              <Button
-                variant='primary'
-                onClick={() => {
-                  setIsQuickPracticeDialogOpen(false);
-                  clearActiveSession();
-                  router.push(
-                    `/practice?quickRepertoire=${encodeURIComponent(item.id)}`,
-                  );
-                }}
-              >
-                {practiceText.confirmNewPractice}
-              </Button>
-            </div>
-          </div>
-        </dialog>
+        <ConfirmDialog
+          labelledBy={`quick-practice-title-${item.id}`}
+          className='z-50'
+          title={practiceText.newPracticeTitle}
+          description={practiceText.newPracticeDescription}
+          cancelLabel={practiceText.cancelNewPractice}
+          confirmLabel={practiceText.confirmNewPractice}
+          onCancel={() => setIsQuickPracticeDialogOpen(false)}
+          onConfirm={() => {
+            setIsQuickPracticeDialogOpen(false);
+            clearActiveSession();
+            router.push(
+              `/practice?quickRepertoire=${encodeURIComponent(item.id)}`,
+            );
+          }}
+        />
       )}
     </article>
   );

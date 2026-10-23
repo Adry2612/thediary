@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { synchronizePracticeTimer } from "../src/lib/practice-timer.ts";
+import { synchronizePracticeTimer } from "../src/utils/practice-timer.ts";
 
 const emptySkillElapsedMs = {
   technique: 0,
   theory: 0,
   repertoire: 0,
+  lick: 0,
   improvisation: 0,
 };
 
@@ -60,4 +61,42 @@ test("completes the session when the final block timer reaches zero", () => {
   assert.equal(result.completed, true);
   assert.equal(result.runtime.phaseIndex, phasePlan.length);
   assert.equal(result.runtime.awaitingPhaseAdvance, false);
+});
+
+test("keeps a non-final block running overtime when the option is on", () => {
+  const result = synchronizePracticeTimer(
+    createRuntime(),
+    phasePlan,
+    1500,
+    false,
+    true,
+  );
+
+  assert.equal(result.completed, false);
+  assert.equal(result.runtime.phaseIndex, 0);
+  assert.equal(result.runtime.phaseElapsedMs, 1500);
+  assert.equal(result.runtime.elapsedMs, 1500);
+  assert.equal(result.runtime.isRunning, true);
+  assert.equal(result.runtime.awaitingPhaseAdvance, true);
+  assert.deepEqual(result.runtime.phaseElapsedTotalsMs, [1500, 0]);
+});
+
+test("completes the final block even when the overtime option is on", () => {
+  const result = synchronizePracticeTimer(
+    createRuntime({
+      phaseIndex: 1,
+      elapsedMs: 1000,
+      phaseElapsedTotalsMs: [1000, 0],
+    }),
+    phasePlan,
+    2500,
+    false,
+    true,
+  );
+
+  assert.equal(result.completed, true);
+  assert.equal(result.runtime.phaseIndex, phasePlan.length);
+  assert.equal(result.runtime.elapsedMs, 2000);
+  assert.equal(result.runtime.awaitingPhaseAdvance, false);
+  assert.equal(result.runtime.isRunning, false);
 });

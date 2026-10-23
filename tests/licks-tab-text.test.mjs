@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { repertoireTabToText } from "../src/lib/licks/tab-text.ts";
+import { repertoireTabToText } from "../src/utils/licks/tab-text.ts";
 
 const tab = (overrides) => ({
   tuning: "EADGBE",

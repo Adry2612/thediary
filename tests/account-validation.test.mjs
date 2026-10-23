@@ -4,7 +4,7 @@ import {
   DELETE_CONFIRMATION_WORD,
   isDeleteConfirmation,
   passwordsMatch,
-} from "../src/lib/account-validation.ts";
+} from "../src/utils/account-validation.ts";
 
 test("matches a password against its repetition", () => {
   assert.equal(passwordsMatch("secreta", "secreta"), true);

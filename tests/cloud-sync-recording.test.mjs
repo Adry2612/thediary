@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { synchronizePracticeRecording } from "../src/lib/cloud-sync/sync-recording.ts";
+import { synchronizePracticeRecording } from "../src/services/cloud-sync/sync-recording.ts";
 
 function recording(blob = new Blob(["audio"], { type: "audio/webm" })) {
   return {

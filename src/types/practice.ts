@@ -2,6 +2,7 @@ export const PRACTICE_SKILLS = [
   "technique",
   "theory",
   "repertoire",
+  "lick",
   "improvisation",
 ] as const;
 
@@ -181,6 +182,8 @@ export interface PracticePhase {
   resources?: PracticeResource[];
   repertoireItemId?: string;
   repertoirePartId?: string;
+  /** Lick de la biblioteca que se practica en este bloque. */
+  lickId?: string;
 }
 
 export interface PracticeTemplate {
@@ -213,6 +216,7 @@ export interface SessionPhaseRecord {
   notes?: string;
   repertoireItemId?: string;
   repertoirePartId?: string;
+  lickId?: string;
 }
 
 export interface PracticeTimerPhaseResult {
@@ -220,6 +224,7 @@ export interface PracticeTimerPhaseResult {
   name: string;
   skill: PracticeSkill;
   elapsedSeconds: number;
+  lickId?: string;
 }
 
 export interface DailyStats {

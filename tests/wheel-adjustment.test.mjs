@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { consumeWheelDelta } from "../src/lib/wheel-adjustment.ts";
+import { consumeWheelDelta } from "../src/utils/wheel-adjustment.ts";
 
 test("accumulates small wheel movements and emits one adjustment per threshold", () => {
   assert.deepEqual(consumeWheelDelta(0, 30), { steps: 0, remainder: 30 });

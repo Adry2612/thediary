@@ -7,7 +7,7 @@ import {
   hasTargetBoundsChanged,
   SPOTLIGHT_PADDING,
   toTargetBounds,
-} from "../src/lib/tutorial-layout.ts";
+} from "../src/utils/tutorial-layout.ts";
 
 const viewport = { width: 1000, height: 800 };
 const dialog = { width: 320, height: 200 };

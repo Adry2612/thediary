@@ -13,7 +13,7 @@ import { SelectField } from "@/components/ui/SelectField";
 import { LicksSkeleton } from "@/components/ui/Skeletons";
 import { useLicksLibrary } from "@/hooks/useLicksLibrary";
 import { useI18nSection } from "@/i18n/I18nProvider";
-import { findLinkedSong, getLickTitle } from "@/lib/licks/presentation";
+import { findLinkedSong, getLickTitle } from "@/utils/licks/presentation";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import type { GuitarLick } from "@/types/lick";
 

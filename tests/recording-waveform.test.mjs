@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getWaveformLevels } from "../src/lib/recording-waveform.ts";
+import { getWaveformLevels } from "../src/utils/recording-waveform.ts";
 
 test("keeps microphone silence visible at a low baseline", () => {
   assert.deepEqual(

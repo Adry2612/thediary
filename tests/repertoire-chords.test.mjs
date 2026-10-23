@@ -23,7 +23,7 @@ import {
   resolveChordShape,
   toggleChordFret,
   formatChordName,
-} from "../src/lib/chords.ts";
+} from "../src/utils/chords.ts";
 
 test("resolves the shape of a known chord", () => {
   const shape = getChordShape("C");

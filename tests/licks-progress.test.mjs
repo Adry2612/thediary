@@ -4,7 +4,7 @@ import {
   getLickProgress,
   markLickPracticed,
   recordLickBpm,
-} from "../src/lib/licks/progress.ts";
+} from "../src/utils/licks/progress.ts";
 
 const now = new Date("2026-02-01T10:30:00.000Z");
 const base = {

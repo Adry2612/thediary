@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { getRecentRepertoireItems } from "@/lib/repertoire-filtering";
+import { getRecentRepertoireItems } from "@/utils/repertoire-filtering";
 import type { RepertoireItem } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 

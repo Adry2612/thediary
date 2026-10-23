@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/Button";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { TextArea } from "@/components/ui/Field";
 import { ChordPicker } from "@/components/repertoire/ChordPicker";
-import { layoutChordChart } from "@/lib/repertoire-chord-layout";
-import type { WrappedRow } from "@/lib/repertoire-chord-layout";
+import { layoutChordChart } from "@/utils/repertoire-chord-layout";
+import type { WrappedRow } from "@/utils/repertoire-chord-layout";
 import {
   chartToLyrics,
   getChordAtPosition,
   lyricsToChart,
   removeChordFromLine,
   setChordOnLine,
-} from "@/lib/repertoire-chord-chart";
-import { createId } from "@/lib/create-id";
+} from "@/utils/repertoire-chord-chart";
+import { createId } from "@/utils/create-id";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import type { RepertoireChordChart } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";

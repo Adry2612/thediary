@@ -4,7 +4,7 @@ import {
   reconcileCloudRecordings,
   reconcileCloudRecordingsSafely,
   isRemoteRecording,
-} from "../src/lib/cloud-sync/catalog.ts";
+} from "../src/services/cloud-sync/catalog.ts";
 
 const local = {
   id: "same-id",

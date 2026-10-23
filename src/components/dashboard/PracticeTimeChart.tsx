@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { formatExactDuration, formatTotal } from "@/lib/format";
-import { getPracticeTimeBuckets } from "@/lib/practice-analytics";
-import { getContainedTooltipPosition } from "@/lib/practice-chart-tooltip";
-import type { PracticeChartPeriod } from "@/lib/practice-analytics";
+import { formatExactDuration, formatTotal } from "@/utils/format";
+import { getPracticeTimeBuckets } from "@/utils/practice-analytics";
+import { getContainedTooltipPosition } from "@/utils/practice-chart-tooltip";
+import type { PracticeChartPeriod } from "@/utils/practice-analytics";
 import { SelectField } from "@/components/ui/SelectField";
 import type { SessionRecord } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";

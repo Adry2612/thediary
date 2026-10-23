@@ -5,11 +5,11 @@ import { useAppData } from "@/components/providers/AppDataProvider";
 import {
   extractSpotifyTrackId,
   extractYoutubeVideoId,
-} from "@/lib/practice-resource-links";
-import { savePracticeAsset } from "@/lib/practice-library";
-import { getPracticeFileKind } from "@/lib/practice-templates";
-import { createId as createIdentifier } from "@/lib/create-id";
-import { saveCloudPracticeAsset } from "@/lib/supabase/practice-files";
+} from "@/utils/practice-resource-links";
+import { savePracticeAsset } from "@/services/practice-library";
+import { getPracticeFileKind } from "@/utils/practice-templates";
+import { createId as createIdentifier } from "@/utils/create-id";
+import { saveCloudPracticeAsset } from "@/services/supabase/practice-files";
 import type {
   AttachmentDraft,
   AttachmentType,

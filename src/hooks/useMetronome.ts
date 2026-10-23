@@ -17,26 +17,27 @@ import {
   MAX_BPM,
   MIN_BPM,
   type TapTempoState,
-} from "@/lib/metronome-tempo";
+} from "@/utils/metronome-tempo";
 import {
   getMetronomeMeter,
   type MetronomeMeterSignature,
-} from "@/lib/metronome-meter";
-import { getScheduledMetronomeBeats } from "@/lib/metronome-scheduler";
+} from "@/utils/metronome-meter";
+import { getScheduledMetronomeBeats } from "@/utils/metronome-scheduler";
 import {
   DEFAULT_TEMPO_RAMP_SETTINGS,
   getTempoRampIntervalSeconds,
   normalizeTempoRampSettings,
   type TempoRampSettings,
-} from "@/lib/metronome-tempo-ramp";
-import { scheduleMetronomeClick } from "@/lib/metronome-audio";
-import { type PracticeSound } from "@/lib/practice-sounds";
+} from "@/utils/metronome-tempo-ramp";
+import { enablePlaybackAudioSession } from "@/services/audio-session";
+import { scheduleMetronomeClick } from "@/services/metronome-audio";
+import { type PracticeSound } from "@/utils/practice-sounds";
 import {
   closeMetronomeAudioContext,
   getOrCreateMetronomeAudioContext,
   resumeMetronomeAudioContext,
   suspendMetronomeAudioContext,
-} from "@/lib/metronome-audio-context";
+} from "@/services/metronome-audio-context";
 
 export { MAX_BPM, MIN_BPM };
 
@@ -309,6 +310,7 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     startingRef.current = true;
     setIsStarting(true);
     setAudioError(null);
+    enablePlaybackAudioSession();
 
     let context: AudioContext;
     try {

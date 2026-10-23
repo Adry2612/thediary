@@ -3,31 +3,13 @@ import {
   type PersistStorage,
   type StateStorage,
 } from "zustand/middleware";
-import type {
-  PracticeTemplate,
-  RepertoireItem,
-  SessionRecord,
-  UserChord,
-} from "@/types/practice";
-import type { GuitarLick } from "@/types/lick";
-import { DEFAULT_PRACTICE_GOALS } from "@/lib/practice-goals";
-import { DEFAULT_WEEKLY_ROUTINE_SCHEDULE } from "@/lib/weekly-routine-schedule";
-import type { WeeklyRoutineSchedule } from "@/lib/weekly-routine-schedule";
-import type { PracticeGoals } from "@/lib/practice-goals";
+import { DEFAULT_PRACTICE_GOALS } from "@/utils/practice-goals";
+import { DEFAULT_WEEKLY_ROUTINE_SCHEDULE } from "@/utils/weekly-routine-schedule";
+import type { PersistedPracticeState } from "@/types/practice-storage";
 import {
   PRACTICE_STORAGE_KEY,
   clearPracticeStorageNamespace,
 } from "./practiceStorageNamespace";
-
-export type PersistedPracticeState = {
-  history: SessionRecord[];
-  templates: PracticeTemplate[];
-  repertoireItems: RepertoireItem[];
-  licks: GuitarLick[];
-  customChords: UserChord[];
-  weeklySchedule: WeeklyRoutineSchedule;
-  practiceGoals: PracticeGoals;
-};
 
 export type PracticeStorageAdapter = PersistStorage<PersistedPracticeState>;
 

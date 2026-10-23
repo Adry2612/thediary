@@ -3,9 +3,10 @@ import type { PracticePhase } from "@/types/practice";
 import { getDictionary } from "@/i18n/translations";
 
 const practiceText = getDictionary().practicePage;
+const techniqueName = getDictionary().licks.techniqueAlternatePicking;
 
 const phases: PracticePhase[] = [
-  { id: 1, name: practiceText.technique, durationMinutes: 10, skill: "technique" },
+  { id: 1, name: techniqueName, durationMinutes: 10, skill: "technique" },
   { id: 2, name: practiceText.repertoire, durationMinutes: 20, skill: "repertoire" },
   {
     id: 3,
@@ -24,7 +25,7 @@ function createSuggestedPhases(totalMinutes: number): PracticePhase[] {
   return [
     {
       id: 1,
-      name: practiceText.technique,
+      name: techniqueName,
       durationMinutes: techniqueMinutes,
       skill: "technique",
     },

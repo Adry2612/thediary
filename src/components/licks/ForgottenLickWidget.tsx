@@ -4,11 +4,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { TechniqueBadges } from "@/components/licks/TechniqueBadges";
 import { useI18nSection } from "@/i18n/I18nProvider";
-import type { ForgottenLick } from "@/lib/licks/forgotten";
+import type { ForgottenLick } from "@/utils/licks/forgotten";
 import {
   getLastPracticedLabel,
   getLickTitle,
-} from "@/lib/licks/presentation";
+} from "@/utils/licks/presentation";
 
 export function ForgottenLickWidget({
   forgotten,

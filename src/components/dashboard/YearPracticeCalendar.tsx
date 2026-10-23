@@ -1,18 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import {
-  getPracticeTooltipPosition,
-  PracticeDayTooltip,
-} from "@/components/dashboard/PracticeDayTooltip";
-import type { PracticeTooltipDay } from "@/types/dashboard";
+import { PracticeDayTooltip } from "@/components/dashboard/PracticeDayTooltip";
+import { usePracticeDayTooltip } from "@/hooks/usePracticeDayTooltip";
+import { useLatestPracticeScroll } from "@/hooks/useLatestPracticeScroll";
 import type { DailyStats, SessionRecord } from "@/types/practice";
+import type { CalendarCell } from "@/types/dashboard";
+import {
+  createCalendarCells,
+  getLatestPracticeDateKey,
+  getMonthMarkers,
+  PRACTICE_DAY_TARGET_SIZE,
+  toDateKey,
+} from "@/utils/practice-calendar";
 import {
   getPracticeIntensityClass,
   PRACTICE_INTENSITY_CLASSES,
-} from "@/lib/practice-goals";
+} from "@/utils/practice-goals";
+import { formatDateLabel } from "@/utils/format";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 
 type YearPracticeCalendarProps = {
@@ -22,78 +29,6 @@ type YearPracticeCalendarProps = {
   year: number;
   dailyGoalMinutes: number;
 };
-
-type CalendarCell = {
-  dateKey: string;
-  stats?: DailyStats;
-  sessions: SessionRecord[];
-} | null;
-
-// Cada día es un objetivo de 20 px alrededor del cuadrado de 16 que pinta el
-// calendario: así se conservan el tamaño y los 4 px de separación originales.
-// El ancho de las columnas y el desplazamiento que sigue a la última práctica
-// usan el objetivo, no el cuadrado.
-const DAY_TARGET_SIZE = 20;
-
-function toDateKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-function parseDateKey(dateKey: string) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function formatDate(dateKey: string, locale: string, includeYear = false) {
-  return new Intl.DateTimeFormat(locale, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    ...(includeYear ? { year: "numeric" } : {}),
-  }).format(parseDateKey(dateKey));
-}
-
-function getMonthMarkers(year: number, weekCount: number, firstWeekday: number, locale: string) {
-  const markers = Array<string>(weekCount).fill("");
-  for (let monthIndex = 0; monthIndex < 12; monthIndex += 1) {
-    const dayOfYear =
-      (Date.UTC(year, monthIndex, 1) - Date.UTC(year, 0, 1)) / 86_400_000;
-    const weekIndex = Math.floor((firstWeekday + dayOfYear) / 7);
-    markers[weekIndex] = new Intl.DateTimeFormat(locale, {
-      month: "short",
-    })
-      .format(new Date(year, monthIndex, 1))
-      .replace(/\.$/, "");
-  }
-
-  return markers;
-}
-
-function createCalendarCells(
-  year: number,
-  weekCount: number,
-  firstWeekday: number,
-  daysInYear: DailyStats[],
-  statsByDate: Map<string, DailyStats>,
-  sessionsByDate: Map<string, SessionRecord[]>,
-): CalendarCell[] {
-  const yearStart = new Date(year, 0, 1);
-  return Array.from({ length: weekCount * 7 }, (_, index) => {
-    const weekIndex = Math.floor(index / 7);
-    const weekdayIndex = index % 7;
-    const dayOffset = weekIndex * 7 + weekdayIndex - firstWeekday;
-    if (dayOffset < 0 || dayOffset >= daysInYear.length) return null;
-
-    const date = new Date(yearStart);
-    date.setDate(yearStart.getDate() + dayOffset);
-    const dateKey = toDateKey(date);
-    return {
-      dateKey,
-      stats: statsByDate.get(dateKey),
-      sessions: sessionsByDate.get(dateKey) ?? [],
-    };
-  });
-}
 
 export function YearPracticeCalendar({
   days,
@@ -107,7 +42,7 @@ export function YearPracticeCalendar({
   const calendar = useI18nSection("calendar");
   const tooltip = useI18nSection("tooltip");
   const weekdays = useI18nSection("weekdays");
-  const [hoveredDay, setHoveredDay] = useState<PracticeTooltipDay | null>(null);
+  const { hoveredDay, showTooltip, hideTooltip } = usePracticeDayTooltip();
   const calendarScrollRef = useRef<HTMLDivElement>(null);
   const statsByDate = useMemo(
     () => new Map(days.map((day) => [day.dateKey, day])),
@@ -134,56 +69,22 @@ export function YearPracticeCalendar({
     statsByDate,
     sessionsByDate,
   );
-  const latestPracticeDateKey = useMemo(() => {
-    const yearSessions = history
-      .filter((session) => new Date(session.startedAt).getFullYear() === year)
-      .sort(
-        (a, b) =>
-          new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
-      );
-    if (yearSessions[0]) return toDateKey(new Date(yearSessions[0].startedAt));
-
-    return [...days]
-      .filter((day) => day.totalMinutes > 0)
-      .sort((a, b) => b.dateKey.localeCompare(a.dateKey))[0]?.dateKey;
-  }, [days, history, year]);
+  const latestPracticeDateKey = getLatestPracticeDateKey(history, days, year);
   const yearLabel = new Intl.NumberFormat(locale, {
     useGrouping: false,
   }).format(year);
 
-  useEffect(() => {
-    if (!latestPracticeDateKey || !calendarScrollRef.current) return;
-    const latestCellIndex = cells.findIndex(
-      (cell) => cell?.dateKey === latestPracticeDateKey,
-    );
-    if (latestCellIndex < 0) return;
+  useLatestPracticeScroll(calendarScrollRef, cells, latestPracticeDateKey);
 
-    const scrollContainer = calendarScrollRef.current;
-    const latestColumn = Math.floor(latestCellIndex / 7);
-    const columnWidth = DAY_TARGET_SIZE;
-    const rightPadding = 96;
-
-    requestAnimationFrame(() => {
-      scrollContainer.scrollTo({
-        left: Math.max(
-          0,
-          latestColumn * columnWidth - scrollContainer.clientWidth + rightPadding,
-        ),
-        behavior: "smooth",
-      });
-    });
-  }, [cells, latestPracticeDateKey]);
-
-  function showTooltip(
+  function showCellTooltip(
     element: HTMLButtonElement,
     cell: NonNullable<CalendarCell>,
   ) {
-    setHoveredDay({
+    showTooltip(element, {
       dateKey: cell.dateKey,
       totalMinutes: cell.stats?.totalMinutes ?? 0,
       sessionCount: cell.stats?.sessionCount ?? 0,
       sessions: cell.sessions,
-      ...getPracticeTooltipPosition(element),
     });
   }
 
@@ -233,7 +134,7 @@ export function YearPracticeCalendar({
           <div
             aria-hidden="true"
             className="mb-2 grid gap-0 pl-8 font-mono text-xs capitalize text-muted"
-            style={{ gridTemplateColumns: `repeat(${weekCount}, ${DAY_TARGET_SIZE}px)` }}
+            style={{ gridTemplateColumns: `repeat(${weekCount}, ${PRACTICE_DAY_TARGET_SIZE}px)` }}
           >
             {monthMarkers.map((month, index) => (
               <span key={index} className="whitespace-nowrap">
@@ -257,7 +158,7 @@ export function YearPracticeCalendar({
               aria-label={`${calendar.yearDays} ${yearLabel}`}
               className="grid grid-flow-col grid-rows-7 gap-0"
               style={{
-                gridTemplateColumns: `repeat(${weekCount}, ${DAY_TARGET_SIZE}px)`,
+                gridTemplateColumns: `repeat(${weekCount}, ${PRACTICE_DAY_TARGET_SIZE}px)`,
               }}
             >
               {cells.map((cell, index) => {
@@ -279,18 +180,18 @@ export function YearPracticeCalendar({
                     key={cell.dateKey}
                     type="button"
                     disabled={isFuture}
-                    aria-label={`${formatDate(cell.dateKey, locale, true)}: ${minutes ? `${Math.round(minutes)} minutos, ${cell.sessions.length} ${cell.sessions.length === 1 ? tooltip.session : tooltip.sessions}. ${tooltip.viewDetails}` : calendar.noPractice}`}
+                    aria-label={`${formatDateLabel(cell.dateKey, locale, true)}: ${minutes ? `${Math.round(minutes)} minutos, ${cell.sessions.length} ${cell.sessions.length === 1 ? tooltip.session : tooltip.sessions}. ${tooltip.viewDetails}` : calendar.noPractice}`}
                     aria-describedby={
                       hoveredDay?.dateKey === cell.dateKey
                         ? "practice-day-tooltip"
                         : undefined
                     }
                     onMouseEnter={(event) =>
-                      showTooltip(event.currentTarget, cell)
+                      showCellTooltip(event.currentTarget, cell)
                     }
-                    onMouseLeave={() => setHoveredDay(null)}
-                    onFocus={(event) => showTooltip(event.currentTarget, cell)}
-                    onBlur={() => setHoveredDay(null)}
+                    onMouseLeave={() => hideTooltip}
+                    onFocus={(event) => showCellTooltip(event.currentTarget, cell)}
+                    onBlur={() => hideTooltip}
                     onClick={() => {
                       if (cell.sessions.length > 0) {
                         router.push(`/dashboard/practice/${cell.dateKey}`);

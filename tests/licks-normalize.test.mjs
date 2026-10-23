@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeLick, normalizeLicks } from "../src/lib/licks/normalize.ts";
+import { normalizeLick, normalizeLicks } from "../src/utils/licks/normalize.ts";
 
 const base = {
   id: "lick-1",

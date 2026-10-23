@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { EditIcon } from "@/components/ui/icons";
-import { getPracticePlanDuration } from "@/lib/practice-plan";
+import { getPracticePlanDuration } from "@/utils/practice-plan";
 import type { PracticeTemplate } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 

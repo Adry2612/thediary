@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   removeById,
   updateById,
-} from "../src/lib/practice-track-updates.ts";
+} from "../src/utils/practice-track-updates.ts";
 
 const items = [
   { id: "a", name: "uno", minutes: 10 },
