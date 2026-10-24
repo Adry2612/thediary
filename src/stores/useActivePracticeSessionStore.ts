@@ -1,8 +1,9 @@
 "use client";
 
 import { create } from "zustand";
-import type { PracticePhase, PracticeResource } from "@/types/practice";
+import type { GuitarType, PracticePhase, PracticeResource } from "@/types/practice";
 import { normalizePracticePhaseLinks } from "../utils/practice-plan.ts";
+import { normalizeGuitarType } from "../utils/practice-session-record.ts";
 
 const ACTIVE_SESSION_STORAGE_KEY = "thediary.active-practice-session";
 
@@ -16,8 +17,11 @@ function readStoredSession(): ActivePracticeSession | null {
     if (!session?.id || !session.name || !Array.isArray(session.phases)) {
       return null;
     }
+    const { guitarType: storedGuitarType, ...rest } = session;
+    const guitarType = normalizeGuitarType(storedGuitarType);
     return {
-      ...session,
+      ...rest,
+      ...(guitarType ? { guitarType } : {}),
       phases: session.phases.map(normalizePracticePhaseLinks),
     };
   } catch {
@@ -40,6 +44,8 @@ export interface ActivePracticeSession {
   phases: PracticePhase[];
   attachedResources?: PracticeResource[];
   isCountUp?: boolean;
+  /** Guitarra elegida para esta sesión; sin valor si no se ha elegido. */
+  guitarType?: GuitarType;
   /** Rutina guardada de la que salió la sesión, si la hubo. */
   templateId?: string;
 }
@@ -56,6 +62,7 @@ interface ActivePracticeSessionState {
     phaseId: PracticePhase["id"],
     changes: Partial<PracticePhase>,
   ) => void;
+  setGuitarType: (guitarType: GuitarType | null) => void;
   clearActiveSession: () => void;
 }
 
@@ -93,6 +100,14 @@ export const useActivePracticeSessionStore =
           phase.id === phaseId ? { ...phase, ...changes } : phase,
         ),
       };
+      persistSession(nextSession);
+      return { activeSession: nextSession };
+    }),
+  setGuitarType: (guitarType) =>
+    set(({ activeSession }) => {
+      if (!activeSession) return {};
+      const { guitarType: _current, ...rest } = activeSession;
+      const nextSession = guitarType ? { ...rest, guitarType } : rest;
       persistSession(nextSession);
       return { activeSession: nextSession };
     }),

@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { MetricCard } from '@/components/dashboard/MetricCard';
+import { ArtistRanking } from '@/components/repertoire/ArtistRanking';
 import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
 import { ForgottenRepertoireWidget } from '@/components/repertoire/ForgottenRepertoireWidget';
 import { SelectField } from '@/components/ui/SelectField';
@@ -10,6 +11,7 @@ import { TextField } from '@/components/ui/Field';
 import { PlusIcon, SearchIcon } from '@/components/ui/icons';
 import { formatPracticeDuration } from '@/utils/dashboard-data';
 import {
+  getArtistPracticeStats,
   getRepertoireItemPracticeStats,
   getRepertoireOverview,
   getRepertoirePracticeStats,
@@ -85,6 +87,10 @@ export function RepertoireView() {
     () => getRepertoireItemPracticeStats(history),
     [history],
   );
+  const artistPractice = useMemo(
+    () => getArtistPracticeStats(history, items),
+    [history, items],
+  );
   const today = useMemo(() => new Date(), []);
   const forgotten = useMemo(
     () => getForgottenRepertoireItem(items, itemPracticeStats, today),
@@ -137,10 +143,11 @@ export function RepertoireView() {
           </p>
         </div>
         <Link
-          href='/practice'
-          className='inline-flex h-12 items-center justify-center rounded-md bg-ink px-5 text-sm font-medium text-canvas transition hover:opacity-90 active:scale-[0.98]'
+          href='/repertoire/new'
+          className='inline-flex h-12 items-center justify-center gap-2 rounded-md bg-ink px-5 text-sm font-medium text-canvas transition hover:opacity-90 active:scale-[0.98]'
         >
-          {text.prepare}
+          <PlusIcon className='size-4' />
+          {text.newItem}
         </Link>
       </header>
 
@@ -169,22 +176,16 @@ export function RepertoireView() {
         ))}
       </section>
 
-      {forgotten ? (
-        <div className='mb-5'>
-          <ForgottenRepertoireWidget forgotten={forgotten} />
+      {forgotten || artistPractice.length > 0 ? (
+        <div
+          className={`mb-5 grid gap-5 ${forgotten && artistPractice.length > 0 ? 'xl:grid-cols-2' : ''}`}
+        >
+          {forgotten ? (
+            <ForgottenRepertoireWidget forgotten={forgotten} />
+          ) : null}
+          <ArtistRanking artists={artistPractice} />
         </div>
       ) : null}
-
-      <div className='flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line bg-surface p-5 sm:p-6'>
-        <p className='max-w-xl text-sm text-muted'>{text.newItemDescription}</p>
-        <Link
-          href='/repertoire/new'
-          className='inline-flex h-12 items-center justify-center gap-2 rounded-md bg-ink px-5 text-sm font-medium text-canvas transition hover:opacity-90 active:scale-[0.98]'
-        >
-          <PlusIcon className='size-4' />
-          {text.newItem}
-        </Link>
-      </div>
 
       <section className='mt-8'>
         <div>

@@ -1,4 +1,5 @@
 import type {
+  GuitarType,
   PracticeSkill,
   SessionPhaseRecord,
   SessionRecord,
@@ -16,6 +17,8 @@ export interface EditableSessionBlock {
   repertoireItemId?: string;
   repertoirePartId?: string;
   lickId?: string;
+  /** BPM del bloque ya guardado; se conserva si no se toca. */
+  averageBpm?: number;
 }
 
 export interface EditableSession {
@@ -24,6 +27,8 @@ export interface EditableSession {
   completed: boolean;
   /** Solo se usa cuando la sesión no tiene bloques. */
   durationMinutes: number;
+  /** `null` cuando la práctica no tiene tipo de guitarra registrado. */
+  guitarType: GuitarType | null;
   blocks: EditableSessionBlock[];
 }
 
@@ -42,6 +47,7 @@ export function toEditableSession(session: SessionRecord): EditableSession {
     notes: session.notes ?? "",
     completed: session.completed ?? false,
     durationMinutes: secondsToMinutes(session.durationSeconds),
+    guitarType: session.guitarType ?? null,
     blocks: (session.phases ?? []).map((phase) => ({
       id: phase.id,
       name: phase.name,
@@ -54,6 +60,7 @@ export function toEditableSession(session: SessionRecord): EditableSession {
       repertoireItemId: phase.repertoireItemId,
       repertoirePartId: phase.repertoirePartId,
       lickId: phase.lickId,
+      averageBpm: phase.averageBpm,
     })),
   };
 }
@@ -88,6 +95,9 @@ export function applySessionEdit(
         ? { repertoirePartId: block.repertoirePartId }
         : {}),
       ...(block.lickId ? { lickId: block.lickId } : {}),
+      ...(block.averageBpm && block.averageBpm > 0
+        ? { averageBpm: Math.round(block.averageBpm) }
+        : {}),
       ...(block.plannedMinutes === null ||
       !Number.isFinite(block.plannedMinutes)
         ? {}
@@ -96,8 +106,10 @@ export function applySessionEdit(
     .filter((block) => block.name.length > 0);
 
   const title = draft.title.trim();
+  const { guitarType: _storedGuitarType, ...sessionWithoutGuitarType } = session;
   const base = {
-    ...session,
+    ...sessionWithoutGuitarType,
+    ...(draft.guitarType ? { guitarType: draft.guitarType } : {}),
     title: title || undefined,
     notes: draft.notes.trim() || undefined,
     completed: draft.completed,

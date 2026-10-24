@@ -28,7 +28,15 @@ export function WeeklyPracticeSummary({
   const dashboard = useI18nSection("dashboard");
   const weekdays = useI18nSection("weekdays");
   const router = useRouter();
-  const { hoveredDay, showTooltip, hideTooltip } = usePracticeDayTooltip();
+  const {
+    hoveredDay,
+    cardRef,
+    showTooltip,
+    hideTooltip,
+    scheduleHide,
+    handleCardPointerEnter,
+    handleCardPointerLeave,
+  } = usePracticeDayTooltip();
   const sessionsByDate = useMemo(() => {
     const grouped = new Map<string, SessionRecord[]>();
     for (const session of sessions) {
@@ -57,8 +65,6 @@ export function WeeklyPracticeSummary({
     element: HTMLButtonElement,
     day: PracticeWeekDay,
   ) {
-    if (!day.hasPractice) return;
-
     showTooltip(element, {
       dateKey: day.dateKey,
       totalMinutes: day.totalMinutes,
@@ -167,9 +173,9 @@ export function WeeklyPracticeSummary({
                     }
                   }}
                   onMouseEnter={(event) => showDayTooltip(event.currentTarget, day)}
-                  onMouseLeave={() => hideTooltip}
+                  onMouseLeave={scheduleHide}
                   onFocus={(event) => showDayTooltip(event.currentTarget, day)}
-                  onBlur={() => hideTooltip}
+                  onBlur={hideTooltip}
                   className={`flex min-h-20 w-full flex-col justify-between rounded-lg p-1.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-200 sm:min-h-28 sm:p-3 ${day.hasPractice ? `${getPracticeIntensityClass(day.totalMinutes, dailyGoalMinutes)} hover:brightness-110` : "bg-zinc-950/40 hover:bg-zinc-900/70"}`}
                 >
                   <span className="flex min-w-0 flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-2">
@@ -198,7 +204,15 @@ export function WeeklyPracticeSummary({
         </ol>
       </div>
       {hoveredDay &&
-        createPortal(<PracticeDayTooltip day={hoveredDay} />, document.body)}
+        createPortal(
+          <PracticeDayTooltip
+            day={hoveredDay}
+            cardRef={cardRef}
+            onPointerEnter={handleCardPointerEnter}
+            onPointerLeave={handleCardPointerLeave}
+          />,
+          document.body,
+        )}
     </section>
   );
 }

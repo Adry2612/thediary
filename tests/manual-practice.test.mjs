@@ -56,6 +56,29 @@ test("creates a historical session from its blocks, duration, skills, and notes"
   assert.ok(record.id);
 });
 
+test("accepts lick blocks and an optional guitar type", () => {
+  const record = createManualPracticeRecord({
+    title: "Frase nueva",
+    startedAtLocal: "2026-10-07T18:30",
+    blocks: [{ name: "Frase en La menor", durationMinutes: 10, skill: "lick" }],
+    notes: "",
+    guitarType: "electric",
+  });
+
+  assert.equal(record.skillSeconds.lick, 600);
+  assert.equal(record.guitarType, "electric");
+  assert.equal("averageBpm" in record.phases[0], false);
+
+  const withoutGuitar = createManualPracticeRecord({
+    title: "Sin tipo",
+    startedAtLocal: "2026-10-07T18:30",
+    blocks: [{ name: "Escalas", durationMinutes: 10, skill: "technique" }],
+    notes: "",
+  });
+
+  assert.equal("guitarType" in withoutGuitar, false);
+});
+
 test("uses a default title and omits empty notes", () => {
   const record = createManualPracticeRecord({
     title: " ",

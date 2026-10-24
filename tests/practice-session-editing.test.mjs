@@ -89,6 +89,56 @@ test("keeps block links and details when a saved session is edited", () => {
   assert.equal(updated.phases[0].resources?.[0].title, "Base");
 });
 
+test("keeps the guitar type and each block's BPM through an edit", () => {
+  const original = session({
+    guitarType: "acoustic",
+    phases: [
+      {
+        id: 1,
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 600,
+        durationMinutes: 10,
+        averageBpm: 88,
+      },
+    ],
+  });
+  const draft = toEditableSession(original);
+
+  assert.equal(draft.guitarType, "acoustic");
+  assert.equal(draft.blocks[0].averageBpm, 88);
+
+  draft.blocks[0] = { ...draft.blocks[0], actualMinutes: 12 };
+  const updated = applySessionEdit(original, draft);
+
+  assert.equal(updated.guitarType, "acoustic");
+  assert.equal(updated.phases[0].averageBpm, 88);
+});
+
+test("changes or clears the guitar type", () => {
+  const original = session({ guitarType: "electric" });
+
+  const changed = toEditableSession(original);
+  changed.guitarType = "acoustic";
+  assert.equal(applySessionEdit(original, changed).guitarType, "acoustic");
+
+  const cleared = toEditableSession(original);
+  cleared.guitarType = null;
+  assert.equal("guitarType" in applySessionEdit(original, cleared), false);
+});
+
+test("keeps the guitar type when all blocks are removed", () => {
+  const original = session({ guitarType: "electric" });
+  const draft = toEditableSession(original);
+  draft.blocks = [];
+  draft.durationMinutes = 30;
+
+  const updated = applySessionEdit(original, draft);
+
+  assert.equal(updated.guitarType, "electric");
+  assert.equal(updated.phases, undefined);
+});
+
 test("drops the blocks and keeps the previous skill split when all are removed", () => {
   const draft = toEditableSession(session());
   draft.blocks = [];

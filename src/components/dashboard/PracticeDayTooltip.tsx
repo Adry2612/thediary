@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import { formatPracticeDuration } from "@/utils/dashboard-data";
 import { formatDateLabel } from "@/utils/format";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
@@ -10,17 +11,32 @@ function formatSessionTime(startedAt: string, locale: string) {
   }).format(new Date(startedAt));
 }
 
-export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
+type PracticeDayTooltipProps = {
+  day: PracticeTooltipDay;
+  cardRef?: RefObject<HTMLDivElement | null>;
+  onPointerEnter?: () => void;
+  onPointerLeave?: () => void;
+};
+
+export function PracticeDayTooltip({
+  day,
+  cardRef,
+  onPointerEnter,
+  onPointerLeave,
+}: PracticeDayTooltipProps) {
   const { locale } = useI18n();
   const tooltip = useI18nSection("tooltip");
   return (
     <div
+      ref={cardRef}
       id="practice-day-tooltip"
       role="tooltip"
-      className={`pointer-events-none fixed z-300 max-h-[70vh] w-72 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950 p-4 text-left text-zinc-200 ${day.showBelow ? "" : "-translate-y-full"}`}
-      style={{ left: day.left, top: day.top }}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
+      className={`pointer-events-auto fixed z-300 flex w-72 max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950 p-4 text-left text-zinc-200 ${day.showBelow ? "" : "-translate-y-full"}`}
+      style={{ left: day.left, top: day.top, maxHeight: day.maxHeight }}
     >
-      <div className="min-w-0">
+      <div className="min-w-0 shrink-0">
         <p className="text-[10px] uppercase tracking-[0.12em] text-muted">
            {tooltip.summary}
         </p>
@@ -31,7 +47,7 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
 
       {day.sessionCount > 0 ? (
         <>
-          <div className="mt-4 flex items-center justify-between border-y border-zinc-800 py-3">
+          <div className="mt-4 flex shrink-0 items-center justify-between border-y border-zinc-800 py-3">
             <span className="text-sm text-zinc-400">
               {day.sessionCount}{" "}
                {day.sessionCount === 1 ? tooltip.session : tooltip.sessions}
@@ -40,7 +56,7 @@ export function PracticeDayTooltip({ day }: { day: PracticeTooltipDay }) {
               {formatPracticeDuration(day.totalMinutes)}
             </span>
           </div>
-          <ul className="mt-3 max-h-[40vh] space-y-3 overflow-y-auto">
+          <ul className="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto">
             {day.sessions.map((session) => (
               <li
                 key={session.id}

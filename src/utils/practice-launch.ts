@@ -1,4 +1,5 @@
 import type {
+  GuitarType,
   PracticePhase,
   PracticeResource,
   PracticeTemplate,
@@ -10,6 +11,8 @@ import { normalizePracticePhaseLinks } from "./practice-plan.ts";
 export interface PracticeLaunchPlan {
   name: string;
   phases: PracticePhase[];
+  /** Guitarra elegida al preparar el plan; sin valor si no se especificó. */
+  guitarType?: GuitarType;
   /** Rutina guardada de la que sale el plan, si la hubo. */
   templateId?: string;
 }
@@ -67,17 +70,18 @@ export function createQuickRepertoirePlan(
 
 /** Plan de una rutina guardada, tal como está guardada. */
 export function createTemplatePlan(
-  template: Pick<PracticeTemplate, "id" | "name" | "phases">,
+  template: Pick<PracticeTemplate, "id" | "name" | "phases" | "guitarType">,
 ): PracticeLaunchPlan {
   return {
     name: template.name,
     phases: template.phases.map(normalizePracticePhaseLinks),
+    ...(template.guitarType ? { guitarType: template.guitarType } : {}),
     templateId: template.id,
   };
 }
 
 export function createPracticePlanFromSession(
-  session: Pick<SessionRecord, "title" | "phases">,
+  session: Pick<SessionRecord, "title" | "phases" | "guitarType">,
 ): PracticeLaunchPlan | null {
   if (!session.phases?.length) return null;
 
@@ -98,5 +102,6 @@ export function createPracticePlanFromSession(
         lickId: phase.lickId,
       }),
     ),
+    ...(session.guitarType ? { guitarType: session.guitarType } : {}),
   };
 }

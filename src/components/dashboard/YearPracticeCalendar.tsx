@@ -42,7 +42,16 @@ export function YearPracticeCalendar({
   const calendar = useI18nSection("calendar");
   const tooltip = useI18nSection("tooltip");
   const weekdays = useI18nSection("weekdays");
-  const { hoveredDay, showTooltip, hideTooltip } = usePracticeDayTooltip();
+  const {
+    hoveredDay,
+    cardRef,
+    showTooltip,
+    scheduleTooltip,
+    hideTooltip,
+    scheduleHide,
+    handleCardPointerEnter,
+    handleCardPointerLeave,
+  } = usePracticeDayTooltip();
   const calendarScrollRef = useRef<HTMLDivElement>(null);
   const statsByDate = useMemo(
     () => new Map(days.map((day) => [day.dateKey, day])),
@@ -81,6 +90,18 @@ export function YearPracticeCalendar({
     cell: NonNullable<CalendarCell>,
   ) {
     showTooltip(element, {
+      dateKey: cell.dateKey,
+      totalMinutes: cell.stats?.totalMinutes ?? 0,
+      sessionCount: cell.stats?.sessionCount ?? 0,
+      sessions: cell.sessions,
+    });
+  }
+
+  function scheduleCellTooltip(
+    element: HTMLButtonElement,
+    cell: NonNullable<CalendarCell>,
+  ) {
+    scheduleTooltip(element, {
       dateKey: cell.dateKey,
       totalMinutes: cell.stats?.totalMinutes ?? 0,
       sessionCount: cell.stats?.sessionCount ?? 0,
@@ -157,6 +178,7 @@ export function YearPracticeCalendar({
               role="group"
               aria-label={`${calendar.yearDays} ${yearLabel}`}
               className="grid grid-flow-col grid-rows-7 gap-0"
+              onMouseLeave={scheduleHide}
               style={{
                 gridTemplateColumns: `repeat(${weekCount}, ${PRACTICE_DAY_TARGET_SIZE}px)`,
               }}
@@ -187,11 +209,10 @@ export function YearPracticeCalendar({
                         : undefined
                     }
                     onMouseEnter={(event) =>
-                      showCellTooltip(event.currentTarget, cell)
+                      scheduleCellTooltip(event.currentTarget, cell)
                     }
-                    onMouseLeave={() => hideTooltip}
                     onFocus={(event) => showCellTooltip(event.currentTarget, cell)}
-                    onBlur={() => hideTooltip}
+                    onBlur={hideTooltip}
                     onClick={() => {
                       if (cell.sessions.length > 0) {
                         router.push(`/dashboard/practice/${cell.dateKey}`);
@@ -211,7 +232,15 @@ export function YearPracticeCalendar({
         </div>
       </div>
       {hoveredDay &&
-        createPortal(<PracticeDayTooltip day={hoveredDay} />, document.body)}
+        createPortal(
+          <PracticeDayTooltip
+            day={hoveredDay}
+            cardRef={cardRef}
+            onPointerEnter={handleCardPointerEnter}
+            onPointerLeave={handleCardPointerLeave}
+          />,
+          document.body,
+        )}
     </section>
   );
 }

@@ -128,3 +128,64 @@ export function getRepertoireOverview(
     },
   );
 }
+
+export type ArtistPracticeStats = {
+  artist: string;
+  practiceSeconds: number;
+  songCount: number;
+};
+
+/**
+ * Tiempo practicado por artista, sumando las fases vinculadas a sus canciones.
+ * Agrupa por nombre sin distinguir mayúsculas ni espacios exteriores y conserva
+ * la primera grafía encontrada. Los licks, las canciones sin artista y los
+ * elementos eliminados no entran en el ranking.
+ */
+export function getArtistPracticeStats(
+  history: SessionRecord[],
+  repertoireItems: RepertoireItem[],
+): ArtistPracticeStats[] {
+  const itemsById = new Map(
+    repertoireItems.map((item) => [item.id, item]),
+  );
+  const groups = new Map<
+    string,
+    { artist: string; practiceSeconds: number; songIds: Set<string> }
+  >();
+
+  for (const session of history) {
+    for (const phase of session.phases ?? []) {
+      if (phase.elapsedSeconds <= 0 || !phase.repertoireItemId) continue;
+
+      const item = itemsById.get(phase.repertoireItemId);
+      if (!item || item.kind !== "song") continue;
+
+      const artist = item.artist?.trim();
+      if (!artist) continue;
+
+      const key = artist.toLocaleLowerCase("es");
+      const group = groups.get(key) ?? {
+        artist,
+        practiceSeconds: 0,
+        songIds: new Set<string>(),
+      };
+      group.practiceSeconds += phase.elapsedSeconds;
+      group.songIds.add(item.id);
+      groups.set(key, group);
+    }
+  }
+
+  return [...groups.values()]
+    .map(({ artist, practiceSeconds, songIds }) => ({
+      artist,
+      practiceSeconds,
+      songCount: songIds.size,
+    }))
+    .sort(
+      (first, second) =>
+        second.practiceSeconds - first.practiceSeconds ||
+        first.artist.localeCompare(second.artist, "es", {
+          sensitivity: "base",
+        }),
+    );
+}

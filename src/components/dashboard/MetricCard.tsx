@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 type MetricCardTone = "dark" | "light";
 
@@ -7,6 +7,8 @@ type MetricCardProps = {
   value: string;
   /** Texto de apoyo bajo el número; el resumen del repertorio no lo usa. */
   description?: string;
+  /** Adorno opcional bajo la descripción, como el fuego de la racha. */
+  highlight?: ReactNode;
   /** Posición en la rejilla, para escalonar la entrada. */
   index?: number;
   /** `dark` es la tarjeta del panel; `light` la del resumen del repertorio. */
@@ -35,6 +37,7 @@ export function MetricCard({
   label,
   value,
   description,
+  highlight,
   index,
   tone = "dark",
   as = "section",
@@ -67,6 +70,7 @@ export function MetricCard({
         {value}
       </p>
       {description ? <p className={classes.description}>{description}</p> : null}
+      {highlight}
     </Component>
   );
 }

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createPracticeSessionRecord } from "../src/utils/practice-session-record.ts";
+import {
+  createPracticeSessionRecord,
+  normalizeSessionRecord,
+} from "../src/utils/practice-session-record.ts";
 
 test("builds a saved session from timer results and phase metadata", () => {
   const phases = [
@@ -86,6 +89,136 @@ test("builds a saved session from timer results and phase metadata", () => {
   assert.notEqual(record.phases?.[0].exercises, phases[0].exercises);
   assert.notEqual(record.phases?.[0].resources, phases[0].resources);
   assert.notEqual(record.phases?.[0].resources?.[0], phases[0].resources[0]);
+});
+
+test("stores the guitar type and the average BPM of each block", () => {
+  const record = createPracticeSessionRecord({
+    id: "session-bpm",
+    title: "Bloques con metrónomo",
+    averageBpm: 90,
+    result: {
+      elapsedSeconds: 120,
+      startedAt: "2026-10-08T12:00:00.000Z",
+      completed: true,
+      skillSeconds: {
+        technique: 60,
+        theory: 0,
+        repertoire: 60,
+        lick: 0,
+        improvisation: 0,
+      },
+      phases: [
+        { id: 1, name: "Escalas", skill: "technique", elapsedSeconds: 60 },
+        { id: 2, name: "Canción", skill: "repertoire", elapsedSeconds: 60 },
+      ],
+    },
+    phases: [
+      { id: 1, name: "Escalas", durationMinutes: 1, skill: "technique" },
+      { id: 2, name: "Canción", durationMinutes: 1, skill: "repertoire" },
+    ],
+    notes: "",
+    phaseNotes: {},
+    guitarType: "electric",
+    bpmSamples: [
+      { elapsedSeconds: 0, bpm: 80 },
+      { elapsedSeconds: 60, bpm: 100 },
+    ],
+    metronomeBlockIndexes: [0, 1],
+  });
+
+  assert.equal(record.guitarType, "electric");
+  assert.deepEqual(
+    record.phases.map((phase) => phase.averageBpm),
+    [80, 100],
+  );
+});
+
+test("omits the guitar type and block BPM when they were not recorded", () => {
+  const record = createPracticeSessionRecord({
+    id: "session-no-bpm",
+    title: "Sin metrónomo",
+    averageBpm: 0,
+    result: {
+      elapsedSeconds: 60,
+      startedAt: "2026-10-08T12:00:00.000Z",
+      completed: true,
+      skillSeconds: {
+        technique: 60,
+        theory: 0,
+        repertoire: 0,
+        lick: 0,
+        improvisation: 0,
+      },
+      phases: [
+        { id: 1, name: "Escalas", skill: "technique", elapsedSeconds: 60 },
+      ],
+    },
+    phases: [{ id: 1, name: "Escalas", durationMinutes: 1, skill: "technique" }],
+    notes: "",
+    phaseNotes: {},
+    bpmSamples: [{ elapsedSeconds: 0, bpm: 90 }],
+    metronomeBlockIndexes: [],
+  });
+
+  assert.equal("guitarType" in record, false);
+  assert.equal("averageBpm" in record.phases[0], false);
+});
+
+test("normalizes stored guitar and block BPM values without losing the session", () => {
+  const base = {
+    id: "session-normalize",
+    startedAt: "2026-10-08T12:00:00.000Z",
+    durationSeconds: 120,
+    averageBpm: 0,
+    skillSeconds: {
+      technique: 60,
+      theory: 0,
+      repertoire: 60,
+      lick: 0,
+      improvisation: 0,
+    },
+  };
+
+  const valid = normalizeSessionRecord({
+    ...base,
+    guitarType: "acoustic",
+    phases: [
+      {
+        id: 1,
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 60,
+        averageBpm: 96.4,
+      },
+    ],
+  });
+  assert.equal(valid.guitarType, "acoustic");
+  assert.equal(valid.phases[0].averageBpm, 96);
+
+  const invalid = normalizeSessionRecord({
+    ...base,
+    guitarType: "classical",
+    phases: [
+      {
+        id: 1,
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 60,
+        averageBpm: -5,
+      },
+      {
+        id: 2,
+        name: "Técnica",
+        skill: "technique",
+        elapsedSeconds: 60,
+        averageBpm: "120",
+      },
+    ],
+  });
+  assert.equal("guitarType" in invalid, false);
+  assert.equal("averageBpm" in invalid.phases[0], false);
+  assert.equal("averageBpm" in invalid.phases[1], false);
+  assert.equal(invalid.phases.length, 2);
 });
 
 test("uses the resolved block name from the phase metadata", () => {

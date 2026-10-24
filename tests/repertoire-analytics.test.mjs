@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  getArtistPracticeStats,
   getRepertoireItemPracticeStats,
   getRepertoireOverview,
   getRepertoirePracticeStats,
@@ -211,4 +212,101 @@ test("does not count an item phase left untouched", () => {
   ];
 
   assert.equal(getRepertoireItemPracticeStats(history).has("song-1"), false);
+});
+
+function artistItem(id, artist, kind = "song") {
+  return { id, kind, title: id, artist, parts: [] };
+}
+
+function linkedPhase(id, itemId, elapsedSeconds) {
+  return {
+    id,
+    name: itemId,
+    skill: "repertoire",
+    elapsedSeconds,
+    repertoireItemId: itemId,
+  };
+}
+
+test("sums artist time across songs and sorts by practised time", () => {
+  const items = [
+    artistItem("song-1", "Metallica"),
+    artistItem("song-2", "Metallica"),
+    artistItem("song-3", "Opeth"),
+    artistItem("lick-1", "Lick Artist", "lick"),
+  ];
+  const history = [
+    createSession("session-1", [
+      linkedPhase("phase-1", "song-1", 600),
+      linkedPhase("phase-2", "song-2", 300),
+      linkedPhase("phase-3", "song-3", 500),
+      linkedPhase("phase-4", "lick-1", 900),
+    ]),
+  ];
+
+  assert.deepEqual(getArtistPracticeStats(history, items), [
+    { artist: "Metallica", practiceSeconds: 900, songCount: 2 },
+    { artist: "Opeth", practiceSeconds: 500, songCount: 1 },
+  ]);
+});
+
+test("merges artist name variants and keeps the practised song count unique", () => {
+  const items = [
+    artistItem("song-1", "  Metallica "),
+    artistItem("song-2", "metallica"),
+  ];
+  const history = [
+    createSession("session-1", [
+      linkedPhase("phase-1", "song-1", 300),
+      linkedPhase("phase-2", "song-1", 300),
+      linkedPhase("phase-3", "song-2", 150),
+    ]),
+  ];
+
+  assert.deepEqual(getArtistPracticeStats(history, items), [
+    { artist: "Metallica", practiceSeconds: 750, songCount: 2 },
+  ]);
+});
+
+test("excludes unlinked, missing, artistless and untouched practice", () => {
+  const items = [
+    artistItem("song-1", "Metallica"),
+    artistItem("song-2", "   "),
+  ];
+  const history = [
+    createSession("session-1", [
+      linkedPhase("phase-1", "song-1", 300),
+      linkedPhase("phase-2", "song-2", 400),
+      linkedPhase("phase-3", "missing-song", 500),
+      {
+        id: "phase-4",
+        name: "Suelta",
+        skill: "technique",
+        elapsedSeconds: 600,
+      },
+      linkedPhase("phase-5", "song-1", 0),
+    ]),
+  ];
+
+  assert.deepEqual(getArtistPracticeStats(history, items), [
+    { artist: "Metallica", practiceSeconds: 300, songCount: 1 },
+  ]);
+});
+
+test("orders artists with equal time by name", () => {
+  const items = [
+    artistItem("song-1", "Opeth"),
+    artistItem("song-2", "Metallica"),
+  ];
+  const history = [
+    createSession("session-1", [
+      linkedPhase("phase-1", "song-1", 300),
+      linkedPhase("phase-2", "song-2", 300),
+    ]),
+  ];
+
+  assert.deepEqual(
+    getArtistPracticeStats(history, items).map((artist) => artist.artist),
+    ["Metallica", "Opeth"],
+  );
 });
