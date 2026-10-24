@@ -116,3 +116,56 @@ test("normalizing a state saved before licks yields an empty collection", () => 
 
   assert.deepEqual(state.licks, []);
 });
+
+test("preserves the guitar type and block BPM through the cloud merge", () => {
+  const remote = normalizePracticeData({
+    history: [
+      {
+        id: "session-1",
+        startedAt: "2026-10-01T10:00:00.000Z",
+        guitarType: "acoustic",
+        skillSeconds: { technique: 60 },
+        phases: [
+          {
+            id: 1,
+            name: "Escalas",
+            skill: "technique",
+            elapsedSeconds: 60,
+            averageBpm: 92,
+          },
+        ],
+      },
+    ],
+  });
+  const local = normalizePracticeData({
+    history: [
+      {
+        id: "session-1",
+        startedAt: "2026-10-01T10:00:00.000Z",
+        guitarType: "electric",
+        skillSeconds: { technique: 60 },
+        phases: [
+          {
+            id: 1,
+            name: "Escalas",
+            skill: "technique",
+            elapsedSeconds: 60,
+            averageBpm: 96,
+          },
+        ],
+      },
+      {
+        id: "session-2",
+        startedAt: "2026-10-02T10:00:00.000Z",
+        guitarType: "classical",
+        skillSeconds: { technique: 60 },
+      },
+    ],
+  });
+
+  const merged = mergePracticeData(remote, local);
+
+  assert.equal(merged.history[0].guitarType, "electric");
+  assert.equal(merged.history[0].phases?.[0].averageBpm, 96);
+  assert.equal("guitarType" in merged.history[1], false);
+});

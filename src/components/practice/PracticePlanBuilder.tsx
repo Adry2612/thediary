@@ -17,20 +17,27 @@ import {
   type PracticeTemplateValidationError,
 } from "@/utils/practice-templates";
 import { usePracticeStore } from "@/stores/usePracticeStore";
-import type { PracticePhase, PracticeTemplate } from "@/types/practice";
+import { useGuitarPreference } from "@/hooks/useGuitarPreference";
+import type { GuitarType, PracticePhase, PracticeTemplate } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { createId } from "@/utils/create-id";
 
 interface PracticePlanBuilderProps {
   initialName?: string;
   initialPhases: PracticePhase[];
+  initialGuitarType?: GuitarType;
   initialTemplateId?: string;
-  onStart: (name: string, phases: PracticePhase[]) => void;
+  onStart: (
+    name: string,
+    phases: PracticePhase[],
+    guitarType?: GuitarType,
+  ) => void;
 }
 
 export function PracticePlanBuilder({
   initialName = "Mi sesión",
   initialPhases,
+  initialGuitarType,
   initialTemplateId,
   onStart,
 }: PracticePlanBuilderProps) {
@@ -40,6 +47,7 @@ export function PracticePlanBuilder({
   const deleteTemplate = usePracticeStore((state) => state.deleteTemplate);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
   const licks = usePracticeStore((state) => state.licks);
+  const { lastGuitarType, rememberGuitarType } = useGuitarPreference();
   const [name, setName] = useState(initialName);
   const [phases, setPhases] = useState(() =>
     normalizeRepertoirePhaseNames(
@@ -47,9 +55,25 @@ export function PracticePlanBuilder({
       repertoireItems,
     ),
   );
+  const [guitarType, setGuitarType] = useState<GuitarType | undefined>(
+    initialGuitarType,
+  );
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const appliedTemplateRef = useRef<string | null>(null);
+  const guitarTouchedRef = useRef(Boolean(initialGuitarType));
+  const guitarOptions = [
+    { value: "unspecified", label: text.guitarUnspecified },
+    { value: "electric", label: text.guitarElectric },
+    { value: "acoustic", label: text.guitarAcoustic },
+  ];
+
+  useEffect(() => {
+    if (guitarTouchedRef.current || initialTemplateId || !lastGuitarType) {
+      return;
+    }
+    setGuitarType(lastGuitarType);
+  }, [initialTemplateId, lastGuitarType]);
 
   useEffect(() => {
     if (!initialTemplateId || appliedTemplateRef.current === initialTemplateId) {
@@ -69,8 +93,10 @@ export function PracticePlanBuilder({
         repertoireItems,
       ),
     );
+    setGuitarType(template.guitarType ?? lastGuitarType ?? undefined);
+    guitarTouchedRef.current = true;
     setError(null);
-  }, [initialTemplateId, repertoireItems, templates]);
+  }, [initialTemplateId, lastGuitarType, repertoireItems, templates]);
 
   useEffect(() => {
     setPhases((current) =>
@@ -104,6 +130,8 @@ export function PracticePlanBuilder({
         repertoireItems,
       ),
     );
+    setGuitarType(template.guitarType ?? lastGuitarType ?? undefined);
+    guitarTouchedRef.current = true;
     setError(null);
   }
 
@@ -138,6 +166,7 @@ export function PracticePlanBuilder({
       phases: clonePracticePhases(
         normalizeRepertoirePhaseNames(phases, repertoireItems),
       ),
+      ...(guitarType ? { guitarType } : {}),
       updatedAt: new Date().toISOString(),
     });
     setSelectedTemplateId(templateId);
@@ -145,11 +174,13 @@ export function PracticePlanBuilder({
 
   function handleStart() {
     if (!validateCurrentPlan()) return;
+    if (guitarType) rememberGuitarType(guitarType);
     onStart(
       name.trim(),
       clonePracticePhases(
         normalizeRepertoirePhaseNames(phases, repertoireItems),
       ),
+      guitarType,
     );
   }
 
@@ -200,15 +231,34 @@ export function PracticePlanBuilder({
           )}
         </div>
 
-        <label className="mt-6 block text-xs text-muted">
-           {text.sessionName}
-          <TextField
-            value={name}
-            maxLength={80}
-            onChange={(event) => setName(event.target.value)}
-            className="mt-1"
-          />
-        </label>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <label className="block text-xs text-muted">
+             {text.sessionName}
+            <TextField
+              value={name}
+              maxLength={80}
+              onChange={(event) => setName(event.target.value)}
+              className="mt-1"
+            />
+          </label>
+          <div className="block text-xs text-muted">
+             {text.guitarType}
+            <SelectField
+              className="mt-1"
+              value={guitarType ?? "unspecified"}
+               ariaLabel={text.guitarAria}
+              options={guitarOptions}
+              onChange={(value) => {
+                guitarTouchedRef.current = true;
+                setGuitarType(
+                  value === "electric" || value === "acoustic"
+                    ? value
+                    : undefined,
+                );
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="mt-6 space-y-4">

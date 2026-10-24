@@ -7,7 +7,8 @@ import { TextArea, TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { createManualPracticeRecord } from "@/utils/manual-practice";
 import { usePracticeStore } from "@/stores/usePracticeStore";
-import { PRACTICE_SKILLS, type PracticeSkill } from "@/types/practice";
+import { PRACTICE_SKILLS, type GuitarType } from "@/types/practice";
+import { useGuitarPreference } from "@/hooks/useGuitarPreference";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import {
   createManualPracticeBlockDraft,
@@ -19,6 +20,8 @@ import {
 export function ManualPracticeEntry() {
   const manual = useI18nSection("manualPractice");
   const skills = useI18nSection("skills");
+  const practiceText = useI18nSection("practice");
+  const { lastGuitarType, rememberGuitarType } = useGuitarPreference();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const addSession = usePracticeStore((state) => state.addSession);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
@@ -28,6 +31,7 @@ export function ManualPracticeEntry() {
   );
   const [blocks, setBlocks] = useState(() => [createManualPracticeBlockDraft()]);
   const [notes, setNotes] = useState("");
+  const [guitarType, setGuitarType] = useState<GuitarType | "">("");
   const [error, setError] = useState<string | null>(null);
   const totalMinutes = blocks.reduce((total, block) => {
     const duration = Number(block.durationMinutes);
@@ -38,6 +42,7 @@ export function ManualPracticeEntry() {
 
   function openDialog() {
     setStartedAtLocal(toLocalDateTimeInputValue(new Date()));
+    setGuitarType(lastGuitarType ?? "");
     setError(null);
     dialogRef.current?.showModal();
   }
@@ -64,8 +69,10 @@ export function ManualPracticeEntry() {
           startedAtLocal,
           blocks: manualPracticeBlocksFromDrafts(blocks),
           notes,
+          guitarType: guitarType || undefined,
         }),
       );
+      if (guitarType) rememberGuitarType(guitarType);
       setTitle("");
       setBlocks([createManualPracticeBlockDraft()]);
       setNotes("");
@@ -120,6 +127,24 @@ export function ManualPracticeEntry() {
                 required
               />
             </label>
+            <div className="block text-sm text-ink sm:col-span-2">
+              {practiceText.guitarType}
+              <SelectField
+                className="mt-2"
+                ariaLabel={practiceText.guitarAria}
+                value={guitarType || "unspecified"}
+                onChange={(value) =>
+                  setGuitarType(
+                    value === "electric" || value === "acoustic" ? value : "",
+                  )
+                }
+                options={[
+                  { value: "unspecified", label: practiceText.guitarUnspecified },
+                  { value: "electric", label: practiceText.guitarElectric },
+                  { value: "acoustic", label: practiceText.guitarAcoustic },
+                ]}
+              />
+            </div>
             <section className="sm:col-span-2">
               <div className="mb-3 flex items-baseline justify-between gap-3">
                 <h3 className="text-sm font-medium text-ink">

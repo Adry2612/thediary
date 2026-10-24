@@ -16,39 +16,10 @@ const phases: PracticePhase[] = [
   },
 ];
 
-const SUGGESTED_DURATIONS = [15, 30, 45, 60];
-
-function createSuggestedPhases(totalMinutes: number): PracticePhase[] {
-  const techniqueMinutes = Math.round(totalMinutes * 0.3);
-  const repertoireMinutes = Math.round(totalMinutes * 0.5);
-
-  return [
-    {
-      id: 1,
-      name: techniqueName,
-      durationMinutes: techniqueMinutes,
-      skill: "technique",
-    },
-    {
-      id: 2,
-      name: practiceText.repertoire,
-      durationMinutes: repertoireMinutes,
-      skill: "repertoire",
-    },
-    {
-      id: 3,
-      name: practiceText.cooldown,
-      durationMinutes: totalMinutes - techniqueMinutes - repertoireMinutes,
-      skill: "technique",
-    },
-  ];
-}
-
 export default async function PracticePage({
   searchParams,
 }: {
   searchParams: Promise<{
-    minutes?: string;
     template?: string;
     repeatSessionId?: string;
     quickRepertoire?: string;
@@ -56,20 +27,15 @@ export default async function PracticePage({
   }>;
 }) {
   const {
-    minutes: requestedMinutes,
     template: requestedTemplateId,
     repeatSessionId,
     quickRepertoire,
     start,
   } = await searchParams;
-  const requestedDuration = Number(requestedMinutes);
-  const phasesForSession = SUGGESTED_DURATIONS.includes(requestedDuration)
-    ? createSuggestedPhases(requestedDuration)
-    : phases;
 
   return (
     <PracticeWorkspace
-      initialPhases={phasesForSession}
+      initialPhases={phases}
       requestedTemplateId={requestedTemplateId}
       requestedSessionId={repeatSessionId}
       requestedQuickRepertoireId={quickRepertoire}

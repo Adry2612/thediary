@@ -9,10 +9,17 @@ test("keeps tooltip coordinates inside the chart at all edges", () => {
   );
   assert.deepEqual(
     getContainedTooltipPosition(500, 320, 500, 320),
-    { left: 316, top: 256 },
+    { left: 284, top: 200 },
   );
   assert.deepEqual(
     getContainedTooltipPosition(250, 180, 500, 320),
-    { left: 162, top: 116 },
+    { left: 146, top: 60 },
+  );
+});
+
+test("keeps the detailed tooltip inside a chart narrower than the card", () => {
+  assert.deepEqual(
+    getContainedTooltipPosition(0, 150, 240, 320),
+    { left: 8, top: 30 },
   );
 });

@@ -1,11 +1,14 @@
 'use client';
 
 import { useMemo } from 'react';
+import { GuitarBalance } from '@/components/dashboard/GuitarBalance';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ManualPracticeEntry } from '@/components/dashboard/ManualPracticeEntry';
 import { PracticeTimeChart } from '@/components/dashboard/PracticeTimeChart';
 import { SkillBalance } from '@/components/dashboard/SkillBalance';
-import { SuggestedPractice } from '@/components/dashboard/SuggestedPractice';
+import { StreakFlame } from '@/components/dashboard/StreakFlame';
+import { TempoProgress } from '@/components/dashboard/TempoProgress';
+import { TopPracticeContent } from '@/components/dashboard/TopPracticeContent';
 import { WeeklyPracticeSummary } from '@/components/dashboard/WeeklyPracticeSummary';
 import { YearPracticeCalendar } from '@/components/dashboard/YearPracticeCalendar';
 import {
@@ -14,10 +17,13 @@ import {
   PRACTICE_SKILL_LABELS,
 } from '@/utils/dashboard-data';
 import {
+  getGuitarBalance,
   getMonthlyHeatmapData,
+  getPracticeContentRankings,
   getPracticeStatistics,
   getSkillDistribution,
   getStreakCount,
+  isStreakOnFire,
 } from '@/utils/practice-analytics';
 import {
   getPracticeWeekDays,
@@ -38,6 +44,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
   const dashboard = useI18nSection('dashboard');
   const { user } = useAppData();
   const history = usePracticeStore((state) => state.history);
+  const repertoireItems = usePracticeStore((state) => state.repertoireItems);
   const practiceGoals = usePracticeStore((state) => state.practiceGoals);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const persistenceError = usePracticeStore((state) => state.persistenceError);
@@ -99,13 +106,14 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         ) / sessionsWithBpm.length,
       )
     : 0;
-  const skillTotals = {
-    technique: skillDistribution.categories.technique.minutes,
-    theory: skillDistribution.categories.theory.minutes,
-    repertoire: skillDistribution.categories.repertoire.minutes,
-    lick: skillDistribution.categories.lick.minutes,
-    improvisation: skillDistribution.categories.improvisation.minutes,
-  };
+  const guitarBalance = useMemo(
+    () => getGuitarBalance(history, currentMonthRange),
+    [currentMonthRange, history],
+  );
+  const contentRankings = useMemo(
+    () => getPracticeContentRankings(history, repertoireItems),
+    [history, repertoireItems],
+  );
   const practiceStatistics = useMemo(
     () => getPracticeStatistics(history),
     [history],
@@ -114,11 +122,13 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
   const totalHours = new Intl.NumberFormat('es-ES', {
     maximumFractionDigits: 1,
   }).format(practiceStatistics.totalSeconds / 3600);
+  const streak = getStreakCount(history, today);
   const metricCards = [
     {
       label: dashboard.streak,
-      value: `${getStreakCount(history, today)} ${dashboard.days}`,
+      value: `${streak} ${dashboard.days}`,
       description: dashboard.daysPracticed,
+      highlight: isStreakOnFire(streak) ? <StreakFlame /> : undefined,
     },
     {
       label: dashboard.monthTime,
@@ -201,7 +211,22 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
           history={history}
           today={today}
         />
-        <SkillBalance totals={skillTotals} />
+        <SkillBalance distribution={skillDistribution} />
+      </div>
+
+      <div className='mt-5 grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2'>
+        <GuitarBalance balance={guitarBalance} />
+        <div className='min-w-0'>
+          <TempoProgress
+            history={history}
+            today={today}
+            repertoireItems={repertoireItems}
+          />
+        </div>
+      </div>
+
+      <div className='mt-5'>
+        <TopPracticeContent rankings={contentRankings} />
       </div>
 
       <div className='mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3'>
@@ -214,9 +239,6 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         ))}
       </div>
 
-      <div className='mt-5'>
-        <SuggestedPractice />
-      </div>
       <p className='mt-8 text-center text-xs text-muted'>
          {dashboard.calendarNote} {todayYear}.
       </p>

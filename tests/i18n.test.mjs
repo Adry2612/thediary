@@ -34,6 +34,26 @@ test("names the practice block detail in both languages", () => {
   assert.equal(translations.en.practice.techniquePickerNoResults, "No techniques match that search.");
 });
 
+test("names the dashboard insights in both languages", () => {
+  assert.equal(translations.es.dashboard.guitarBalance, "Balance de guitarras");
+  assert.equal(translations.en.dashboard.guitarBalance, "Guitar balance");
+  assert.equal(translations.es.dashboard.tempoProgress, "Progreso de tempo");
+  assert.equal(translations.en.dashboard.tempoProgress, "Tempo progress");
+  assert.deepEqual(
+    Object.keys(translations.es.dashboard).sort(),
+    Object.keys(translations.en.dashboard).sort(),
+  );
+});
+
+test("names the session guitar type in both languages", () => {
+  assert.equal(translations.es.practice.guitarType, "Tipo de guitarra");
+  assert.equal(translations.en.practice.guitarType, "Guitar type");
+  assert.deepEqual(
+    Object.keys(translations.es.practice).sort(),
+    Object.keys(translations.en.practice).sort(),
+  );
+});
+
 test("falls back to the key when a translation is missing", () => {
   const t = createTranslator(translations.es);
   assert.equal(t("missing.key"), "missing.key");

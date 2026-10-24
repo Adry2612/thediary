@@ -1,5 +1,5 @@
-const TOOLTIP_WIDTH = 176;
-const TOOLTIP_HEIGHT = 56;
+const TOOLTIP_WIDTH = 208;
+const TOOLTIP_HEIGHT = 112;
 const TOOLTIP_INSET = 8;
 
 export function getContainedTooltipPosition(

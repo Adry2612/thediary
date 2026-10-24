@@ -124,6 +124,27 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
         />
       </label>
 
+      <div className="mt-4 block max-w-56 text-xs text-muted">
+        Tipo de guitarra
+        <SelectField
+          className="mt-1"
+          ariaLabel="Tipo de guitarra"
+          value={draft.guitarType ?? "unspecified"}
+          options={[
+            { value: "unspecified", label: "Sin especificar" },
+            { value: "electric", label: "Eléctrica" },
+            { value: "acoustic", label: "Acústica" },
+          ]}
+          onChange={(value) =>
+            setDraft((current) => ({
+              ...current,
+              guitarType:
+                value === "electric" || value === "acoustic" ? value : null,
+            }))
+          }
+        />
+      </div>
+
       <section className="mt-6 border-t border-line pt-5">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h3 className="text-base font-semibold text-ink">

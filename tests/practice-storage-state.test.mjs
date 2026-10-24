@@ -155,3 +155,52 @@ test("replaces malformed collections and settings with defaults", () => {
     },
   );
 });
+
+test("keeps a valid guitar type and per-block BPM and drops invalid values", () => {
+  const state = normalizePracticeStorageState({
+    state: {
+      history: [
+        {
+          id: "valid",
+          guitarType: "electric",
+          skillSeconds: { technique: 60 },
+          phases: [
+            {
+              id: 1,
+              name: "Escalas",
+              skill: "technique",
+              elapsedSeconds: 60,
+              averageBpm: 100,
+            },
+          ],
+        },
+        {
+          id: "invalid",
+          guitarType: "classical",
+          skillSeconds: { technique: 60 },
+          phases: [
+            {
+              id: 1,
+              name: "Escalas",
+              skill: "technique",
+              elapsedSeconds: 60,
+              averageBpm: 0,
+            },
+          ],
+        },
+        {
+          id: "legacy",
+          skillSeconds: { technique: 60 },
+        },
+      ],
+    },
+    ...normalizers,
+  });
+
+  assert.equal(state.history[0].guitarType, "electric");
+  assert.equal(state.history[0].phases?.[0].averageBpm, 100);
+  assert.equal("guitarType" in state.history[1], false);
+  assert.equal("averageBpm" in (state.history[1].phases?.[0] ?? {}), false);
+  assert.equal("guitarType" in state.history[2], false);
+  assert.equal(state.history[2].skillSeconds.lick, 0);
+});

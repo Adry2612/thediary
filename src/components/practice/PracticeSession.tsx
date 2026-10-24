@@ -11,6 +11,7 @@ import { PracticeMaterials } from "@/components/practice/PracticeMaterials";
 import { LickTab } from "@/components/licks/LickTab";
 import { Card } from "@/components/ui/Card";
 import { TimerCard } from "@/components/practice/TimerCard";
+import { useGuitarPreference } from "@/hooks/useGuitarPreference";
 import { useMetronome } from "@/hooks/useMetronome";
 import { usePracticeTimer } from "@/hooks/usePracticeTimer";
 import { useSplitViewAvailability } from "@/hooks/useSplitViewAvailability";
@@ -78,11 +79,16 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const updatePhase = useActivePracticeSessionStore(
     (state) => state.updatePhase,
   );
+  const setGuitarType = useActivePracticeSessionStore(
+    (state) => state.setGuitarType,
+  );
+  const { lastGuitarType } = useGuitarPreference();
   const pathname = usePathname();
   const isPracticeRoute = pathname === "/practice";
   const router = useRouter();
   const {
     bpm: metronomeBpm,
+    isRunning: isMetronomeRunning,
     stop: stopMetronome,
     practiceStartSound,
     setPracticeStartSound,
@@ -113,12 +119,32 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const bpmSamplesRef = useRef([
     { elapsedSeconds: 0, bpm: metronomeBpm },
   ]);
+  const metronomeBlocksRef = useRef<number[]>([]);
   useEffect(() => {
     if (previousTimerStartedAtRef.current && !timer.startedAt) {
       bpmSamplesRef.current = [{ elapsedSeconds: 0, bpm: metronomeBpm }];
+      metronomeBlocksRef.current = [];
     }
     previousTimerStartedAtRef.current = timer.startedAt;
   }, [metronomeBpm, timer.startedAt]);
+  useEffect(() => {
+    if (!isMetronomeRunning) return;
+    const blockIndex = timer.currentPhaseIndex;
+    if (metronomeBlocksRef.current.includes(blockIndex)) return;
+    metronomeBlocksRef.current = [...metronomeBlocksRef.current, blockIndex];
+  }, [isMetronomeRunning, timer.currentPhaseIndex]);
+  const seededGuitarSessionRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!lastGuitarType || session.guitarType) return;
+    if (seededGuitarSessionRef.current === sessionId) return;
+    seededGuitarSessionRef.current = sessionId;
+    setGuitarType(lastGuitarType);
+  }, [
+    lastGuitarType,
+    session.guitarType,
+    sessionId,
+    setGuitarType,
+  ]);
   const recordBpmChange = useCallback(
     (bpm: number) => {
       bpmSamplesRef.current = addBpmSample(
@@ -175,6 +201,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         phases: phasesForRecord,
         notes: sessionNotes,
         phaseNotes,
+        guitarType: session.guitarType,
+        bpmSamples: bpmSamplesRef.current,
+        metronomeBlockIndexes: metronomeBlocksRef.current,
       }),
     );
     for (const lickId of getPracticedLickIds(pendingResult.phases)) {

@@ -176,3 +176,43 @@ test("copies a template plan without sharing the stored phases", () => {
   });
   assert.notEqual(plan.phases, phases);
 });
+
+test("keeps a template's guitar type in its launch plan", () => {
+  const plan = createTemplatePlan({
+    id: "template-1",
+    name: "Rutina",
+    phases: [],
+    guitarType: "acoustic",
+  });
+
+  assert.equal(plan.guitarType, "acoustic");
+  assert.equal(plan.templateId, "template-1");
+});
+
+test("keeps a repeated session's guitar type", () => {
+  const plan = createPracticePlanFromSession({
+    title: "Sesión",
+    guitarType: "electric",
+    phases: [
+      {
+        id: "phase-1",
+        name: "Escalas",
+        skill: "technique",
+        elapsedSeconds: 600,
+        durationMinutes: 10,
+      },
+    ],
+  });
+
+  assert.equal(plan?.guitarType, "electric");
+});
+
+test("does not add a guitar type when the source has none", () => {
+  const plan = createTemplatePlan({
+    id: "template-1",
+    name: "Rutina",
+    phases: [],
+  });
+
+  assert.equal("guitarType" in plan, false);
+});

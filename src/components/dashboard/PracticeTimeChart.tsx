@@ -1,14 +1,20 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { formatExactDuration, formatTotal } from "@/utils/format";
-import { getPracticeTimeBuckets } from "@/utils/practice-analytics";
+import { formatPracticeDuration, formatTotal } from "@/utils/format";
+import { getPracticeTimeBuckets, getPracticeTimeSummary } from "@/utils/practice-analytics";
 import { getContainedTooltipPosition } from "@/utils/practice-chart-tooltip";
-import type { PracticeChartPeriod } from "@/utils/practice-analytics";
+import type { PracticeChartPeriod, PracticeTimeBucket } from "@/utils/practice-analytics";
 import { SelectField } from "@/components/ui/SelectField";
 import type { SessionRecord } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import type { ChartTooltip } from "@/types/dashboard";
+
+const changeFormatter = new Intl.NumberFormat("es-ES", {
+  style: "percent",
+  maximumFractionDigits: 0,
+  signDisplay: "always",
+});
 
 export function PracticeTimeChart({
   history,
@@ -30,19 +36,37 @@ export function PracticeTimeChart({
     () => getPracticeTimeBuckets(history, period, today),
     [history, period, today],
   );
+  const summary = useMemo(
+    () => getPracticeTimeSummary(history, period, today),
+    [history, period, today],
+  );
   const maximumSeconds = Math.max(
     0,
     ...buckets.map((bucket) => bucket.totalSeconds),
   );
-  const totalSeconds = buckets.reduce(
-    (total, bucket) => total + bucket.totalSeconds,
-    0,
-  );
+  const totalSeconds = summary.totalSeconds;
+  const bestLabel =
+    period === "week"
+      ? dashboard.summaryBestDay
+      : period === "month"
+        ? dashboard.summaryBestWeek
+        : dashboard.summaryBestMonth;
+  const changeLabel =
+    summary.changeRatio === null
+      ? dashboard.summaryNoPrevious
+      : summary.changeRatio === 0
+        ? dashboard.summarySame
+        : changeFormatter.format(summary.changeRatio);
+  const bestSuffix =
+    period === "week"
+      ? dashboard.tooltipOfBestDay
+      : period === "month"
+        ? dashboard.tooltipOfBestWeek
+        : dashboard.tooltipOfBestMonth;
 
   function showTooltip(
     element: HTMLElement,
-    label: string,
-    totalSeconds: number,
+    bucket: PracticeTimeBucket,
     pointerPosition?: { x: number; y: number },
   ) {
     const containerBounds = chartContainerRef.current?.getBoundingClientRect();
@@ -57,9 +81,22 @@ export function PracticeTimeChart({
       containerBounds.width,
       containerBounds.height,
     );
+    const shareOfBest =
+      maximumSeconds > 0
+        ? Math.round((bucket.totalSeconds / maximumSeconds) * 100)
+        : 0;
+
     setTooltip({
-      label,
-      duration: formatExactDuration(totalSeconds),
+      label: bucket.label,
+      duration: formatPracticeDuration(bucket.totalSeconds / 60),
+      sessionCount: bucket.sessionCount,
+      average:
+        bucket.sessionCount > 0
+          ? formatPracticeDuration(
+              bucket.totalSeconds / 60 / bucket.sessionCount,
+            )
+          : "—",
+      ofBest: `${shareOfBest} % ${bestSuffix}`,
       ...position,
     });
   }
@@ -104,6 +141,45 @@ export function PracticeTimeChart({
          <span className="text-xs text-muted">{dashboard.inPeriod}</span>
       </div>
 
+      <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-zinc-800 pt-5">
+        <div>
+          <dt className="text-[10px] uppercase tracking-[0.12em] text-muted">
+            {dashboard.summarySessions}
+          </dt>
+          <dd className="mt-1 font-mono text-sm tabular-nums text-zinc-100">
+            {summary.sessionCount}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[10px] uppercase tracking-[0.12em] text-muted">
+            {dashboard.summaryAverageSession}
+          </dt>
+          <dd className="mt-1 font-mono text-sm tabular-nums text-zinc-100">
+            {summary.sessionCount > 0
+              ? formatPracticeDuration(summary.averageSessionSeconds / 60)
+              : "—"}
+          </dd>
+        </div>
+        <div className="min-w-0">
+          <dt className="text-[10px] uppercase tracking-[0.12em] text-muted">
+            {bestLabel}
+          </dt>
+          <dd className="mt-1 truncate font-mono text-sm tabular-nums text-zinc-100">
+            {summary.bestBucket
+              ? `${summary.bestBucket.label} · ${formatPracticeDuration(summary.bestBucket.totalSeconds / 60)}`
+              : "—"}
+          </dd>
+        </div>
+        <div className="min-w-0">
+          <dt className="text-[10px] uppercase tracking-[0.12em] text-muted">
+            {dashboard.summaryComparison}
+          </dt>
+          <dd className="mt-1 truncate font-mono text-sm tabular-nums text-zinc-100">
+            {changeLabel}
+          </dd>
+        </div>
+      </dl>
+
       <div className="mt-5 min-h-0 flex-1 overflow-x-auto">
         <ul
            aria-label={dashboard.chartAria}
@@ -130,21 +206,14 @@ export function PracticeTimeChart({
                 aria-label={accessibleLabel}
                 onPointerEnter={(event) => {
                   if (event.pointerType === "touch" || !hasPractice) return;
-                  showTooltip(
-                    event.currentTarget,
-                    bucket.label,
-                    bucket.totalSeconds,
-                    { x: event.clientX, y: event.clientY },
-                  );
+                  showTooltip(event.currentTarget, bucket, {
+                    x: event.clientX,
+                    y: event.clientY,
+                  });
                 }}
                 onFocus={
                   hasPractice
-                    ? (event) =>
-                        showTooltip(
-                          event.currentTarget,
-                          bucket.label,
-                          bucket.totalSeconds,
-                        )
+                    ? (event) => showTooltip(event.currentTarget, bucket)
                     : undefined
                 }
                 onPointerLeave={(event) => {
@@ -175,12 +244,22 @@ export function PracticeTimeChart({
       {tooltip && (
         <div
           role="tooltip"
-          className="pointer-events-none absolute z-50 w-44 border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-300 shadow-lg"
+          className="pointer-events-none absolute z-50 w-52 border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-300 shadow-lg"
           style={{ left: tooltip.left, top: tooltip.top }}
         >
           <span className="block text-muted">{tooltip.label}</span>
           <span className="mt-1 block font-mono text-sm tabular-nums text-zinc-100">
             {tooltip.duration}
+          </span>
+          <span className="mt-2 block text-[11px] text-muted">
+            {tooltip.sessionCount}{" "}
+            {tooltip.sessionCount === 1
+              ? dashboard.tooltipSession
+              : dashboard.tooltipSessions}{" "}
+            · {tooltip.average} {dashboard.tooltipAverage}
+          </span>
+          <span className="mt-1 block text-[11px] text-muted">
+            {tooltip.ofBest}
           </span>
         </div>
       )}

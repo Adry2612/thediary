@@ -31,6 +31,11 @@ export function formatTotal(totalSeconds: number): string {
   return formatPracticeDuration(totalSeconds / 60);
 }
 
+/** Número con signo explícito cuando crece: "+4", "0", "-2". */
+export function formatSignedNumber(value: number): string {
+  return value > 0 ? `+${value}` : String(value);
+}
+
 /**
  * Duración exacta al segundo ("65 min 12 s"). Los segundos se truncan, no se
  * redondean: el tiempo ya transcurrido nunca debe aparecer aumentado.

@@ -20,12 +20,17 @@ export type PracticeTooltipDay = {
   left: number;
   top: number;
   showBelow: boolean;
+  maxHeight: number;
 };
 
 /** Ficha emergente del gráfico de tiempo, ya colocada. */
 export type ChartTooltip = {
   label: string;
   duration: string;
+  sessionCount: number;
+  average: string;
+  /** Porcentaje respecto al mejor bucket del periodo, ya formateado. */
+  ofBest: string;
   left: number;
   top: number;
 };

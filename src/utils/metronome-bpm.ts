@@ -21,6 +21,65 @@ export function addBpmSample(
   return [...samples, { elapsedSeconds, bpm }];
 }
 
+/**
+ * BPM medio de cada bloque a partir de la línea temporal de la sesión.
+ *
+ * La línea temporal usa segundos de sesión; los bloques se separan por la suma
+ * acumulada de sus duraciones. Un bloque de duración cero, o en el que el
+ * metrónomo no llegó a sonar, devuelve `0` (sin BPM registrado).
+ */
+export function getBlockAverageBpms(
+  samples: MetronomeBpmSample[],
+  blockDurationsSeconds: number[],
+  metronomeBlockIndexes?: Iterable<number>,
+): number[] {
+  const metronomeBlocks = metronomeBlockIndexes
+    ? new Set(metronomeBlockIndexes)
+    : null;
+  const sortedSamples = [...samples].sort(
+    (first, second) => first.elapsedSeconds - second.elapsedSeconds,
+  );
+  let blockStart = 0;
+
+  return blockDurationsSeconds.map((duration, index) => {
+    const safeDuration = Math.max(0, duration);
+    const blockEnd = blockStart + safeDuration;
+    const ranWithMetronome = metronomeBlocks
+      ? metronomeBlocks.has(index)
+      : true;
+    let averageBpm = 0;
+
+    if (safeDuration > 0 && ranWithMetronome) {
+      let previousSample: MetronomeBpmSample | undefined;
+      const blockSamples: MetronomeBpmSample[] = [];
+
+      for (const sample of sortedSamples) {
+        if (sample.elapsedSeconds <= blockStart) {
+          previousSample = sample;
+          continue;
+        }
+        if (sample.elapsedSeconds >= blockEnd) break;
+        blockSamples.push({
+          elapsedSeconds: sample.elapsedSeconds - blockStart,
+          bpm: sample.bpm,
+        });
+      }
+
+      if (previousSample) {
+        blockSamples.unshift({
+          elapsedSeconds: 0,
+          bpm: previousSample.bpm,
+        });
+      }
+
+      averageBpm = getTimeWeightedAverageBpm(blockSamples, safeDuration);
+    }
+
+    blockStart = blockEnd;
+    return averageBpm;
+  });
+}
+
 export function getTimeWeightedAverageBpm(
   samples: MetronomeBpmSample[],
   durationSeconds: number,

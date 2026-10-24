@@ -9,6 +9,7 @@ import {
   createPracticePlanFromSession,
   createQuickPracticePlan,
   createTemplatePlan,
+  type PracticeLaunchPlan,
   type PracticeLaunchSession,
 } from '@/utils/practice-launch';
 import { getPracticePlanDuration } from '@/utils/practice-plan';
@@ -54,7 +55,7 @@ export function PracticeWorkspace({
   const setActiveSession = useActivePracticeSessionStore(
     (state) => state.setActiveSession,
   );
-  const [draftPlan, setDraftPlan] = useState({
+  const [draftPlan, setDraftPlan] = useState<PracticeLaunchPlan>({
     name: text.yourPractice,
     phases: initialPhases,
   });
@@ -71,7 +72,11 @@ export function PracticeWorkspace({
   );
   const launchRequestedPlan = useCallback(
     (plan: PracticeLaunchSession) => {
-      setDraftPlan({ name: plan.name, phases: plan.phases });
+      setDraftPlan({
+        name: plan.name,
+        phases: plan.phases,
+        guitarType: plan.guitarType,
+      });
       setActiveSession({ id: createId(), ...plan });
     },
     [setActiveSession],
@@ -153,6 +158,8 @@ export function PracticeWorkspace({
               {activePlan.isCountUp ?
                 text.freeSession
               : `${getPracticePlanDuration(activePlan.phases)} min · ${text.personalSession}`}
+              {activePlan.guitarType ?
+                ` · ${activePlan.guitarType === 'electric' ? text.guitarElectric : text.guitarAcoustic}` : null}
             </p>
           </div>
         : <p className='mt-3 max-w-xl text-sm text-muted'>
@@ -187,9 +194,14 @@ export function PracticeWorkspace({
               <PracticePlanBuilder
                 initialName={draftPlan.name}
                 initialPhases={draftPlan.phases}
+                initialGuitarType={draftPlan.guitarType}
                 initialTemplateId={editingTemplateId ?? undefined}
-                onStart={(name, phases) => {
-                  const nextPlan = { name, phases };
+                onStart={(name, phases, guitarType) => {
+                  const nextPlan = {
+                    name,
+                    phases,
+                    ...(guitarType ? { guitarType } : {}),
+                  };
                   setDraftPlan(nextPlan);
                   setActiveSession({ id: createId(), ...nextPlan });
                 }}

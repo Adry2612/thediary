@@ -190,6 +190,8 @@ export interface PracticeTemplate {
   id: string;
   name: string;
   phases: PracticePhase[];
+  /** Guitarra elegida para la rutina; sin valor si no se especificó. */
+  guitarType?: GuitarType;
   updatedAt: string;
 }
 
@@ -202,6 +204,8 @@ export interface SessionRecord {
   completed?: boolean;
   skillSeconds: Record<PracticeSkill, number>;
   notes?: string;
+  /** Guitarra con la que se practicó. Sin valor si no se eligió. */
+  guitarType?: GuitarType;
   phases?: SessionPhaseRecord[];
 }
 
@@ -210,6 +214,8 @@ export interface SessionPhaseRecord {
   name: string;
   skill: PracticeSkill;
   elapsedSeconds: number;
+  /** BPM medio de este bloque, solo si el metrónomo sonó durante él. */
+  averageBpm?: number;
   durationMinutes?: number;
   exercises?: string[];
   resources?: PracticeResource[];
@@ -237,7 +243,10 @@ export interface DailyStats {
 
 export interface SkillDistribution {
   totalMinutes: number;
-  categories: Record<PracticeSkill, { minutes: number; percentage: number }>;
+  categories: Record<
+    PracticeSkill,
+    { minutes: number; percentage: number; sessionCount: number }
+  >;
 }
 
 export interface PracticeTimerResult {

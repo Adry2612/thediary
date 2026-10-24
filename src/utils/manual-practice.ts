@@ -1,12 +1,10 @@
-import type { PracticeSkill, SessionRecord } from "../types/practice.ts";
+import {
+  PRACTICE_SKILLS,
+  type GuitarType,
+  type PracticeSkill,
+  type SessionRecord,
+} from "../types/practice.ts";
 import { createId } from "./create-id.ts";
-
-const PRACTICE_SKILLS: PracticeSkill[] = [
-  "technique",
-  "theory",
-  "repertoire",
-  "improvisation",
-];
 
 export type ManualPracticeInput = {
   title: string;
@@ -17,6 +15,7 @@ export type ManualPracticeInput = {
     skill: PracticeSkill;
   }[];
   notes: string;
+  guitarType?: GuitarType;
 };
 
 /**
@@ -143,6 +142,7 @@ export function createManualPracticeRecord(
     completed: true,
     skillSeconds,
     notes: notes || undefined,
+    ...(input.guitarType ? { guitarType: input.guitarType } : {}),
     phases,
   };
 }

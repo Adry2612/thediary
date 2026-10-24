@@ -1,10 +1,16 @@
 import {
   PRACTICE_SKILLS,
+  type GuitarType,
   type PracticePhase,
   type PracticeSkill,
   type PracticeTimerResult,
+  type SessionPhaseRecord,
   type SessionRecord,
 } from "../types/practice.ts";
+import {
+  getBlockAverageBpms,
+  type MetronomeBpmSample,
+} from "./metronome-bpm.ts";
 
 interface CreatePracticeSessionRecordInput {
   id: string;
@@ -14,6 +20,11 @@ interface CreatePracticeSessionRecordInput {
   phases: PracticePhase[];
   notes: string;
   phaseNotes: Record<number, string>;
+  guitarType?: GuitarType;
+  /** Línea temporal de BPM de la sesión; sin ella no hay BPM por bloque. */
+  bpmSamples?: MetronomeBpmSample[];
+  /** Bloques durante los que el metrónomo llegó a sonar. */
+  metronomeBlockIndexes?: Iterable<number>;
 }
 
 export function createPracticeSessionRecord({
@@ -24,7 +35,19 @@ export function createPracticeSessionRecord({
   phases,
   notes,
   phaseNotes,
+  guitarType,
+  bpmSamples,
+  metronomeBlockIndexes,
 }: CreatePracticeSessionRecordInput): SessionRecord {
+  const blockAverageBpms =
+    bpmSamples && bpmSamples.length > 0
+      ? getBlockAverageBpms(
+          bpmSamples,
+          result.phases.map((phase) => phase.elapsedSeconds),
+          metronomeBlockIndexes,
+        )
+      : [];
+
   return {
     id,
     title,
@@ -34,9 +57,13 @@ export function createPracticeSessionRecord({
     completed: result.completed,
     skillSeconds: normalizeSkillSeconds(result.skillSeconds),
     notes: notes.trim() || undefined,
+    ...(guitarType ? { guitarType } : {}),
     phases: result.phases.map((phase, index) => ({
       ...phase,
       name: phases[index]?.name ?? phase.name,
+      ...(blockAverageBpms[index]
+        ? { averageBpm: blockAverageBpms[index] }
+        : {}),
       durationMinutes: phases[index]?.durationMinutes,
       exercises: [...(phases[index]?.exercises ?? [])],
       resources: phases[index]?.resources?.map((resource) => ({
@@ -69,10 +96,35 @@ export function normalizeSkillSeconds(
   );
 }
 
+/** Solo el tipo de guitarra admitido; cualquier otro valor se descarta. */
+export function normalizeGuitarType(value: unknown): GuitarType | undefined {
+  return value === "electric" || value === "acoustic" ? value : undefined;
+}
+
+/**
+ * Conserva el BPM medio del bloque solo si es un número finito y positivo. Un
+ * valor inválido se elimina sin perder el bloque.
+ */
+function normalizeSessionPhase(
+  phase: SessionPhaseRecord,
+): SessionPhaseRecord {
+  const { averageBpm: storedBpm, ...rest } = phase;
+  return typeof storedBpm === "number" &&
+    Number.isFinite(storedBpm) &&
+    storedBpm > 0
+    ? { ...rest, averageBpm: Math.round(storedBpm) }
+    : rest;
+}
+
 /** Rellena las categorías que falten en una sesión cargada de datos antiguos. */
 export function normalizeSessionRecord(session: SessionRecord): SessionRecord {
+  const { guitarType: storedGuitarType, phases, ...rest } = session;
+  const guitarType = normalizeGuitarType(storedGuitarType);
+
   return {
-    ...session,
+    ...rest,
+    ...(guitarType ? { guitarType } : {}),
     skillSeconds: normalizeSkillSeconds(session.skillSeconds),
+    ...(phases ? { phases: phases.map(normalizeSessionPhase) } : {}),
   };
 }

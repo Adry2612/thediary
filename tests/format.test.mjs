@@ -6,10 +6,17 @@ import {
   formatExactDuration,
   formatOvertime,
   formatPracticeDuration,
+  formatSignedNumber,
   formatTotal,
   getTimerAction,
   getTimerDisplaySeconds,
 } from "../src/utils/format.ts";
+
+test("adds an explicit sign to a growing number", () => {
+  assert.equal(formatSignedNumber(4), "+4");
+  assert.equal(formatSignedNumber(0), "0");
+  assert.equal(formatSignedNumber(-2), "-2");
+});
 
 test("formats a clock as minutes and seconds", () => {
   assert.equal(formatClock(0), "00:00");
@@ -59,6 +66,8 @@ test("formats practice minutes in hours and minutes, rounded", () => {
   assert.equal(formatPracticeDuration(60), "1 h");
   assert.equal(formatPracticeDuration(65), "1 h 5 min");
   assert.equal(formatPracticeDuration(150), "2 h 30 min");
+  assert.equal(formatPracticeDuration(300), "5 h");
+  assert.equal(formatPracticeDuration(252), "4 h 12 min");
 });
 
 test("picks the timer action in the same order as the button did", () => {

@@ -49,3 +49,28 @@ test("updates one phase in place and keeps the rest of the session", () => {
 
   useActivePracticeSessionStore.getState().clearActiveSession();
 });
+
+test("keeps the guitar type of the running practice and can clear it", () => {
+  useActivePracticeSessionStore.getState().setActiveSession({
+    id: "practice-session-3",
+    name: "Rutina",
+    phases: [
+      { id: "a", name: "Técnica", durationMinutes: 5, skill: "technique" },
+    ],
+  });
+
+  useActivePracticeSessionStore.getState().setGuitarType("acoustic");
+  assert.equal(
+    useActivePracticeSessionStore.getState().activeSession?.guitarType,
+    "acoustic",
+  );
+
+  useActivePracticeSessionStore.getState().setGuitarType(null);
+  assert.equal(
+    "guitarType" in
+      (useActivePracticeSessionStore.getState().activeSession ?? {}),
+    false,
+  );
+
+  useActivePracticeSessionStore.getState().clearActiveSession();
+});
