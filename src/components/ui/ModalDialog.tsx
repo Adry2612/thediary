@@ -1,6 +1,6 @@
 import type { MouseEvent, ReactNode, Ref, SyntheticEvent } from "react";
 
-type Variant = "md" | "lg" | "confirm";
+type Variant = "md" | "lg" | "wide" | "confirm";
 
 interface ModalDialogProps {
   /** Ref del `<dialog>`; lo entrega `useDialogModal`. */
@@ -20,7 +20,8 @@ const baseStyles =
 
 const variants: Record<Variant, string> = {
   md: "w-[calc(100%-2rem)] max-w-md",
-  lg: "max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto",
+  lg: "max-h-[calc(90dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-lg overflow-y-auto",
+  wide: "max-h-[calc(90dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto",
   confirm:
     "fixed inset-0 w-[calc(100%-2rem)] max-w-md shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
 };

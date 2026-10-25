@@ -53,7 +53,7 @@ export function ChangePasswordDialog({
             required
             value={form.password}
             onChange={(event) => form.setPassword(event.target.value)}
-            className="mt-2 h-11 w-full rounded-md border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink/50"
+            className="mt-2 h-11 w-full rounded-md border border-line bg-canvas px-3 text-base text-ink outline-none focus:border-ink/50 sm:text-sm"
           />
           <label
             className="mt-4 block text-sm text-ink"
@@ -69,7 +69,7 @@ export function ChangePasswordDialog({
             required
             value={form.confirmation}
             onChange={(event) => form.setConfirmation(event.target.value)}
-            className="mt-2 h-11 w-full rounded-md border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-ink/50"
+            className="mt-2 h-11 w-full rounded-md border border-line bg-canvas px-3 text-base text-ink outline-none focus:border-ink/50 sm:text-sm"
           />
           {form.error && (
             <p className="mt-3 text-sm text-accent-red-fg" role="alert">

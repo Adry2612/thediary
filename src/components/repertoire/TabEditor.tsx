@@ -259,11 +259,11 @@ export function TabEditor({
       description={description ?? text.tabDescription}
       defaultOpen={defaultOpen}
     >
-      <div className="mt-4 flex flex-wrap items-end gap-3">
-        <div className="text-xs text-muted">
+      <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap sm:items-end">
+        <div className="min-w-0 w-full text-xs text-muted sm:w-auto">
           {text.tabResolution}
           <SelectField
-            className="mt-1 w-44"
+            className="mt-1 w-full sm:w-44"
             value={String(value.subdivision)}
             ariaLabel={text.tabResolution}
             onChange={(next) => onChange(setTabSubdivision(value, Number(next)))}
@@ -274,7 +274,7 @@ export function TabEditor({
             ]}
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <Button
             type="button"
             size="field"
@@ -297,7 +297,7 @@ export function TabEditor({
             +
           </Button>
         </div>
-        <label className="text-xs text-muted">
+        <label className="min-w-0 w-full text-xs text-muted sm:w-auto">
           {text.tabFret}
           <TextField
             type="number"
@@ -306,25 +306,27 @@ export function TabEditor({
             value={fretFieldValue}
             aria-label={text.tabFret}
             onChange={(event) => applyFretInput(event.target.value)}
-            className="mt-1 w-20"
+            className="mt-1 w-full sm:w-20"
           />
         </label>
-        <Button
-          type="button"
-          size="field"
-          onClick={() =>
-            onChange(clearTabNote(value, focus.string, focus.column))
-          }
-        >
-          {text.tabClearCell}
-        </Button>
-        <Button
-          type="button"
-          size="field"
-          onClick={() => onChange({ ...value, notes: [] })}
-        >
-          {text.tabClearAll}
-        </Button>
+        <div className="flex min-w-0 flex-wrap gap-2">
+          <Button
+            type="button"
+            size="field"
+            onClick={() =>
+              onChange(clearTabNote(value, focus.string, focus.column))
+            }
+          >
+            {text.tabClearCell}
+          </Button>
+          <Button
+            type="button"
+            size="field"
+            onClick={() => onChange({ ...value, notes: [] })}
+          >
+            {text.tabClearAll}
+          </Button>
+        </div>
       </div>
 
       <p className="mt-3 text-xs text-muted">{text.tabHint}</p>
@@ -359,7 +361,7 @@ export function TabEditor({
           onBlur={commitBuffer}
           className="rounded-lg border border-line bg-canvas/40 p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/40"
         >
-        <div ref={measureRef} className="w-full">
+        <div ref={measureRef} className="w-full min-w-0">
           {systems.map((system) => {
             const techniques = tabSystemTechniques(value, system);
             const spanRows = TAB_TECHNIQUES.filter(

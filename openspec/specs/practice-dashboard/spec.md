@@ -7,10 +7,10 @@ Defines what the practice dashboard shows and how its summaries behave: the hove
 
 ### Requirement: The day summary can be entered with the pointer
 
-The system SHALL keep a practice day's hover summary open while the pointer moves from the day to the summary itself, so the user can read or scroll it, and SHALL close it only after the pointer leaves both.
+The system SHALL keep the weekly summary's hover summary open while the pointer moves from the day to the summary itself, so the user can read or scroll it, and SHALL close it only after the pointer leaves both.
 
 #### Scenario: Moving the pointer onto the summary
-- **WHEN** the summary is open and the pointer leaves the day but enters the summary
+- **WHEN** the weekly summary is open and the pointer leaves the day but enters the summary
 - **THEN** the summary stays open and the user can interact with it
 
 #### Scenario: Leaving the summary
@@ -27,27 +27,27 @@ The system SHALL keep a practice day's hover summary open while the pointer move
 
 ### Requirement: The day summary closes when the page moves
 
-The system SHALL close the day summary when the page scrolls or the viewport is resized, and SHALL NOT close it when the user scrolls the summary's own session list.
+The system SHALL close the weekly summary's floating day summary when the page scrolls or the viewport is resized, and SHALL NOT close it when the user scrolls the summary's own session list.
 
 #### Scenario: Scrolling the page
-- **WHEN** the summary is open and the page scrolls vertically or horizontally
-- **THEN** the summary closes instead of remaining pinned to the old screen position
+- **WHEN** the weekly summary's floating card is open and the page scrolls vertically or horizontally
+- **THEN** the card closes instead of remaining pinned to the old screen position
 
 #### Scenario: Scrolling inside the summary
-- **WHEN** the summary has more sessions than fit and the user scrolls its internal list
-- **THEN** the summary stays open
+- **WHEN** the card has more sessions than fit and the user scrolls its internal list
+- **THEN** the card stays open
 
 #### Scenario: Resizing the window
-- **WHEN** the summary is open and the viewport is resized
-- **THEN** the summary closes
+- **WHEN** the card is open and the viewport is resized
+- **THEN** the card closes
 
 #### Scenario: Keyboard dismissal
-- **WHEN** the summary is open and the user presses Escape
-- **THEN** the summary closes
+- **WHEN** the card is open and the user presses Escape
+- **THEN** the card closes
 
 #### Scenario: Keyboard focus
 - **WHEN** the user reaches a practice day with the keyboard
-- **THEN** the summary opens and stays open while that day keeps the focus
+- **THEN** the card opens and stays open while that day keeps the focus
 
 ### Requirement: Long practice durations are expressed in hours and minutes
 
@@ -185,38 +185,6 @@ The system SHALL give every new chart an accessible name, SHALL expose its value
 - **WHEN** a chart distinguishes categories by colour
 - **THEN** each category also has a text label and value
 
-### Requirement: The annual calendar keeps the day summary on its day
-
-The system SHALL keep the annual calendar's day summary on the day under the pointer, SHALL delay switching to another day while a summary is already open, and SHALL cancel a pending switch when the pointer enters the summary. The summary MUST remain interactive and MUST close when the pointer leaves both the day and the summary, when the page scrolls, when the viewport is resized, or when Escape is pressed.
-
-#### Scenario: Opening a day
-- **WHEN** the pointer enters a day of the annual calendar
-- **THEN** its summary opens immediately without waiting for a dwell
-
-#### Scenario: Travelling from the day to the summary
-- **WHEN** the summary is open and the pointer crosses neighbouring day cells on its way to the summary
-- **THEN** the summary keeps the original day and stays open until the pointer enters the summary
-
-#### Scenario: Crossing days briefly
-- **WHEN** the pointer moves quickly across several annual-calendar cells
-- **THEN** the summary does not switch day until the pointer rests on one cell for the hover-intent delay
-
-#### Scenario: Choosing another day
-- **WHEN** the pointer rests on a different day long enough to commit the switch
-- **THEN** the summary shows the new day without closing and reopening
-
-#### Scenario: Days without practice
-- **WHEN** the pointer enters an annual-calendar day without saved practice
-- **THEN** the summary shows that day's empty state and can still be entered
-
-#### Scenario: Keyboard focus
-- **WHEN** a day receives keyboard focus
-- **THEN** its summary opens immediately, without the pointer's hover-intent delay
-
-#### Scenario: Dismissing the summary
-- **WHEN** the user scrolls the page, resizes the viewport or presses Escape
-- **THEN** the annual calendar's summary closes and does not remain pinned to the old position
-
 ### Requirement: The skill balance shows its summary in a floating card
 
 The system SHALL show a floating summary card for the skill under the pointer or keyboard focus with the minutes practised this month, its percentage of the month and the number of sessions that practised it. The centre of the chart SHALL keep showing the monthly total, and the card MUST stay inside the viewport without blocking the arc or legend row that opened it.
@@ -352,3 +320,107 @@ The system SHALL show, for each practised bucket of the practice rhythm chart, a
 #### Scenario: Changing the period
 - **WHEN** the user switches between week, month and year
 - **THEN** the card's best-unit comparison uses the matching day, week or month wording
+
+### Requirement: The day summary names a practice once
+
+The system SHALL show the name of a session in the calendar's day summary and SHALL omit the block line when the session has exactly one block whose name matches the session name, so a practice started from a single repertoire song is not listed twice.
+
+#### Scenario: A practice started from one song
+- **WHEN** a day holds a quick practice whose session name and only block share the song title
+- **THEN** the summary shows the song title once, next to its time and BPM
+
+#### Scenario: One block with another name
+- **WHEN** a session has one block whose name differs from the session name
+- **THEN** the summary shows the session name and the block name
+
+#### Scenario: Several blocks
+- **WHEN** a session has several blocks
+- **THEN** the summary lists each block, even if one matches the session name
+
+#### Scenario: Existing sessions
+- **WHEN** the summary renders a session saved before this rule
+- **THEN** the duplicate is hidden by the same rule without rewriting the stored session
+
+### Requirement: The annual calendar's day summary can be opened with a tap
+
+On a coarse pointer, the system SHALL open a day's summary on the first tap without navigating, SHALL open the day detail on a second tap on that same day, and SHALL move the summary when another day is tapped. Keyboard and assistive-technology activation SHALL open the day detail directly, and the pointer behaviour SHALL stay as it is.
+
+#### Scenario: First tap on a day
+- **WHEN** the user taps a day with saved practice on a touch screen
+- **THEN** that day's summary opens and the page does not navigate
+
+#### Scenario: Second tap on the open day
+- **WHEN** the summary is open for a day and the user taps that same day again
+- **THEN** the system opens that day's detail
+
+#### Scenario: Tapping another day
+- **WHEN** a summary is open and the user taps a different day
+- **THEN** the summary moves to the new day without navigating
+
+#### Scenario: Tapping a day without practice
+- **WHEN** the user taps a day without saved practice
+- **THEN** the summary shows that day's empty state and the page does not navigate
+
+#### Scenario: Keyboard or assistive activation
+- **WHEN** a day is activated from the keyboard or by an assistive technology
+- **THEN** the day detail opens directly, without the extra tap
+
+#### Scenario: Mouse keeps its behaviour
+- **WHEN** the pointer hovers a day and then clicks it
+- **THEN** the summary opens on hover and the click opens the day detail, as before
+
+### Requirement: The annual calendar previews a day in a non-blocking card
+
+The system SHALL show the annual calendar's day summary in a floating card next to the day under the pointer or keyboard focus, SHALL let pointer events pass through the card so the day underneath it stays hoverable and clickable, and SHALL keep the preview compact: date, session count, total time and up to three sessions, with a count of the sessions that do not fit.
+
+#### Scenario: Opening a day
+- **WHEN** the pointer enters a day of the annual calendar
+- **THEN** its summary card opens next to that day without waiting for a dwell
+
+#### Scenario: Moving across the card
+- **WHEN** the pointer leaves the day and crosses the area occupied by the card
+- **THEN** the day underneath the pointer receives the hover and the card updates to that day instead of keeping the previous one
+
+#### Scenario: Choosing a day under the card
+- **WHEN** the pointer clicks a day whose cell is covered by the open card
+- **THEN** that day's detail opens normally
+
+#### Scenario: Keyboard focus
+- **WHEN** a day receives keyboard focus
+- **THEN** the card opens next to it and describes that day until the focus moves
+
+#### Scenario: Many sessions in a day
+- **WHEN** the day has more than three sessions
+- **THEN** the card lists the first three and shows how many more sessions that day has
+
+#### Scenario: A day without practice
+- **WHEN** the pointer or focus reaches a day without saved practice
+- **THEN** the card shows that day's empty state and still lets the surrounding days be used
+
+### Requirement: The annual preview closes when the day is no longer consulted
+
+The system SHALL close the annual calendar's preview card after the pointer leaves the calendar, when the page scrolls, when the viewport is resized, when Escape is pressed, or when a touch user taps outside the calendar, and SHALL keep the touch two-tap rule: the first tap previews a day, the second tap on the same day opens its detail.
+
+#### Scenario: Leaving the calendar
+- **WHEN** the pointer leaves the day and the calendar without entering another day
+- **THEN** the card closes after a short grace period
+
+#### Scenario: Scrolling the page
+- **WHEN** the page or the calendar strip scrolls while the card is open
+- **THEN** the card closes instead of staying pinned to the old position
+
+#### Scenario: Resizing or Escape
+- **WHEN** the viewport is resized or the user presses Escape
+- **THEN** the card closes
+
+#### Scenario: First touch
+- **WHEN** the user taps a day with practice on a touch screen
+- **THEN** the card previews that day without navigating
+
+#### Scenario: Second touch
+- **WHEN** the user taps the same day again while its card is open
+- **THEN** that day's detail opens
+
+#### Scenario: Tapping outside
+- **WHEN** the user taps outside the calendar while a preview is open
+- **THEN** the card closes and the armed day is cleared

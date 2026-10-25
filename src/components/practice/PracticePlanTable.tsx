@@ -24,7 +24,7 @@ export function PracticePlanTable({
       className='enter overflow-hidden'
     >
       <div className='overflow-x-auto'>
-        <table className='w-full table-fixed text-left'>
+        <table className='w-full table-fixed hyphens-auto text-left'>
           <colgroup>
             <col className='w-[27%] sm:w-[22%]' />
             <col className='w-[53%] sm:w-[63%]' />
@@ -75,28 +75,22 @@ export function PracticePlanTable({
                     scope='row'
                     className='px-3 py-4 text-sm font-medium text-ink sm:px-5'
                   >
-                    <span className='block break-words'>
+                    <span className='block break-words hyphens-auto'>
                       {title || `${text.currentBlock} ${index + 1}`}
                     </span>
                     <span className='mt-1 block text-xs font-normal text-muted'>
                        {skills[phase.skill]}
                     </span>
                   </th>
-                  <td className='px-3 py-4 text-xs leading-relaxed text-muted sm:px-5 sm:text-sm'>
+                  <td className='px-3 py-4 text-xs leading-relaxed text-muted break-words hyphens-auto sm:px-5 sm:text-sm'>
                     {hasDetails ?
                       <div className='space-y-1.5'>
-                        {exercises.length > 0 && (
-                          <p>
-                             <span className='text-ink'>{text.exercises}:</span>{' '}
-                            {exercises.join(', ')}
+                        {exercises.map((exercise, exerciseIndex) => (
+                          <p key={`${exercise}-${exerciseIndex}`}>
+                            {exercise}
                           </p>
-                        )}
-                        {linkedPart && (
-                          <p>
-                            <span className='text-ink'>{text.repertoirePart}:</span>{' '}
-                            {linkedPart}
-                          </p>
-                        )}
+                        ))}
+                        {linkedPart && <p>{linkedPart}</p>}
                         {resources.length > 0 && (
                           <p>
                              <span className='text-ink'>{text.material}:</span>{' '}

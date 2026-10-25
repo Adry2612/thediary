@@ -54,7 +54,77 @@ test("names the session guitar type in both languages", () => {
   );
 });
 
+test("names the floating practice bar controls in both languages", () => {
+  assert.equal(
+    translations.es.practice.openActivePractice,
+    "Volver a la práctica en curso",
+  );
+  assert.equal(
+    translations.en.practice.openActivePractice,
+    "Return to the practice in progress",
+  );
+  assert.equal(translations.es.practice.goToTimer, "Ir al temporizador");
+  assert.equal(translations.en.practice.goToTimer, "Go to the timer");
+  assert.equal(translations.es.practice.pausePractice, "Pausar la práctica");
+  assert.equal(translations.en.practice.pausePractice, "Pause the practice");
+  assert.equal(translations.es.practice.resumePractice, "Reanudar la práctica");
+  assert.equal(
+    translations.en.practice.resumePractice,
+    "Resume the practice",
+  );
+});
+
+test("names the home repertoire card states in both languages", () => {
+  assert.equal(translations.es.home.noParts, "Sin partes todavía");
+  assert.equal(translations.en.home.noParts, "No parts yet");
+});
+
+test("names the home plan labels and upcoming blocks in both languages", () => {
+  assert.equal(translations.es.practice.sessionPlan, "Plan de la sesión");
+  assert.equal(translations.en.practice.sessionPlan, "Session plan");
+  assert.equal(
+    translations.es.practice.upcomingBlocks,
+    "Próximos bloques",
+  );
+  assert.equal(translations.en.practice.upcomingBlocks, "Upcoming blocks");
+  assert.equal(translations.es.practice.nextBlock, "Siguiente");
+  assert.equal(translations.en.practice.nextBlock, "Next");
+  assert.equal(
+    translations.es.practice.noUpcomingBlocks,
+    "No quedan más bloques en esta sesión.",
+  );
+  assert.equal(
+    translations.en.practice.noUpcomingBlocks,
+    "No more blocks left in this session.",
+  );
+  assert.equal(translations.es.practice.nextPhase, undefined);
+  assert.equal(translations.en.practice.nextPhase, undefined);
+  assert.equal(translations.es.practice.noNextPhase, undefined);
+  assert.equal(translations.en.practice.noNextPhase, undefined);
+});
+
 test("falls back to the key when a translation is missing", () => {
   const t = createTranslator(translations.es);
   assert.equal(t("missing.key"), "missing.key");
+});
+
+test("keeps the catalog copy in both languages", () => {
+  const keys = [
+    "catalogSearchTitle",
+    "catalogSearchHint",
+    "catalogSearchPlaceholder",
+    "catalogSearchAction",
+    "catalogSearching",
+    "catalogEmpty",
+    "catalogUnavailable",
+    "catalogUse",
+    "catalogBackfill",
+  ];
+
+  for (const key of keys) {
+    assert.equal(typeof translations.es.repertoire[key], "string", key);
+    assert.equal(typeof translations.en.repertoire[key], "string", key);
+    assert.ok(translations.es.repertoire[key].length > 0, key);
+    assert.ok(translations.en.repertoire[key].length > 0, key);
+  }
 });

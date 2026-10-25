@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { DialogHeader } from "@/components/ui/DialogHeader";
 import { ModalDialog } from "@/components/ui/ModalDialog";
-import { SearchIcon } from "@/components/ui/icons";
+import { SearchField } from "@/components/ui/SearchField";
 import { useDialogModal } from "@/hooks/useDialogModal";
 import {
   filterSearchPickerItems,
@@ -86,28 +86,22 @@ export function SearchPickerDialog({
           closeLabel={closeLabel}
         />
 
-        <label className="mt-5 block text-xs text-muted">
-          {searchLabel}
-          <span className="relative mt-1 block">
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
-            <input
-              ref={inputRef}
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  event.preventDefault();
-                  onClose();
-                }
-              }}
-              placeholder={searchPlaceholder}
-              aria-label={searchLabel}
-              spellCheck={false}
-              className="h-12 w-full rounded-md border border-line bg-canvas pl-10 pr-4 text-sm text-ink transition-colors placeholder:text-muted/70 hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg"
-            />
-          </span>
-        </label>
+        <div className="mt-5">
+          <SearchField
+            label={searchLabel}
+            inputRef={inputRef}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                onClose();
+              }
+            }}
+            placeholder={searchPlaceholder}
+            spellCheck={false}
+          />
+        </div>
 
         <div className="mt-4 max-h-[55vh] overflow-y-auto border-y border-line">
           {visibleItems.length > 0 ? (

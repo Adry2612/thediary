@@ -137,7 +137,7 @@ export function LickEditorModal({
       onClick={(event) => {
         if (event.target === dialogRef.current) onClose();
       }}
-      className="fixed inset-0 m-auto max-h-[calc(100dvh-1rem)] w-[min(100%-1rem,46rem)] overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70 sm:max-h-[calc(100dvh-2rem)]"
+      className="fixed inset-0 m-auto max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[min(100%-2.5rem,46rem)] overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70 sm:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:w-[min(100%-1rem,46rem)]"
     >
       <form onSubmit={submit} className="p-5 sm:p-7">
         <div className="flex items-start justify-between gap-4">

@@ -53,6 +53,7 @@ export function createQuickRepertoirePlan(
 ): PracticeLaunchSession {
   return {
     name: item.title,
+    ...(item.guitarType ? { guitarType: item.guitarType } : {}),
     phases: [
       {
         id: `quick-${item.id}`,

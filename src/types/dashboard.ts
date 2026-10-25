@@ -23,6 +23,12 @@ export type PracticeTooltipDay = {
   maxHeight: number;
 };
 
+/** Contenido del resumen de un día, sin la posición de la ficha flotante. */
+export type PracticeDaySummaryData = Omit<
+  PracticeTooltipDay,
+  "left" | "top" | "showBelow" | "maxHeight"
+>;
+
 /** Ficha emergente del gráfico de tiempo, ya colocada. */
 export type ChartTooltip = {
   label: string;

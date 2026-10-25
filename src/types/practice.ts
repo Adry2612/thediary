@@ -1,3 +1,5 @@
+import type { CatalogSource } from "./catalog.ts";
+
 export const PRACTICE_SKILLS = [
   "technique",
   "theory",
@@ -165,6 +167,16 @@ export interface RepertoireItem {
   youtubeUrl?: string;
   /** Enlace opcional de Spotify */
   spotifyUrl?: string;
+  /** Álbum del que procede la canción, si se conoce. */
+  album?: string;
+  /** Año de lanzamiento del álbum, si se conoce. */
+  releaseYear?: number;
+  /** URL https de la carátula, si se conoce. */
+  coverUrl?: string;
+  /** Catálogo del que salieron los metadatos, si se buscaron. */
+  catalogSource?: CatalogSource;
+  /** Identificador del elemento en ese catálogo. */
+  catalogId?: string;
   /** Si está en la lista de "aprender en el futuro" */
   isFutureLearn?: boolean;
   /** Letra de la canción con los acordes asignados. */

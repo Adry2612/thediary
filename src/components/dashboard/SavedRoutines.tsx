@@ -40,7 +40,7 @@ export function SavedRoutines({ routines, hasHydrated }: SavedRoutinesProps) {
            {home.saveRoutine}
         </p>
       ) : (
-        <ul className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {routines.map((routine) => {
             const durationMinutes = getPracticePlanDuration(routine.phases);
             const sessionUrl = `/practice?template=${encodeURIComponent(routine.id)}&start=1`;

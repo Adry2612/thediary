@@ -180,8 +180,8 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
   }, [closeTutorial, isTransitioning]);
 
   const contextValue = useMemo(
-    () => ({ openTutorial }),
-    [openTutorial],
+    () => ({ openTutorial, isOpen }),
+    [isOpen, openTutorial],
   );
 
   return (

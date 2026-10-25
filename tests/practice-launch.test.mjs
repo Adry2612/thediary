@@ -133,6 +133,29 @@ test("builds a quick repertoire plan linked to the item and its material", () =>
   });
 });
 
+test("keeps the song's guitar type in a quick repertoire plan", () => {
+  const plan = createQuickRepertoirePlan({
+    id: "song-1",
+    title: "Canción",
+    parts: [],
+    updatedAt: "2026-10-01T12:00:00.000Z",
+    guitarType: "acoustic",
+  });
+
+  assert.equal(plan.guitarType, "acoustic");
+});
+
+test("does not invent a guitar type for a quick repertoire plan without one", () => {
+  const plan = createQuickRepertoirePlan({
+    id: "song-1",
+    title: "Canción",
+    parts: [],
+    updatedAt: "2026-10-01T12:00:00.000Z",
+  });
+
+  assert.equal("guitarType" in plan, false);
+});
+
 test("reconstructs a lick block with its link", () => {
   const plan = createPracticePlanFromSession({
     title: "Sesión",

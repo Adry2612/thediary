@@ -65,11 +65,14 @@ export function HomeView({ todayKey }: { todayKey: string }) {
         />
       </div>
 
-      <div className='mt-5 grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.8fr)]'>
+      <div className='mt-5'>
         <SavedRoutines
           routines={templates}
           hasHydrated={hasHydrated}
         />
+      </div>
+
+      <div className='mt-5'>
         <RecentRepertoire
           items={repertoireItems}
           hasHydrated={hasHydrated}

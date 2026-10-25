@@ -63,7 +63,7 @@ export function TodaysRoutinePlan({
           <p className='text-xs uppercase tracking-[0.12em] text-muted'>
              {weekdayLabel} · {home.todayPlan}
           </p>
-          <h2 className='mt-2 break-words font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8'>
+          <h2 className='mt-2 break-words hyphens-auto font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8'>
             {routine.name}
           </h2>
         </div>

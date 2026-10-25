@@ -4,6 +4,7 @@ import type {
   RepertoireItem,
   RepertoirePart,
 } from "../types/practice.ts";
+import { normalizeCatalogMetadata } from "./repertoire-catalog.ts";
 
 interface RepertoireBpmParseResult {
   isValid: boolean;
@@ -68,6 +69,9 @@ export interface RepertoireExtraConfigDraft {
   youtubeUrl: string;
   spotifyUrl: string;
   isFutureLearn: boolean;
+  album?: string;
+  releaseYear?: string;
+  coverUrl?: string;
 }
 
 /** Capo admitido: del 0 (sin cejilla) al 12. */
@@ -133,6 +137,20 @@ export function buildRepertoireExtraConfigUpdates(
     updates.spotifyUrl = draft.spotifyUrl.trim() || undefined;
   if (draft.isFutureLearn !== (current.isFutureLearn ?? false))
     updates.isFutureLearn = draft.isFutureLearn || undefined;
+
+  const metadata = normalizeCatalogMetadata({
+    album: draft.album ?? "",
+    releaseYear:
+      draft.releaseYear?.trim() ? Number(draft.releaseYear) : undefined,
+    coverUrl: draft.coverUrl ?? "",
+  });
+
+  if (draft.album !== undefined && (metadata.album ?? "") !== (current.album ?? ""))
+    updates.album = metadata.album;
+  if (draft.releaseYear !== undefined && metadata.releaseYear !== current.releaseYear)
+    updates.releaseYear = metadata.releaseYear;
+  if (draft.coverUrl !== undefined && (metadata.coverUrl ?? "") !== (current.coverUrl ?? ""))
+    updates.coverUrl = metadata.coverUrl;
 
   return updates;
 }

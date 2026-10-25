@@ -220,6 +220,68 @@ Object.assign(en.settings, {
     'This button will be enabled once you provide a link to your profile.',
 });
 
+Object.assign(es.repertoire, {
+  catalogSearchTitle: 'Buscar en el catálogo',
+  catalogSearchHint:
+    'Trae la portada, el álbum y el año. La afinación, el capo y las partes siguen siendo tuyas.',
+  catalogSearchPlaceholder: 'Canción o artista',
+  catalogSearchAction: 'Buscar',
+  catalogSearching: 'Buscando…',
+  catalogResult: 'resultado',
+  catalogResults: 'resultados',
+  catalogEmpty: 'No hay coincidencias en el catálogo.',
+  catalogUnavailable:
+    'No se pudo conectar con el catálogo. Puedes crear la canción a mano.',
+  catalogUse: 'Usar',
+  catalogBackfill: 'Buscar datos',
+  catalogAlbum: 'Álbum',
+  catalogYear: 'Año de lanzamiento',
+  catalogCover: 'URL de la carátula',
+  catalogCoverPlaceholder: 'https://…',
+});
+
+Object.assign(en.repertoire, {
+  catalogSearchTitle: 'Search the catalog',
+  catalogSearchHint:
+    'Brings the artwork, album and year. Tuning, capo and parts are still yours.',
+  catalogSearchPlaceholder: 'Song or artist',
+  catalogSearchAction: 'Search',
+  catalogSearching: 'Searching…',
+  catalogResult: 'result',
+  catalogResults: 'results',
+  catalogEmpty: 'No matches in the catalog.',
+  catalogUnavailable:
+    'The catalog could not be reached. You can still create the song by hand.',
+  catalogUse: 'Use',
+  catalogBackfill: 'Find details',
+  catalogAlbum: 'Album',
+  catalogYear: 'Release year',
+  catalogCover: 'Artwork URL',
+  catalogCoverPlaceholder: 'https://…',
+});
+
+Object.assign(es.repertoire, {
+  groupBy: 'Agrupar por',
+  groupNone: 'Sin agrupar',
+  groupArtist: 'Artista/banda',
+  groupAlbum: 'Álbum',
+  groupUnknownArtist: 'Sin artista',
+  groupUnknownAlbum: 'Sin álbum',
+  groupSong: 'canción',
+  groupSongs: 'canciones',
+});
+
+Object.assign(en.repertoire, {
+  groupBy: 'Group by',
+  groupNone: 'No grouping',
+  groupArtist: 'Artist/band',
+  groupAlbum: 'Album',
+  groupUnknownArtist: 'No artist',
+  groupUnknownAlbum: 'No album',
+  groupSong: 'song',
+  groupSongs: 'songs',
+});
+
 export const locales = ['es', 'en'] as const;
 export type Locale = (typeof locales)[number];
 export const translations: Record<Locale, Dict> = { es, en };

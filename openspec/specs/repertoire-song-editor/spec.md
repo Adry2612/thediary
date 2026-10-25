@@ -5,18 +5,6 @@ Lets the user write a song's content by hand in the repertoire: the lyrics with 
 
 ## Requirements
 
-### Requirement: Repertoire items are created on their own page
-
-The system SHALL offer an "add new item" action in the repertoire list that navigates to a dedicated creation page, and SHALL keep the creation form out of the repertoire list.
-
-#### Scenario: User opens the creation page
-- **WHEN** the user activates the add-new-item action in the repertoire list
-- **THEN** the app navigates to the repertoire creation page
-
-#### Scenario: User saves a new item
-- **WHEN** the user completes the creation form and saves
-- **THEN** the app stores the item in the repertoire and opens its detail
-
 ### Requirement: Lyrics can carry chords at any position
 
 The system SHALL let the user keep the lyrics of a song as one editable block of text and anchor a chord at any character position of a line, so a chord can sit at the start, in the middle or at the end of a word, in the gap between two words, or at the end of the line.
@@ -524,3 +512,23 @@ The system SHALL load a stored tab that predates techniques without changing its
 #### Scenario: An out-of-range bend amount
 - **WHEN** a stored bend has an amount outside the accepted range
 - **THEN** the app discards that bend and keeps the note
+
+### Requirement: The tablature keeps the app frame on small screens
+
+The system SHALL keep the tab editor and the tab viewer inside the app's horizontal rhythm on small screens: its controls SHALL wrap inside the section padding without clipping, its grid SHALL fit or scroll inside its own container without widening the page, and a dialog hosting the editor SHALL keep the same side margin as a page.
+
+#### Scenario: The tab controls on a phone
+- **WHEN** the tab editor renders at a phone width
+- **THEN** resolution, measures, fret and clear actions wrap inside the section and none is cut off at the edge
+
+#### Scenario: A long tablature on a phone
+- **WHEN** the tab has more columns than fit the section
+- **THEN** the grid stays inside the section and the page keeps its margins
+
+#### Scenario: The editor inside the lick dialog
+- **WHEN** the user opens the tab editor in the lick dialog on a phone
+- **THEN** the dialog keeps the app's side margin and the tab section keeps its own inner padding
+
+#### Scenario: The read-only tablature
+- **WHEN** a saved tab is shown outside the editor
+- **THEN** it stays within the card that holds it and scrolls horizontally there if needed

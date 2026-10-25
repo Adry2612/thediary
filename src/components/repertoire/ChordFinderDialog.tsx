@@ -11,6 +11,7 @@ import {
 } from "@/utils/chords";
 import type { UserChord } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
+import { SearchField } from "@/components/ui/SearchField";
 
 const ENHARMONIC_LABELS = [
   "C",
@@ -137,15 +138,16 @@ export function ChordFinderDialog({
           </button>
         </div>
 
-        <input
-          ref={inputRef}
-          className="mt-3 h-10 w-full rounded-md border border-line bg-canvas px-2 text-sm text-ink placeholder:text-muted/60 focus-visible:border-accent-green-fg/60 focus-visible:outline-none"
-          value={query}
-          placeholder={text.chordFinderSearch}
-          aria-label={text.chordFinderSearch}
-          spellCheck={false}
-          onChange={(event) => setQuery(event.target.value)}
-        />
+        <div className="mt-3">
+          <SearchField
+            label={text.chordFinderTitle}
+            inputRef={inputRef}
+            value={query}
+            placeholder={text.chordFinderSearch}
+            spellCheck={false}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </div>
 
         <div className="mt-3 space-y-3">
           {groups.length === 0 && savedChords.length === 0 && (
