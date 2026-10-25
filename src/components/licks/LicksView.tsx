@@ -7,7 +7,7 @@ import { LickCard } from "@/components/licks/LickCard";
 import { LickEditorModal } from "@/components/licks/LickEditorModal";
 import { TechniquesHeatmap } from "@/components/licks/TechniquesHeatmap";
 import { Button } from "@/components/ui/Button";
-import { TextField } from "@/components/ui/Field";
+import { SearchField } from "@/components/ui/SearchField";
 import { PlusIcon } from "@/components/ui/icons";
 import { SelectField } from "@/components/ui/SelectField";
 import { LicksSkeleton } from "@/components/ui/Skeletons";
@@ -156,17 +156,14 @@ export function LicksView({ todayKey }: { todayKey: string }) {
 
           <section className="mt-10">
             <div className="flex flex-wrap items-end justify-between gap-4">
-              <label className="block w-full max-w-sm text-xs text-muted">
-                {text.search}
-                <TextField
-                  type="search"
+              <div className="w-full max-w-sm">
+                <SearchField
+                  label={text.search}
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder={text.searchPlaceholder}
-                  aria-label={text.searchAria}
-                  className="mt-1"
                 />
-              </label>
+              </div>
               <p className="text-xs text-muted">
                 {visible.length} / {summary.total} {text.licksCount}
               </p>

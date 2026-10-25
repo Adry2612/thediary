@@ -1,14 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
-import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ArtistRanking } from '@/components/repertoire/ArtistRanking';
 import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
 import { ForgottenRepertoireWidget } from '@/components/repertoire/ForgottenRepertoireWidget';
 import { SelectField } from '@/components/ui/SelectField';
-import { TextField } from '@/components/ui/Field';
-import { PlusIcon, SearchIcon } from '@/components/ui/icons';
+import { SearchField } from '@/components/ui/SearchField';
+import { PlusIcon } from '@/components/ui/icons';
 import { formatPracticeDuration } from '@/utils/dashboard-data';
 import {
   getArtistPracticeStats,
@@ -24,11 +23,17 @@ import {
   type FutureLearnFilter,
   type GuitarTypeFilter,
 } from '@/utils/repertoire-filtering';
+import {
+  groupRepertoireItems,
+  isRepertoireGroupBy,
+} from '@/utils/repertoire-grouping';
+import type { RepertoireItem } from '@/types/practice';
 import { useRepertoireFilters } from '@/hooks/useRepertoireFilters';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { useRouter } from 'next/navigation';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { RepertoireSkeleton } from '@/components/ui/Skeletons';
+import { RepertoireItemDialog } from '@/components/repertoire/RepertoireItemDialog';
 
 export function RepertoireView() {
   const text = useI18nSection('repertoire');
@@ -54,7 +59,13 @@ export function RepertoireView() {
     { value: 'artist' as const, label: text.artistSort },
     { value: 'practice' as const, label: text.mostPracticed },
   ];
+  const groupOptions = [
+    { value: 'none' as const, label: text.groupNone },
+    { value: 'artist' as const, label: text.groupArtist },
+    { value: 'album' as const, label: text.groupAlbum },
+  ];
   const router = useRouter();
+  const [isCreatingItem, setIsCreatingItem] = useState(false);
   const history = usePracticeStore((state) => state.history);
   const items = usePracticeStore((state) => state.repertoireItems);
   const saveRepertoireItem = usePracticeStore(
@@ -74,6 +85,8 @@ export function RepertoireView() {
     setProgressFilter,
     sortOrder,
     setSortOrder,
+    groupBy,
+    setGroupBy,
     searchQuery,
     setSearchQuery,
     hasActiveFilters,
@@ -123,6 +136,31 @@ export function RepertoireView() {
     () => getRepertoireOverview(items, itemPracticeStats),
     [items, itemPracticeStats],
   );
+  const groups = useMemo(
+    () =>
+      groupRepertoireItems(visibleItems, groupBy, {
+        unknownLabel:
+          groupBy === 'album' ? text.groupUnknownAlbum : text.groupUnknownArtist,
+      }),
+    [visibleItems, groupBy, text.groupUnknownAlbum, text.groupUnknownArtist],
+  );
+
+  function renderListItem(item: RepertoireItem) {
+    return (
+      <li key={item.id} className='cursor-pointer'>
+        <RepertoireItemCard
+          item={item}
+          practiceStats={practiceStats.get(item.id)}
+          itemPractice={itemPracticeStats.get(item.id)}
+          onSave={saveRepertoireItem}
+          onDelete={deleteRepertoireItem}
+          onOpen={(selectedItem) =>
+            router.push(`/repertoire/${selectedItem.id}`)
+          }
+        />
+      </li>
+    );
+  }
 
   if (!hasHydrated) {
     return <RepertoireSkeleton />;
@@ -142,13 +180,14 @@ export function RepertoireView() {
             {text.description}
           </p>
         </div>
-        <Link
-          href='/repertoire/new'
+        <button
+          type='button'
+          onClick={() => setIsCreatingItem(true)}
           className='inline-flex h-12 items-center justify-center gap-2 rounded-md bg-ink px-5 text-sm font-medium text-canvas transition hover:opacity-90 active:scale-[0.98]'
         >
           <PlusIcon className='size-4' />
           {text.newItem}
-        </Link>
+        </button>
       </header>
 
       <section
@@ -200,20 +239,12 @@ export function RepertoireView() {
         </div>
 
         <div className='mt-5 rounded-xl border border-line bg-surface p-4 sm:p-5'>
-          <label className='block text-xs text-muted'>
-            {text.search}
-            <span className='relative mt-1 block'>
-              <SearchIcon className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted' />
-              <TextField
-                type='search'
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder={text.searchPlaceholder}
-                aria-label={text.searchAria}
-                className='pl-10'
-              />
-            </span>
-          </label>
+          <SearchField
+            label={text.search}
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder={text.searchPlaceholder}
+          />
 
           <div className='mt-3 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-start'>
             <div className='min-w-0 text-xs text-muted sm:w-56'>
@@ -244,6 +275,20 @@ export function RepertoireView() {
                   if (isRepertoireSortOrder(value)) setSortOrder(value);
                 }}
                 options={sortOptions}
+              />
+            </div>
+            <div className='min-w-0 text-xs text-muted sm:w-48'>
+              <span className='block text-[10px] uppercase tracking-[0.12em]'>
+                {text.groupBy}
+              </span>
+              <SelectField
+                className='mt-1'
+                value={groupBy}
+                ariaLabel={text.groupBy}
+                onChange={(value) => {
+                  if (isRepertoireGroupBy(value)) setGroupBy(value);
+                }}
+                options={groupOptions}
               />
             </div>
             <div className='min-w-0 text-xs text-muted sm:w-40'>
@@ -300,25 +345,34 @@ export function RepertoireView() {
         {!hasHydrated ?
           <p className='mt-5 text-sm text-muted'>{text.loading}</p>
         : visibleItems.length > 0 ?
-          <ul className='mt-5 space-y-4'>
-            {visibleItems.map((item) => (
-              <li
-                key={item.id}
-                className='cursor-pointer'
-              >
-                <RepertoireItemCard
-                  item={item}
-                  practiceStats={practiceStats.get(item.id)}
-                  itemPractice={itemPracticeStats.get(item.id)}
-                  onSave={saveRepertoireItem}
-                  onDelete={deleteRepertoireItem}
-                  onOpen={(selectedItem) =>
-                    router.push(`/repertoire/${selectedItem.id}`)
-                  }
-                />
-              </li>
-            ))}
-          </ul>
+          groupBy === 'none' ?
+            <ul className='mt-5 space-y-4'>
+              {visibleItems.map(renderListItem)}
+            </ul>
+          : <div className='mt-6 space-y-8'>
+              {groups.map((group) => (
+                <section
+                  key={group.key}
+                  aria-label={group.label}
+                  className='min-w-0'
+                >
+                  <header className='flex items-baseline justify-between gap-3 border-b border-line pb-2'>
+                    <h3 className='font-sans text-lg leading-7 font-semibold tracking-tight'>
+                      {group.label}
+                    </h3>
+                    <span className='text-xs text-muted'>
+                      {group.items.length}{' '}
+                      {group.items.length === 1 ?
+                        text.groupSong
+                      : text.groupSongs}
+                    </span>
+                  </header>
+                  <ul className='mt-4 space-y-4'>
+                    {group.items.map(renderListItem)}
+                  </ul>
+                </section>
+              ))}
+            </div>
         : <div className='mt-5 rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center'>
             <p className='font-sans text-2xl font-semibold'>
               {items.length === 0 ?
@@ -350,6 +404,15 @@ export function RepertoireView() {
         >
           {text.resourceError ?? text.adjustFilters}: {persistenceError}
         </p>
+      )}
+      {isCreatingItem && (
+        <RepertoireItemDialog
+          onClose={() => setIsCreatingItem(false)}
+          onCreated={(itemId) => {
+            setIsCreatingItem(false);
+            router.push(`/repertoire/${itemId}`);
+          }}
+        />
       )}
     </main>
   );

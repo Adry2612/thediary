@@ -92,7 +92,7 @@ export function MetronomeSettings({
             setIsOpen(false);
           }
         }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-1rem)] w-[min(100%-1rem,36rem)] overflow-x-hidden overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70 sm:max-h-[calc(100dvh-2rem)] sm:w-[min(100%-2rem,36rem)]"
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[min(100%-1rem,36rem)] overflow-x-hidden overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70 sm:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:w-[min(100%-2rem,36rem)]"
       >
         <div className="p-4 sm:p-8">
           <div className="flex items-start justify-between gap-3">

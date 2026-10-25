@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { PracticeDayTooltip } from "@/components/dashboard/PracticeDayTooltip";
@@ -19,6 +19,7 @@ import {
   getPracticeIntensityClass,
   PRACTICE_INTENSITY_CLASSES,
 } from "@/utils/practice-goals";
+import { resolveDayActivation } from "@/utils/practice-calendar-touch";
 import { formatDateLabel } from "@/utils/format";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 
@@ -46,13 +47,18 @@ export function YearPracticeCalendar({
     hoveredDay,
     cardRef,
     showTooltip,
-    scheduleTooltip,
     hideTooltip,
     scheduleHide,
     handleCardPointerEnter,
     handleCardPointerLeave,
-  } = usePracticeDayTooltip();
+  } = usePracticeDayTooltip({ preview: true });
   const calendarScrollRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  /**
+   * Día abierto por un toque en pantalla táctil. El siguiente toque sobre ese
+   * mismo día entra al detalle; tocar otro día mueve la vista previa.
+   */
+  const armedDateRef = useRef<string | null>(null);
   const statsByDate = useMemo(
     () => new Map(days.map((day) => [day.dateKey, day])),
     [days],
@@ -70,13 +76,17 @@ export function YearPracticeCalendar({
   const firstWeekday = (yearStart.getDay() + 6) % 7;
   const weekCount = Math.ceil((firstWeekday + days.length) / 7);
   const monthMarkers = getMonthMarkers(year, weekCount, firstWeekday, locale);
-  const cells = createCalendarCells(
-    year,
-    weekCount,
-    firstWeekday,
-    days,
-    statsByDate,
-    sessionsByDate,
+  const cells = useMemo(
+    () =>
+      createCalendarCells(
+        year,
+        weekCount,
+        firstWeekday,
+        days,
+        statsByDate,
+        sessionsByDate,
+      ),
+    [days, firstWeekday, sessionsByDate, statsByDate, weekCount, year],
   );
   const latestPracticeDateKey = getLatestPracticeDateKey(history, days, year);
   const yearLabel = new Intl.NumberFormat(locale, {
@@ -84,6 +94,32 @@ export function YearPracticeCalendar({
   }).format(year);
 
   useLatestPracticeScroll(calendarScrollRef, cells, latestPracticeDateKey);
+
+  useEffect(() => {
+    armedDateRef.current = null;
+    hideTooltip();
+  }, [hideTooltip, year]);
+
+  /**
+   * En táctil, tocar fuera de la cuadrícula cierra la vista previa y desarma
+   * el día. El toque que abre la ficha nunca pasa por aquí porque nace dentro
+   * de la cuadrícula.
+   */
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      if (!window.matchMedia("(hover: none)").matches) return;
+      if (!armedDateRef.current) return;
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (gridRef.current?.contains(target)) return;
+
+      armedDateRef.current = null;
+      hideTooltip();
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [hideTooltip]);
 
   function showCellTooltip(
     element: HTMLButtonElement,
@@ -97,16 +133,30 @@ export function YearPracticeCalendar({
     });
   }
 
-  function scheduleCellTooltip(
-    element: HTMLButtonElement,
+  function handleCellClick(
+    event: MouseEvent<HTMLButtonElement>,
     cell: NonNullable<CalendarCell>,
   ) {
-    scheduleTooltip(element, {
+    const pointer = window.matchMedia("(hover: none)").matches
+      ? "coarse"
+      : "fine";
+    const activation = resolveDayActivation({
+      pointer,
+      isKeyboard: event.detail === 0,
+      hasPractice: cell.sessions.length > 0,
+      armedDate: armedDateRef.current,
       dateKey: cell.dateKey,
-      totalMinutes: cell.stats?.totalMinutes ?? 0,
-      sessionCount: cell.stats?.sessionCount ?? 0,
-      sessions: cell.sessions,
     });
+
+    if (activation === "navigate") {
+      armedDateRef.current = null;
+      hideTooltip();
+      router.push(`/dashboard/practice/${cell.dateKey}`);
+      return;
+    }
+
+    armedDateRef.current = cell.dateKey;
+    showCellTooltip(event.currentTarget, cell);
   }
 
   return (
@@ -175,6 +225,7 @@ export function YearPracticeCalendar({
               ))}
             </div>
             <div
+              ref={gridRef}
               role="group"
               aria-label={`${calendar.yearDays} ${yearLabel}`}
               className="grid grid-flow-col grid-rows-7 gap-0"
@@ -209,15 +260,13 @@ export function YearPracticeCalendar({
                         : undefined
                     }
                     onMouseEnter={(event) =>
-                      scheduleCellTooltip(event.currentTarget, cell)
+                      showCellTooltip(event.currentTarget, cell)
                     }
-                    onFocus={(event) => showCellTooltip(event.currentTarget, cell)}
+                    onFocus={(event) =>
+                      showCellTooltip(event.currentTarget, cell)
+                    }
                     onBlur={hideTooltip}
-                    onClick={() => {
-                      if (cell.sessions.length > 0) {
-                        router.push(`/dashboard/practice/${cell.dateKey}`);
-                      }
-                    }}
+                    onClick={(event) => handleCellClick(event, cell)}
                     className={`group grid size-5 place-items-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-200 disabled:cursor-default disabled:opacity-30 ${cell.sessions.length > 0 ? "cursor-pointer" : ""}`}
                   >
                     <span
@@ -238,6 +287,8 @@ export function YearPracticeCalendar({
             cardRef={cardRef}
             onPointerEnter={handleCardPointerEnter}
             onPointerLeave={handleCardPointerLeave}
+            interactive={false}
+            compact
           />,
           document.body,
         )}

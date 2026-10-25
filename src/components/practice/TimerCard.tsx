@@ -25,8 +25,8 @@ import { useI18nSection } from "@/i18n/I18nProvider";
 type TimerCardProps = {
   timer: PracticeTimerController;
   isCompleted: boolean;
-  isPracticeRoute: boolean;
-  onDiscard: () => void;
+  /** Abre la confirmación de fin, compartida con la barra flotante. */
+  onRequestFinish: () => void;
   compact?: boolean;
   practiceStartSound: PracticeSound;
   setPracticeStartSound: (sound: PracticeSound) => void;
@@ -44,8 +44,7 @@ type TimerCardProps = {
 export function TimerCard({
   timer,
   isCompleted,
-  isPracticeRoute,
-  onDiscard,
+  onRequestFinish,
   compact = false,
   practiceStartSound,
   setPracticeStartSound,
@@ -56,14 +55,9 @@ export function TimerCard({
   repertoireSongs,
   onChangeRepertoireSong,
 }: TimerCardProps) {
-  const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
   const [isOptionsDialogOpen, setIsOptionsDialogOpen] = useState(false);
   const [isSongPickerOpen, setIsSongPickerOpen] = useState(false);
   const optionsTitleId = useId();
-  const isFinishDialogVisible =
-    isFinishDialogOpen && isPracticeRoute && !isCompleted;
-  const { dialogRef: finishDialogRef, handleCancel: handleFinishCancel } =
-    useDialogModal(isFinishDialogVisible, () => setIsFinishDialogOpen(false));
   const { dialogRef: optionsDialogRef, handleCancel: handleOptionsCancel } =
     useDialogModal(isOptionsDialogOpen, () => setIsOptionsDialogOpen(false));
   const timerText = useI18nSection("timer");
@@ -73,7 +67,6 @@ export function TimerCard({
     currentPhase,
     awaitingPhaseAdvance,
     elapsedSeconds,
-    finish,
     isRunning,
     remainingSeconds,
     pause,
@@ -113,7 +106,9 @@ export function TimerCard({
 
   return (
     <>
-      <Card className={`enter flex flex-col items-center text-center ${compact ? "p-5 sm:p-6" : ""}`}>
+      <Card
+        className={`enter flex h-full flex-col items-center text-center ${compact ? "p-5 sm:p-6" : ""}`}
+      >
         <div className="relative flex w-full items-center justify-center">
           <span className="rounded-full bg-accent-green-bg px-3 py-1 font-sans text-xs uppercase tracking-[0.05em] text-accent-green-fg">
             {currentPhase
@@ -345,7 +340,7 @@ export function TimerCard({
         {currentPhase && !isCompleted && (
           <Button
             className="mt-4 w-full border-red-400/40 text-red-300 hover:border-red-400/70 hover:bg-red-500/10 focus-visible:outline-red-400"
-            onClick={() => setIsFinishDialogOpen(true)}
+            onClick={onRequestFinish}
           >
             <svg
               aria-hidden="true"
@@ -359,39 +354,6 @@ export function TimerCard({
           </Button>
         )}
       </Card>
-
-      <ModalDialog
-        dialogRef={finishDialogRef}
-        onClose={() => setIsFinishDialogOpen(false)}
-        onCancel={handleFinishCancel}
-      >
-        <div className="p-6 sm:p-8">
-          <p className="text-xs uppercase tracking-[0.05em] text-muted">
-            {timerText.finishSession}
-          </p>
-          <h2 className="mt-3 font-sans text-3xl font-semibold">{timerText.finishPracticeTitle}</h2>
-          <p className="mt-4 text-sm leading-6 text-muted">
-            {timerText.finishPracticeDescription}
-          </p>
-          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <Button onClick={() => setIsFinishDialogOpen(false)}>
-              {timerText.keepPracticing}
-            </Button>
-            <Button onClick={onDiscard}>
-              {timerText.exitWithoutSaving}
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => {
-                setIsFinishDialogOpen(false);
-                finish();
-              }}
-            >
-              {timerText.finishAndSave}
-            </Button>
-          </div>
-        </div>
-      </ModalDialog>
 
       <SongPickerDialog
         open={isSongPickerOpen}

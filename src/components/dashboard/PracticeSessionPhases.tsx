@@ -95,12 +95,7 @@ export function PracticeSessionPhases({
                           {phase.exercises && phase.exercises.length > 0 && (
                             <p>{phase.exercises.join(", ")}</p>
                           )}
-                          {linkedPart && (
-                            <p>
-                              <span className="text-ink">Parte:</span>{" "}
-                              {linkedPart}
-                            </p>
-                          )}
+                          {linkedPart && <p>{linkedPart}</p>}
                           {linkedLick && (
                             <p>
                               <span className="text-ink">Lick:</span>{" "}

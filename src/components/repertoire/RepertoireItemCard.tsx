@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PracticeMaterials } from '@/components/practice/PracticeMaterials';
+import { CatalogSearchDialog } from '@/components/repertoire/CatalogSearchDialog';
+import { CoverArt } from '@/components/repertoire/CoverArt';
 import { RepertoirePartEditor } from '@/components/repertoire/RepertoirePartEditor';
 import { Button } from '@/components/ui/Button';
 import { CheckboxField } from '@/components/ui/CheckboxField';
@@ -16,6 +18,7 @@ import type {
   RepertoirePartPracticeStats,
 } from '@/utils/repertoire-analytics';
 import { REPERTOIRE_DIFFICULTIES } from '@/utils/repertoire-item';
+import { buildCatalogQuery } from '@/utils/repertoire-catalog';
 import { getDifficultyLabel } from '@/utils/difficulty-labels';
 import {
   buildRepertoireDetailsUpdate,
@@ -30,6 +33,8 @@ import type {
   GuitarType,
   RepertoireDifficulty,
 } from '@/types/practice';
+import type { CatalogCandidate } from '@/types/catalog';
+import { buildCatalogFillUpdates } from '@/utils/repertoire-catalog';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { createId as createIdentifier } from '@/utils/create-id';
 import { COMMON_TUNINGS } from '@/utils/repertoire-item';
@@ -89,6 +94,12 @@ export function RepertoireItemCard({
   );
   const [youtubeUrl, setYoutubeUrl] = useState(item.youtubeUrl ?? '');
   const [spotifyUrl, setSpotifyUrl] = useState(item.spotifyUrl ?? '');
+  const [album, setAlbum] = useState(item.album ?? '');
+  const [releaseYear, setReleaseYear] = useState(
+    item.releaseYear?.toString() ?? '',
+  );
+  const [coverUrl, setCoverUrl] = useState(item.coverUrl ?? '');
+  const [isCatalogSearchOpen, setIsCatalogSearchOpen] = useState(false);
   const [isFutureLearn, setIsFutureLearn] = useState(
     item.isFutureLearn ?? false,
   );
@@ -106,6 +117,9 @@ export function RepertoireItemCard({
     setDifficulty(item.difficulty ?? '');
     setYoutubeUrl(item.youtubeUrl ?? '');
     setSpotifyUrl(item.spotifyUrl ?? '');
+    setAlbum(item.album ?? '');
+    setReleaseYear(item.releaseYear?.toString() ?? '');
+    setCoverUrl(item.coverUrl ?? '');
     setIsFutureLearn(item.isFutureLearn ?? false);
   }, [item]);
 
@@ -147,6 +161,9 @@ export function RepertoireItemCard({
         difficulty: overrides.difficulty ?? difficulty,
         youtubeUrl,
         spotifyUrl,
+        album,
+        releaseYear,
+        coverUrl,
         isFutureLearn,
       },
       item,
@@ -155,6 +172,17 @@ export function RepertoireItemCard({
 
     if (!updates || !hasRepertoireExtraConfigChanges(updates)) return;
     onSave({ ...item, ...updates });
+  }
+
+  function applyCatalogCandidate(candidate: CatalogCandidate) {
+    const updates = buildCatalogFillUpdates(
+      item,
+      candidate,
+      new Date().toISOString(),
+    );
+
+    if (updates) onSave({ ...item, ...updates });
+    setIsCatalogSearchOpen(false);
   }
 
   function addPart() {
@@ -213,7 +241,7 @@ export function RepertoireItemCard({
             event.currentTarget.blur();
           }
         }}
-        className={`max-w-40 truncate outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 ${artist ? 'text-muted' : 'text-muted/60'}`}
+        className={`max-w-40 truncate text-base outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 sm:text-xs ${artist ? 'text-muted' : 'text-muted/60'}`}
       >
         {item.artist ?? ''}
       </span>
@@ -238,6 +266,11 @@ export function RepertoireItemCard({
         tabIndex={onOpen ? 0 : undefined}
       >
         <span className='flex min-w-0 w-full items-center gap-4'>
+          <CoverArt
+            coverUrl={item.coverUrl}
+            size={detail ? 'lg' : 'sm'}
+            alt={item.album ?? ''}
+          />
           <span className='min-w-0 w-full'>
             {detail ?
               <span
@@ -478,6 +511,55 @@ export function RepertoireItemCard({
                     ]}
                   />
                 </label>
+
+                <label className='block text-xs text-muted sm:col-span-2'>
+                  {text.catalogAlbum}
+                  <TextField
+                    value={album}
+                    onChange={(event) => setAlbum(event.target.value)}
+                    onBlur={() => saveExtraConfig()}
+                    maxLength={120}
+                    className='mt-1'
+                  />
+                </label>
+
+                <label className='block text-xs text-muted'>
+                  {text.catalogYear}
+                  <TextField
+                    type='number'
+                    min={1900}
+                    max={2100}
+                    step={1}
+                    value={releaseYear}
+                    onChange={(event) => setReleaseYear(event.target.value)}
+                    onBlur={() => saveExtraConfig()}
+                    placeholder='1986'
+                    className='mt-1'
+                  />
+                </label>
+
+                <label className='block text-xs text-muted sm:col-span-2'>
+                  {text.catalogCover}
+                  <TextField
+                    value={coverUrl}
+                    onChange={(event) => setCoverUrl(event.target.value)}
+                    onBlur={() => saveExtraConfig()}
+                    maxLength={500}
+                    placeholder={text.catalogCoverPlaceholder}
+                    className='mt-1'
+                  />
+                </label>
+              </div>
+
+              <div className='mt-4'>
+                <Button
+                  type='button'
+                  size='field'
+                  variant='ghost'
+                  onClick={() => setIsCatalogSearchOpen(true)}
+                >
+                  {text.catalogBackfill}
+                </Button>
               </div>
             </div>
           </details>
@@ -501,6 +583,13 @@ export function RepertoireItemCard({
             </details>
           )}
         </div>
+      )}
+      {isCatalogSearchOpen && (
+        <CatalogSearchDialog
+          initialQuery={buildCatalogQuery(item.title, item.artist)}
+          onSelect={applyCatalogCandidate}
+          onClose={() => setIsCatalogSearchOpen(false)}
+        />
       )}
       {isQuickPracticeDialogOpen && (
         <ConfirmDialog

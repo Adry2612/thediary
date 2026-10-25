@@ -17,20 +17,32 @@ const HIDE_DELAY_MS = 150;
 
 /**
  * Espera antes de cambiar de día mientras ya hay un resumen abierto. Cruzar la
- * cuadrícula anual hacia la ficha pasa por celdas vecinas; sin esta intención,
+ * fila semanal hacia la ficha pasa por celdas vecinas; sin esta intención,
  * cada una reemplazaría el día abierto y la ficha se movería bajo el puntero.
  */
 const HOVER_INTENT_MS = 180;
 
+type PracticeDayTooltipOptions = {
+  /**
+   * La ficha anual es solo una vista previa: no recibe el puntero, así que
+   * cualquier día bajo ella puede seguir usándose. En este modo no hay
+   * intención de hover ni entrada en la ficha: se abre al instante y se cierra
+   * con cualquier scroll, cambio de tamaño, Escape o salida del calendario.
+   */
+  preview?: boolean;
+};
+
 /**
- * Día cuyo resumen está abierto y dónde colocarlo. Comparten el estado el
- * calendario anual y el resumen semanal.
+ * Día cuyo resumen está abierto y dónde colocarlo. Lo comparten la ficha
+ * flotante del resumen semanal y la vista previa del calendario anual.
  *
- * La ficha es interactiva: permanece abierta mientras el puntero esté en el día
- * o en la propia ficha. Se cierra al salir de ambos, al hacer scroll en la
- * página (no en la lista interna) y al redimensionar la ventana.
+ * En el modo interactivo la ficha permanece abierta mientras el puntero esté en
+ * el día o en la propia ficha. En el modo de vista previa no captura el puntero
+ * y se cierra en cuanto se deja de consultar el día.
  */
-export function usePracticeDayTooltip() {
+export function usePracticeDayTooltip({
+  preview = false,
+}: PracticeDayTooltipOptions = {}) {
   const [hoveredDay, setHoveredDay] = useState<PracticeTooltipDay | null>(null);
   const hideTimerRef = useRef<number | null>(null);
   const switchTimerRef = useRef<number | null>(null);
@@ -41,6 +53,12 @@ export function usePracticeDayTooltip() {
    * nadie y la ficha desaparecería bajo el puntero.
    */
   const isPointerOverCardRef = useRef(false);
+  /**
+   * Tras redimensionar, el navegador puede volver a emitir `mouseenter` sobre
+   * el día que sigue bajo el puntero. La vista previa espera a que el puntero
+   * se mueva para no reaparecer anclada a la posición anterior.
+   */
+  const suppressPreviewHoverRef = useRef(false);
 
   const cancelHide = useCallback(() => {
     if (hideTimerRef.current === null) return;
@@ -63,16 +81,17 @@ export function usePracticeDayTooltip() {
 
   const scheduleHide = useCallback(() => {
     cancelHide();
-    if (isPointerOverCardRef.current) return;
+    if (!preview && isPointerOverCardRef.current) return;
     hideTimerRef.current = window.setTimeout(() => {
       hideTimerRef.current = null;
       cancelScheduledSwitch();
       setHoveredDay(null);
     }, HIDE_DELAY_MS);
-  }, [cancelHide, cancelScheduledSwitch]);
+  }, [cancelHide, cancelScheduledSwitch, preview]);
 
   const showTooltip = useCallback(
     (element: HTMLElement, day: PracticeTooltipDayData) => {
+      if (preview && suppressPreviewHoverRef.current) return;
       cancelHide();
       cancelScheduledSwitch();
       setHoveredDay({
@@ -80,7 +99,7 @@ export function usePracticeDayTooltip() {
         ...getPracticeTooltipPosition(element),
       });
     },
-    [cancelHide, cancelScheduledSwitch],
+    [cancelHide, cancelScheduledSwitch, preview],
   );
 
   /**
@@ -92,7 +111,7 @@ export function usePracticeDayTooltip() {
     (element: HTMLElement, day: PracticeTooltipDayData) => {
       cancelHide();
       cancelScheduledSwitch();
-      if (!hoveredDay) {
+      if (preview || !hoveredDay) {
         showTooltip(element, day);
         return;
       }
@@ -102,27 +121,31 @@ export function usePracticeDayTooltip() {
         showTooltip(element, day);
       }, HOVER_INTENT_MS);
     },
-    [cancelHide, cancelScheduledSwitch, hoveredDay, showTooltip],
+    [cancelHide, cancelScheduledSwitch, hoveredDay, preview, showTooltip],
   );
 
   const handleCardPointerEnter = useCallback(() => {
+    if (preview) return;
     isPointerOverCardRef.current = true;
     cancelHide();
     cancelScheduledSwitch();
-  }, [cancelHide, cancelScheduledSwitch]);
+  }, [cancelHide, cancelScheduledSwitch, preview]);
 
   const handleCardPointerLeave = useCallback(() => {
+    if (preview) return;
     isPointerOverCardRef.current = false;
     scheduleHide();
-  }, [scheduleHide]);
+  }, [preview, scheduleHide]);
 
   const isOpen = hoveredDay !== null;
   useEffect(() => {
     if (!isOpen) return;
 
     function handleScroll(event: Event) {
-      const target = event.target;
-      if (target instanceof Node && cardRef.current?.contains(target)) return;
+      if (!preview) {
+        const target = event.target;
+        if (target instanceof Node && cardRef.current?.contains(target)) return;
+      }
       hideTooltip();
     }
 
@@ -130,15 +153,27 @@ export function usePracticeDayTooltip() {
       if (event.key === "Escape") hideTooltip();
     }
 
+    function handleResize() {
+      if (preview) {
+        suppressPreviewHoverRef.current = true;
+        const release = () => {
+          suppressPreviewHoverRef.current = false;
+          window.removeEventListener("pointermove", release);
+        };
+        window.addEventListener("pointermove", release);
+      }
+      hideTooltip();
+    }
+
     window.addEventListener("scroll", handleScroll, true);
-    window.addEventListener("resize", hideTooltip);
+    window.addEventListener("resize", handleResize);
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("scroll", handleScroll, true);
-      window.removeEventListener("resize", hideTooltip);
+      window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [hideTooltip, isOpen]);
+  }, [hideTooltip, isOpen, preview]);
 
   useEffect(
     () => () => {

@@ -38,6 +38,9 @@ function createDraft(item, overrides = {}) {
     youtubeUrl: item.youtubeUrl ?? "",
     spotifyUrl: item.spotifyUrl ?? "",
     isFutureLearn: item.isFutureLearn ?? false,
+    album: item.album ?? "",
+    releaseYear: item.releaseYear?.toString() ?? "",
+    coverUrl: item.coverUrl ?? "",
     ...overrides,
   };
 }
@@ -307,4 +310,65 @@ test("saves the trimmed title and artist, dropping an empty artist", () => {
       },
     },
   );
+});
+
+test("saves the catalog metadata edited on the item", () => {
+  const item = createItem();
+  const updates = buildRepertoireExtraConfigUpdates(
+    createDraft(item, {
+      album: "Master of Puppets",
+      releaseYear: "1986",
+      coverUrl: "https://example.com/600x600bb.jpg",
+    }),
+    item,
+    UPDATED_AT,
+  );
+
+  assert.deepEqual(updates, {
+    updatedAt: UPDATED_AT,
+    album: "Master of Puppets",
+    releaseYear: 1986,
+    coverUrl: "https://example.com/600x600bb.jpg",
+  });
+});
+
+test("clears the catalog metadata when the fields are emptied", () => {
+  const item = createItem({
+    album: "Master of Puppets",
+    releaseYear: 1986,
+    coverUrl: "https://example.com/600x600bb.jpg",
+  });
+  const updates = buildRepertoireExtraConfigUpdates(
+    createDraft(item, { album: "", releaseYear: "", coverUrl: "" }),
+    item,
+    UPDATED_AT,
+  );
+
+  assert.equal(updates.album, undefined);
+  assert.equal(updates.releaseYear, undefined);
+  assert.equal(updates.coverUrl, undefined);
+});
+
+test("drops an out-of-range release year instead of saving it", () => {
+  const item = createItem();
+  const updates = buildRepertoireExtraConfigUpdates(
+    createDraft(item, { releaseYear: "1200" }),
+    item,
+    UPDATED_AT,
+  );
+
+  assert.equal(updates.releaseYear, undefined);
+  assert.equal(hasRepertoireExtraConfigChanges(updates), false);
+});
+
+test("keeps the stored metadata when the draft does not mention it", () => {
+  const item = createItem({ album: "Master of Puppets", releaseYear: 1986 });
+  const draft = createDraft(item);
+  delete draft.album;
+  delete draft.releaseYear;
+  delete draft.coverUrl;
+
+  assert.deepEqual(buildRepertoireExtraConfigUpdates(draft, item, UPDATED_AT), {
+    updatedAt: UPDATED_AT,
+  });
 });

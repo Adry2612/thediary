@@ -2,16 +2,18 @@
 
 import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/Button';
-import { ChevronIcon } from '@/components/ui/icons';
+import { ChevronIcon, SearchIcon } from '@/components/ui/icons';
 import { TextField } from '@/components/ui/Field';
 import { SelectField } from '@/components/ui/SelectField';
 import { ChordChartEditor } from '@/components/repertoire/ChordChartEditor';
+import { CatalogSearchDialog } from '@/components/repertoire/CatalogSearchDialog';
 import { TabEditor } from '@/components/repertoire/TabEditor';
 import { isTabEditorEnabled } from '@/utils/feature-flags';
 import { createRepertoireItem, REPERTOIRE_DIFFICULTIES } from '@/utils/repertoire-item';
 import { getDifficultyLabel } from '@/utils/difficulty-labels';
 import { normalizeChordChart } from '@/utils/repertoire-chord-chart';
 import { normalizeTab } from '@/utils/repertoire-tab';
+import { buildCatalogQuery } from '@/utils/repertoire-catalog';
 import { parseTuningNotes } from '@/utils/chords';
 import {
   isAllowedResourceUrl,
@@ -62,6 +64,15 @@ export function RepertoireSongForm({
     setYoutubeUrl,
     spotifyUrl,
     setSpotifyUrl,
+    album,
+    setAlbum,
+    releaseYear,
+    setReleaseYear,
+    coverUrl,
+    setCoverUrl,
+    catalogSource,
+    catalogId,
+    applyCatalogCandidate,
     isFutureLearn,
     setIsFutureLearn,
     resources,
@@ -73,6 +84,7 @@ export function RepertoireSongForm({
     finalTuning,
   } = useRepertoireSongDraft();
   const [isSaving, setIsSaving] = useState(false);
+  const [isCatalogSearchOpen, setIsCatalogSearchOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const normalizedTab = normalizeTab(tab, finalTuning || undefined);
@@ -119,6 +131,11 @@ export function RepertoireSongForm({
           difficulty: difficulty || undefined,
           youtubeUrl: youtubeUrl.trim() || undefined,
           spotifyUrl: spotifyUrl.trim() || undefined,
+          album,
+          releaseYear: releaseYear.trim() ? Number(releaseYear) : undefined,
+          coverUrl,
+          catalogSource,
+          catalogId,
           isFutureLearn: isFutureLearn || undefined,
           resources: resources.length > 0 ? resources : undefined,
           chordChart:
@@ -142,146 +159,194 @@ export function RepertoireSongForm({
 
   return (
     <form onSubmit={(event) => void addItem(event)} className='mt-6'>
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end'>
-        <label className='block text-xs text-muted'>
-          {text.songs}
-          <TextField
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            maxLength={100}
-            placeholder={text.titlePlaceholder}
-            required
-            className='mt-1'
-          />
-        </label>
+      <Button
+        type='button'
+        variant='ghost'
+        onClick={() => setIsCatalogSearchOpen(true)}
+      >
+        <SearchIcon className='size-4' aria-hidden='true' />
+        {text.catalogSearchTitle}
+      </Button>
+      <p className='mt-2 text-xs text-muted'>{text.catalogSearchHint}</p>
 
-        <label className='block text-xs text-muted'>
-          {text.artist}
-          <TextField
-            value={artist}
-            onChange={(event) => setArtist(event.target.value)}
-            maxLength={100}
-            placeholder={text.artistPlaceholder}
-            className='mt-1'
-          />
-        </label>
+      <div className='mt-5'>
+        <div className='grid grid-cols-3 items-end gap-3'>
+          <label className='col-span-3 block text-xs text-muted'>
+            {text.songs}
+            <TextField
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              maxLength={100}
+              placeholder={text.titlePlaceholder}
+              required
+              className='mt-1'
+              data-repertoire-title
+            />
+          </label>
 
-        <div className='sm:col-span-2 lg:col-span-4'>
+          <label className='col-span-3 block text-xs text-muted'>
+            {text.artist}
+            <TextField
+              value={artist}
+              onChange={(event) => setArtist(event.target.value)}
+              maxLength={100}
+              placeholder={text.artistPlaceholder}
+              className='mt-1'
+            />
+          </label>
+
+          <label className='col-span-2 block text-xs text-muted'>
+            {text.catalogAlbum}
+            <TextField
+              value={album}
+              onChange={(event) => setAlbum(event.target.value)}
+              maxLength={120}
+              className='mt-1'
+            />
+          </label>
+
+          <label className='col-span-1 block text-xs text-muted'>
+            {text.catalogYear}
+            <TextField
+              type='number'
+              min={1900}
+              max={2100}
+              step={1}
+              value={releaseYear}
+              onChange={(event) => setReleaseYear(event.target.value)}
+              placeholder='1986'
+              className='mt-1'
+            />
+          </label>
+        </div>
+
+        <div className='mt-4'>
           <PracticeResourceEditor
             phaseId='repertoire'
             resources={resources}
             onChange={(_, changes) => setResources(changes.resources ?? [])}
           />
         </div>
-
-        <details className='group lg:col-span-4 mt-2'>
-          <summary className='flex cursor-pointer items-center gap-2 text-sm text-muted transition-colors hover:text-ink'>
-            <ChevronIcon className='group-open:rotate-90' />
-            {text.extraConfig}
-          </summary>
-          <div className='mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-            <label className='block text-xs text-muted sm:col-span-2'>
-              {text.tuning}
-              <SelectField
-                className='mt-1'
-                value={tuning}
-                onChange={setTuning}
-                ariaLabel={text.tuning}
-                options={COMMON_TUNINGS.map((option) => ({
-                  value: option,
-                  label: option,
-                }))}
-              />
-            </label>
-
-            {tuning === 'Otra...' && (
-              <label className='block text-xs text-muted sm:col-span-2'>
-                {text.customTuning}
-                <TextField
-                  value={customTuning}
-                  onChange={(event) => setCustomTuning(event.target.value)}
-                  maxLength={50}
-                  placeholder={text.customTuningPlaceholder}
-                  className='mt-1'
-                />
-              </label>
-            )}
-
-            <label className='block text-xs text-muted'>
-              {text.capo}
-              <TextField
-                type='number'
-                min={0}
-                max={12}
-                step={1}
-                value={capo}
-                onChange={(event) => setCapo(event.target.value)}
-                placeholder='0'
-                aria-label={text.capoAria}
-                className='mt-1 font-mono'
-              />
-            </label>
-
-            <label className='block text-xs text-muted'>
-              {text.guitarType}
-              <SelectField
-                className='mt-1'
-                value={guitarType}
-                ariaLabel={text.guitarType}
-                onChange={(value) => setGuitarType(value as GuitarType | '')}
-                options={[
-                  { value: '', label: text.unspecified },
-                  { value: 'electric', label: text.electric },
-                  { value: 'acoustic', label: text.acoustic },
-                ]}
-              />
-            </label>
-
-            <label className='block text-xs text-muted'>
-              {text.difficulty}
-              <SelectField
-                className='mt-1'
-                value={difficulty}
-                ariaLabel={text.difficulty}
-                onChange={(value) =>
-                  setDifficulty(value as RepertoireDifficulty | '')
-                }
-                options={[
-                  { value: '', label: text.difficultyNone },
-                  ...REPERTOIRE_DIFFICULTIES.map((value) => ({
-                    value,
-                    label: getDifficultyLabel(text, value),
-                  })),
-                ]}
-              />
-            </label>
-
-            <label className='flex cursor-pointer items-center gap-2 text-xs text-muted sm:col-span-4'>
-              <input
-                type='checkbox'
-                checked={isFutureLearn}
-                onChange={(event) => setIsFutureLearn(event.target.checked)}
-                className='peer sr-only'
-              />
-              <span
-                aria-hidden='true'
-                className='flex size-4 items-center justify-center border border-muted text-transparent transition peer-checked:border-accent-green-fg peer-checked:bg-accent-green-fg peer-checked:text-canvas peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-green-fg'
-              >
-                <svg viewBox='0 0 12 12' className='size-3' fill='none'>
-                  <path
-                    d='m2 6 2.5 2.5L10 3'
-                    stroke='currentColor'
-                    strokeWidth='1.5'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-              </span>
-              <span>{text.futureLearn}</span>
-            </label>
-          </div>
-        </details>
       </div>
+
+      <details className='group mt-6'>
+        <summary className='flex cursor-pointer items-center gap-2 text-sm text-muted transition-colors hover:text-ink'>
+          <ChevronIcon className='group-open:rotate-90' />
+          {text.extraConfig}
+        </summary>
+        <div className='mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+          <label className='block text-xs text-muted sm:col-span-2'>
+            {text.tuning}
+            <SelectField
+              className='mt-1'
+              value={tuning}
+              onChange={setTuning}
+              ariaLabel={text.tuning}
+              options={COMMON_TUNINGS.map((option) => ({
+                value: option,
+                label: option,
+              }))}
+            />
+          </label>
+
+          {tuning === 'Otra...' && (
+            <label className='block text-xs text-muted sm:col-span-2'>
+              {text.customTuning}
+              <TextField
+                value={customTuning}
+                onChange={(event) => setCustomTuning(event.target.value)}
+                maxLength={50}
+                placeholder={text.customTuningPlaceholder}
+                className='mt-1'
+              />
+            </label>
+          )}
+
+          <label className='block text-xs text-muted'>
+            {text.capo}
+            <TextField
+              type='number'
+              min={0}
+              max={12}
+              step={1}
+              value={capo}
+              onChange={(event) => setCapo(event.target.value)}
+              placeholder='0'
+              aria-label={text.capoAria}
+              className='mt-1 font-mono'
+            />
+          </label>
+
+          <label className='block text-xs text-muted'>
+            {text.guitarType}
+            <SelectField
+              className='mt-1'
+              value={guitarType}
+              ariaLabel={text.guitarType}
+              onChange={(value) => setGuitarType(value as GuitarType | '')}
+              options={[
+                { value: '', label: text.unspecified },
+                { value: 'electric', label: text.electric },
+                { value: 'acoustic', label: text.acoustic },
+              ]}
+            />
+          </label>
+
+          <label className='block text-xs text-muted'>
+            {text.difficulty}
+            <SelectField
+              className='mt-1'
+              value={difficulty}
+              ariaLabel={text.difficulty}
+              onChange={(value) =>
+                setDifficulty(value as RepertoireDifficulty | '')
+              }
+              options={[
+                { value: '', label: text.difficultyNone },
+                ...REPERTOIRE_DIFFICULTIES.map((value) => ({
+                  value,
+                  label: getDifficultyLabel(text, value),
+                })),
+              ]}
+            />
+          </label>
+
+          <label className='block text-xs text-muted sm:col-span-2'>
+            {text.catalogCover}
+            <TextField
+              value={coverUrl}
+              onChange={(event) => setCoverUrl(event.target.value)}
+              maxLength={500}
+              placeholder={text.catalogCoverPlaceholder}
+              className='mt-1'
+            />
+          </label>
+
+          <label className='flex cursor-pointer items-center gap-2 text-xs text-muted sm:col-span-4'>
+            <input
+              type='checkbox'
+              checked={isFutureLearn}
+              onChange={(event) => setIsFutureLearn(event.target.checked)}
+              className='peer sr-only'
+            />
+            <span
+              aria-hidden='true'
+              className='flex size-4 items-center justify-center border border-muted text-transparent transition peer-checked:border-accent-green-fg peer-checked:bg-accent-green-fg peer-checked:text-canvas peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-green-fg'
+            >
+              <svg viewBox='0 0 12 12' className='size-3' fill='none'>
+                <path
+                  d='m2 6 2.5 2.5L10 3'
+                  stroke='currentColor'
+                  strokeWidth='1.5'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
+              </svg>
+            </span>
+            <span>{text.futureLearn}</span>
+          </label>
+        </div>
+      </details>
 
       <p className='mt-6 text-xs uppercase tracking-[0.12em] text-muted'>
         {text.tuningLabel}: {parseTuningNotes(finalTuning || undefined).join(' ')}
@@ -305,6 +370,14 @@ export function RepertoireSongForm({
         <p className='mt-4 text-sm text-red-300' role='alert'>
           {error}
         </p>
+      )}
+
+      {isCatalogSearchOpen && (
+        <CatalogSearchDialog
+          initialQuery={buildCatalogQuery(title, artist)}
+          onSelect={applyCatalogCandidate}
+          onClose={() => setIsCatalogSearchOpen(false)}
+        />
       )}
     </form>
   );

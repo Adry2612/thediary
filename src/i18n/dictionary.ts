@@ -157,6 +157,7 @@ export type Dict = {
     loadingSaved: string;
     noRepertoire: string;
     learnedParts: string;
+    noParts: string;
     updated: string;
     quickStart: string;
     routines: string;

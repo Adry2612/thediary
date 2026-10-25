@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   getPracticeTooltipPosition,
+  getSessionPhaseLines,
   PRACTICE_TOOLTIP_GAP,
 } from "../src/utils/practice-tooltip.ts";
 
@@ -62,4 +63,50 @@ test("keeps the summary inside the viewport horizontally", () => {
   assert.equal(getPracticeTooltipPosition(elementAt(600, 1000)).left, 724);
 
   delete globalThis.window;
+});
+
+function phase(name) {
+  return { id: 1, name, skill: "repertoire", elapsedSeconds: 60 };
+}
+
+test("hides the only block when it repeats the session name", () => {
+  const lines = getSessionPhaseLines({
+    title: "Master of Puppets",
+    phases: [phase("Master of Puppets")],
+  });
+
+  assert.deepEqual(lines, []);
+});
+
+test("keeps a single block whose name differs from the session", () => {
+  const phases = [phase("Riff principal")];
+
+  assert.deepEqual(
+    getSessionPhaseLines({ title: "Master of Puppets", phases }),
+    phases,
+  );
+});
+
+test("keeps every block when the session has several", () => {
+  const phases = [phase("Master of Puppets"), phase("Riff principal")];
+
+  assert.deepEqual(
+    getSessionPhaseLines({ title: "Master of Puppets", phases }),
+    phases,
+  );
+});
+
+test("compares the names ignoring case and surrounding spaces", () => {
+  const lines = getSessionPhaseLines({
+    title: "  master of puppets ",
+    phases: [phase("Master of Puppets  ")],
+  });
+
+  assert.deepEqual(lines, []);
+});
+
+test("keeps the blocks when the session has no title", () => {
+  const phases = [phase("Riff principal")];
+
+  assert.deepEqual(getSessionPhaseLines({ phases }), phases);
 });

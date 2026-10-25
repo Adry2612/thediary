@@ -8,10 +8,11 @@ import {
   type RepertoireProgressFilter,
   type RepertoireSortOrder,
 } from "@/utils/repertoire-filtering";
+import type { RepertoireGroupBy } from "@/utils/repertoire-grouping";
 
 /**
- * Los cinco filtros del listado de repertorio. Guardar aquí el estado deja a la
- * vista solo el markup; las reglas de qué es un filtro activo viven en
+ * Los filtros y el orden del listado de repertorio. Guardar aquí el estado deja
+ * a la vista solo el markup; las reglas de qué es un filtro activo viven en
  * `repertoire-filtering`.
  */
 export function useRepertoireFilters() {
@@ -22,6 +23,7 @@ export function useRepertoireFilters() {
   const [progressFilter, setProgressFilter] =
     useState<RepertoireProgressFilter>("all");
   const [sortOrder, setSortOrder] = useState<RepertoireSortOrder>("original");
+  const [groupBy, setGroupBy] = useState<RepertoireGroupBy>("none");
   const [searchQuery, setSearchQuery] = useState("");
 
   const hasActiveFilters = hasActiveRepertoireFilters({
@@ -37,6 +39,7 @@ export function useRepertoireFilters() {
     setFutureLearnFilter("all");
     setProgressFilter("all");
     setSortOrder("original");
+    setGroupBy("none");
   }, []);
 
   return {
@@ -48,6 +51,8 @@ export function useRepertoireFilters() {
     setProgressFilter,
     sortOrder,
     setSortOrder,
+    groupBy,
+    setGroupBy,
     searchQuery,
     setSearchQuery,
     hasActiveFilters,

@@ -72,6 +72,17 @@ export function PlusIcon({ className, ...props }: IconProps) {
   );
 }
 
+/** Nota musical: relleno de las carátulas que faltan. */
+export function MusicNoteIcon({ className, ...props }: IconProps) {
+  return (
+    <StrokeIcon className={className} {...props}>
+      <path d="M9 18V5l10-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="16" cy="16" r="3" />
+    </StrokeIcon>
+  );
+}
+
 export function SearchIcon({ className, ...props }: IconProps) {
   return (
     <StrokeIcon className={className} {...props}>
@@ -218,6 +229,19 @@ export function PauseIcon({ className = "size-4", ...props }: IconProps) {
       {...props}
     >
       <path d="M4 3h3v10H4zM9 3h3v10H9z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function StopIcon({ className = "size-4", ...props }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className={className}
+      {...props}
+    >
+      <rect x="3.5" y="3.5" width="9" height="9" rx="1" fill="currentColor" />
     </svg>
   );
 }

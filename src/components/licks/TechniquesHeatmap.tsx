@@ -24,7 +24,7 @@ export function TechniquesHeatmap({ licks }: { licks: GuitarLick[] }) {
 
   return (
     <div className="grid gap-5 xl:grid-cols-2">
-      <section className="rounded-xl border border-line bg-surface p-5 sm:p-6">
+      <section className="min-w-0 rounded-xl border border-line bg-surface p-5 sm:p-6">
         <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">
           {text.techniquesTitle}
         </h2>
@@ -64,7 +64,7 @@ export function TechniquesHeatmap({ licks }: { licks: GuitarLick[] }) {
         )}
       </section>
 
-      <section className="rounded-xl border border-line bg-surface p-5 sm:p-6">
+      <section className="min-w-0 rounded-xl border border-line bg-surface p-5 sm:p-6">
         <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">
           {text.keysTitle}
         </h2>

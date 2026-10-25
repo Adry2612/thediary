@@ -5,7 +5,7 @@ import { PracticeRecordingItem } from "@/components/practice/PracticeRecordingIt
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RecordingsListSkeleton } from "@/components/ui/Skeletons";
 import { SelectField } from "@/components/ui/SelectField";
-import { TextField } from "@/components/ui/Field";
+import { SearchField } from "@/components/ui/SearchField";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 import { useRecordingsLibrary } from "@/hooks/useRecordingsLibrary";
 import { formatDateLabel } from "@/utils/format";
@@ -74,19 +74,13 @@ export function RecordingsLibrary() {
             />
           </div>
           <div>
-            <label
-              htmlFor="recording-phase-name"
-              className="text-xs text-muted"
-            >
-              {text.blockName}
-            </label>
-            <TextField
+            <SearchField
               id="recording-phase-name"
+              label={text.blockName}
               value={filters.phaseName}
               onChange={(event) => updateFilter("phaseName", event.target.value)}
               placeholder={text.searchBlock}
               aria-label={text.filterBlockName}
-              className="mt-1"
             />
           </div>
           <div>

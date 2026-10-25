@@ -32,7 +32,7 @@ export function LickCard({
   const lastPractised = getLastPracticedLabel(text, lick.lastPracticedAt, today);
 
   return (
-    <article className="flex h-full flex-col rounded-xl border border-line bg-surface p-5 transition hover:border-white/20">
+    <article className="flex h-full min-w-0 flex-col rounded-xl border border-line bg-surface p-5 transition hover:border-white/20">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -86,7 +86,7 @@ export function LickCard({
         </div>
       ) : null}
 
-      <div className="mt-4 min-h-0 flex-1">
+      <div className="mt-4 min-h-0 min-w-0 flex-1">
         <LickTab
           tab={lick.tab}
           content={lick.tabContent}

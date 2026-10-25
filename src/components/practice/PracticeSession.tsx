@@ -4,13 +4,22 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { PracticeCompletionDialog } from "@/components/practice/PracticeCompletionDialog";
+import { FinishPracticeDialog } from "@/components/practice/FinishPracticeDialog";
 import { MetronomeCard } from "@/components/practice/MetronomeCard";
 import { PracticeAudioRecorder } from "@/components/practice/PracticeAudioRecorder";
-import { SplitViewIcon } from "@/components/ui/icons";
+import {
+  PauseIcon,
+  PlayIcon,
+  SplitViewIcon,
+  StopIcon,
+} from "@/components/ui/icons";
 import { PracticeMaterials } from "@/components/practice/PracticeMaterials";
 import { LickTab } from "@/components/licks/LickTab";
 import { Card } from "@/components/ui/Card";
 import { TimerCard } from "@/components/practice/TimerCard";
+import { UpcomingBlocks } from "@/components/practice/UpcomingBlocks";
+import { useAnimatedPresence } from "@/hooks/useAnimatedPresence";
+import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useGuitarPreference } from "@/hooks/useGuitarPreference";
 import { useMetronome } from "@/hooks/useMetronome";
 import { usePracticeTimer } from "@/hooks/usePracticeTimer";
@@ -47,11 +56,15 @@ import { useI18nSection } from "@/i18n/I18nProvider";
 
 export function PracticeSession({ session }: { session: ActivePracticeSession }) {
   const text = useI18nSection("practice");
+  const timerText = useI18nSection("timer");
   const licksText = useI18nSection("licks");
   const { id: sessionId, name, phases } = session;
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
   const [pendingResult, setPendingResult] =
     useState<PracticeTimerResult | null>(null);
+  const timerCardRef = useRef<HTMLDivElement>(null);
+  const isTimerVisible = useElementVisibility(timerCardRef);
   const sessionSavedRef = useRef(false);
   const completionHandledRef = useRef(false);
   const addSession = usePracticeStore((state) => state.addSession);
@@ -85,6 +98,8 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const { lastGuitarType } = useGuitarPreference();
   const pathname = usePathname();
   const isPracticeRoute = pathname === "/practice";
+  const { isMounted: isBarMounted, isVisible: isBarVisible } =
+    useAnimatedPresence(!isPracticeRoute || !isTimerVisible);
   const router = useRouter();
   const {
     bpm: metronomeBpm,
@@ -234,8 +249,35 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     router.push('/practice');
   }
 
-  const nextPhase = phases[timer.currentPhaseIndex + 1];
+  function finishPractice() {
+    timer.finish();
+    if (!isPracticeRoute) router.push("/practice");
+  }
+
+  function discardFromDialog() {
+    setIsFinishDialogOpen(false);
+    discardSession();
+  }
+
+  function scrollToTimerCard() {
+    const element = timerCardRef.current;
+    if (!element) return;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    element.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }
+
   const currentPhase = phases[timer.currentPhaseIndex];
+  const isPlayPauseDisabled =
+    !currentPhase ||
+    isCompleted ||
+    (timer.awaitingPhaseAdvance && !timer.isRunning && !timer.continueAfterBlockTime);
+  const isStopDisabled = !currentPhase || isCompleted;
+  const isFinishDialogVisible = isFinishDialogOpen && !isCompleted;
   const sessionStatus = getSessionStatus(isCompleted, timer.isRunning);
   const sessionStatusLabel =
     sessionStatus === "completed" ? text.completedStatus
@@ -269,20 +311,21 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   }
 
   const timerCard = (
-    <TimerCard
-      timer={timer}
-      isCompleted={isCompleted}
-      isPracticeRoute={isPracticeRoute}
-      onDiscard={discardSession}
-      practiceStartSound={practiceStartSound}
-      setPracticeStartSound={setPracticeStartSound}
-      practiceEndSound={practiceEndSound}
-      setPracticeEndSound={setPracticeEndSound}
-      artist={currentRepertoireItem?.artist}
-      title={currentRepertoireItem?.title ?? currentPhase?.name}
-      repertoireSongs={repertoireSongs}
-      onChangeRepertoireSong={changeCurrentSong}
-    />
+    <div ref={timerCardRef} className="h-full min-w-0">
+      <TimerCard
+        timer={timer}
+        isCompleted={isCompleted}
+        onRequestFinish={() => setIsFinishDialogOpen(true)}
+        practiceStartSound={practiceStartSound}
+        setPracticeStartSound={setPracticeStartSound}
+        practiceEndSound={practiceEndSound}
+        setPracticeEndSound={setPracticeEndSound}
+        artist={currentRepertoireItem?.artist}
+        title={currentRepertoireItem?.title ?? currentPhase?.name}
+        repertoireSongs={repertoireSongs}
+        onChangeRepertoireSong={changeCurrentSong}
+      />
+    </div>
   );
   const metronomeCard = (
     <MetronomeCard onBpmChange={recordBpmChange} stopOnUnmount={false} />
@@ -293,34 +336,12 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
       {metronomeCard}
     </div>
   );
-  const nextPhasePanel = !isCompleted && (
-    <section
-      aria-labelledby="next-practice-phase-title"
-      className="enter rounded-xl border border-line bg-surface p-6 sm:p-8"
-    >
-      <p className="text-xs uppercase tracking-[0.05em] text-muted">Plan de la sesión</p>
-      <h2
-        id="next-practice-phase-title"
-        className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8"
-      >
-        {text.nextPhase}
-      </h2>
-      {nextPhase ? (
-        <div className="mt-4 border-t border-line pt-4">
-          <p className="font-medium">
-            {getPracticeBlockTitle(nextPhase, repertoireItems)}
-          </p>
-          <p className="mt-1 font-mono text-xs text-muted">
-            {nextPhase.durationMinutes} min
-          </p>
-          {nextPhase.exercises && nextPhase.exercises.length > 0 && (
-            <p className="mt-3 text-sm text-muted">{nextPhase.exercises.join(" · ")}</p>
-          )}
-        </div>
-      ) : (
-        <p className="mt-4 text-sm text-muted">{text.noNextPhase}</p>
-      )}
-    </section>
+  const upcomingBlocks = !isCompleted && (
+    <UpcomingBlocks
+      phases={phases}
+      currentPhaseIndex={timer.currentPhaseIndex}
+      repertoireItems={repertoireItems}
+    />
   );
   const lickMaterial = currentLick ? (
     <Card className='p-5 sm:p-8'>
@@ -401,6 +422,12 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         onSave={saveCompletedSession}
         onDiscard={discardSession}
       />
+      <FinishPracticeDialog
+        open={isFinishDialogVisible}
+        onClose={() => setIsFinishDialogOpen(false)}
+        onDiscard={discardFromDialog}
+        onFinish={finishPractice}
+      />
       <main
         className={
           isPracticeRoute
@@ -426,7 +453,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
             <div className="space-y-6">
               {timerCard}
               {metronomeCard}
-              {nextPhasePanel}
+              {upcomingBlocks}
               {recorder}
             </div>
             <aside className="min-h-0 min-w-0 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:min-h-0 lg:overflow-y-auto">
@@ -436,28 +463,47 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         ) : (
           <>
             {timerAndMetronome}
-            {nextPhasePanel}
+            {upcomingBlocks}
             {materials}
             {recorder}
           </>
         )}
       </main>
-      {!isPracticeRoute && (
-        <nav aria-label="Práctica en curso">
-          <Link
-            href="/practice"
-            aria-label={`Volver a la práctica en curso: ${name}`}
-            className="fixed inset-x-3 bottom-3 z-40 mx-auto flex w-[calc(100%-1.5rem)] max-w-2xl items-center gap-3 rounded-xl border border-line bg-surface p-3 transition-colors hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green-fg sm:bottom-5 sm:gap-4 sm:p-4"
-          >
+      {isBarMounted && (
+        <nav
+          aria-label={text.sessionStatus}
+          inert={!isBarVisible}
+          className={`fixed inset-x-3 z-40 mx-auto w-[calc(100%-1.5rem)] max-w-2xl transition-[opacity,transform] duration-[180ms] ease-out motion-reduce:transition-none motion-reduce:duration-0 ${
+            isBarVisible
+              ? "translate-y-0 opacity-100"
+              : "pointer-events-none translate-y-2 opacity-0"
+          }`}
+          style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="relative flex items-center gap-3 rounded-xl border border-line bg-surface p-3 transition-colors [@media(hover:hover)]:hover:border-white/25 focus-within:border-white/20 sm:gap-4 sm:p-4">
+            {isPracticeRoute ? (
+              <button
+                type="button"
+                onClick={scrollToTimerCard}
+                aria-label={`${text.goToTimer}: ${name}`}
+                className="absolute inset-0 z-0 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-green-fg"
+              />
+            ) : (
+              <Link
+                href="/practice"
+                aria-label={`${text.openActivePractice}: ${name}`}
+                className="absolute inset-0 z-0 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-green-fg"
+              />
+            )}
             <span
               aria-hidden="true"
-              className={`size-2.5 shrink-0 rounded-full ${
+              className={`pointer-events-none relative z-10 size-2.5 shrink-0 rounded-full ${
                 timer.isRunning
                   ? "bg-accent-green-fg"
                   : "border border-muted bg-transparent"
               }`}
             />
-            <span className="min-w-0 flex-1">
+            <span className="pointer-events-none relative z-10 min-w-0 flex-1">
               <span className="block text-[10px] uppercase tracking-[0.05em] text-muted sm:text-xs">
                 {sessionStatusLabel}
               </span>
@@ -467,15 +513,35 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
               </span>
             </span>
             {timer.currentPhase && !isCompleted && (
-              <span className="shrink-0 font-mono text-sm tabular-nums text-ink sm:text-base">
+              <span className="pointer-events-none relative z-10 shrink-0 font-mono text-sm tabular-nums text-ink sm:text-base">
                 {formatClock(timer.remainingSeconds)}
               </span>
             )}
-            <span className="shrink-0 border border-line bg-white/[0.06] px-3 py-2 text-xs font-medium text-ink sm:px-4 sm:text-sm">
-              <span className="sm:hidden">Volver</span>
-              <span className="hidden sm:inline">Volver a la práctica</span>
-            </span>
-          </Link>
+            <div className="relative z-10 flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={timer.isRunning ? timer.pause : timer.resume}
+                disabled={isPlayPauseDisabled}
+                aria-label={
+                  timer.isRunning ? text.pausePractice : text.resumePractice
+                }
+                title={timer.isRunning ? text.pausePractice : text.resumePractice}
+                className="pointer-events-auto flex size-10 items-center justify-center rounded-lg border border-line text-ink transition-colors [@media(hover:hover)]:hover:border-white/25 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-green-fg"
+              >
+                {timer.isRunning ? <PauseIcon /> : <PlayIcon />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsFinishDialogOpen(true)}
+                disabled={isStopDisabled}
+                aria-label={timerText.finishSession}
+                title={timerText.finishSession}
+                className="pointer-events-auto flex size-10 items-center justify-center rounded-lg border border-red-400/40 text-red-300 transition-colors [@media(hover:hover)]:hover:border-red-400/70 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+              >
+                <StopIcon />
+              </button>
+            </div>
+          </div>
         </nav>
       )}
     </>

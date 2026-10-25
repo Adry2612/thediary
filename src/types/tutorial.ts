@@ -46,4 +46,6 @@ export type TutorialText = {
 /** Lo que el tutorial expone al resto de la aplicación. */
 export interface TutorialContextValue {
   openTutorial: () => void;
+  /** El recorrido está abierto y su foco debe permanecer en pantalla. */
+  isOpen: boolean;
 }

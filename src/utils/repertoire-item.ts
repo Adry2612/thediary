@@ -1,4 +1,6 @@
 import type { RepertoireItem, RepertoireItemKind, GuitarType, RepertoireDifficulty } from "../types/practice.ts";
+import type { CatalogSource } from "../types/catalog.ts";
+import { normalizeCatalogMetadata } from "./repertoire-catalog.ts";
 
 /**
  * Afinaciones que ofrecen los formularios de repertorio. La última opción no es
@@ -56,6 +58,11 @@ interface CreateRepertoireItemInput {
   difficulty?: RepertoireDifficulty;
   youtubeUrl?: string;
   spotifyUrl?: string;
+  album?: string;
+  releaseYear?: number;
+  coverUrl?: string;
+  catalogSource?: CatalogSource;
+  catalogId?: string;
   isFutureLearn?: boolean;
   chordChart?: RepertoireItem["chordChart"];
   tab?: RepertoireItem["tab"];
@@ -76,11 +83,24 @@ export function createRepertoireItem({
   difficulty,
   youtubeUrl,
   spotifyUrl,
+  album,
+  releaseYear,
+  coverUrl,
+  catalogSource,
+  catalogId,
   isFutureLearn,
   chordChart,
   tab,
   updatedAt,
 }: CreateRepertoireItemInput): RepertoireItem {
+  const catalogMetadata = normalizeCatalogMetadata({
+    album,
+    releaseYear,
+    coverUrl,
+    catalogSource,
+    catalogId,
+  });
+
   return {
     id,
     kind,
@@ -106,6 +126,7 @@ export function createRepertoireItem({
     ...(difficulty ? { difficulty } : {}),
     ...(youtubeUrl?.trim() ? { youtubeUrl: youtubeUrl.trim() } : {}),
     ...(spotifyUrl?.trim() ? { spotifyUrl: spotifyUrl.trim() } : {}),
+    ...catalogMetadata,
     ...(isFutureLearn ? { isFutureLearn: true } : {}),
     ...(chordChart ? { chordChart } : {}),
     ...(tab ? { tab } : {}),

@@ -66,7 +66,7 @@ export function TabPlaybackBar({
   const canPlay = tab.notes.length > 0;
 
   return (
-    <div className={`flex flex-wrap items-end gap-2 ${className}`}>
+    <div className={`flex max-w-full min-w-0 flex-wrap items-end gap-2 ${className}`}>
       <Button
         type="button"
         size="field"

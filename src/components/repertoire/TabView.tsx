@@ -54,7 +54,7 @@ export function TabView({
     <div
       role="group"
       aria-label={ariaLabel}
-      className={`overflow-x-auto rounded-lg border border-line bg-canvas/70 ${className}`}
+      className={`max-w-full overflow-x-auto rounded-lg border border-line bg-canvas/70 ${className}`}
     >
       <div className="min-w-max p-3">
         <div className="flex">

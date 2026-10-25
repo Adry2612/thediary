@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { AppDataProvider } from '@/components/providers/AppDataProvider';
 import { GuestModeNotice } from '@/components/account/GuestModeNotice';
 import { SiteNavigation } from '@/components/layout/SiteNavigation';
@@ -10,9 +10,28 @@ import { I18nProvider } from '@/i18n/I18nProvider';
 import { defaultLocale, getDictionary } from '@/i18n/translations';
 import './globals.css';
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#121211',
+};
+
 export const metadata: Metadata = {
   title: getDictionary(defaultLocale).app.name,
   description: getDictionary(defaultLocale).app.description,
+  appleWebApp: {
+    capable: true,
+    title: 'thediary',
+    // Barra opaca: en la app instalada el contenido nunca queda debajo del
+    // reloj/notch, así que el header no puede difuminarse con la barra de
+    // estado. La franja `--app-safe-top` sigue cubriendo el caso edge-to-edge
+    // de Android y de las pestañas del navegador.
+    statusBarStyle: 'black',
+  },
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+  },
   icons: {
     icon: [
       { url: '/favicon-32x32.png?v=4', sizes: '32x32', type: 'image/png' },

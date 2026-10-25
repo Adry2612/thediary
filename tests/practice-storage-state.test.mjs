@@ -156,6 +156,52 @@ test("replaces malformed collections and settings with defaults", () => {
   );
 });
 
+test("keeps the catalog metadata stored with a repertoire item", () => {
+  const item = {
+    id: "song-1",
+    kind: "song",
+    title: "Master of Puppets",
+    artist: "Metallica",
+    parts: [],
+    updatedAt: "2026-10-25T00:00:00.000Z",
+    album: "Master of Puppets",
+    releaseYear: 1986,
+    coverUrl: "https://example.com/cover.jpg",
+    catalogSource: "itunes",
+    catalogId: "12345",
+  };
+
+  const [stored] = normalizePracticeStorageState({
+    state: { repertoireItems: [item] },
+    ...normalizers,
+  }).repertoireItems;
+
+  assert.deepEqual(stored, item);
+});
+
+test("still normalizes the difficulty of an item that carries catalog metadata", () => {
+  const [stored] = normalizePracticeStorageState({
+    state: {
+      repertoireItems: [
+        {
+          id: "song-1",
+          kind: "song",
+          title: "Master of Puppets",
+          parts: [],
+          album: "Master of Puppets",
+          releaseYear: 1986,
+          difficulty: "impossible",
+        },
+      ],
+    },
+    ...normalizers,
+  }).repertoireItems;
+
+  assert.equal("difficulty" in stored, false);
+  assert.equal(stored.album, "Master of Puppets");
+  assert.equal(stored.releaseYear, 1986);
+});
+
 test("keeps a valid guitar type and per-block BPM and drops invalid values", () => {
   const state = normalizePracticeStorageState({
     state: {

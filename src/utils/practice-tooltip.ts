@@ -1,4 +1,23 @@
 import type { PracticeTooltipDay } from "../types/dashboard.ts";
+import type { SessionPhaseRecord, SessionRecord } from "../types/practice.ts";
+
+/**
+ * Bloques que el resumen de un día debe listar. Una práctica rápida de una
+ * canción guarda el título de la canción como nombre de la sesión y como
+ * nombre de su único bloque; mostrar ambos repetiría el mismo texto.
+ */
+export function getSessionPhaseLines(
+  session: Pick<SessionRecord, "title" | "phases">,
+): SessionPhaseRecord[] {
+  const phases = session.phases ?? [];
+  if (phases.length !== 1) return phases;
+
+  const title = session.title?.trim();
+  if (!title) return phases;
+
+  const normalize = (value: string) => value.trim().toLocaleLowerCase("es");
+  return normalize(phases[0].name) === normalize(title) ? [] : phases;
+}
 
 /** Hueco entre el día y la ficha para que el puntero pueda cruzar sin saltos. */
 export const PRACTICE_TOOLTIP_GAP = 10;

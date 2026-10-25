@@ -2,20 +2,28 @@ import type {
   HTMLAttributes,
   InputHTMLAttributes,
   ReactNode,
+  Ref,
   TextareaHTMLAttributes,
 } from "react";
 
 const sharedFieldClasses =
-  "w-full rounded-md border border-line bg-canvas px-4 text-sm text-ink transition-colors duration-200 placeholder:text-muted/70 hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-md border border-line bg-canvas px-4 text-base text-ink transition-colors duration-200 placeholder:text-muted/70 hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm";
+
+type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
+  /** Permite enfocar el campo desde un diálogo sin exponer un `forwardRef`. */
+  inputRef?: Ref<HTMLInputElement>;
+};
 
 export function TextField({
   className = "",
   type,
+  inputRef,
   ...props
-}: InputHTMLAttributes<HTMLInputElement>) {
+}: TextFieldProps) {
   return (
     <input
       {...props}
+      ref={inputRef}
       type={type}
       className={`h-12 min-w-0 ${sharedFieldClasses} ${type === "number" ? "font-mono" : ""} ${className}`}
     />

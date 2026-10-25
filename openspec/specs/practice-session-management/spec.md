@@ -315,7 +315,7 @@ The system SHALL offer an option to keep the timer running after a block's plann
 
 ### Requirement: A saved practice shows its block details and resolved links
 
-The system SHALL show each saved block's detail entries and SHALL resolve a repertoire link to the song title, with the part when present, and a lick link to the lick title, including when the block names only the item.
+The system SHALL show each saved block's detail entries and SHALL resolve a repertoire link to the song title, with the part when present on its own line without a "Parte:" prefix, and a lick link to the lick title, including when the block names only the item.
 
 #### Scenario: A block linked only to a song
 - **WHEN** a saved block names a song but no part
@@ -323,7 +323,7 @@ The system SHALL show each saved block's detail entries and SHALL resolve a repe
 
 #### Scenario: A block linked to a song and a part
 - **WHEN** a saved block names a song and a part
-- **THEN** the completed practice shows both the song and the part
+- **THEN** the completed practice shows both the song and the part, with the part on its own line and no "Parte:" prefix
 
 #### Scenario: A block linked to a lick
 - **WHEN** a saved block names a lick
@@ -335,7 +335,7 @@ The system SHALL show each saved block's detail entries and SHALL resolve a repe
 
 ### Requirement: A saved practice records the guitar type used
 
-The system SHALL let the user choose electric or acoustic guitar for a practice session, SHALL offer that choice while the practice runs, in manual practice entry and in the session editor, and SHALL store the chosen type with the session. The type SHALL be optional and SHALL never be inferred from a song when the user has not chosen one.
+The system SHALL let the user choose electric or acoustic guitar for a practice session, SHALL offer that choice while the practice runs, in manual practice entry and in the session editor, and SHALL store the chosen type with the session. A quick practice started from a repertoire item that declares a guitar type SHALL start from that type. Otherwise the type SHALL come from the last used type or stay unset, and the system SHALL never invent one.
 
 #### Scenario: Choosing the guitar while practising
 - **WHEN** the user selects electric or acoustic in a running practice
@@ -344,6 +344,18 @@ The system SHALL let the user choose electric or acoustic guitar for a practice 
 #### Scenario: Changing the guitar during the session
 - **WHEN** the user changes the guitar type before finishing the practice
 - **THEN** the saved practice stores the last chosen type for the whole session
+
+#### Scenario: Choosing the guitar while preparing
+- **WHEN** the user selects electric or acoustic in the practice plan
+- **THEN** the session uses that type and the saved practice stores it
+
+#### Scenario: A quick practice from a repertoire item
+- **WHEN** the user starts a quick practice from a repertoire item that declares a guitar type
+- **THEN** the session starts with that type and the saved practice stores it
+
+#### Scenario: A quick practice from an item without a type
+- **WHEN** the item declares no guitar type and the user has a last used type
+- **THEN** the session starts from the last used type and the saved practice keeps it
 
 #### Scenario: Manual practice
 - **WHEN** the user records a practice manually and chooses a guitar type
@@ -362,7 +374,7 @@ The system SHALL let the user choose electric or acoustic guitar for a practice 
 - **THEN** it loads normally and remains unclassified instead of receiving an invented type
 
 #### Scenario: Last used type
-- **WHEN** the user starts a new practice after having chosen a guitar type before
+- **WHEN** the user starts a new practice that does not declare a guitar type after having chosen one before
 - **THEN** the choice starts on the last used type and the user can change it
 
 #### Scenario: Stored type survives reload and sync
@@ -468,3 +480,135 @@ Editing a saved practice SHALL let the user set, change or clear its guitar type
 #### Scenario: The source routine is untouched
 - **WHEN** the user changes the guitar type of a practice started from a saved routine
 - **THEN** the saved routine keeps its own guitar type
+
+### Requirement: A running practice stays reachable from a floating bar
+
+While a practice is active, the system SHALL show a floating bar that names the practice and offers resume/pause and stop, SHALL treat the whole bar as the way back to the practice, and SHALL keep the text fully legible on hover. Inside the practice screen the bar SHALL appear only while the timer is out of view, and SHALL take the user back to the timer when activated.
+
+#### Scenario: Reading the bar
+- **WHEN** the pointer is over the floating bar
+- **THEN** its text keeps its normal opacity and only the border or contrast changes
+
+#### Scenario: Pausing and resuming from anywhere
+- **WHEN** the practice is running and the user activates the pause control
+- **THEN** the timer pauses and the same control turns into resume, without leaving the current screen
+
+#### Scenario: Returning with the bar
+- **WHEN** the user activates the bar outside the practice screen
+- **THEN** the system opens the practice
+
+#### Scenario: Scrolled past the timer
+- **WHEN** the user is on the practice screen and scrolls the timer card out of view
+- **THEN** the bar appears with the same name, clock and controls, and disappears when the timer is visible again
+
+#### Scenario: Returning to the timer
+- **WHEN** the user activates the bar while already on the practice screen
+- **THEN** the system scrolls the timer card back into view instead of navigating
+
+### Requirement: The floating bar can finish the practice
+
+The system SHALL make the floating bar's stop control finish the practice through the existing confirmation and completion flow, SHALL reflect a completed or non-resumable timer by disabling the controls that cannot act, and SHALL bring the user to the practice screen so the completion dialog is visible.
+
+#### Scenario: Stopping from another screen
+- **WHEN** the user activates stop outside the practice screen and confirms
+- **THEN** the practice is finished, the user lands on the practice screen and the completion dialog is shown
+
+#### Scenario: Cancelling the stop
+- **WHEN** the user opens the stop confirmation and cancels it
+- **THEN** the practice keeps its state and the bar stays where it was
+
+#### Scenario: Nothing left to resume
+- **WHEN** the current block has ended and the timer is waiting for the next one
+- **THEN** the resume control is disabled instead of starting a block that cannot run
+
+#### Scenario: Practice already finished
+- **WHEN** the practice has been completed and is waiting to be saved
+- **THEN** the bar's timer controls are disabled and the completion flow stays available
+
+### Requirement: The floating practice bar animates when it appears and disappears
+
+The system SHALL animate the floating practice bar as it enters and leaves, SHALL keep it non-interactive while it is leaving, and SHALL skip the animation when the user prefers reduced motion.
+
+#### Scenario: The bar appears
+- **WHEN** the bar becomes visible because the user leaves the practice screen or because the timer card leaves the viewport
+- **THEN** the bar fades in with a short upward movement instead of appearing abruptly
+
+#### Scenario: The bar disappears
+- **WHEN** the bar stops being needed because the user returns to the practice screen or because the timer card is visible again
+- **THEN** it fades out and can no longer be activated while it leaves
+
+#### Scenario: Reduced motion
+- **WHEN** the user has reduced motion enabled
+- **THEN** the bar appears and disappears without movement and without the enter or exit delay
+
+### Requirement: The home practice plan lists block details without repeated labels
+
+The system SHALL list each block's detail entries in the home screen's practice plan without repeating the "Detalle del bloque" label, SHALL show a linked repertoire part on its own line without a "Parte:" prefix, and SHALL keep the material label.
+
+#### Scenario: A block with details
+- **WHEN** the home plan shows a block with several detail entries
+- **THEN** each entry appears on its own line and no entry is preceded by "Detalle del bloque"
+
+#### Scenario: A repertoire block with a part
+- **WHEN** the block is linked to a repertoire song with a part
+- **THEN** the part appears on its own line with no "Parte:" prefix
+
+#### Scenario: Material
+- **WHEN** the block has attached material
+- **THEN** the material keeps its "Material:" label
+
+#### Scenario: No details
+- **WHEN** the block has no detail entries, part or material
+- **THEN** the plan shows the existing empty state for that block
+
+### Requirement: The home practice plan breaks long text with hyphens
+
+The system SHALL wrap long block titles, detail entries and labels inside their cells, SHALL break long words with a hyphen when they do not fit, and SHALL NOT replace or hide the text.
+
+#### Scenario: A long word in a narrow cell
+- **WHEN** a title or detail contains a word wider than its cell
+- **THEN** the word continues on the next line after a hyphen instead of overflowing the table
+
+#### Scenario: Narrow screen
+- **WHEN** the home plan is viewed on a narrow screen
+- **THEN** the table stays within the viewport and every detail remains readable
+
+### Requirement: The running practice lists every remaining block
+
+While a practice is running, the system SHALL show every block that remains after the current one in plan order, with its name, skill, planned duration and detail entries, SHALL mark the immediate next block, and SHALL update the list when the timer advances.
+
+#### Scenario: Several blocks remain
+- **WHEN** the current block is not the last one
+- **THEN** the practice screen shows the next block and every block after it, with the immediate next block marked
+
+#### Scenario: The timer advances
+- **WHEN** the practice moves to the next block
+- **THEN** that block leaves the list and the following blocks remain in order
+
+#### Scenario: The last block
+- **WHEN** no blocks remain after the current one
+- **THEN** the section shows an empty state instead of an empty list
+
+#### Scenario: Practice completed
+- **WHEN** the practice is completed and the completion dialog is shown
+- **THEN** the remaining-blocks section is not shown
+
+#### Scenario: Long block text
+- **WHEN** a block name or detail does not fit
+- **THEN** it wraps inside its card without overflowing
+
+### Requirement: The timer and metronome cards keep matching heights
+
+On wide viewports the system SHALL place the timer and the metronome in the same row with the same height, SHALL let the timer card fill its column instead of ending above the metronome, and SHALL stack both cards at full width on narrow viewports.
+
+#### Scenario: Wide viewport
+- **WHEN** the practice screen is shown on a wide viewport
+- **THEN** the timer and metronome cards start at the same height and end at the same height, with no empty gap below either card
+
+#### Scenario: Narrow viewport
+- **WHEN** the practice screen is shown on a narrow viewport
+- **THEN** the two cards stack, each taking the full available width without horizontal overflow
+
+#### Scenario: The timer grows
+- **WHEN** the timer shows a longer title, the song picker or another extra row
+- **THEN** the metronome card keeps matching the timer's height instead of staying shorter
