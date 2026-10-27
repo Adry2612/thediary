@@ -22,6 +22,7 @@ test("keeps the labels the lists were showing", () => {
     songsterr: "Songsterr",
     pdf: "PDF",
     audio: "Audio",
+    image: "Imagen",
     guitarpro: "Guitar Pro",
     youtube: "YouTube",
     spotify: "Spotify",

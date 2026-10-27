@@ -7,9 +7,16 @@ import {
   extractYoutubeVideoId,
 } from "@/utils/practice-resource-links";
 import { savePracticeAsset } from "@/services/practice-library";
-import { getPracticeFileKind } from "@/utils/practice-templates";
+import {
+  getPracticeFileKind,
+  normalizeSongsterrUrl,
+} from "@/utils/practice-templates";
 import { createId as createIdentifier } from "@/utils/create-id";
 import { saveCloudPracticeAsset } from "@/services/supabase/practice-files";
+import {
+  ATTACHMENT_OPTIONS,
+  type StoredFileKind,
+} from "@/utils/practice-attachments";
 import type {
   AttachmentDraft,
   AttachmentType,
@@ -18,29 +25,6 @@ import type {
 import type { PracticeResource } from "@/types/practice";
 
 const EMPTY_DRAFT: AttachmentDraft = { title: "", url: "", text: "" };
-
-const DEFAULT_TITLES: Record<AttachmentType, string> = {
-  tab: "Tablatura",
-  pdf: "Documento PDF",
-  youtube: "Vídeo de YouTube",
-  spotify: "Canción de Spotify",
-};
-
-type StoredFileKind = NonNullable<ReturnType<typeof getPracticeFileKind>>;
-
-const ALLOWED_FILE_KINDS: Record<AttachmentType, StoredFileKind[]> = {
-  tab: ["guitarpro"],
-  pdf: ["pdf"],
-  youtube: [],
-  spotify: [],
-};
-
-const FILE_ERRORS: Record<AttachmentType, string> = {
-  tab: "Sube un archivo Guitar Pro (.gp, .gpx, .gp3–.gp5) o de texto (.txt).",
-  pdf: "Sube un archivo PDF.",
-  youtube: "",
-  spotify: "",
-};
 
 function createId() {
   return createIdentifier();
@@ -78,7 +62,10 @@ export function usePracticeAttachment(
   }
 
   function attach(type: AttachmentType, resource: Omit<PracticeResource, "id" | "title">) {
-    const title = draft.title.trim() || resource.fileName || DEFAULT_TITLES[type];
+    const title =
+      draft.title.trim() ||
+      resource.fileName ||
+      ATTACHMENT_OPTIONS[type].defaultTitle;
     onAttach({ ...resource, id: createId(), title });
     close();
   }
@@ -103,7 +90,18 @@ export function usePracticeAttachment(
     attach("spotify", { kind: "spotify", url: draft.url.trim() });
   }
 
+  function submitSongsterr() {
+    const url = normalizeSongsterrUrl(draft.url);
+    if (!url) {
+      return setError(
+        "Introduce un enlace HTTPS válido de Songsterr (songsterr.com).",
+      );
+    }
+    attach("songsterr", { kind: "songsterr", url });
+  }
+
   function submit() {
+    if (activeType === "songsterr") return submitSongsterr();
     if (activeType === "youtube") return submitYoutube();
     if (activeType === "spotify") return submitSpotify();
     if (activeType === "tab" && tabMode === "text") return submitTabText();
@@ -119,10 +117,18 @@ export function usePracticeAttachment(
 
   async function submitFile(file: File | undefined) {
     if (!file || !activeType) return;
+    const option = ATTACHMENT_OPTIONS[activeType];
     const isTabText = activeType === "tab" && isTextFile(file);
     const kind = getPracticeFileKind(file.name, file.type);
-    const isAllowed = kind !== null && ALLOWED_FILE_KINDS[activeType].includes(kind);
-    if (!isTabText && !isAllowed) return setError(FILE_ERRORS[activeType]);
+    const isAllowed = kind !== null && option.fileKinds.includes(kind);
+    if (!isTabText && !isAllowed) return setError(option.fileError);
+    if (
+      !isTabText &&
+      option.maxBytes !== undefined &&
+      file.size > option.maxBytes
+    ) {
+      return setError(option.sizeError ?? "El archivo es demasiado grande.");
+    }
     if (!isReady) {
       return setError("Espera a que se carguen tus datos antes de subir archivos.");
     }

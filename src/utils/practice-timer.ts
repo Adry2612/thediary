@@ -17,6 +17,18 @@ export type PracticeTimerRuntime = {
   awaitingPhaseAdvance: boolean;
 };
 
+/**
+ * Indica si el aviso de fin de bloque debe sonar ahora. Solo avisa en el
+ * flanco de subida: mientras el bloque siga en overtime, `awaitingPhaseAdvance`
+ * permanece activo y no debe repetirse el sonido en cada sincronización.
+ */
+export function shouldSignalBlockEnd(
+  previous: Pick<PracticeTimerRuntime, "awaitingPhaseAdvance">,
+  next: Pick<PracticeTimerRuntime, "awaitingPhaseAdvance">,
+): boolean {
+  return next.awaitingPhaseAdvance && !previous.awaitingPhaseAdvance;
+}
+
 export function synchronizePracticeTimer(
   runtime: PracticeTimerRuntime,
   phasePlan: PracticeTimerPlanItem[],

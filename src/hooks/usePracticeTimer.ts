@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  shouldSignalBlockEnd,
   synchronizePracticeTimer,
   type PracticeTimerPlanItem,
   type PracticeTimerRuntime,
@@ -255,7 +256,9 @@ export function usePracticeTimer(
       }
 
       runtimeRef.current = result.runtime;
-      if (result.runtime.awaitingPhaseAdvance) playTransitionTone(false);
+      if (shouldSignalBlockEnd(runtime, result.runtime)) {
+        playTransitionTone(false);
+      }
       publishSnapshot(result.runtime);
     },
     [
@@ -358,7 +361,7 @@ export function usePracticeTimer(
 
     runtimeRef.current = nextRuntime;
     if (nextPhase) {
-      playTransitionTone(false);
+      if (!runtime.awaitingPhaseAdvance) playTransitionTone(false);
       window.setTimeout(() => playTransitionTone(true), 220);
       onPhaseChangeRef.current?.(nextPhase);
     }

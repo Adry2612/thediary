@@ -82,8 +82,8 @@ export function PracticeMaterials({
       )}
       {resources.length === 0 && (
         <p className='text-sm text-muted'>
-          Aún no hay material. Usa el botón + para adjuntar una TAB, un PDF o un
-          enlace de YouTube o Spotify.
+          Aún no hay material. Usa el botón + para adjuntar una TAB, un PDF, una
+          imagen o un enlace de Songsterr, YouTube o Spotify.
         </p>
       )}
       {resources.length > 0 && (

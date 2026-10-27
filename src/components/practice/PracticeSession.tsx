@@ -58,13 +58,19 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const text = useI18nSection("practice");
   const timerText = useI18nSection("timer");
   const licksText = useI18nSection("licks");
+  const pathname = usePathname();
+  const isPracticeRoute = pathname === "/practice";
   const { id: sessionId, name, phases } = session;
   const [isCompleted, setIsCompleted] = useState(false);
   const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
   const [pendingResult, setPendingResult] =
     useState<PracticeTimerResult | null>(null);
-  const timerCardRef = useRef<HTMLDivElement>(null);
-  const isTimerVisible = useElementVisibility(timerCardRef);
+  const {
+    ref: timerCardRef,
+    element: timerCardElement,
+    isVisible: isTimerVisible,
+    hasMeasured: isTimerMeasured,
+  } = useElementVisibility<HTMLDivElement>("0px", pathname);
   const sessionSavedRef = useRef(false);
   const completionHandledRef = useRef(false);
   const addSession = usePracticeStore((state) => state.addSession);
@@ -96,10 +102,10 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     (state) => state.setGuitarType,
   );
   const { lastGuitarType } = useGuitarPreference();
-  const pathname = usePathname();
-  const isPracticeRoute = pathname === "/practice";
   const { isMounted: isBarMounted, isVisible: isBarVisible } =
-    useAnimatedPresence(!isPracticeRoute || !isTimerVisible);
+    useAnimatedPresence(
+      !isPracticeRoute || (isTimerMeasured && !isTimerVisible),
+    );
   const router = useRouter();
   const {
     bpm: metronomeBpm,
@@ -260,7 +266,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   }
 
   function scrollToTimerCard() {
-    const element = timerCardRef.current;
+    const element = timerCardElement;
     if (!element) return;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",

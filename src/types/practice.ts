@@ -15,6 +15,7 @@ export const PRACTICE_RESOURCE_KINDS = [
   "guitarpro",
   "pdf",
   "audio",
+  "image",
   "youtube",
   "spotify",
   "tab",

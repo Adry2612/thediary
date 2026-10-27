@@ -5,17 +5,11 @@ import {
   ATTACHMENT_TYPES,
   type AttachmentType,
 } from '@/types/practice-attachment';
+import { ATTACHMENT_OPTIONS } from '@/utils/practice-attachments';
 
 interface Props {
   onSelect: (type: AttachmentType) => void;
 }
-
-const OPTIONS: Record<AttachmentType, { label: string; hint: string }> = {
-  tab: { label: 'TAB', hint: 'Texto o archivo' },
-  pdf: { label: 'PDF', hint: 'Documento' },
-  youtube: { label: 'YouTube', hint: 'Enlace de vídeo' },
-  spotify: { label: 'Spotify', hint: 'Enlace de canción' },
-};
 
 export const AttachMaterialMenu = ({ onSelect }: Props) => {
   const { containerRef, isOpen, toggle, close } = useDismissibleMenu();
@@ -63,9 +57,9 @@ export const AttachMaterialMenu = ({ onSelect }: Props) => {
                 onClick={() => handleSelect(type)}
                 className='flex min-h-11 w-full items-baseline justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition hover:bg-white/5 focus-visible:bg-white/5 focus-visible:outline-none'
               >
-                <span className='font-medium'>{OPTIONS[type].label}</span>
+                <span className='font-medium'>{ATTACHMENT_OPTIONS[type].label}</span>
                 <span className='truncate text-xs text-muted'>
-                  {OPTIONS[type].hint}
+                  {ATTACHMENT_OPTIONS[type].hint}
                 </span>
               </button>
             </li>
