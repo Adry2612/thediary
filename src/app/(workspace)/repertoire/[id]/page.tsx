@@ -4,6 +4,8 @@ import { use } from 'react';
 import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
 import { RepertoireSongEditor } from '@/components/repertoire/RepertoireSongEditor';
 import { BackLink } from '@/components/ui/BackLink';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PageShell } from '@/components/ui/PageShell';
 import {
   getRepertoireItemPracticeStats,
   getRepertoirePracticeStats,
@@ -33,25 +35,23 @@ export default function RepertoireDetailPage({ params }: Props) {
 
   if (!hasHydrated) {
     return (
-      <main className='mx-auto max-w-5xl px-5 py-16 text-sm text-muted'>
-        {repertoireDetail.loading}
-      </main>
+      <PageShell>
+        <p className='text-sm text-muted'>{repertoireDetail.loading}</p>
+      </PageShell>
     );
   }
 
   if (!item) {
     return (
-      <main className='mx-auto max-w-5xl px-5 py-16 sm:px-8'>
+      <PageShell>
         <BackLink href='/repertoire'>{repertoireDetail.back}</BackLink>
-        <h1 className='mt-8 font-sans text-3xl font-semibold'>
-          {repertoireDetail.notFound}
-        </h1>
-      </main>
+        <PageHeader className='mt-8' title={repertoireDetail.notFound} />
+      </PageShell>
     );
   }
 
   return (
-    <main className='mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16'>
+    <PageShell>
       <BackLink href='/repertoire'>{repertoireDetail.back}</BackLink>
       <div className='mt-6'>
         <RepertoireItemCard
@@ -64,6 +64,6 @@ export default function RepertoireDetailPage({ params }: Props) {
         />
       </div>
       <RepertoireSongEditor item={item} onSave={saveRepertoireItem} />
-    </main>
+    </PageShell>
   );
 }

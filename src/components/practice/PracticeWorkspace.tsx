@@ -1,25 +1,41 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FreePracticeStartDialog } from '@/components/practice/FreePracticeStartDialog';
 import { PracticePlanBuilder } from '@/components/practice/PracticePlanBuilder';
+import { PracticePlanTable } from '@/components/practice/PracticePlanTable';
 import { SavedPracticeRoutines } from '@/components/practice/SavedPracticeRoutines';
 import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PageShell } from '@/components/ui/PageShell';
 import { ArrowLeftIcon } from '@/components/ui/icons';
 import {
-  createPracticePlanFromSession,
   createQuickPracticePlan,
+  createQuickRepertoirePlan,
   createTemplatePlan,
   type PracticeLaunchPlan,
   type PracticeLaunchSession,
 } from '@/utils/practice-launch';
 import { getPracticePlanDuration } from '@/utils/practice-plan';
 import {
+  INITIAL_PRACTICE_FLOW,
+  backToPracticeChoice,
+  closePracticeBuilder,
+  finishPractice,
+  openPracticeBuilder,
+  reviewPracticePlan,
+  startPracticeNow,
+  startReviewedPractice,
+} from '@/utils/practice-flow';
+import {
   validatePracticeTemplate,
 } from '@/utils/practice-templates';
 import { useRequestedLaunch } from '@/hooks/useRequestedLaunch';
+import { useGuitarPreference } from '@/hooks/useGuitarPreference';
 import { useActivePracticeSessionStore } from '@/stores/useActivePracticeSessionStore';
 import { usePracticeStore } from '@/stores/usePracticeStore';
-import type { PracticePhase } from '@/types/practice';
+import type { GuitarType, PracticePhase } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { createId } from '@/utils/create-id';
 import { PracticeSkeleton } from '@/components/ui/Skeletons';
@@ -42,6 +58,7 @@ export function PracticeWorkspace({
   const history = usePracticeStore((state) => state.history);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
   const licks = usePracticeStore((state) => state.licks);
+  const guitars = usePracticeStore((state) => state.guitars);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const activeSession = useActivePracticeSessionStore(
     (state) => state.activeSession,
@@ -49,39 +66,37 @@ export function PracticeWorkspace({
   const activeSessionHydrated = useActivePracticeSessionStore(
     (state) => state.hasHydrated,
   );
-  const isSplitView = useActivePracticeSessionStore(
-    (state) => state.isSplitView,
-  );
   const setActiveSession = useActivePracticeSessionStore(
     (state) => state.setActiveSession,
   );
-  const [draftPlan, setDraftPlan] = useState<PracticeLaunchPlan>({
-    name: text.yourPractice,
-    phases: initialPhases,
-  });
-  const [isBuilding, setIsBuilding] = useState(false);
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(
-    null,
-  );
+  const [flow, setFlow] = useState(INITIAL_PRACTICE_FLOW);
+  const router = useRouter();
+  const { lastGuitarType, rememberGuitarType } = useGuitarPreference();
   const activePlan = activeSession;
-  const WorkspaceContainer = activePlan ? 'div' : 'main';
   const isLaunching = Boolean(
-    requestedSessionId ||
-      requestedQuickRepertoireId ||
-      (autoStartTemplate && requestedTemplateId),
+    requestedSessionId || (autoStartTemplate && requestedTemplateId),
   );
   const launchRequestedPlan = useCallback(
     (plan: PracticeLaunchSession) => {
-      setDraftPlan({
-        name: plan.name,
-        phases: plan.phases,
-        guitarType: plan.guitarType,
-      });
       setActiveSession({ id: createId(), ...plan });
+      setFlow((current) =>
+        startPracticeNow(current, {
+          name: plan.name,
+          phases: plan.phases,
+          ...(plan.guitarType ? { guitarType: plan.guitarType } : {}),
+          ...(plan.guitarId ? { guitarId: plan.guitarId } : {}),
+          ...(plan.targetMinutes ? { targetMinutes: plan.targetMinutes } : {}),
+        }),
+      );
     },
     [setActiveSession],
   );
-  const { templateLaunchError, setTemplateLaunchError } = useRequestedLaunch({
+  const {
+    templateLaunchError,
+    setTemplateLaunchError,
+    pendingQuickRepertoire,
+    clearPendingQuickRepertoire,
+  } = useRequestedLaunch({
     requestedTemplateId,
     requestedSessionId,
     requestedQuickRepertoireId,
@@ -99,11 +114,18 @@ export function PracticeWorkspace({
     invalidRepeat: text.invalidRepeat,
     launch: launchRequestedPlan,
   });
+
+  useEffect(() => {
+    if (!activeSession) {
+      setFlow((current) => finishPractice(current));
+    }
+  }, [activeSession]);
+
   if (!hasHydrated || (isLaunching && !activePlan)) {
     return <PracticeSkeleton />;
   }
 
-  function startTemplate(templateId: string) {
+  function reviewTemplate(templateId: string) {
     const template = templates.find((candidate) => candidate.id === templateId);
     if (!template) {
       setTemplateLaunchError(text.templateNotFound);
@@ -118,10 +140,10 @@ export function PracticeWorkspace({
       setTemplateLaunchError(text.invalidTemplate);
       return;
     }
-    const plan = createTemplatePlan(template);
-    setDraftPlan(plan);
     setTemplateLaunchError(null);
-    setActiveSession({ id: createId(), ...plan });
+    setFlow((current) =>
+      reviewPracticePlan(current, createTemplatePlan(template)),
+    );
   }
 
   function startQuickPractice() {
@@ -130,114 +152,242 @@ export function PracticeWorkspace({
       text.quickBlockName,
       createId(),
     );
-    setDraftPlan({ name: plan.name, phases: plan.phases });
     setTemplateLaunchError(null);
+    setFlow((current) => startPracticeNow(current, plan));
     setActiveSession({ id: createId(), ...plan });
   }
 
-  function openBuilder(templateId: string | null) {
-    setEditingTemplateId(templateId);
-    if (templateId === null) {
-      setDraftPlan({ name: text.yourPractice, phases: initialPhases });
-    }
-    setIsBuilding(true);
+  function startReviewedPlan() {
+    const plan = flow.plan;
+    if (!plan) return;
+    setTemplateLaunchError(null);
+    setFlow((current) => startReviewedPractice(current));
+    setActiveSession({ id: createId(), ...plan });
   }
 
+  function startBuiltPlan(
+    name: string,
+    phases: PracticePhase[],
+    guitarType?: PracticeLaunchPlan['guitarType'],
+    guitarId?: string,
+  ) {
+    const plan = {
+      name,
+      phases,
+      ...(guitarType ? { guitarType } : {}),
+      ...(guitarId ? { guitarId } : {}),
+    };
+    setFlow((current) => reviewPracticePlan(current, plan));
+  }
+
+  function openBuilder(templateId: string | null) {
+    setFlow((current) => openPracticeBuilder(current, templateId));
+  }
+
+  function closeBuilder() {
+    setFlow((current) => closePracticeBuilder(current));
+  }
+
+  function startPendingQuickRepertoire(
+    guitarType: GuitarType,
+    guitarId?: string,
+    targetMinutes?: number,
+  ) {
+    if (!pendingQuickRepertoire) return;
+    rememberGuitarType(guitarType);
+    const plan = createQuickRepertoirePlan(pendingQuickRepertoire, {
+      guitarType,
+      guitarId,
+      targetMinutes,
+    });
+    clearPendingQuickRepertoire();
+    launchRequestedPlan(plan);
+    router.replace('/practice');
+  }
+
+  function cancelPendingQuickRepertoire() {
+    clearPendingQuickRepertoire();
+    router.replace('/practice');
+  }
+
+  const reviewedPlan = flow.plan;
+  const builder = flow.builder;
+  const isBuilding = Boolean(builder);
+  const builderPhases =
+    builder && !builder.templateId && reviewedPlan?.phases.length
+      ? reviewedPlan.phases
+      : initialPhases;
+  const title = activePlan?.name ?? text.yourPractice;
+  const activeGuitar = activePlan?.guitarId
+    ? guitars.find((guitar) => guitar.id === activePlan.guitarId)
+    : undefined;
+  const reviewedGuitar = reviewedPlan?.guitarId
+    ? guitars.find((guitar) => guitar.id === reviewedPlan.guitarId)
+    : undefined;
+  const activeGuitarLabel =
+    activeGuitar?.name ??
+    (activePlan?.guitarType
+      ? activePlan.guitarType === 'electric'
+        ? text.guitarElectric
+        : text.guitarAcoustic
+      : null);
+  const reviewedGuitarLabel =
+    reviewedGuitar?.name ??
+    (reviewedPlan?.guitarType
+      ? reviewedPlan.guitarType === 'electric'
+        ? text.guitarElectric
+        : text.guitarAcoustic
+      : null);
+
   return (
-    <WorkspaceContainer
-      className={`mx-auto flex w-full ${isSplitView ? 'max-w-7xl' : 'max-w-5xl'} flex-col gap-6 px-5 sm:px-8 ${activePlan ? 'pb-0 pt-12 sm:pt-16' : 'py-12 sm:py-16'}`}
+    <PageShell
+      as={activePlan ? 'div' : 'main'}
+      bottom={activePlan ? 'flush' : 'default'}
+      className='flex flex-col gap-6'
     >
-      <header className='enter'>
-        <p className='font-mono text-xs uppercasetext-muted'>{text.diary}</p>
-        <h1 className='mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight sm:text-4xl'>
-          {activePlan?.name ?? text.yourPractice}
-        </h1>
-        {activePlan ?
-          <div className='mt-3 flex flex-wrap items-center gap-3'>
+      <PageHeader
+        bottomSpacing='none'
+        title={title}
+        description={
+          activePlan ?
             <p className='font-mono text-xs uppercase text-muted'>
               {activePlan.isCountUp ?
                 text.freeSession
               : `${getPracticePlanDuration(activePlan.phases)} min · ${text.personalSession}`}
-              {activePlan.guitarType ?
-                ` · ${activePlan.guitarType === 'electric' ? text.guitarElectric : text.guitarAcoustic}` : null}
+              {activeGuitarLabel ? ` · ${activeGuitarLabel}` : null}
             </p>
-          </div>
-        : <p className='mt-3 max-w-xl text-sm text-muted'>
-            {text.setupDescription}
-          </p>
+          : flow.step === 'review' && reviewedPlan ?
+            <p className='font-mono text-xs uppercase text-muted'>
+              {reviewedPlan.phases.length} {text.blocksCount} ·{' '}
+              {getPracticePlanDuration(reviewedPlan.phases)} {text.total}
+              {reviewedGuitarLabel ? ` · ${reviewedGuitarLabel}` : null}
+            </p>
+          : text.setupDescription
         }
-      </header>
+        actions={
+          !activePlan && flow.step === 'choose' && !isBuilding ?
+            <Button type='button' size='field' onClick={startQuickPractice}>
+              {text.quickPractice}
+            </Button>
+          : undefined
+        }
+      />
 
       {!activePlan && (
         <>
           {templateLaunchError && (
-            <p
-              className='text-sm text-red-300'
-              role='alert'
-            >
+            <p className='text-sm text-red-300' role='alert'>
               {templateLaunchError}
             </p>
           )}
+
           {isBuilding ? (
             <>
               <button
                 type='button'
-                onClick={() => {
-                  setIsBuilding(false);
-                  setEditingTemplateId(null);
-                }}
+                onClick={closeBuilder}
+                className='inline-flex items-center gap-1.5 self-start text-sm text-muted underline underline-offset-4 hover:text-ink'
+              >
+                <ArrowLeftIcon className='size-4 shrink-0' />
+                {flow.step === 'review' ? text.backToReview : text.backToRoutines}
+              </button>
+              <PracticePlanBuilder
+                initialName={reviewedPlan?.name ?? text.yourPractice}
+                initialPhases={builderPhases}
+                initialGuitarType={reviewedPlan?.guitarType}
+                initialGuitarId={reviewedPlan?.guitarId}
+                initialTemplateId={builder?.templateId ?? undefined}
+                onStart={startBuiltPlan}
+              />
+            </>
+          ) : flow.step === 'review' && reviewedPlan ? (
+            <>
+              <button
+                type='button'
+                onClick={() => setFlow((current) => backToPracticeChoice(current))}
                 className='inline-flex items-center gap-1.5 self-start text-sm text-muted underline underline-offset-4 hover:text-ink'
               >
                 <ArrowLeftIcon className='size-4 shrink-0' />
                 {text.backToRoutines}
               </button>
-              <PracticePlanBuilder
-                initialName={draftPlan.name}
-                initialPhases={draftPlan.phases}
-                initialGuitarType={draftPlan.guitarType}
-                initialTemplateId={editingTemplateId ?? undefined}
-                onStart={(name, phases, guitarType) => {
-                  const nextPlan = {
-                    name,
-                    phases,
-                    ...(guitarType ? { guitarType } : {}),
-                  };
-                  setDraftPlan(nextPlan);
-                  setActiveSession({ id: createId(), ...nextPlan });
-                }}
-              />
-            </>
-          ) : (
-            <>
-              <div className='flex flex-wrap gap-3'>
+
+              <section className='flex flex-col gap-4'>
+                <div className='flex flex-wrap items-baseline justify-between gap-3'>
+                  <h2 className='font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8'>
+                    {text.reviewPlanTitle}
+                  </h2>
+                  <p className='text-xs text-muted'>{text.reviewPlanDescription}</p>
+                </div>
+                <PracticePlanTable
+                  phases={reviewedPlan.phases}
+                  repertoireItems={repertoireItems}
+                />
+              </section>
+
+              <div className='flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5'>
+                <Button
+                  type='button'
+                  onClick={() =>
+                    openBuilder(reviewedPlan.templateId ?? null)
+                  }
+                >
+                  {text.editRoutine}
+                </Button>
                 <Button
                   type='button'
                   variant='primary'
                   size='field'
-                  onClick={() => openBuilder(null)}
+                  onClick={startReviewedPlan}
                 >
-                  {text.createPractice}
-                </Button>
-                <Button
-                  type='button'
-                  size='field'
-                  onClick={startQuickPractice}
-                >
-                  {text.quickPractice}
+                  {text.startPractice}
                 </Button>
               </div>
-              <p className='max-w-xl text-xs leading-6 text-muted'>
-                {text.quickPracticeDescription}
-              </p>
+            </>
+          ) : (
+            <>
               <SavedPracticeRoutines
                 routines={templates}
-                onStart={startTemplate}
+                onStart={reviewTemplate}
                 onEdit={(templateId) => openBuilder(templateId)}
               />
+              <div className='flex flex-wrap items-center gap-4 border-t border-line pt-5'>
+                {templates.length === 0 ? (
+                  <Button
+                    type='button'
+                    variant='primary'
+                    size='field'
+                    onClick={() => openBuilder(null)}
+                  >
+                    {text.createPractice}
+                  </Button>
+                ) : (
+                  <button
+                    type='button'
+                    onClick={() => openBuilder(null)}
+                    className='text-sm text-muted underline underline-offset-4 hover:text-ink'
+                  >
+                    {text.createPractice}
+                  </button>
+                )}
+                <p className='max-w-xl text-xs leading-6 text-muted'>
+                  {text.quickPracticeDescription}
+                </p>
+              </div>
             </>
           )}
         </>
       )}
-    </WorkspaceContainer>
+
+      {pendingQuickRepertoire && (
+        <FreePracticeStartDialog
+          key={pendingQuickRepertoire.id}
+          item={pendingQuickRepertoire}
+          guitars={guitars}
+          defaultGuitarType={lastGuitarType}
+          onCancel={cancelPendingQuickRepertoire}
+          onStart={startPendingQuickRepertoire}
+        />
+      )}
+    </PageShell>
   );
 }

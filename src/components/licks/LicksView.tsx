@@ -11,6 +11,8 @@ import { SearchField } from "@/components/ui/SearchField";
 import { PlusIcon } from "@/components/ui/icons";
 import { SelectField } from "@/components/ui/SelectField";
 import { LicksSkeleton } from "@/components/ui/Skeletons";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PageShell } from "@/components/ui/PageShell";
 import { useLicksLibrary } from "@/hooks/useLicksLibrary";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { findLinkedSong, getLickTitle } from "@/utils/licks/presentation";
@@ -60,28 +62,21 @@ export function LicksView({ todayKey }: { todayKey: string }) {
   ];
 
   return (
-    <main className="mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
-      <header className="flex flex-wrap items-end justify-between gap-6">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-            {text.eyebrow}
-          </p>
-          <h1 className="mt-3 font-sans text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            {text.title}
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm text-muted">
-            {text.description}
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="primary"
-          onClick={() => setEditor({ lick: null })}
-        >
-          <PlusIcon className="size-4" />
-          {text.newLick}
-        </Button>
-      </header>
+    <PageShell>
+      <PageHeader
+        title={text.title}
+        description={text.description}
+        actions={
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => setEditor({ lick: null })}
+          >
+            <PlusIcon className="size-4" />
+            {text.newLick}
+          </Button>
+        }
+      />
 
       {persistenceError ? (
         <p role="alert" className="mt-6 rounded-md border border-red-300/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -205,6 +200,6 @@ export function LicksView({ todayKey }: { todayKey: string }) {
           onClose={() => setEditor(null)}
         />
       ) : null}
-    </main>
+    </PageShell>
   );
 }

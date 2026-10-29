@@ -3,6 +3,10 @@ import {
   increaseTempoWithinLimit,
   type TempoRampSettings,
 } from "./metronome-tempo-ramp.ts";
+import {
+  getBeatState,
+  type MetronomeBeatState,
+} from "./metronome-beat-pattern.ts";
 
 const SCHEDULE_AHEAD_SECONDS = 0.1;
 
@@ -15,11 +19,18 @@ export interface MetronomeScheduleState {
   nextTempoIncreaseBar: number | null;
 }
 
+/** Qué clic suena en un pulso programado. */
+export type MetronomeBeatClick =
+  | "accent"
+  | "accentClosed"
+  | "normal"
+  | "none";
+
 export interface ScheduledMetronomeBeat {
   scheduledAt: number;
   beat: number;
   subdivision: number;
-  isDownbeat: boolean;
+  click: MetronomeBeatClick;
 }
 
 interface GetScheduledMetronomeBeatsInput {
@@ -28,6 +39,7 @@ interface GetScheduledMetronomeBeatsInput {
   bpm: number;
   subdivision: number;
   beatsPerMeasure: number;
+  beatPattern: readonly MetronomeBeatState[];
   tempoRamp: TempoRampSettings;
 }
 
@@ -43,6 +55,7 @@ export function getScheduledMetronomeBeats({
   bpm,
   subdivision,
   beatsPerMeasure,
+  beatPattern,
   tempoRamp,
 }: GetScheduledMetronomeBeatsInput): ScheduledMetronomeBeats {
   const beats: ScheduledMetronomeBeat[] = [];
@@ -57,12 +70,20 @@ export function getScheduledMetronomeBeats({
   const intervalSeconds = getTempoRampIntervalSeconds(tempoRamp);
 
   while (nextBeatTime < schedulingLimit) {
-    const isDownbeat = beatNumber === 0 && subdivisionNumber === 0;
+    // El incremento por compases sigue el inicio del compás, no el acento:
+    // silenciar el primer pulso no debe parar la subida de tempo.
+    const isBarStart = beatNumber === 0 && subdivisionNumber === 0;
+    const beatState = getBeatState(beatPattern, beatNumber);
+    const click: MetronomeBeatClick =
+      beatState === "muted" ? "none"
+      : beatState === "accent" && subdivisionNumber === 0 ? "accent"
+      : beatState === "accentClosed" && subdivisionNumber === 0 ? "accentClosed"
+      : "normal";
 
     if (
       tempoRamp.enabled &&
       tempoRamp.intervalUnit === "bars" &&
-      isDownbeat &&
+      isBarStart &&
       nextTempoIncreaseBar !== null &&
       completedBars >= nextTempoIncreaseBar
     ) {
@@ -102,7 +123,7 @@ export function getScheduledMetronomeBeats({
       scheduledAt: nextBeatTime,
       beat: beatNumber,
       subdivision: subdivisionNumber,
-      isDownbeat,
+      click,
     });
 
     nextBeatTime += 60 / currentBpm / subdivision;

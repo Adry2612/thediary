@@ -17,6 +17,8 @@ function createEmptyState(overrides = {}) {
     customChords: [],
     weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
     practiceGoals: { ...DEFAULT_PRACTICE_GOALS },
+    guitars: [],
+    guitarEntries: [],
     ...overrides,
   };
 }
@@ -38,6 +40,14 @@ test("any populated collection counts as practice data", () => {
   );
   assert.equal(
     hasPracticeData(createEmptyState({ customChords: [{ id: "c" }] })),
+    true,
+  );
+  assert.equal(
+    hasPracticeData(createEmptyState({ guitars: [{ id: "g" }] })),
+    true,
+  );
+  assert.equal(
+    hasPracticeData(createEmptyState({ guitarEntries: [{ id: "e" }] })),
     true,
   );
 });
@@ -100,6 +110,8 @@ test("copies only the persisted parts into the snapshot", () => {
 
   assert.deepEqual(Object.keys(snapshot).sort(), [
     "customChords",
+    "guitarEntries",
+    "guitars",
     "history",
     "licks",
     "practiceGoals",

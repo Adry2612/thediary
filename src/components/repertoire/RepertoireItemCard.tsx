@@ -241,7 +241,7 @@ export function RepertoireItemCard({
             event.currentTarget.blur();
           }
         }}
-        className={`max-w-40 truncate text-base outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 sm:text-xs ${artist ? 'text-muted' : 'text-muted/60'}`}
+        className={`max-w-40 truncate text-base outline-none focus-visible:underline focus-visible:decoration-accent-green-fg focus-visible:decoration-2 focus-visible:underline-offset-4 ${artist ? 'text-muted' : 'text-muted/60'}`}
       >
         {item.artist ?? ''}
       </span>

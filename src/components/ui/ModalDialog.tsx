@@ -7,6 +7,8 @@ interface ModalDialogProps {
   dialogRef?: Ref<HTMLDialogElement>;
   labelledBy?: string;
   open?: boolean;
+  /** Añade la animación de salida antes de que el `<dialog>` se cierre. */
+  isClosing?: boolean;
   variant?: Variant;
   className?: string;
   onCancel?: (event: SyntheticEvent<HTMLDialogElement>) => void;
@@ -16,7 +18,7 @@ interface ModalDialogProps {
 }
 
 const baseStyles =
-  "m-auto border border-line bg-surface p-0 text-ink backdrop:bg-black/70";
+  "overlay-motion m-auto border border-line bg-surface p-0 text-ink backdrop:bg-black/70";
 
 const variants: Record<Variant, string> = {
   md: "w-[calc(100%-2rem)] max-w-md",
@@ -35,6 +37,7 @@ export function ModalDialog({
   dialogRef,
   labelledBy,
   open,
+  isClosing = false,
   variant = "md",
   className = "",
   onCancel,
@@ -47,6 +50,7 @@ export function ModalDialog({
       ref={dialogRef}
       aria-labelledby={labelledBy}
       open={open}
+      data-closing={isClosing ? "true" : undefined}
       onCancel={onCancel}
       onClose={onClose}
       onMouseDown={onMouseDown}

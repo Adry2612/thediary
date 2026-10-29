@@ -78,3 +78,11 @@ test("image attachments cap the upload size and stay in the image kind", () => {
   assert.equal(MAX_IMAGE_BYTES, 10 * 1024 * 1024);
   assert.ok(image.sizeError?.trim().length);
 });
+
+test("the image picker explicitly accepts PNG and the other supported formats", () => {
+  const accept = ATTACHMENT_OPTIONS.image.accept;
+
+  for (const value of ["image/png", ".png", "image/jpeg", ".webp"]) {
+    assert.ok(accept.includes(value), `image accept must include ${value}`);
+  }
+});

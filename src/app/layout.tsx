@@ -13,6 +13,10 @@ import './globals.css';
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // La app se comporta como una aplicación nativa: ni el zoom por gesto ni el
+  // automático al enfocar un campo deben cambiar la escala de la página.
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
   themeColor: '#121211',
 };

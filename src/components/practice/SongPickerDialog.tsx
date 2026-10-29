@@ -54,7 +54,6 @@ export function SongPickerDialog({
   return (
     <SearchPickerDialog
       open={open}
-      eyebrow={text.repertoireSong}
       title={text.songPickerTitle}
       description={text.songPickerDescription}
       searchLabel={text.songPickerSearch}

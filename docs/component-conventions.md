@@ -100,8 +100,10 @@ Los componentes compartidos reciben uniones cerradas (`variant`, `size`, `tone`,
 | `ModalDialog` | `variant: md \| lg \| confirm`, `dialogRef`, `open`, `labelledBy` | `m-auto border border-line bg-surface p-0 text-ink backdrop:bg-black/70` + `md: w-[calc(100%-2rem)] max-w-md`, `lg: max-h-[90dvh] … max-w-lg overflow-y-auto`, `confirm: fixed inset-0 … max-w-md shadow-[0_8px_32px_rgba(0,0,0,0.4)]` |
 | `PortalModal` | `open`, `title`, `description`, `busy`, `onClose` | `role="dialog"`, `aria-modal`, `fixed inset-0 z-50 grid place-items-center bg-black/60 p-4`, panel `w-full max-w-md rounded-xl border border-line bg-surface p-6` |
 | `ConfirmDialog` | `labelledBy`, `title`, `description`, `confirmLabel`, `cancelLabel`, `onConfirm`, `onCancel` | `ModalDialog` confirm + `p-6 sm:p-8` y botones `flex flex-col-reverse gap-3 sm:flex-row sm:justify-end` |
-| `DialogHeader` | `eyebrow`, `title`, `titleId`, `description`, `onClose`, `closeLabel` | `flex items-start justify-between gap-4`; ceja `font-mono text-[10px] uppercase tracking-[0.14em] text-muted`; cierre `size-7 rounded border border-line` |
-| `SectionHeader` | pendiente: se construye al adoptarlo en 6.6 | — |
+| `DialogHeader` | `title`, `titleId`, `description`, `onClose`, `closeLabel` | `flex items-start justify-between gap-4`; título `text-xl font-semibold tracking-tight`; cierre `size-7 rounded border border-line` |
+| `PageShell` | `as: main \| div`, `bottom: default \| flush`, `className` | `mx-auto w-full max-w-7xl px-5 sm:px-8` + `py-12 sm:py-16` (o `flush`: `pt-12 pb-0 sm:pt-16 sm:pb-0`); `main` añade `min-h-screen` |
+| `PageHeader` | `title`, `titleId`, `description`, `actions`, `bottomSpacing: default \| none`, `className` | `enter flex flex-wrap items-end justify-between gap-6`; título `font-sans text-3xl leading-tight font-semibold tracking-tight sm:text-4xl`; descripción `mt-4 max-w-2xl text-base font-medium text-muted sm:text-lg`; sin ceja |
+| `SectionHeader` | pendiente: su alcance es el de las secciones internas, sobre `PageShell`/`PageHeader`, no el de la cabecera de página | — |
 
 `ui/ModalDialog` no abre ni cierra nada: la ref y los efectos viven en
 `useDialogModal` (`"use client"`), que hace `showModal`/`close`, bloquea el

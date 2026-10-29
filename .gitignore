@@ -29,4 +29,7 @@ pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# artifacts from the browser verification tool
+/.playwright-mcp/
+
 supabase/migrations

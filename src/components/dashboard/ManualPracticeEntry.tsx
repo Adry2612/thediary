@@ -1,37 +1,55 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextArea, TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { createManualPracticeRecord } from "@/utils/manual-practice";
 import { usePracticeStore } from "@/stores/usePracticeStore";
-import { PRACTICE_SKILLS, type GuitarType } from "@/types/practice";
+import { usePracticeGuitar } from "@/hooks/usePracticeGuitar";
+import { PRACTICE_SKILLS, type GuitarType, type PracticeSkill } from "@/types/practice";
 import { useGuitarPreference } from "@/hooks/useGuitarPreference";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import {
+  changeManualPracticeSkill,
+  changeManualPracticeSongPart,
+  clearManualPracticeSong,
   createManualPracticeBlockDraft,
+  linkManualPracticeSong,
   manualPracticeBlocksFromDrafts,
   toLocalDateTimeInputValue,
   type ManualPracticeBlockDraft,
 } from "@/utils/manual-practice";
+import { SongPickerDialog } from "@/components/practice/SongPickerDialog";
+import { useDialogMotion } from "@/hooks/useDialogMotion";
 
 export function ManualPracticeEntry() {
   const manual = useI18nSection("manualPractice");
   const skills = useI18nSection("skills");
   const practiceText = useI18nSection("practice");
   const { lastGuitarType, rememberGuitarType } = useGuitarPreference();
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const { dialogRef, isClosing } = useDialogMotion(isOpen);
   const addSession = usePracticeStore((state) => state.addSession);
+  const repertoireItems = usePracticeStore((state) => state.repertoireItems);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
+  const guitars = usePracticeStore((state) => state.guitars);
+  const songs = repertoireItems.filter((item) => item.kind === "song");
   const [title, setTitle] = useState("");
+  const [songPickerBlockId, setSongPickerBlockId] = useState<string | null>(null);
   const [startedAtLocal, setStartedAtLocal] = useState(() =>
     toLocalDateTimeInputValue(new Date()),
   );
   const [blocks, setBlocks] = useState(() => [createManualPracticeBlockDraft()]);
   const [notes, setNotes] = useState("");
   const [guitarType, setGuitarType] = useState<GuitarType | "">("");
+  const {
+    guitarId,
+    setGuitarId,
+    rememberGuitar,
+    showSelector: showGuitarSelector,
+  } = usePracticeGuitar({ guitars });
   const [error, setError] = useState<string | null>(null);
   const totalMinutes = blocks.reduce((total, block) => {
     const duration = Number(block.durationMinutes);
@@ -44,7 +62,7 @@ export function ManualPracticeEntry() {
     setStartedAtLocal(toLocalDateTimeInputValue(new Date()));
     setGuitarType(lastGuitarType ?? "");
     setError(null);
-    dialogRef.current?.showModal();
+    setIsOpen(true);
   }
 
   function updateBlock(
@@ -58,6 +76,48 @@ export function ManualPracticeEntry() {
     );
   }
 
+  function changeBlockSkill(blockId: string, skill: PracticeSkill) {
+    setBlocks((current) =>
+      current.map((block) =>
+        block.id === blockId ? changeManualPracticeSkill(block, skill) : block,
+      ),
+    );
+  }
+
+  function chooseSong(songId: string) {
+    const song = songs.find((candidate) => candidate.id === songId);
+    if (!song || !songPickerBlockId) {
+      setSongPickerBlockId(null);
+      return;
+    }
+    setBlocks((current) =>
+      current.map((block) =>
+        block.id === songPickerBlockId
+          ? linkManualPracticeSong(block, song)
+          : block,
+      ),
+    );
+    setSongPickerBlockId(null);
+  }
+
+  function changeBlockPart(blockId: string, partId?: string) {
+    setBlocks((current) =>
+      current.map((block) =>
+        block.id === blockId
+          ? changeManualPracticeSongPart(block, partId)
+          : block,
+      ),
+    );
+  }
+
+  function clearBlockSong(blockId: string) {
+    setBlocks((current) =>
+      current.map((block) =>
+        block.id === blockId ? clearManualPracticeSong(block) : block,
+      ),
+    );
+  }
+
   function saveManualPractice(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -67,16 +127,18 @@ export function ManualPracticeEntry() {
         createManualPracticeRecord({
           title,
           startedAtLocal,
-          blocks: manualPracticeBlocksFromDrafts(blocks),
+          blocks: manualPracticeBlocksFromDrafts(blocks, songs),
           notes,
           guitarType: guitarType || undefined,
+          guitarId,
         }),
       );
       if (guitarType) rememberGuitarType(guitarType);
+      rememberGuitar();
       setTitle("");
       setBlocks([createManualPracticeBlockDraft()]);
       setNotes("");
-      dialogRef.current?.close();
+      setIsOpen(false);
     } catch (saveError) {
       setError(
         saveError instanceof Error
@@ -93,13 +155,15 @@ export function ManualPracticeEntry() {
       </Button>
       <dialog
         ref={dialogRef}
-        className="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto border border-line bg-surface p-0 text-ink backdrop:bg-black/70"
+        data-closing={isClosing ? "true" : undefined}
+        onCancel={(event) => {
+          event.preventDefault();
+          setIsOpen(false);
+        }}
+        className="overlay-motion m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto border border-line bg-surface p-0 text-ink backdrop:bg-black/70"
       >
         <form onSubmit={saveManualPractice} className="p-6 sm:p-8">
-          <p className="text-xs uppercase tracking-[0.05em] text-muted">
-             {manual.eyebrow}
-          </p>
-          <h2 className="mt-3 font-sans text-2xl font-semibold">
+          <h2 className="font-sans text-2xl font-semibold">
              {manual.title}
           </h2>
           <p className="mt-3 text-sm leading-6 text-muted">
@@ -131,7 +195,7 @@ export function ManualPracticeEntry() {
               {practiceText.guitarType}
               <SelectField
                 className="mt-2"
-                ariaLabel={practiceText.guitarAria}
+                ariaLabel={practiceText.guitarTypeAria}
                 value={guitarType || "unspecified"}
                 onChange={(value) =>
                   setGuitarType(
@@ -145,6 +209,24 @@ export function ManualPracticeEntry() {
                 ]}
               />
             </div>
+            {showGuitarSelector && (
+              <div className="block text-sm text-ink sm:col-span-2">
+                {practiceText.guitar}
+                <SelectField
+                  className="mt-2"
+                  ariaLabel={practiceText.guitarAria}
+                  value={guitarId ?? "none"}
+                  onChange={(value) => setGuitarId(value === "none" ? undefined : value)}
+                  options={[
+                    { value: "none", label: practiceText.guitarNone },
+                    ...guitars.map((guitar) => ({
+                      value: guitar.id,
+                      label: guitar.name,
+                    })),
+                  ]}
+                />
+              </div>
+            )}
             <section className="sm:col-span-2">
               <div className="mb-3 flex items-baseline justify-between gap-3">
                 <h3 className="text-sm font-medium text-ink">
@@ -155,7 +237,12 @@ export function ManualPracticeEntry() {
                 </p>
               </div>
               <div className="space-y-3">
-                {blocks.map((block, index) => (
+                {blocks.map((block, index) => {
+                  const linkedSong = songs.find(
+                    (song) => song.id === block.repertoireItemId,
+                  );
+
+                  return (
                   <fieldset
                     key={block.id}
                     className="border border-line bg-canvas/60 p-4"
@@ -192,6 +279,7 @@ export function ManualPracticeEntry() {
                           }
                            placeholder={manual.technique}
                           maxLength={100}
+                          disabled={Boolean(block.repertoireItemId)}
                           required
                         />
                       </label>
@@ -222,7 +310,7 @@ export function ManualPracticeEntry() {
                               (candidate) => candidate === value,
                             );
                             if (selectedSkill) {
-                              updateBlock(block.id, { skill: selectedSkill });
+                              changeBlockSkill(block.id, selectedSkill);
                             }
                           }}
                            ariaLabel={`${manual.practiceType} ${manual.block} ${index + 1}`}
@@ -230,8 +318,75 @@ export function ManualPracticeEntry() {
                         />
                       </div>
                     </div>
+                    {block.skill === "repertoire" && (
+                      <div className="mt-3 rounded-md border border-line bg-canvas/50 p-3">
+                        {linkedSong ? (
+                          <>
+                            <p className="text-sm font-medium text-ink">
+                              {linkedSong.title}
+                            </p>
+                            <p className="mt-1 text-xs text-muted">
+                              {manual.songCredits}
+                            </p>
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                              <div className="block text-sm text-ink">
+                                {manual.part}
+                                <SelectField
+                                  className="mt-2"
+                                  ariaLabel={`${manual.part} ${linkedSong.title}`}
+                                  value={block.repertoirePartId ?? "whole"}
+                                  onChange={(value) =>
+                                    changeBlockPart(
+                                      block.id,
+                                      value === "whole" ? undefined : value,
+                                    )
+                                  }
+                                  options={[
+                                    { value: "whole", label: manual.noPart },
+                                    ...linkedSong.parts.map((part) => ({
+                                      value: part.id,
+                                      label: part.name,
+                                    })),
+                                  ]}
+                                />
+                              </div>
+                              <div className="flex flex-wrap items-end gap-3">
+                                <Button
+                                  type="button"
+                                  className="h-11 px-4"
+                                  onClick={() => setSongPickerBlockId(block.id)}
+                                >
+                                  {manual.changeSong}
+                                </Button>
+                                <button
+                                  type="button"
+                                  onClick={() => clearBlockSong(block.id)}
+                                  className="min-h-11 text-xs text-muted underline underline-offset-4 transition hover:text-ink"
+                                >
+                                  {manual.clearSong}
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <p className="text-xs text-muted">
+                              {manual.song}
+                            </p>
+                            <Button
+                              type="button"
+                              className="h-11 px-4"
+                              onClick={() => setSongPickerBlockId(block.id)}
+                            >
+                              {manual.searchSong}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </fieldset>
-                ))}
+                  );
+                })}
               </div>
               <Button
                 type="button"
@@ -262,7 +417,7 @@ export function ManualPracticeEntry() {
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
            <Button
               type="button"
-              onClick={() => dialogRef.current?.close()}
+              onClick={() => setIsOpen(false)}
             >
               {manual.cancel}
             </Button>
@@ -271,6 +426,16 @@ export function ManualPracticeEntry() {
             </Button>
           </div>
         </form>
+        <SongPickerDialog
+          open={songPickerBlockId !== null}
+          songs={songs}
+          selectedSongId={
+            blocks.find((block) => block.id === songPickerBlockId)
+              ?.repertoireItemId
+          }
+          onSelect={(song) => chooseSong(song.id)}
+          onClose={() => setSongPickerBlockId(null)}
+        />
       </dialog>
     </>
   );

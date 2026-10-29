@@ -37,6 +37,7 @@ import {
   setPracticeStorageNamespace,
 } from "@/stores/practiceStorage";
 import type { PersistedPracticeState } from "@/types/practice-storage";
+import { migrateLegacyEquipmentEntries } from "@/utils/equipment";
 import {
   getPersistedPracticeState,
   replacePracticeState,
@@ -438,6 +439,23 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       practiceGoals:
         rawGuestState?.practiceGoals ??
         getPersistedPracticeState().practiceGoals,
+      guitars: Array.isArray(rawGuestState?.guitars)
+        ? rawGuestState.guitars
+        : [],
+      guitarEntries: Array.isArray(rawGuestState?.guitarEntries)
+        ? rawGuestState.guitarEntries
+        : migrateLegacyEquipmentEntries({
+            stringChanges: (
+              rawGuestState as
+                | { stringChanges?: unknown; guitarSetups?: unknown }
+                | undefined
+            )?.stringChanges,
+            guitarSetups: (
+              rawGuestState as
+                | { stringChanges?: unknown; guitarSetups?: unknown }
+                | undefined
+            )?.guitarSetups,
+          }),
     };
     const currentState = getPersistedPracticeState();
     const mergedState = mergePracticeData(currentState, guestState);

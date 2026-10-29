@@ -34,6 +34,7 @@ import {
   getSessionStatus,
 } from "@/utils/practice-session-status";
 import { createPracticeSessionRecord } from "@/utils/practice-session-record";
+import { targetMinutesToSeconds } from "@/utils/practice-target";
 import { getPhaseMaterials } from "@/utils/practice-materials";
 import { normalizeRepertoirePhaseNames } from "@/utils/practice-plan";
 import {
@@ -51,7 +52,10 @@ import {
   type ActivePracticeSession,
 } from "@/stores/useActivePracticeSessionStore";
 import { usePracticeStore } from "@/stores/usePracticeStore";
-import type { PracticeTimerResult } from "@/types/practice";
+import type {
+  PracticeMetricValue,
+  PracticeTimerResult,
+} from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 export function PracticeSession({ session }: { session: ActivePracticeSession }) {
@@ -101,6 +105,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const setGuitarType = useActivePracticeSessionStore(
     (state) => state.setGuitarType,
   );
+  const setTargetMinutes = useActivePracticeSessionStore(
+    (state) => state.setTargetMinutes,
+  );
   const { lastGuitarType } = useGuitarPreference();
   const { isMounted: isBarMounted, isVisible: isBarVisible } =
     useAnimatedPresence(
@@ -133,6 +140,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     session.isCountUp ?? false,
     practiceStartSound,
     practiceEndSound,
+    targetMinutesToSeconds(session.targetMinutes),
   );
   const timerElapsedSecondsRef = useRef(timer.elapsedSeconds);
   timerElapsedSecondsRef.current = timer.elapsedSeconds;
@@ -201,6 +209,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     sessionNotes: string,
     phaseNotes: Record<number, string>,
     updateRoutine = false,
+    metrics: { mood?: PracticeMetricValue; focus?: PracticeMetricValue } = {},
   ) {
     if (!pendingResult || sessionSavedRef.current) return;
 
@@ -223,6 +232,10 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         notes: sessionNotes,
         phaseNotes,
         guitarType: session.guitarType,
+        guitarId: session.guitarId,
+        completed: session.isCountUp ? true : pendingResult.completed,
+        mood: metrics.mood,
+        focus: metrics.focus,
         bpmSamples: bpmSamplesRef.current,
         metronomeBlockIndexes: metronomeBlocksRef.current,
       }),
@@ -326,6 +339,8 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         setPracticeStartSound={setPracticeStartSound}
         practiceEndSound={practiceEndSound}
         setPracticeEndSound={setPracticeEndSound}
+        targetMinutes={session.targetMinutes}
+        onChangeTargetMinutes={setTargetMinutes}
         artist={currentRepertoireItem?.artist}
         title={currentRepertoireItem?.title ?? currentPhase?.name}
         repertoireSongs={repertoireSongs}
@@ -437,7 +452,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
       <main
         className={
           isPracticeRoute
-            ? `mx-auto w-full ${isSplitView ? "max-w-7xl" : "max-w-5xl"} space-y-6 px-5 pb-16 pt-6 sm:px-8 sm:pb-24 sm:pt-8`
+            ? "mx-auto w-full max-w-7xl 2xl:max-w-[96rem] space-y-6 px-5 pt-6 pb-16 sm:px-8 sm:pt-8 sm:pb-24"
             : "hidden"
         }
         aria-hidden={!isPracticeRoute}

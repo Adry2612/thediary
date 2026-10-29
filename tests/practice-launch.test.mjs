@@ -145,6 +145,37 @@ test("keeps the song's guitar type in a quick repertoire plan", () => {
   assert.equal(plan.guitarType, "acoustic");
 });
 
+test("applies the confirmed guitar type, specific guitar and target to a quick repertoire plan", () => {
+  const plan = createQuickRepertoirePlan(
+    {
+      id: "song-1",
+      title: "Canción",
+      parts: [],
+      updatedAt: "2026-10-01T12:00:00.000Z",
+      guitarType: "acoustic",
+    },
+    { guitarType: "electric", guitarId: "guitar-1", targetMinutes: 30 },
+  );
+
+  assert.equal(plan.guitarType, "electric");
+  assert.equal(plan.guitarId, "guitar-1");
+  assert.equal(plan.targetMinutes, 30);
+});
+
+test("discards an invalid quick repertoire target", () => {
+  const plan = createQuickRepertoirePlan(
+    {
+      id: "song-1",
+      title: "Canción",
+      parts: [],
+      updatedAt: "2026-10-01T12:00:00.000Z",
+    },
+    { targetMinutes: 0 },
+  );
+
+  assert.equal("targetMinutes" in plan, false);
+});
+
 test("does not invent a guitar type for a quick repertoire plan without one", () => {
   const plan = createQuickRepertoirePlan({
     id: "song-1",
@@ -210,6 +241,20 @@ test("keeps a template's guitar type in its launch plan", () => {
 
   assert.equal(plan.guitarType, "acoustic");
   assert.equal(plan.templateId, "template-1");
+});
+
+test("keeps a repeated session's specific guitar", () => {
+  const plan = createPracticePlanFromSession({
+    title: "Sesión",
+    guitarType: "acoustic",
+    guitarId: "guitar-2",
+    phases: [
+      { id: "p", name: "Canción", skill: "repertoire", elapsedSeconds: 60 },
+    ],
+  });
+
+  assert.equal(plan?.guitarId, "guitar-2");
+  assert.equal(plan?.guitarType, "acoustic");
 });
 
 test("keeps a repeated session's guitar type", () => {

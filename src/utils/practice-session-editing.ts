@@ -29,6 +29,8 @@ export interface EditableSession {
   durationMinutes: number;
   /** `null` cuando la práctica no tiene tipo de guitarra registrado. */
   guitarType: GuitarType | null;
+  /** Guitarra concreta de Mi equipo; `null` si no se eligió. */
+  guitarId: string | null;
   blocks: EditableSessionBlock[];
 }
 
@@ -48,6 +50,7 @@ export function toEditableSession(session: SessionRecord): EditableSession {
     completed: session.completed ?? false,
     durationMinutes: secondsToMinutes(session.durationSeconds),
     guitarType: session.guitarType ?? null,
+    guitarId: session.guitarId ?? null,
     blocks: (session.phases ?? []).map((phase) => ({
       id: phase.id,
       name: phase.name,
@@ -106,10 +109,15 @@ export function applySessionEdit(
     .filter((block) => block.name.length > 0);
 
   const title = draft.title.trim();
-  const { guitarType: _storedGuitarType, ...sessionWithoutGuitarType } = session;
+  const {
+    guitarType: _storedGuitarType,
+    guitarId: _storedGuitarId,
+    ...sessionWithoutGuitar
+  } = session;
   const base = {
-    ...sessionWithoutGuitarType,
+    ...sessionWithoutGuitar,
     ...(draft.guitarType ? { guitarType: draft.guitarType } : {}),
+    ...(draft.guitarId ? { guitarId: draft.guitarId } : {}),
     title: title || undefined,
     notes: draft.notes.trim() || undefined,
     completed: draft.completed,

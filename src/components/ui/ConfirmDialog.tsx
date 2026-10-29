@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { ModalDialog } from "@/components/ui/ModalDialog";
+import { useDeferredClose } from "@/hooks/useDeferredClose";
 
 interface ConfirmDialogProps {
   /** Id del `<h2>`; el `<dialog>` se nombra con él. */
@@ -28,9 +29,12 @@ export function ConfirmDialog({
   onCancel,
   className = "",
 }: ConfirmDialogProps) {
+  const { isClosing, requestClose } = useDeferredClose(onCancel);
+
   return (
     <ModalDialog
       open
+      isClosing={isClosing}
       variant="confirm"
       labelledBy={labelledBy}
       className={className}
@@ -41,8 +45,11 @@ export function ConfirmDialog({
         </h2>
         <p className="mt-3 text-sm leading-6 text-muted">{description}</p>
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button onClick={onCancel}>{cancelLabel}</Button>
-          <Button variant="primary" onClick={onConfirm}>
+          <Button onClick={() => requestClose()}>{cancelLabel}</Button>
+          <Button
+            variant="primary"
+            onClick={() => requestClose(onConfirm)}
+          >
             {confirmLabel}
           </Button>
         </div>

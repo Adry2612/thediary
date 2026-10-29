@@ -9,6 +9,7 @@ import {
   type UserChord,
 } from "@/types/practice";
 import type { GuitarLick } from "@/types/lick";
+import type { Guitar, GuitarEntry } from "@/types/equipment";
 import {
   markLickPracticed as markLickPracticedNow,
   recordLickBpm as recordBpmForLick,
@@ -32,6 +33,7 @@ import {
   type PracticeGoals,
 } from "@/utils/practice-goals";
 import { normalizePracticeStorageState } from "@/stores/normalizePracticeStorageState";
+import { removeGuitarFromMaintenance } from "@/utils/equipment";
 
 type PracticeStoreState = {
   history: SessionRecord[];
@@ -41,6 +43,8 @@ type PracticeStoreState = {
   customChords: UserChord[];
   weeklySchedule: WeeklyRoutineSchedule;
   practiceGoals: PracticeGoals;
+  guitars: Guitar[];
+  guitarEntries: GuitarEntry[];
   hasHydrated: boolean;
   persistenceError: string | null;
   addSession: (session: SessionRecord) => void;
@@ -61,6 +65,10 @@ type PracticeStoreState = {
   markLickPracticed: (lickId: string, practicedAt?: string) => void;
   saveCustomChord: (chord: UserChord) => void;
   deleteCustomChord: (chordId: string) => void;
+  saveGuitar: (guitar: Guitar) => void;
+  deleteGuitar: (guitarId: string) => void;
+  saveGuitarEntry: (entry: GuitarEntry) => void;
+  deleteGuitarEntry: (entryId: string) => void;
   setHasHydrated: (hasHydrated: boolean) => void;
   setPersistenceError: (message: string | null) => void;
 };
@@ -75,6 +83,8 @@ export const usePracticeStore = create<PracticeStoreState>()(
       customChords: [],
       weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
       practiceGoals: { ...DEFAULT_PRACTICE_GOALS },
+      guitars: [],
+      guitarEntries: [],
       hasHydrated: false,
       persistenceError: null,
       addSession: (session) =>
@@ -199,6 +209,44 @@ export const usePracticeStore = create<PracticeStoreState>()(
           ),
           persistenceError: null,
         })),
+      saveGuitar: (guitar) =>
+        set((state) => ({
+          guitars: [
+            ...state.guitars.filter((candidate) => candidate.id !== guitar.id),
+            guitar,
+          ],
+          persistenceError: null,
+        })),
+      deleteGuitar: (guitarId) =>
+        set((state) => {
+          const next = removeGuitarFromMaintenance(
+            guitarId,
+            state.guitars,
+            state.guitarEntries,
+          );
+          return {
+            guitars: next.guitars,
+            guitarEntries: next.entries,
+            persistenceError: null,
+          };
+        }),
+      saveGuitarEntry: (entry) =>
+        set((state) => ({
+          guitarEntries: [
+            ...state.guitarEntries.filter(
+              (candidate) => candidate.id !== entry.id,
+            ),
+            entry,
+          ],
+          persistenceError: null,
+        })),
+      deleteGuitarEntry: (entryId) =>
+        set((state) => ({
+          guitarEntries: state.guitarEntries.filter(
+            (entry) => entry.id !== entryId,
+          ),
+          persistenceError: null,
+        })),
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),
       setPersistenceError: (persistenceError) => set({ persistenceError }),
     }),
@@ -215,6 +263,8 @@ export const usePracticeStore = create<PracticeStoreState>()(
           customChords: state.customChords,
           weeklySchedule: state.weeklySchedule,
           practiceGoals: state.practiceGoals,
+          guitars: state.guitars,
+          guitarEntries: state.guitarEntries,
         }) satisfies PersistedPracticeState,
       merge: (persistedState, currentState) => {
         const persisted = normalizePracticeStorageState(
@@ -251,6 +301,8 @@ export function getPersistedPracticeState(): PersistedPracticeState {
     customChords,
     weeklySchedule,
     practiceGoals,
+    guitars,
+    guitarEntries,
   } = usePracticeStore.getState();
   return {
     history,
@@ -260,6 +312,8 @@ export function getPersistedPracticeState(): PersistedPracticeState {
     customChords,
     weeklySchedule,
     practiceGoals,
+    guitars,
+    guitarEntries,
   };
 }
 

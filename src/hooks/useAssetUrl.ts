@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getPracticeAsset } from "@/services/practice-library";
-import { getCloudPracticeAsset } from "@/services/supabase/practice-files";
+import { getPracticeAssetForUser } from "@/services/practice-asset";
 import type { PracticeResource } from "@/types/practice";
 
 /**
@@ -23,10 +22,10 @@ export function useAssetUrl(
     setError(null);
     if (!resource?.assetId || resource.kind === "songsterr") return;
 
-    const assetRequest =
-      userId ?
-        getCloudPracticeAsset(userId, resource.assetId)
-      : getPracticeAsset(resource.assetId);
+    const assetRequest = getPracticeAssetForUser(
+      resource.assetId,
+      userId,
+    );
     void assetRequest
       .then((asset) => {
         if (!asset) throw new Error("No se encontró el archivo.");

@@ -25,12 +25,32 @@
   --app-safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+html {
+  /* Mantiene el tamaño de texto que pide el navegador y evita que iOS lo
+     reescale al girar el dispositivo o al enfocar un campo. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * `manipulation` desactiva el zoom por doble toque sin quitar el desplazamiento
+ * ni los gestos de arrastre que necesitan los controles.
+ */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
 }
 
 /*
@@ -103,6 +123,51 @@ body {
   animation-delay: calc(var(--index, 0) * 80ms);
 }
 
+@keyframes overlay-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+
+@keyframes overlay-panel-out {
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.99);
+  }
+}
+
+@keyframes overlay-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes overlay-backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Entrada de cualquier `<dialog>` con la clase compartida. */
+dialog.overlay-motion[open] {
+  animation: overlay-panel-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+dialog.overlay-motion[open]::backdrop {
+  animation: overlay-backdrop-in 180ms ease-out both;
+}
+
+/* Salida: más corta que la entrada y sin interacción mientras dura. */
+dialog.overlay-motion[data-closing="true"] {
+  animation: overlay-panel-out 120ms ease-in both;
+  pointer-events: none;
+}
+
+dialog.overlay-motion[data-closing="true"]::backdrop {
+  animation: overlay-backdrop-out 120ms ease-in both;
+}
+
 @keyframes tutorial-view-exit {
   to {
     opacity: 0;
@@ -159,6 +224,13 @@ body {
   }
 
   .streak-flame {
+    animation: none;
+  }
+
+  dialog.overlay-motion[open],
+  dialog.overlay-motion[open]::backdrop,
+  dialog.overlay-motion[data-closing="true"],
+  dialog.overlay-motion[data-closing="true"]::backdrop {
     animation: none;
   }
 

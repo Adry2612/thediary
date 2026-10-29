@@ -13,6 +13,12 @@ import type { SessionRecord, PracticeTemplate, RepertoireItem, UserChord } from 
 import { migrateRepertoireLicks } from "../../utils/licks/migration.ts";
 import { normalizeLicks } from "../../utils/licks/normalize.ts";
 import { normalizeSessionRecord } from "../../utils/practice-session-record.ts";
+import {
+  migrateLegacyEquipmentEntries,
+  normalizeGuitarEntries,
+  normalizeGuitars,
+} from "../../utils/equipment.ts";
+import type { GuitarEntry } from "../../types/equipment.ts";
 import { getSupabaseClient } from "./client.ts";
 
 interface PracticeDataRow {
@@ -44,6 +50,25 @@ function hasNonDefaultGoals(goals: PracticeGoals): boolean {
   );
 }
 
+/**
+ * Historial de la guitarra. Las claves de la versión anterior se convierten en
+ * entradas para que una fila de la nube escrita por un build antiguo no se
+ * pierda al sincronizar.
+ */
+function normalizeStoredGuitarEntries(state: Record<string, unknown>): GuitarEntry[] {
+  const entries = new Map<string, GuitarEntry>();
+  for (const entry of migrateLegacyEquipmentEntries({
+    stringChanges: state.stringChanges,
+    guitarSetups: state.guitarSetups,
+  })) {
+    entries.set(entry.id, entry);
+  }
+  for (const entry of normalizeGuitarEntries(state.guitarEntries)) {
+    entries.set(entry.id, entry);
+  }
+  return [...entries.values()];
+}
+
 export function normalizePracticeData(value: unknown): PersistedPracticeState {
   const state = isRecord(value) ? value : {};
   const migration = migrateRepertoireLicks(
@@ -67,6 +92,8 @@ export function normalizePracticeData(value: unknown): PersistedPracticeState {
       : [],
     weeklySchedule: normalizeWeeklyRoutineSchedule(state.weeklySchedule),
     practiceGoals: normalizePracticeGoals(state.practiceGoals),
+    guitars: normalizeGuitars(state.guitars),
+    guitarEntries: normalizeStoredGuitarEntries(state),
   };
 }
 
@@ -86,6 +113,8 @@ export function mergePracticeData(
     repertoireItems: mergeById(remote.repertoireItems, local.repertoireItems),
     licks: mergeById(remote.licks, local.licks),
     customChords: mergeById(remote.customChords, local.customChords),
+    guitars: mergeById(remote.guitars, local.guitars),
+    guitarEntries: mergeById(remote.guitarEntries, local.guitarEntries),
     weeklySchedule: hasAssignedRoutine(local.weeklySchedule)
       ? local.weeklySchedule
       : remote.weeklySchedule,
@@ -151,5 +180,7 @@ export function createEmptyPracticeData(): PersistedPracticeState {
     customChords: [],
     weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
     practiceGoals: { ...DEFAULT_PRACTICE_GOALS },
+    guitars: [],
+    guitarEntries: [],
   };
 }

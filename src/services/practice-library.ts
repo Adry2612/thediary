@@ -99,6 +99,13 @@ export function getPracticeAsset(
   return runRequest(ASSETS_STORE, "readonly", (store) => store.get(assetId));
 }
 
+/** Borra un archivo concreto; se usa al quitar una foto o una guitarra. */
+export function deletePracticeAsset(assetId: string): Promise<undefined> {
+  return runRequest(ASSETS_STORE, "readwrite", (store) =>
+    store.delete(assetId),
+  );
+}
+
 export function listPracticeAssets(): Promise<PracticeAsset[]> {
   return runRequest(ASSETS_STORE, "readonly", (store) => store.getAll());
 }

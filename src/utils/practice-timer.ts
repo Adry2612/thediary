@@ -35,7 +35,8 @@ export function synchronizePracticeTimer(
   now: number,
   countUp = false,
   continueAfterBlockTime = false,
-): { runtime: PracticeTimerRuntime; completed: boolean } {
+  limitMs: number | null = null,
+): { runtime: PracticeTimerRuntime; completed: boolean; targetReached: boolean } {
   const deltaMs = Math.max(0, now - runtime.lastUpdatedAtMs);
   const activePhase = phasePlan[runtime.phaseIndex];
   if (!activePhase) {
@@ -48,8 +49,13 @@ export function synchronizePracticeTimer(
     0,
     activePhase.durationMs - runtime.phaseElapsedMs,
   );
-  const consumedMs =
+  const remainingToLimit =
+    limitMs === null ? Number.POSITIVE_INFINITY : Math.max(0, limitMs - runtime.elapsedMs);
+  const requestedConsumedMs =
     countUp || runsOvertime ? deltaMs : Math.min(deltaMs, remainingMs);
+  const consumedMs = Math.min(requestedConsumedMs, remainingToLimit);
+  const reachedLimit =
+    limitMs !== null && runtime.elapsedMs + consumedMs >= limitMs;
   const phaseElapsedMs = runtime.phaseElapsedMs + consumedMs;
   const phaseElapsedTotalsMs = [...runtime.phaseElapsedTotalsMs];
   const skillElapsedMs = { ...runtime.skillElapsedMs };
@@ -59,7 +65,9 @@ export function synchronizePracticeTimer(
 
   const phaseEnded = !countUp && phaseElapsedMs >= activePhase.durationMs;
   const completed = phaseEnded && isLastPhase;
-  const keepsRunning = !phaseEnded || (runsOvertime && !completed);
+  const targetReached = reachedLimit && !completed;
+  const keepsRunning =
+    (!phaseEnded || (runsOvertime && !completed)) && !targetReached;
 
   return {
     runtime: {
@@ -71,8 +79,9 @@ export function synchronizePracticeTimer(
       phaseIndex: completed ? runtime.phaseIndex + 1 : runtime.phaseIndex,
       lastUpdatedAtMs: now,
       isRunning: keepsRunning,
-      awaitingPhaseAdvance: phaseEnded && !completed,
+      awaitingPhaseAdvance: phaseEnded && !completed && !targetReached,
     },
     completed,
+    targetReached,
   };
 }

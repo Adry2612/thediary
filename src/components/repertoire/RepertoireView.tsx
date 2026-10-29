@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { MetricCard } from '@/components/dashboard/MetricCard';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PageShell } from '@/components/ui/PageShell';
 import { ArtistRanking } from '@/components/repertoire/ArtistRanking';
 import { RepertoireItemCard } from '@/components/repertoire/RepertoireItemCard';
 import { ForgottenRepertoireWidget } from '@/components/repertoire/ForgottenRepertoireWidget';
@@ -167,28 +169,21 @@ export function RepertoireView() {
   }
 
   return (
-    <main className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'>
-      <header className='enter mb-8 flex flex-wrap items-end justify-between gap-6'>
-        <div>
-          <p className='font-mono text-xs uppercase tracking-[0.14em] text-muted'>
-            {text.library}
-          </p>
-          <h1 className='mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight sm:text-4xl'>
-            {text.title}
-          </h1>
-          <p className='mt-4 max-w-2xl text-base font-medium text-muted sm:text-lg'>
-            {text.description}
-          </p>
-        </div>
-        <button
-          type='button'
-          onClick={() => setIsCreatingItem(true)}
-          className='inline-flex h-12 items-center justify-center gap-2 rounded-md bg-ink px-5 text-sm font-medium text-canvas transition hover:opacity-90 active:scale-[0.98]'
-        >
-          <PlusIcon className='size-4' />
-          {text.newItem}
-        </button>
-      </header>
+    <PageShell>
+      <PageHeader
+        title={text.title}
+        description={text.description}
+        actions={
+          <button
+            type='button'
+            onClick={() => setIsCreatingItem(true)}
+            className='inline-flex h-12 items-center justify-center gap-2 rounded-md bg-ink px-5 text-sm font-medium text-canvas transition hover:opacity-90 active:scale-[0.98]'
+          >
+            <PlusIcon className='size-4' />
+            {text.newItem}
+          </button>
+        }
+      />
 
       <section
         aria-label={text.summary}
@@ -414,6 +409,6 @@ export function RepertoireView() {
           }}
         />
       )}
-    </main>
+    </PageShell>
   );
 }

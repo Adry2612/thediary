@@ -104,6 +104,58 @@ test("completes the final block even when the overtime option is on", () => {
   assert.equal(result.runtime.isRunning, false);
 });
 
+test("stops exactly at the session target and reports it", () => {
+  const result = synchronizePracticeTimer(
+    createRuntime(),
+    phasePlan,
+    1000,
+    true,
+    false,
+    700,
+  );
+
+  assert.equal(result.completed, false);
+  assert.equal(result.targetReached, true);
+  assert.equal(result.runtime.elapsedMs, 700);
+  assert.equal(result.runtime.isRunning, false);
+  assert.equal(result.runtime.awaitingPhaseAdvance, false);
+  assert.deepEqual(result.runtime.phaseElapsedTotalsMs, [700, 0]);
+});
+
+test("does not stop before the target", () => {
+  const result = synchronizePracticeTimer(
+    createRuntime(),
+    phasePlan,
+    500,
+    true,
+    false,
+    700,
+  );
+
+  assert.equal(result.targetReached, false);
+  assert.equal(result.runtime.elapsedMs, 500);
+  assert.equal(result.runtime.isRunning, true);
+});
+
+test("normal completion wins when the target and the final block coincide", () => {
+  const result = synchronizePracticeTimer(
+    createRuntime({
+      phaseIndex: 1,
+      elapsedMs: 1000,
+      phaseElapsedTotalsMs: [1000, 0],
+    }),
+    phasePlan,
+    2000,
+    false,
+    false,
+    2000,
+  );
+
+  assert.equal(result.completed, true);
+  assert.equal(result.targetReached, false);
+  assert.equal(result.runtime.isRunning, false);
+});
+
 test("signals a block end only when the waiting state starts", () => {
   const running = createRuntime();
 

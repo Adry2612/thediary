@@ -1,6 +1,7 @@
 import type { PracticeAsset, PracticeAudioRecording } from "@/types/practice-library";
 import { listPracticeAssets, listPracticeRecordings } from "../practice-library.ts";
 import { getSupabaseClient } from "./client.ts";
+import { isUnsupportedMimeTypeError } from "../../utils/storage-error.ts";
 
 const STORAGE_BUCKET = "practice-files";
 const STORAGE_PAGE_SIZE = 1000;
@@ -120,12 +121,32 @@ async function uploadFile(
 
   const extension = getFileExtension(fileName, blob.type);
   const path = `${userId}/${category}/${id}.${extension}`;
-  const { error } = await client.storage.from(STORAGE_BUCKET).upload(path, blob, {
-    contentType:
-      blob.type.split(";")[0]?.trim() || "application/octet-stream",
+  const storage = client.storage.from(STORAGE_BUCKET);
+  const contentType = blob.type.split(";")[0]?.trim() || "application/octet-stream";
+
+  const firstUpload = await storage.upload(path, blob, {
+    contentType,
     upsert: true,
   });
-  if (error) throwSupabaseError("No se pudo subir el archivo", error);
+
+  if (!firstUpload.error) return path;
+
+  // Buckets antiguos solo admiten un conjunto cerrado de MIME. Si el archivo
+  // ya está validado por la app, se sube como binario y se conserva su tipo
+  // real en la tabla para poder reconstruirlo al descargarlo.
+  if (
+    contentType !== "application/octet-stream" &&
+    isUnsupportedMimeTypeError(firstUpload.error)
+  ) {
+    const fallbackUpload = await storage.upload(path, blob, {
+      contentType: "application/octet-stream",
+      upsert: true,
+    });
+    if (!fallbackUpload.error) return path;
+    throwSupabaseError("No se pudo subir el archivo", fallbackUpload.error);
+  }
+
+  throwSupabaseError("No se pudo subir el archivo", firstUpload.error);
   return path;
 }
 
@@ -169,6 +190,45 @@ export async function saveCloudPracticeAsset(
   if (error) throwSupabaseError("No se pudo guardar el material", error);
 }
 
+/**
+ * Borra la copia en la cuenta de un archivo concreto. Se usa al quitar una foto;
+ * el borrado masivo sigue viviendo en `deleteAllCloudPracticeFiles`.
+ */
+export async function deleteCloudPracticeAsset(
+  userId: string,
+  assetId: string,
+): Promise<void> {
+  const client = getSupabaseClient();
+  if (!client) throw new Error("Supabase no está configurado.");
+
+  const { data, error } = await client
+    .from("practice_assets")
+    .select("storage_path")
+    .eq("user_id", userId)
+    .eq("id", assetId)
+    .maybeSingle();
+  if (error) throwSupabaseError("No se pudo localizar el archivo", error);
+
+  const storagePath = (data as { storage_path?: string } | null)?.storage_path;
+  if (storagePath) {
+    const { error: removeError } = await client.storage
+      .from(STORAGE_BUCKET)
+      .remove([storagePath]);
+    if (removeError) {
+      throwSupabaseError("No se pudo borrar el archivo", removeError);
+    }
+  }
+
+  const { error: rowError } = await client
+    .from("practice_assets")
+    .delete()
+    .eq("user_id", userId)
+    .eq("id", assetId);
+  if (rowError) {
+    throwSupabaseError("No se pudo borrar el registro del archivo", rowError);
+  }
+}
+
 export async function getCloudPracticeAsset(
   userId: string,
   assetId: string,
@@ -178,21 +238,27 @@ export async function getCloudPracticeAsset(
 
   const { data, error } = await client
     .from("practice_assets")
-    .select("storage_path,file_name,kind")
+    .select("storage_path,file_name,kind,mime_type")
     .eq("user_id", userId)
     .eq("id", assetId)
     .maybeSingle();
   if (error) throwSupabaseError("No se pudo cargar el material", error);
   if (!data) return undefined;
 
-  const row = data as unknown as Pick<AssetRow, "storage_path" | "file_name" | "kind">;
-  const { data: blob, error: downloadError } = await client.storage
+  const row = data as unknown as Pick<
+    AssetRow,
+    "storage_path" | "file_name" | "kind" | "mime_type"
+  >;
+  const { data: storedBlob, error: downloadError } = await client.storage
     .from(STORAGE_BUCKET)
     .download(row.storage_path);
   if (downloadError) {
     throwSupabaseError("No se pudo descargar el material", downloadError);
   }
-  if (!blob) throw new Error("Supabase no devolvió el archivo solicitado.");
+  if (!storedBlob) throw new Error("Supabase no devolvió el archivo solicitado.");
+  const blob = new Blob([storedBlob], {
+    type: row.mime_type || storedBlob.type || "application/octet-stream",
+  });
   return {
     id: assetId,
     fileName: row.file_name,

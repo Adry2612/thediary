@@ -7,6 +7,7 @@ import {
   releaseExclusiveAudio,
 } from "@/utils/practice-audio-playback";
 import { getPlaybackDurationSeconds } from "@/utils/recording-duration";
+import { getSeekSeconds } from "@/utils/waveform-seek";
 import { enablePlaybackAudioSession } from "@/services/audio-session";
 
 interface UsePracticeAudioPlayerOptions {
@@ -106,6 +107,29 @@ export function usePracticeAudioPlayer({
     if (audioRef.current) audioRef.current.volume = nextVolume;
   }
 
+  /** Avanza o retrocede la reproducción; nunca sale de los límites del audio. */
+  function seekBy(deltaSeconds: number) {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const max = Number.isFinite(audio.duration) ? audio.duration : duration ?? 0;
+    const next = Math.min(
+      Math.max(0, audio.currentTime + deltaSeconds),
+      max > 0 ? max : Number.POSITIVE_INFINITY,
+    );
+    seek(next);
+  }
+
+  /** Mueve la reproducción a una posición de la onda, de 0 a 1. */
+  function seekToRatio(ratio: number) {
+    const audio = audioRef.current;
+    const max =
+      audio && Number.isFinite(audio.duration) ? audio.duration : duration ?? 0;
+    if (max <= 0) return;
+
+    seek(getSeekSeconds(ratio, max));
+  }
+
   function handleLoadedMetadata(event: SyntheticEvent<HTMLAudioElement>) {
     setIsSeekReady(true);
     updateDuration(event.currentTarget);
@@ -163,6 +187,8 @@ export function usePracticeAudioPlayer({
     toggleVolumeControl,
     togglePlayback,
     seek,
+    seekBy,
+    seekToRatio,
     changeVolume,
     handleLoadedMetadata,
     handleTimeUpdate,

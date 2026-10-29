@@ -4,6 +4,8 @@ import Link from "next/link";
 import { PracticeRecordingItem } from "@/components/practice/PracticeRecordingItem";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RecordingsListSkeleton } from "@/components/ui/Skeletons";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PageShell } from "@/components/ui/PageShell";
 import { SelectField } from "@/components/ui/SelectField";
 import { SearchField } from "@/components/ui/SearchField";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
@@ -31,23 +33,21 @@ export function RecordingsLibrary() {
   } = useRecordingsLibrary(text.block);
 
   return (
-    <main className="mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
-      <header className="mb-8">
-        <p className="font-mono text-xs uppercase tracking-[0.12em] text-muted">
-          {text.eyebrow}
-        </p>
-        <h1
-          className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl"
-        >
-          {text.title}
-        </h1>
-        <p className="mt-3 max-w-2xl text-base text-muted">
-          {text.description}
-        </p>
-        <p className="mt-3 max-w-2xl rounded-md border border-line bg-surface px-4 py-3 text-sm text-muted" role="note">
-          {text.cloudStorageNotice}
-        </p>
-      </header>
+    <PageShell>
+      <PageHeader
+        title={text.title}
+        description={
+          <>
+            {text.description}
+            <span
+              className="mt-3 block rounded-md border border-line bg-surface px-4 py-3 text-sm font-normal text-muted"
+              role="note"
+            >
+              {text.cloudStorageNotice}
+            </span>
+          </>
+        }
+      />
 
       {(loadError || deleteError) && (
         <p className="mb-5 text-sm text-red-300" role="alert">
@@ -196,6 +196,6 @@ export function RecordingsLibrary() {
           }
         />
       )}
-    </main>
+    </PageShell>
   );
 }

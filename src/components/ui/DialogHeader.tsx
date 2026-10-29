@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 interface DialogHeaderProps {
-  eyebrow?: ReactNode;
   title: ReactNode;
   /** Id del título: el `<dialog>` lo usa en `aria-labelledby`. */
   titleId: string;
@@ -11,9 +10,8 @@ interface DialogHeaderProps {
   className?: string;
 }
 
-/** Ceja, título y botón de cierre de un diálogo, en el orden de lectura. */
+/** Título, descripción y botón de cierre de un diálogo, en el orden de lectura. */
 export function DialogHeader({
-  eyebrow,
   title,
   titleId,
   description,
@@ -24,14 +22,9 @@ export function DialogHeader({
   return (
     <div className={`flex items-start justify-between gap-4 ${className}`}>
       <div className="min-w-0">
-        {eyebrow ? (
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-            {eyebrow}
-          </p>
-        ) : null}
         <h2
           id={titleId}
-          className="mt-2 font-sans text-xl font-semibold tracking-tight text-ink"
+          className="font-sans text-xl font-semibold tracking-tight text-ink"
         >
           {title}
         </h2>

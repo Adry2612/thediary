@@ -7,8 +7,42 @@ import {
   buildSelectEntries,
   type SelectOption,
 } from "@/utils/select-options";
+import {
+  getListboxPlacement,
+  type ListboxPlacement,
+} from "@/utils/select-position";
 
 export type { SelectOption };
+
+const THUMB_BOX =
+  "shrink-0 border border-line object-cover";
+
+/**
+ * Miniatura de una opción. Solo se pinta cuando hay foto; sin ella la opción
+ * se queda con su texto y no reserva hueco.
+ */
+function SelectThumb({
+  image,
+  size,
+}: {
+  image?: string;
+  size: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!image || failed) return null;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={image}
+      alt=""
+      aria-hidden="true"
+      onError={() => setFailed(true)}
+      className={`${size} ${THUMB_BOX}`}
+    />
+  );
+}
 
 type SelectFieldProps = {
   value: string;
@@ -32,9 +66,8 @@ export function SelectField({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [listboxStyle, setListboxStyle] = useState<
-    { left: number; top?: number; bottom?: number; width: number } | null
-  >(null);
+  const [listboxStyle, setListboxStyle] =
+    useState<ListboxPlacement | null>(null);
   const selectedIndex = options.findIndex((option) => option.value === value);
   const [activeIndex, setActiveIndex] = useState(
     Math.max(selectedIndex, 0),
@@ -53,7 +86,7 @@ export function SelectField({
     if (!isOpen) return;
 
     const animationFrame = requestAnimationFrame(() =>
-      listboxRef.current?.focus(),
+      listboxRef.current?.focus({ preventScroll: true }),
     );
     const closeOnOutsidePointer = (event: PointerEvent) => {
       const target = event.target as Node;
@@ -62,9 +95,9 @@ export function SelectField({
       }
     };
     /**
-     * La lista es un portal con posición fija calculada al abrir. Si la página
-     * o un ancestro se desplaza, se quedaría flotando lejos del campo; cerrarla
-     * es más predecible que recalcular su posición en cada scroll.
+     * La lista es un portal con la posición calculada al abrir. Si la página
+     * o un ancestro se desplaza, se quedaría lejos del campo; cerrarla es más
+     * predecible que recalcular su posición en cada scroll.
      */
     const closeOnOutsideScroll = (event: Event) => {
       const target = event.target;
@@ -87,30 +120,41 @@ export function SelectField({
   }, [isOpen]);
 
   function openListbox(direction: 1 | -1 = 1) {
-    const triggerBounds = triggerRef.current?.getBoundingClientRect();
-    const dialogBounds = triggerRef.current
-      ?.closest("dialog")
-      ?.getBoundingClientRect();
+    const triggerElement = triggerRef.current;
+    const triggerBounds = triggerElement?.getBoundingClientRect();
+    const dialog = triggerElement?.closest("dialog") ?? null;
 
     if (triggerBounds) {
-      const visibleTop = Math.max(dialogBounds?.top ?? 0, 0);
-      const visibleBottom = Math.min(
-        dialogBounds?.bottom ?? window.innerHeight,
-        window.innerHeight,
+      const dialogBounds = dialog?.getBoundingClientRect();
+      setListboxStyle(
+        getListboxPlacement({
+          trigger: {
+            left: triggerBounds.left,
+            top: triggerBounds.top,
+            right: triggerBounds.right,
+            bottom: triggerBounds.bottom,
+            width: triggerBounds.width,
+          },
+          container:
+            dialog && dialogBounds
+              ? {
+                  left: dialogBounds.left,
+                  top: dialogBounds.top,
+                  right: dialogBounds.right,
+                  bottom: dialogBounds.bottom,
+                  width: dialogBounds.width,
+                  clientLeft: dialog.clientLeft,
+                  clientTop: dialog.clientTop,
+                  clientWidth: dialog.clientWidth,
+                  clientHeight: dialog.clientHeight,
+                  scrollLeft: dialog.scrollLeft,
+                  scrollTop: dialog.scrollTop,
+                }
+              : null,
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          optionCount: options.length,
+        }),
       );
-      const availableAbove = triggerBounds.top - visibleTop;
-      const availableBelow = visibleBottom - triggerBounds.bottom;
-      const estimatedListboxHeight = Math.min(options.length * 40 + 8, 240);
-      const shouldOpenUpward =
-        availableBelow < estimatedListboxHeight && availableAbove > availableBelow;
-      setListboxStyle({
-        left: triggerBounds.left,
-        width: triggerBounds.width,
-        ...(shouldOpenUpward
-          ? { bottom: window.innerHeight - triggerBounds.top + 4 }
-          : { top: triggerBounds.bottom + 4 }),
-      });
-    } else {
     }
 
     const startingIndex =
@@ -199,7 +243,15 @@ export function SelectField({
         }}
         className="flex min-h-12 h-auto w-full items-center justify-between gap-3 border border-line bg-canvas px-4 py-3 text-left font-mono text-sm leading-tight text-ink transition hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <span className="min-w-0 whitespace-normal break-words">{selectedOption?.label ?? ""}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <SelectThumb
+            image={selectedOption?.image}
+            size="size-5"
+          />
+          <span className="min-w-0 whitespace-normal break-words">
+            {selectedOption?.label ?? ""}
+          </span>
+        </span>
         <svg
           aria-hidden="true"
           viewBox="0 0 16 16"
@@ -256,8 +308,14 @@ export function SelectField({
                       : "text-muted hover:bg-white/[0.04] hover:text-ink"
                 }`}
               >
-                <span className="whitespace-normal break-words">
-                  {entry.option.label}
+                <span className="flex min-w-0 items-center gap-2">
+                  <SelectThumb
+                    image={entry.option.image}
+                    size="size-7"
+                  />
+                  <span className="whitespace-normal break-words">
+                    {entry.option.label}
+                  </span>
                 </span>
                 {entry.option.value === value && (
                   <span

@@ -206,25 +206,100 @@ function getDailyPracticeSeconds(history: SessionRecord[]) {
   return dailySeconds;
 }
 
-function createBucket(
+export type PracticeChartRange = {
+  label: string;
+  startDate: string;
+  endDate: string;
+};
+
+function createRange(
   label: string,
   startDate: Date,
   endDate: Date,
+): PracticeChartRange {
+  return {
+    label,
+    startDate: toDateKey(startDate),
+    endDate: toDateKey(endDate),
+  };
+}
+
+function getWeekRanges(today: Date): PracticeChartRange[] {
+  const monday = startOfWeek(today);
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(monday, index);
+    const label = new Intl.DateTimeFormat("es-ES", {
+      weekday: "short",
+    }).format(date);
+    return createRange(`${label} ${date.getDate()}`, date, date);
+  });
+}
+
+function getMonthRanges(today: Date): PracticeChartRange[] {
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const firstWeek = startOfWeek(monthStart);
+  const ranges: PracticeChartRange[] = [];
+
+  for (
+    let weekStart = firstWeek;
+    weekStart <= monthEnd;
+    weekStart = addDays(weekStart, 7)
+  ) {
+    const weekEnd = addDays(weekStart, 6);
+    const rangeStart = weekStart < monthStart ? monthStart : weekStart;
+    const rangeEnd = weekEnd > monthEnd ? monthEnd : weekEnd;
+    ranges.push(
+      createRange(
+        `${rangeStart.getDate()}–${rangeEnd.getDate()}`,
+        rangeStart,
+        rangeEnd,
+      ),
+    );
+  }
+
+  return ranges;
+}
+
+function getYearRanges(today: Date): PracticeChartRange[] {
+  return Array.from({ length: 12 }, (_, monthIndex) => {
+    const monthStart = new Date(today.getFullYear(), monthIndex, 1);
+    const monthEnd = new Date(today.getFullYear(), monthIndex + 1, 0);
+    const label = new Intl.DateTimeFormat("es-ES", {
+      month: "short",
+    })
+      .format(monthStart)
+      .replace(/\.$/, "");
+
+    return createRange(label, monthStart, monthEnd);
+  });
+}
+
+/** Rangos de los intervalos que comparten los gráficos del panel. */
+export function getPracticeChartRanges(
+  period: PracticeChartPeriod,
+  today = new Date(),
+): PracticeChartRange[] {
+  if (period === "week") return getWeekRanges(today);
+  if (period === "month") return getMonthRanges(today);
+  return getYearRanges(today);
+}
+
+function createBucket(
+  range: PracticeChartRange,
   dailySeconds: Map<string, number>,
 ): PracticeTimeBucket {
   let totalSeconds = 0;
   for (
-    let cursor = new Date(startDate);
-    cursor <= endDate;
+    let cursor = new Date(`${range.startDate}T00:00:00`);
+    toDateKey(cursor) <= range.endDate;
     cursor = addDays(cursor, 1)
   ) {
     totalSeconds += dailySeconds.get(toDateKey(cursor)) ?? 0;
   }
 
   return {
-    label,
-    startDate: toDateKey(startDate),
-    endDate: toDateKey(endDate),
+    ...range,
     totalSeconds,
     sessionCount: 0,
   };
@@ -256,70 +331,32 @@ function addSessionCounts(
   }));
 }
 
+function rangesToBuckets(
+  ranges: PracticeChartRange[],
+  dailySeconds: Map<string, number>,
+): PracticeTimeBucket[] {
+  return ranges.map((range) => createBucket(range, dailySeconds));
+}
+
 function getWeekBuckets(
   today: Date,
   dailySeconds: Map<string, number>,
 ): PracticeTimeBucket[] {
-  const monday = startOfWeek(today);
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = addDays(monday, index);
-    const label = new Intl.DateTimeFormat("es-ES", {
-      weekday: "short",
-    }).format(date);
-    return createBucket(
-      `${label} ${date.getDate()}`,
-      date,
-      date,
-      dailySeconds,
-    );
-  });
+  return rangesToBuckets(getWeekRanges(today), dailySeconds);
 }
 
 function getMonthBuckets(
   today: Date,
   dailySeconds: Map<string, number>,
 ): PracticeTimeBucket[] {
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  const firstWeek = startOfWeek(monthStart);
-  const buckets: PracticeTimeBucket[] = [];
-
-  for (
-    let weekStart = firstWeek;
-    weekStart <= monthEnd;
-    weekStart = addDays(weekStart, 7)
-  ) {
-    const weekEnd = addDays(weekStart, 6);
-    const bucketStart = weekStart < monthStart ? monthStart : weekStart;
-    const bucketEnd = weekEnd > monthEnd ? monthEnd : weekEnd;
-    buckets.push(
-      createBucket(
-        `${bucketStart.getDate()}–${bucketEnd.getDate()}`,
-        bucketStart,
-        bucketEnd,
-        dailySeconds,
-      ),
-    );
-  }
-
-  return buckets;
+  return rangesToBuckets(getMonthRanges(today), dailySeconds);
 }
 
 function getYearBuckets(
   today: Date,
   dailySeconds: Map<string, number>,
 ): PracticeTimeBucket[] {
-  return Array.from({ length: 12 }, (_, monthIndex) => {
-    const monthStart = new Date(today.getFullYear(), monthIndex, 1);
-    const monthEnd = new Date(today.getFullYear(), monthIndex + 1, 0);
-    const label = new Intl.DateTimeFormat("es-ES", {
-      month: "short",
-    })
-      .format(monthStart)
-      .replace(/\.$/, "");
-
-    return createBucket(label, monthStart, monthEnd, dailySeconds);
-  });
+  return rangesToBuckets(getYearRanges(today), dailySeconds);
 }
 
 function buildPracticeTimeBuckets(
@@ -327,9 +364,7 @@ function buildPracticeTimeBuckets(
   today: Date,
   dailySeconds: Map<string, number>,
 ): PracticeTimeBucket[] {
-  if (period === "week") return getWeekBuckets(today, dailySeconds);
-  if (period === "month") return getMonthBuckets(today, dailySeconds);
-  return getYearBuckets(today, dailySeconds);
+  return rangesToBuckets(getPracticeChartRanges(period, today), dailySeconds);
 }
 
 function getPreviousPeriodBuckets(

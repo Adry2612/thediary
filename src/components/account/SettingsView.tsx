@@ -3,9 +3,12 @@
 import Link from 'next/link';
 import { ChangePasswordDialog } from '@/components/account/ChangePasswordDialog';
 import { DeletePracticeDataDialog } from '@/components/account/DeletePracticeDataDialog';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PageShell } from '@/components/ui/PageShell';
 import { SelectField } from '@/components/ui/SelectField';
 import { CloudSyncProviderIcon } from '@/components/ui/icons';
 import { useSettingsView } from '@/hooks/useSettingsView';
+import { usePracticeFeedbackPreference } from '@/hooks/usePracticeFeedbackPreference';
 import { useI18n, useI18nSection } from '@/i18n/I18nProvider';
 import { type Locale } from '@/i18n/translations';
 import { useTutorial } from '@/components/tutorial/TutorialProvider';
@@ -15,20 +18,30 @@ export function SettingsView() {
   const settings = useI18nSection('settings');
   const { openTutorial } = useTutorial();
   const view = useSettingsView(settings);
+  const feedback = usePracticeFeedbackPreference();
+  const feedbackMetrics = [
+    {
+      metric: 'mood' as const,
+      title: settings.feedbackMood,
+      description: settings.feedbackMoodDescription,
+      enabled: feedback.isMoodEnabled,
+    },
+    {
+      metric: 'focus' as const,
+      title: settings.feedbackFocus,
+      description: settings.feedbackFocusDescription,
+      enabled: feedback.isFocusEnabled,
+    },
+  ];
 
   return (
-    <main className='mx-auto max-w-3xl px-5 py-12 sm:px-8'>
-      <p className='text-xs uppercase tracking-[0.12em] text-muted'>
-        {settings.eyebrow}
-      </p>
-      <h1 className='mt-2 text-3xl font-semibold tracking-tight text-ink'>
-        {settings.title}
-      </h1>
-      <p className='mt-3 max-w-xl text-sm leading-6 text-muted'>
-        {settings.description}
-      </p>
+    <PageShell>
+      <PageHeader
+        title={settings.title}
+        description={settings.description}
+      />
 
-      <div className='mt-8 space-y-4'>
+      <div className='max-w-3xl space-y-4'>
         <section
           data-tour-target='settings-account'
           aria-labelledby='settings-account-title'
@@ -85,6 +98,56 @@ export function SettingsView() {
                 { value: 'en', label: settings.english },
               ]}
             />
+          </div>
+        </section>
+
+        <section
+          aria-labelledby='settings-feedback-title'
+          className='rounded-xl border border-line bg-surface p-5 sm:p-6'
+        >
+          <p className='text-xs uppercase tracking-[0.08em] text-muted'>
+            {settings.preferences}
+          </p>
+          <h2
+            id='settings-feedback-title'
+            className='mt-2 text-lg font-medium text-ink'
+          >
+            {settings.feedbackTitle}
+          </h2>
+          <p className='mt-2 max-w-xl text-sm leading-6 text-muted'>
+            {settings.feedbackDescription}
+          </p>
+          <div className='mt-4 grid gap-3 sm:grid-cols-2'>
+            {feedbackMetrics.map((metric) => (
+              <div
+                key={metric.metric}
+                className='flex flex-col gap-3 rounded-md border border-line p-4'
+              >
+                <div>
+                  <p className='text-sm font-medium text-ink'>{metric.title}</p>
+                  <p className='mt-1 text-xs leading-5 text-muted'>
+                    {metric.description}
+                  </p>
+                </div>
+                <button
+                  type='button'
+                  aria-pressed={metric.enabled}
+                  aria-label={`${metric.title}: ${metric.enabled ? settings.feedbackToggleOn : settings.feedbackToggleOff}`}
+                  onClick={() =>
+                    feedback.setEnabled(metric.metric, !metric.enabled)
+                  }
+                  className={`min-h-10 self-start rounded-md border px-3 text-sm transition hover:bg-white/5 ${
+                    metric.enabled ?
+                      'border-accent-green-fg/50 bg-accent-green-bg/30 text-accent-green-fg'
+                    : 'border-line text-ink'
+                  }`}
+                >
+                  {metric.enabled ?
+                    settings.feedbackToggleOn
+                  : settings.feedbackToggleOff}
+                </button>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -352,6 +415,6 @@ export function SettingsView() {
         open={view.dialog === 'delete'}
         onClose={view.closeDialog}
       />
-    </main>
+    </PageShell>
   );
 }

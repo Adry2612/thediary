@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { PracticeAudioPlayer } from '@/components/practice/PracticeAudioPlayer';
+import { useRecordingUrl } from '@/hooks/useRecordingUrl';
+import { useRecordingPeaks } from '@/hooks/useRecordingPeaks';
 import { PRACTICE_SKILL_LABELS } from '@/utils/dashboard-data';
 import type { PracticeAudioRecording } from "@/types/practice-library";
 import { createCloudSyncReference, type CloudSyncProvider } from '@/types/cloud-sync';
@@ -15,32 +17,13 @@ interface PracticeRecordingItemProps {
   onUpdate?: (recording: PracticeAudioRecording) => void;
 }
 
-function useRecordingUrl(recording: PracticeAudioRecording) {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (recording.playbackUrl) {
-      setUrl(recording.playbackUrl);
-      return;
-    }
-    if (!recording.blob) {
-      setUrl(null);
-      return;
-    }
-    const objectUrl = URL.createObjectURL(recording.blob);
-    setUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [recording.blob, recording.playbackUrl]);
-
-  return url;
-}
-
 export function PracticeRecordingItem({
   recording,
   onDelete,
   onUpdate,
 }: PracticeRecordingItemProps) {
   const audioUrl = useRecordingUrl(recording);
+  const peaks = useRecordingPeaks(recording.id, recording.blob);
   const { locale } = useI18n();
   const text = useI18nSection('recordings');
   const { statuses, isLoading: isLoadingProviders, connect, syncRecording } =
@@ -121,15 +104,17 @@ export function PracticeRecordingItem({
           <p className='mt-1 text-xs text-muted'>
             {recording.sessionName} · {date}
           </p>
-          <p className='mt-1 text-xs text-muted'>
-            {recording.phaseOrder ? `${recording.phaseOrder} · ` : ''}
-            {recording.phaseName ?? text.unassignedBlock}
-          </p>
-          <p className='mt-1 text-xs text-muted'>
-            {recording.practiceSkill ?
-              PRACTICE_SKILL_LABELS[recording.practiceSkill]
-            : text.unassignedType}
-          </p>
+          <div className='mt-2 flex flex-wrap gap-1.5'>
+            <span className='rounded-full border border-line px-2 py-0.5 text-[10px] uppercase tracking-[0.06em] text-muted'>
+              {recording.phaseOrder ? `${recording.phaseOrder} · ` : ''}
+              {recording.phaseName ?? text.unassignedBlock}
+            </span>
+            <span className='rounded-full border border-line px-2 py-0.5 text-[10px] uppercase tracking-[0.06em] text-muted'>
+              {recording.practiceSkill ?
+                PRACTICE_SKILL_LABELS[recording.practiceSkill]
+              : text.unassignedType}
+            </span>
+          </div>
         </div>
         <div className='flex shrink-0 items-center gap-1'>
           <button
@@ -193,11 +178,13 @@ export function PracticeRecordingItem({
         </div>
       )}
       {audioUrl && (
-        <div className='mt-4 border-t border-line pt-4'>
+        <div className='mt-4 min-w-0 border-t border-line pt-4'>
           <PracticeAudioPlayer
             src={audioUrl}
             title={recording.title}
             durationSeconds={recording.durationSeconds}
+            peaks={peaks ?? undefined}
+            seekStepSeconds={5}
           />
         </div>
       )}

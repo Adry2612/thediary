@@ -83,6 +83,18 @@ export function MusicNoteIcon({ className, ...props }: IconProps) {
   );
 }
 
+/** Guitarra: relleno de las filas de cuerdas que no tienen foto. */
+export function GuitarIcon({ className, ...props }: IconProps) {
+  return (
+    <StrokeIcon className={className} {...props}>
+      <path d="M14.5 4.5 19 9" />
+      <path d="m16.5 6.5-5 5" />
+      <path d="M12.5 11.5c1.6 1.6 1.4 3.1.4 4.1-1 1-2.3 1.2-3.6 1.6-1.3.4-2.1 1.2-2.5 2.5-.4 1.3-1.6 2.3-3 2.3" />
+      <circle cx="8.5" cy="15.5" r="2.5" />
+    </StrokeIcon>
+  );
+}
+
 export function SearchIcon({ className, ...props }: IconProps) {
   return (
     <StrokeIcon className={className} {...props}>
@@ -242,6 +254,45 @@ export function StopIcon({ className = "size-4", ...props }: IconProps) {
       {...props}
     >
       <rect x="3.5" y="3.5" width="9" height="9" rx="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function RecordIcon({ className = "size-4", ...props }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className={className}
+      {...props}
+    >
+      <circle cx="8" cy="8" r="5" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function RewindIcon({ className = "size-4", ...props }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className={className}
+      {...props}
+    >
+      <path d="M7 3 2.5 7 7 11zM13 3l-4.5 4L13 11z" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function ForwardIcon({ className = "size-4", ...props }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className={className}
+      {...props}
+    >
+      <path d="M9 3l4.5 4L9 11zM3 3l4.5 4L3 11z" fill="currentColor" />
     </svg>
   );
 }

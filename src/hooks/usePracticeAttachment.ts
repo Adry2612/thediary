@@ -110,8 +110,19 @@ export function usePracticeAttachment(
   async function saveFileAsset(file: File, kind: StoredFileKind) {
     const assetId = createId();
     const asset = { id: assetId, fileName: file.name, kind, blob: file };
-    if (user) await saveCloudPracticeAsset(user.id, asset);
-    else await savePracticeAsset(asset);
+    // El archivo vive primero en este dispositivo; la nube es best-effort para
+    // que un bucket mal configurado no impida adjuntar el material.
+    await savePracticeAsset(asset);
+    if (user) {
+      try {
+        await saveCloudPracticeAsset(user.id, asset);
+      } catch (cloudError) {
+        console.warn(
+          "No se pudo subir el material a la nube; se conserva en este dispositivo.",
+          cloudError,
+        );
+      }
+    }
     return assetId;
   }
 

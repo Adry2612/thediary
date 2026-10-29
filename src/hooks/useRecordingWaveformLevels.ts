@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getWaveformLevels } from "@/utils/recording-waveform";
+import {
+  WAVEFORM_BAR_COUNT,
+  WAVEFORM_BASELINE_HEIGHT,
+  appendWaveformLevel,
+  getWaveformLevels,
+} from "@/utils/recording-waveform";
 
-interface PracticeRecordingWaveformProps {
-  stream: MediaStream | null;
-  onError: (message: string) => void;
+function emptyLevels() {
+  return Array.from(
+    { length: WAVEFORM_BAR_COUNT },
+    () => WAVEFORM_BASELINE_HEIGHT,
+  );
 }
-
-const BAR_COUNT = 32;
 
 function closeAudioContext(audioContext: AudioContext) {
   if (audioContext.state === "closed") return;
@@ -18,16 +23,23 @@ function closeAudioContext(audioContext: AudioContext) {
   });
 }
 
-export function PracticeRecordingWaveform({
-  stream,
-  onError,
-}: PracticeRecordingWaveformProps) {
-  const [levels, setLevels] = useState<number[]>(() =>
-    Array(BAR_COUNT).fill(0.08),
-  );
+/**
+ * Niveles de la grabación en curso. Mantiene un búfer que crece por la derecha
+ * y sale por la izquierda. Con movimiento reducido actualiza un medidor fijo,
+ * sin desplazar la onda.
+ */
+export function useRecordingWaveformLevels(
+  stream: MediaStream | null,
+  isRecording: boolean,
+  onError: (message: string) => void,
+) {
+  const [levels, setLevels] = useState<number[]>(emptyLevels);
 
   useEffect(() => {
-    if (!stream) return;
+    if (!stream || !isRecording) {
+      setLevels(emptyLevels());
+      return;
+    }
     if (!window.AudioContext) {
       onError("Este navegador no permite visualizar el nivel de audio.");
       return;
@@ -53,11 +65,16 @@ export function PracticeRecordingWaveform({
       function updateWaveform(timestamp: number) {
         if (timestamp - lastUpdate >= 80) {
           analyser.getByteTimeDomainData(samples);
-          setLevels(getWaveformLevels(samples, BAR_COUNT));
+          const level = getWaveformLevels(samples, 1)[0];
+          setLevels((current) =>
+            reducedMotion ?
+              Array.from({ length: WAVEFORM_BAR_COUNT }, () => level)
+            : appendWaveformLevel(current, level, WAVEFORM_BAR_COUNT),
+          );
           lastUpdate = timestamp;
         }
 
-        if (!reducedMotion) frame = requestAnimationFrame(updateWaveform);
+        frame = requestAnimationFrame(updateWaveform);
       }
 
       frame = requestAnimationFrame(updateWaveform);
@@ -77,24 +94,7 @@ export function PracticeRecordingWaveform({
       source?.disconnect();
       if (audioContext) closeAudioContext(audioContext);
     };
-  }, [onError, stream]);
+  }, [isRecording, onError, stream]);
 
-  if (!stream) return null;
-
-  return (
-    <div
-      className="mt-5 flex h-12 items-center justify-center gap-1"
-      role="img"
-      aria-label="Onda de audio de la grabación en curso"
-    >
-      {levels.map((level, index) => (
-        <span
-          key={index}
-          aria-hidden="true"
-          className="w-1 rounded-full bg-accent-green-fg/80"
-          style={{ height: `${Math.max(8, level * 100)}%` }}
-        />
-      ))}
-    </div>
-  );
+  return levels;
 }

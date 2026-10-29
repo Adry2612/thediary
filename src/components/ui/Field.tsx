@@ -6,8 +6,13 @@ import type {
   TextareaHTMLAttributes,
 } from "react";
 
+/*
+ * Los controles de texto se quedan en 16 px en cualquier ancho: por debajo de
+ * esa medida los navegadores móviles amplían la página al enfocar el campo,
+ * incluso en horizontal, donde ya se aplican los estilos de escritorio.
+ */
 const sharedFieldClasses =
-  "w-full rounded-md border border-line bg-canvas px-4 text-base text-ink transition-colors duration-200 placeholder:text-muted/70 hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm";
+  "w-full rounded-md border border-line bg-canvas px-4 text-base text-ink transition-colors duration-200 placeholder:text-muted/70 hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg disabled:cursor-not-allowed disabled:opacity-50";
 
 type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   /** Permite enfocar el campo desde un diálogo sin exponer un `forwardRef`. */

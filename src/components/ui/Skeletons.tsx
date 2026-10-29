@@ -1,3 +1,5 @@
+import { PageShell } from "@/components/ui/PageShell";
+
 type SkeletonProps = {
   className?: string;
 };
@@ -13,9 +15,8 @@ function Skeleton({ className = '' }: SkeletonProps) {
 
 function SkeletonHeader({ compact = false }: { compact?: boolean }) {
   return (
-    <header className={compact ? 'mb-8' : 'mb-10'}>
-      <Skeleton className='h-3 w-24' />
-      <Skeleton className='mt-4 h-10 w-64 max-w-full sm:h-12' />
+    <header className='mb-8'>
+      <Skeleton className='h-10 w-64 max-w-full sm:h-12' />
       <Skeleton className='mt-4 h-5 w-full max-w-xl' />
       {!compact && <Skeleton className='mt-2 h-5 w-4/5 max-w-lg' />}
     </header>
@@ -34,10 +35,9 @@ function SkeletonCard({ className = '' }: SkeletonProps) {
 
 export function HomeSkeleton() {
   return (
-    <main
+    <PageShell
       aria-busy='true'
       aria-label='Cargando inicio'
-      className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'
     >
       <SkeletonHeader compact />
       <SkeletonCard className='h-36' />
@@ -47,16 +47,15 @@ export function HomeSkeleton() {
         <Skeleton className='h-64 rounded-xl' />
         <Skeleton className='h-64 rounded-xl' />
       </div>
-    </main>
+    </PageShell>
   );
 }
 
 export function DashboardSkeleton() {
   return (
-    <main
+    <PageShell
       aria-busy='true'
       aria-label='Cargando panel'
-      className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'
     >
       <SkeletonHeader />
       <SkeletonCard className='h-36' />
@@ -70,16 +69,16 @@ export function DashboardSkeleton() {
           <SkeletonCard key={index} />
         ))}
       </div>
-    </main>
+    </PageShell>
   );
 }
 
 export function PracticeSkeleton() {
   return (
-    <main
+    <PageShell
       aria-busy='true'
       aria-label='Cargando práctica'
-      className='mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-6 pt-16 pb-16 sm:pt-24 sm:pb-24'
+      className='flex flex-col gap-6'
     >
       <SkeletonHeader compact />
       <div className='rounded-xl border border-line bg-surface p-5 sm:p-7'>
@@ -104,16 +103,15 @@ export function PracticeSkeleton() {
           </div>
         </div>
       </div>
-    </main>
+    </PageShell>
   );
 }
 
 export function MetronomeSkeleton() {
   return (
-    <main
+    <PageShell
       aria-busy='true'
       aria-label='Cargando metrónomo'
-      className='mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16'
     >
       <SkeletonHeader compact />
       <div className='mx-auto w-full max-w-3xl rounded-xl border border-line bg-surface p-8 sm:p-12'>
@@ -137,16 +135,15 @@ export function MetronomeSkeleton() {
         <Skeleton className='mt-5 h-11 w-full' />
         <Skeleton className='mx-auto mt-2 h-3 w-48' />
       </div>
-    </main>
+    </PageShell>
   );
 }
 
 export function RecordingsSkeleton() {
   return (
-    <main
+    <PageShell
       aria-busy='true'
       aria-label='Cargando grabaciones'
-      className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'
     >
       <SkeletonHeader compact />
       <div className='rounded-xl border border-line bg-surface p-5 sm:p-6'>
@@ -191,7 +188,7 @@ export function RecordingsSkeleton() {
           </section>
         ))}
       </div>
-    </main>
+    </PageShell>
   );
 }
 
@@ -237,41 +234,40 @@ export function RecordingsListSkeleton({
 
 export function SettingsSkeleton() {
   return (
-    <main
+    <PageShell
       aria-busy='true'
       aria-label='Cargando opciones'
-      className='mx-auto max-w-3xl px-5 py-12 sm:px-8'
     >
       <SkeletonHeader compact />
-      <div className='space-y-4'>
+      <div className='max-w-3xl space-y-4'>
         {Array.from({ length: 5 }, (_, index) => (
           <SkeletonCard key={index} className='h-36 sm:h-32' />
         ))}
       </div>
-    </main>
+    </PageShell>
   );
 }
 
 export function AccountSkeleton() {
   return (
-    <main
+    <PageShell
       aria-busy='true'
       aria-label='Cargando cuenta'
-      className='mx-auto max-w-3xl px-5 py-12 sm:px-8'
     >
       <SkeletonHeader compact />
-      <SkeletonCard className='h-40' />
-      <SkeletonCard className='mt-6 h-72' />
-    </main>
+      <div className='max-w-3xl'>
+        <SkeletonCard className='h-40' />
+        <SkeletonCard className='mt-6 h-72' />
+      </div>
+    </PageShell>
   );
 }
 
 export function RepertoireSkeleton() {
   return (
-    <main
+    <PageShell
       aria-busy='true'
       aria-label='Cargando repertorio'
-      className='mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16'
     >
       <SkeletonHeader />
       <div className='rounded-xl border border-line bg-surface p-4'>
@@ -287,29 +283,27 @@ export function RepertoireSkeleton() {
           <SkeletonCard key={index} className='h-32' />
         ))}
       </div>
-    </main>
+    </PageShell>
   );
 }
 
 export function GenericPageSkeleton() {
   return (
-    <main
+    <PageShell
       aria-busy='true'
       aria-label='Cargando página'
-      className='mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16'
     >
       <SkeletonHeader compact />
       <SkeletonCard className='h-80' />
-    </main>
+    </PageShell>
   );
 }
 
 export function LicksSkeleton() {
   return (
-    <main
+    <PageShell
       aria-busy='true'
       aria-label='Cargando licks'
-      className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'
     >
       <SkeletonHeader />
       <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
@@ -327,6 +321,6 @@ export function LicksSkeleton() {
           <SkeletonCard key={index} className='h-72' />
         ))}
       </div>
-    </main>
+    </PageShell>
   );
 }

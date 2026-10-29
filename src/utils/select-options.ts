@@ -4,6 +4,8 @@ export type SelectOption = {
   disabled?: boolean;
   /** Nombre del bloque. Los bloques con el mismo nombre se agrupan. */
   group?: string;
+  /** Miniatura opcional que acompaña a la etiqueta. */
+  image?: string;
 };
 
 export type SelectEntry =

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useDialogMotion } from "@/hooks/useDialogMotion";
 import {
   CHORD_ROOTS,
   CHORD_TYPES,
@@ -57,7 +58,7 @@ export function ChordFinderDialog({
   onClose,
 }: ChordFinderDialogProps) {
   const text = useI18nSection("repertoire");
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const { dialogRef, isClosing } = useDialogMotion(open);
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
 
@@ -67,15 +68,9 @@ export function ChordFinderDialog({
   const needle = query.trim().toLowerCase();
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (open && !dialog.open) {
-      dialog.showModal();
-      inputRef.current?.focus();
-    }
-    if (!open && dialog.open) {
-      dialog.close();
-    }
+    if (!open) return;
+    const frame = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
   }, [open]);
 
   useEffect(() => {
@@ -113,6 +108,7 @@ export function ChordFinderDialog({
   return (
     <dialog
       ref={dialogRef}
+      data-closing={isClosing ? "true" : undefined}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
@@ -121,7 +117,7 @@ export function ChordFinderDialog({
       onClick={(event) => {
         if (event.target === dialogRef.current) onClose();
       }}
-      className="m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto border border-line bg-surface p-0 text-ink backdrop:bg-black/70"
+      className="overlay-motion m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto border border-line bg-surface p-0 text-ink backdrop:bg-black/70"
     >
       <div className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">

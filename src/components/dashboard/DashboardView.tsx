@@ -4,7 +4,10 @@ import { useMemo } from 'react';
 import { GuitarBalance } from '@/components/dashboard/GuitarBalance';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ManualPracticeEntry } from '@/components/dashboard/ManualPracticeEntry';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PageShell } from '@/components/ui/PageShell';
 import { PracticeTimeChart } from '@/components/dashboard/PracticeTimeChart';
+import { PracticeWellbeing } from '@/components/dashboard/PracticeWellbeing';
 import { SkillBalance } from '@/components/dashboard/SkillBalance';
 import { StreakFlame } from '@/components/dashboard/StreakFlame';
 import { TempoProgress } from '@/components/dashboard/TempoProgress';
@@ -25,6 +28,7 @@ import {
   getStreakCount,
   isStreakOnFire,
 } from '@/utils/practice-analytics';
+import { hasPracticeWellbeingData } from '@/utils/practice-metrics';
 import {
   getPracticeWeekDays,
   getSessionsForWeek,
@@ -118,6 +122,10 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     () => getPracticeStatistics(history),
     [history],
   );
+  const hasWellbeing = useMemo(
+    () => hasPracticeWellbeingData(history),
+    [history],
+  );
   const mostPracticedSkill = practiceStatistics.mostPracticedSkill;
   const totalHours = new Intl.NumberFormat('es-ES', {
     maximumFractionDigits: 1,
@@ -169,23 +177,12 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
   }
 
   return (
-    <main className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'>
-      <header className='enter mb-10 flex flex-wrap items-end justify-between gap-6'>
-        <div>
-          <p className='font-mono text-xs uppercase tracking-[0.14em] text-muted'>
-             {dashboard.eyebrow}
-          </p>
-          <h1 className='mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight text-zinc-100 sm:text-4xl'>
-             {dashboard.title}
-          </h1>
-          <p className='mt-4 max-w-xl text-base font-medium text-zinc-400 sm:text-lg'>
-             {dashboard.description}
-          </p>
-        </div>
-        <div className='flex flex-wrap items-center gap-3'>
-          <ManualPracticeEntry />
-        </div>
-      </header>
+    <PageShell>
+      <PageHeader
+        title={dashboard.title}
+        description={dashboard.description}
+        actions={<ManualPracticeEntry />}
+      />
 
       <div className='mb-5'>
         <WeeklyPracticeSummary
@@ -229,6 +226,12 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         <TopPracticeContent rankings={contentRankings} />
       </div>
 
+      {hasWellbeing && (
+        <div className='mt-5'>
+          <PracticeWellbeing history={history} today={today} />
+        </div>
+      )}
+
       <div className='mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3'>
         {metricCards.map((metric, index) => (
           <MetricCard
@@ -250,6 +253,6 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
            {dashboard.persistenceError ?? dashboard.recordedTime}: {persistenceError}
         </p>
       )}
-    </main>
+    </PageShell>
   );
 }
