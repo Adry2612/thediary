@@ -14,6 +14,8 @@ export function hasPracticeData(state: PersistedPracticeState): boolean {
     state.repertoireItems.length > 0 ||
     state.licks.length > 0 ||
     state.customChords.length > 0 ||
+    state.guitars.length > 0 ||
+    state.guitarEntries.length > 0 ||
     Object.values(state.weeklySchedule).some(
       (routineId) => routineId !== null,
     ) ||
@@ -37,6 +39,8 @@ export function hasPracticeStateChanged(
     current.repertoireItems !== previous.repertoireItems ||
     current.licks !== previous.licks ||
     current.customChords !== previous.customChords ||
+    current.guitars !== previous.guitars ||
+    current.guitarEntries !== previous.guitarEntries ||
     current.weeklySchedule !== previous.weeklySchedule ||
     current.practiceGoals !== previous.practiceGoals
   );
@@ -57,5 +61,7 @@ export function toPersistedSnapshot(
     customChords: state.customChords,
     weeklySchedule: state.weeklySchedule,
     practiceGoals: state.practiceGoals,
+    guitars: state.guitars,
+    guitarEntries: state.guitarEntries,
   };
 }

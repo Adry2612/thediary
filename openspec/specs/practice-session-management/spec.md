@@ -7,7 +7,7 @@ Permite practicar de dos maneras —retomar una rutina guardada o lanzar una pr�
 
 ### Requirement: Practice screen surfaces saved routines
 
-The system SHALL present the saved practice routines as the primary content of the practice screen, before any routine design flow, and SHALL offer a shortcut to start each routine and to edit it.
+The practice screen SHALL be a three-state flow: choosing, reviewing and practising. The choosing state SHALL present the saved practice routines as its primary content, with the quick practice and the routine editor as secondary actions, and every state SHALL offer a single primary action.
 
 #### Scenario: User opens the practice screen with saved routines
 - **WHEN** the user opens the practice screen and at least one routine is saved
@@ -15,15 +15,31 @@ The system SHALL present the saved practice routines as the primary content of t
 
 #### Scenario: User starts a saved routine from the list
 - **WHEN** the user chooses to start a saved routine
-- **THEN** the app begins a practice session with the blocks of that routine without asking for confirmation
+- **THEN** the app moves to the reviewing state with the plan of that routine instead of starting the timer immediately
+
+#### Scenario: Reviewing the plan
+- **WHEN** the reviewing state is shown
+- **THEN** it shows the routine name, its blocks, the total planned time and the chosen guitar type, with a single primary action to start
+
+#### Scenario: Starting from the review
+- **WHEN** the user starts the reviewed plan
+- **THEN** the app begins the practice session with exactly the blocks that were reviewed
+
+#### Scenario: Going back without starting
+- **WHEN** the user goes back from the reviewing state
+- **THEN** the app returns to the choosing state and no session starts
+
+#### Scenario: Editing from the choosing state
+- **WHEN** the user chooses to edit a routine
+- **THEN** the routine editor opens as a secondary path and the choosing state keeps its primary action
 
 ### Requirement: User can create a new routine or start a quick practice
 
-The system SHALL offer both creating a new practice that opens the full routine design flow and starting a quick practice that begins a free timed session without designing blocks.
+The system SHALL keep creating a new practice that opens the routine editor as a secondary path, SHALL start a quick practice as a free timed session without designing blocks or passing through the reviewing state, and SHALL keep saving a finished quick practice to the history.
 
 #### Scenario: User creates a new practice
 - **WHEN** the user chooses to create a new practice
-- **THEN** the app opens the full routine design flow with the option to save the routine and to start the session
+- **THEN** the app opens the routine editor with the option to save the routine and to review it before starting
 
 #### Scenario: User starts a quick practice
 - **WHEN** the user starts a quick practice
@@ -137,9 +153,53 @@ The system SHALL show only the study material of the block currently being pract
 - **WHEN** the user attaches a material while a block is current
 - **THEN** the material is added to that block and shown immediately
 
+### Requirement: Practice material accepts image files
+
+The system SHALL offer images as attachable study material, SHALL accept JPEG, PNG, WebP, AVIF and GIF files up to 10 MB, SHALL store them through the same local or cloud asset flow as other files, and SHALL preview them inside the material panel with a way to open them in a new tab. Unsupported formats and oversized files SHALL be rejected with a readable error.
+
+#### Scenario: Attaching an image
+- **WHEN** the user chooses the image option and selects a supported image file
+- **THEN** the image is stored, attached to the current block or repertoire item and shown in the material list
+
+#### Scenario: Previewing an image
+- **WHEN** the user selects an attached image
+- **THEN** the material panel shows the image without leaving the practice screen
+
+#### Scenario: Opening the image on its own
+- **WHEN** the user activates the open action of an attached image
+- **THEN** the image opens in a new tab
+
+#### Scenario: Unsupported image
+- **WHEN** the user selects an SVG, HEIC/HEIF or another unsupported file for the image option
+- **THEN** the app rejects it and explains which formats are accepted
+
+#### Scenario: Oversized image
+- **WHEN** the user selects an image larger than 10 MB
+- **THEN** the app rejects it before uploading and shows a size error
+
+#### Scenario: Image without an account
+- **WHEN** a guest attaches an image
+- **THEN** the image is kept in the local library like other guest files
+
+### Requirement: Songsterr links can be attached and open externally
+
+The system SHALL offer Songsterr in the material menu, SHALL accept only HTTPS links on the Songsterr domain, SHALL attach the link to the current block or repertoire item, and SHALL open it in a new tab instead of embedding it.
+
+#### Scenario: Attaching a Songsterr link
+- **WHEN** the user chooses the Songsterr option and enters a valid Songsterr URL
+- **THEN** the link is attached to the current block or repertoire item
+
+#### Scenario: Opening an attached link
+- **WHEN** the user selects a Songsterr material
+- **THEN** the panel names the material and offers opening it in a new tab
+
+#### Scenario: Invalid Songsterr link
+- **WHEN** the user enters a non-HTTPS URL or a URL outside the Songsterr domain
+- **THEN** the app rejects it and keeps the form open with an error
+
 ### Requirement: A repertoire block is linked to a song and named after it
 
-The system SHALL require every repertoire block to reference one song from the repertoire, SHALL take the block's name from that song's title, SHALL NOT allow the user to type a different block name, SHALL keep the song part optional, and SHALL remove the reference when the block changes to another category. The song SHALL be chosen through a searchable picker that offers only songs.
+The system SHALL require every repertoire block of a practice plan to reference one song from the repertoire, SHALL take the block's name from that song's title, SHALL NOT allow the user to type a different block name, SHALL keep the song part optional, and SHALL remove the reference when the block changes to another category. The song SHALL be chosen through a searchable picker that offers only songs.
 
 #### Scenario: Choosing a song
 - **WHEN** the user selects a song for a repertoire block
@@ -283,7 +343,7 @@ The system SHALL detect when the links of a practice started from a saved routin
 
 ### Requirement: The timer can continue past a block's planned time
 
-The system SHALL offer an option to keep the timer running after a block's planned time until the user advances to the next block, SHALL keep the block-complete notice visible while it runs overtime, SHALL include the overtime in the session total, and SHALL leave the option off by default.
+The system SHALL offer an option to keep the timer running after a block's planned time until the user advances to the next block, SHALL show a brief block-complete notice that dismisses itself, SHALL keep the next-block action available while the timer waits or runs overtime, SHALL include the overtime in the session total, and SHALL leave the option off by default.
 
 #### Scenario: The option is off
 - **WHEN** a block reaches its planned time with the option off
@@ -294,8 +354,16 @@ The system SHALL offer an option to keep the timer running after a block's plann
 - **THEN** the timer keeps running in that block and the total keeps increasing
 
 #### Scenario: The notice stays visible
-- **WHEN** a block is running overtime
-- **THEN** the block-complete notice remains visible until the user advances
+- **WHEN** a block reaches its planned time and the timer is waiting or running overtime
+- **THEN** a brief notice appears and dismisses itself, while the next-block action stays visible until the user advances
+
+#### Scenario: The block-complete signal sounds once
+- **WHEN** a block reaches its planned time and the timer keeps running overtime
+- **THEN** the block-complete sound plays once and does not play again on later timer updates
+
+#### Scenario: Resuming overtime does not repeat the signal
+- **WHEN** the user pauses during overtime and resumes the same block
+- **THEN** the block-complete sound does not play again
 
 #### Scenario: Advancing after overtime
 - **WHEN** the user advances to the next block during overtime
@@ -335,7 +403,7 @@ The system SHALL show each saved block's detail entries and SHALL resolve a repe
 
 ### Requirement: A saved practice records the guitar type used
 
-The system SHALL let the user choose electric or acoustic guitar for a practice session, SHALL offer that choice while the practice runs, in manual practice entry and in the session editor, and SHALL store the chosen type with the session. A quick practice started from a repertoire item that declares a guitar type SHALL start from that type. Otherwise the type SHALL come from the last used type or stay unset, and the system SHALL never invent one.
+The system SHALL let the user choose electric or acoustic guitar for a practice session, SHALL offer that choice while the practice runs, in manual practice entry and in the session editor, and SHALL store the chosen type with the session. A quick practice started from a repertoire item SHALL ask for the type before starting, preselected from the item's declared type or from the last used type, and SHALL require the user to confirm electric or acoustic. Other new practices SHALL start from the last used type or stay unset, and the system SHALL never invent one.
 
 #### Scenario: Choosing the guitar while practising
 - **WHEN** the user selects electric or acoustic in a running practice
@@ -351,11 +419,19 @@ The system SHALL let the user choose electric or acoustic guitar for a practice 
 
 #### Scenario: A quick practice from a repertoire item
 - **WHEN** the user starts a quick practice from a repertoire item that declares a guitar type
-- **THEN** the session starts with that type and the saved practice stores it
+- **THEN** the confirmation opens with that type selected and the session starts with it once the user confirms
 
 #### Scenario: A quick practice from an item without a type
 - **WHEN** the item declares no guitar type and the user has a last used type
-- **THEN** the session starts from the last used type and the saved practice keeps it
+- **THEN** the confirmation opens with the last used type selected and the session starts with it once the user confirms
+
+#### Scenario: No known guitar type
+- **WHEN** the item declares no guitar type and there is no last used type
+- **THEN** the confirmation asks the user to choose electric or acoustic and no session starts until one is chosen
+
+#### Scenario: Cancelling the confirmation
+- **WHEN** the user closes the confirmation without starting
+- **THEN** no session starts and the repertoire stays as it was
 
 #### Scenario: Manual practice
 - **WHEN** the user records a practice manually and chooses a guitar type
@@ -501,6 +577,14 @@ While a practice is active, the system SHALL show a floating bar that names the 
 - **WHEN** the user is on the practice screen and scrolls the timer card out of view
 - **THEN** the bar appears with the same name, clock and controls, and disappears when the timer is visible again
 
+#### Scenario: Opening the practice screen at the top
+- **WHEN** the user enters the practice screen while the timer card is visible in the viewport
+- **THEN** the bar stays hidden until the timer card actually leaves the viewport
+
+#### Scenario: Switching to split view
+- **WHEN** the user toggles split view while on the practice screen and the timer card remains visible
+- **THEN** the bar stays hidden after the timer card is placed in its new layout
+
 #### Scenario: Returning to the timer
 - **WHEN** the user activates the bar while already on the practice screen
 - **THEN** the system scrolls the timer card back into view instead of navigating
@@ -612,3 +696,363 @@ On wide viewports the system SHALL place the timer and the metronome in the same
 #### Scenario: The timer grows
 - **WHEN** the timer shows a longer title, the song picker or another extra row
 - **THEN** the metronome card keeps matching the timer's height instead of staying shorter
+
+### Requirement: A saved take is navigated on its waveform
+
+The system SHALL let the user move the playback of a saved take by tapping or dragging on its waveform, SHALL draw the playhead on that waveform, SHALL expose the waveform as a keyboard-operable slider, SHALL keep the fixed-step rewind and forward controls, and MUST NOT show a separate progress bar for that take.
+
+#### Scenario: Tapping the waveform
+- **WHEN** the user taps a point of the waveform
+- **THEN** playback moves to the position that corresponds to that point and the playhead stays there
+
+#### Scenario: Dragging the waveform
+- **WHEN** the user drags across the waveform
+- **THEN** the playback position follows the pointer while it moves and stops at the released point
+
+#### Scenario: Seeking with the keyboard
+- **WHEN** the waveform has focus and the user presses an arrow, Home or End key
+- **THEN** the position moves by a short step or to the start or end, and the new position and time are announced
+
+#### Scenario: Playback follows the waveform
+- **WHEN** a take is playing
+- **THEN** the playhead advances over the waveform and stays in sync with the audio
+
+#### Scenario: No separate progress bar
+- **WHEN** a saved take is shown with its waveform
+- **THEN** the separate progress bar is absent and the time labels stay visible
+
+### Requirement: The recording transport sits beside the recording name
+
+The recorder SHALL place its transport controls next to the recording-name field on the same row when there is room, SHALL place them directly below the field on narrow viewports, SHALL keep the framed wave display and the recorder status visible, and SHALL keep each control's disabled state and accessible name.
+
+#### Scenario: A wide recorder
+- **WHEN** the recorder is shown on a wide viewport
+- **THEN** the recording-name field and the transport controls share a row, with the buttons to the right of the name
+
+#### Scenario: A narrow recorder
+- **WHEN** the recorder is shown on a phone
+- **THEN** the transport moves below the recording-name field without overlapping the wave display
+
+#### Scenario: Recording state
+- **WHEN** a recording is in progress
+- **THEN** the record control is unavailable, stop is available and the playback controls stay disabled until a take exists
+
+### Requirement: Feedback preferences are read when the practice closes
+
+The system SHALL read the mood and focus preferences when the practice completion sheet opens, so a change made in Settings applies to the next finished practice without reloading the app, SHALL ask only for the metrics enabled at that moment, and SHALL save with empty metrics when they are unanswered.
+
+#### Scenario: Enabling a metric during a practice
+- **WHEN** the user enables mood while a practice is running and then finishes it
+- **THEN** the completion sheet asks for mood without needing a reload
+
+#### Scenario: Disabling a metric during a practice
+- **WHEN** the user disables focus while a practice is running and then finishes it
+- **THEN** the completion sheet does not ask for focus
+
+#### Scenario: Answering after the change
+- **WHEN** the user answers an enabled metric in the completion sheet
+- **THEN** the stored practice keeps that value and the other metric stays empty
+
+#### Scenario: Skipping after the change
+- **WHEN** the user saves the practice without answering an enabled metric
+- **THEN** the practice is stored and that metric stays empty
+
+### Requirement: A finished practice is saved from a compact sheet
+
+The system SHALL close a finished practice with a compact sheet that shows the summary first, keeps the session notes behind a collapsed action and leaves the save action as the only primary button.
+
+#### Scenario: Opening the completion sheet
+- **WHEN** a practice finishes
+- **THEN** the sheet shows the total time and the practice summary before any input
+
+#### Scenario: Writing notes
+- **WHEN** the user activates the notes action
+- **THEN** the session notes field expands in place and the summary stays visible
+
+#### Scenario: Saving
+- **WHEN** the user saves the practice
+- **THEN** the sheet closes and the practice is stored exactly as before
+
+#### Scenario: Leaving without saving
+- **WHEN** the user chooses to exit without saving
+- **THEN** the sheet offers the same discard confirmation it offered before
+
+### Requirement: Mood and focus are optional session metrics
+
+The system SHALL let the user record a mood value and a focus value for a practice, each on a five-emoji scale, asked at the end of the practice about the state the user had when starting it. Both metrics SHALL be off by default, SHALL be enabled independently from a settings section, SHALL be skippable, and SHALL only be stored when they were enabled and answered.
+
+#### Scenario: Both metrics are off
+- **WHEN** the user finishes a practice with mood and focus disabled
+- **THEN** the completion sheet asks neither and the session is stored without them
+
+#### Scenario: Only one metric is on
+- **WHEN** the user enables mood but not focus
+- **THEN** the completion sheet asks only for mood
+
+#### Scenario: Answering the scale
+- **WHEN** the user picks one of the five emojis for mood or focus
+- **THEN** the chosen value is selected visibly and the session stores it with a value from one to five
+
+#### Scenario: Skipping the question
+- **WHEN** the user saves the practice without choosing an emoji
+- **THEN** the practice is saved and that metric stays empty
+
+#### Scenario: Returning to a session without metrics
+- **WHEN** a stored practice has no mood or focus
+- **THEN** it loads and behaves exactly as before
+
+### Requirement: The recorder behaves like a tape deck
+
+The recorder SHALL sit inside a framed display with the waveform drawn inside it, SHALL move the live waveform from right to left while recording and SHALL keep the complete waveform of the recorded take inside the same frame after stopping. Its controls SHALL be a transport row —record, stop, play, pause, rewind and forward— instead of a single form button, and every control SHALL keep an accessible name and a disabled state that matches what it can do.
+
+#### Scenario: Recording
+- **WHEN** the user starts recording
+- **THEN** the frame shows the incoming waveform moving from right to left and the record control becomes the active state
+
+#### Scenario: Stopping
+- **WHEN** the user stops recording
+- **THEN** the take is saved and its complete waveform is drawn inside the frame
+
+#### Scenario: Playing a take
+- **WHEN** the user plays a saved take
+- **THEN** the transport shows playback, pause becomes available and the playhead moves over the waveform
+
+#### Scenario: Seeking
+- **WHEN** the user activates rewind or forward during playback
+- **THEN** playback moves back or ahead by a short fixed step and the waveform follows the new position
+
+#### Scenario: Unavailable controls
+- **WHEN** no take is selected or nothing is recording
+- **THEN** the controls that cannot act are disabled instead of doing nothing silently
+
+#### Scenario: Reduced motion
+- **WHEN** the user prefers reduced motion
+- **THEN** the live waveform updates without a continuous scrolling animation
+
+### Requirement: Saving a routine confirms the result
+
+The system SHALL confirm in place when a routine is saved or updated, SHALL announce the confirmation to assistive technology, SHALL clear it after a short time and SHALL report a failure with an error instead of silence.
+
+#### Scenario: Saving a new routine
+- **WHEN** the user saves a routine for the first time
+- **THEN** a confirmation naming the saved routine appears next to the actions and is announced
+
+#### Scenario: Updating a routine
+- **WHEN** the user saves changes to an existing routine
+- **THEN** the confirmation says the routine was updated
+
+#### Scenario: The confirmation clears
+- **WHEN** a few seconds pass after saving
+- **THEN** the confirmation disappears without moving the surrounding controls
+
+#### Scenario: Saving fails
+- **WHEN** the routine cannot be saved
+- **THEN** the app shows an error message and keeps the editor open with its contents
+
+### Requirement: A practice can record the specific guitar used
+
+The system SHALL store an optional guitar identifier with a practice, SHALL preserve it across reload and sync, and SHALL keep the type-only choice available when no specific guitar is recorded.
+
+#### Scenario: Storing the guitar
+- **WHEN** a practice is saved with a specific guitar
+- **THEN** the saved practice keeps that guitar
+
+#### Scenario: Running practice shows the guitar
+- **WHEN** the running session has a specific guitar
+- **THEN** the practice shows its name as read-only context and offers no control to change it there
+
+#### Scenario: A deleted guitar
+- **WHEN** a saved practice references a guitar that no longer exists
+- **THEN** the practice loads normally and keeps its recorded time and type
+
+#### Scenario: Practice from before this change
+- **WHEN** a stored practice has no specific guitar
+- **THEN** it loads normally and remains attributed only to its type
+
+#### Scenario: Stored guitar survives reload and sync
+- **WHEN** a practice with a specific guitar is reloaded or merged from another device
+- **THEN** the guitar identifier is preserved
+
+### Requirement: A new practice inherits the guitar instead of asking
+
+The system SHALL attribute a new practice to the user's only guitar without asking, SHALL otherwise inherit the last guitar used on the device, SHALL show the guitar selector only when the user has more than one guitar, and SHALL NOT add a guitar to an existing practice when it is edited.
+
+#### Scenario: One guitar
+- **WHEN** the user has a single guitar and starts a practice
+- **THEN** the practice is attributed to that guitar without showing a selector
+
+#### Scenario: Several guitars
+- **WHEN** the user has more than one guitar and starts a practice
+- **THEN** the last guitar used on the device is preselected and the selector is available
+
+#### Scenario: Changing the guitar
+- **WHEN** the user chooses another guitar for the practice
+- **THEN** the practice stores it and it becomes the guitar inherited by the next practice
+
+#### Scenario: The inherited guitar no longer exists
+- **WHEN** the last guitar used was deleted
+- **THEN** the practice falls back to the only remaining guitar or to the type-only choice without failing
+
+#### Scenario: Editing an existing practice
+- **WHEN** the user edits a practice that recorded no guitar
+- **THEN** no guitar is added to it
+
+#### Scenario: No guitars
+- **WHEN** the user has no guitars
+- **THEN** the practice keeps the electric or acoustic choice and remains valid
+
+### Requirement: A free practice is complete when the user ends it
+
+The system SHALL store a practice that has no planned duration as complete when the user finishes it, SHALL present it as a completed practice in the day detail, and SHALL NOT describe it as finished before completing a routine. A planned practice ended before its last block SHALL keep reporting that it was finished early.
+
+#### Scenario: A free practice from the practice screen
+- **WHEN** the user starts a quick practice, stops the timer with the finish control and saves it
+- **THEN** the practice is stored as complete and the day detail does not say it was finished before completing the routine
+
+#### Scenario: A free practice from the repertoire
+- **WHEN** the user starts a quick practice from a repertoire item and ends it with the finish control
+- **THEN** the practice is stored as complete and shown as such
+
+#### Scenario: A planned routine ended early
+- **WHEN** the user finishes a planned routine before its last block ends
+- **THEN** the practice keeps reporting that it was finished before completing the routine
+
+#### Scenario: A planned routine reaches its end
+- **WHEN** the timer completes the last block of a planned routine
+- **THEN** the practice is stored as complete, as before
+
+#### Scenario: Editing a free practice
+- **WHEN** the user edits and saves a free practice that was stored as complete
+- **THEN** it stays complete unless the user changes its completion state explicitly
+
+### Requirement: The practice settings offer a session time target
+
+The system SHALL let the user set an optional whole-minute target for the current practice, SHALL offer it in the practice settings of both planned and free sessions, and SHALL also offer it in the confirmation that starts a free practice from the repertoire.
+
+#### Scenario: Setting a target
+- **WHEN** the user opens the practice settings and sets a target of 30 minutes
+- **THEN** the session keeps that target and the timer continues running
+
+#### Scenario: Free practice settings
+- **WHEN** the user opens the practice settings during a free practice
+- **THEN** the time target is available even though the session has no planned blocks
+
+#### Scenario: Setting the target before starting
+- **WHEN** the user sets a target in the confirmation of a free repertoire practice and starts it
+- **THEN** the session starts with that target
+
+#### Scenario: Clearing the target
+- **WHEN** the user removes the target
+- **THEN** the session continues without a target and no alert is scheduled
+
+#### Scenario: An invalid target
+- **WHEN** the user enters zero, a negative value or a fraction of a minute
+- **THEN** the value is not accepted as a target
+
+#### Scenario: The target survives a pause
+- **WHEN** the user pauses and resumes the practice
+- **THEN** the target is kept for the same session
+
+#### Scenario: A target already reached
+- **WHEN** the user sets a target shorter than the time already practised
+- **THEN** the timer pauses and the target notice appears without waiting for more time
+
+### Requirement: The time target pauses the practice when reached
+
+The system SHALL play the end sound once, pause the timer and show a brief notice that dismisses itself when the elapsed time reaches the target, SHALL let the user resume past the target or finish the practice, and SHALL NOT alert again for the same target after the user resumes.
+
+#### Scenario: Reaching the target
+- **WHEN** the elapsed time reaches the session target
+- **THEN** the end sound plays once, the timer pauses and a brief notice states that the target was reached
+
+#### Scenario: The target notice dismisses itself
+- **WHEN** the target notice has been visible for a few seconds
+- **THEN** it disappears without blocking the timer, the resume action or the finish action
+
+#### Scenario: The timer updates past the target
+- **WHEN** a timer update crosses the target before the pause takes effect
+- **THEN** the timer stops at the target instead of continuing to count
+
+#### Scenario: Continuing after the target
+- **WHEN** the user resumes the practice after the notice
+- **THEN** the timer continues counting, the notice disappears and the sound does not play again for that target
+
+#### Scenario: Finishing after the target
+- **WHEN** the user finishes the practice from the target notice
+- **THEN** the completion flow opens with the time practised so far
+
+#### Scenario: No target
+- **WHEN** the session has no target
+- **THEN** the timer behaves as before and no target notice appears
+
+#### Scenario: Changing the target after reaching it
+- **WHEN** the user sets a new target after the previous one was reached
+- **THEN** the session uses the new target and the alert for it can fire once
+
+### Requirement: The end-of-practice summary is neutral
+
+The completion dialog SHALL present itself as a session summary and SHALL NOT announce the practice as finished before the user saves it.
+
+#### Scenario: Opening the summary
+- **WHEN** the timer ends or the user finishes the session
+- **THEN** the dialog shows a neutral session-summary heading and a review-and-save action instead of a finished-practice message
+
+#### Scenario: Saving the practice
+- **WHEN** the user saves from the summary
+- **THEN** the practice is stored exactly as before
+
+### Requirement: The wellbeing response scale uses no emojis
+
+The system SHALL let the user record mood and focus with a one-to-five scale that shows the number and a textual label for each value, SHALL keep both metrics optional and clearable, and SHALL NOT use emoji characters in the control.
+
+#### Scenario: Choosing a value
+- **WHEN** the user picks a value for mood or focus
+- **THEN** the control shows that value and its textual label and the session stores the number
+
+#### Scenario: Different labels per metric
+- **WHEN** the user opens the mood and the focus controls
+- **THEN** each shows labels that describe its own metric, such as "Bajo" or "Enfocado", instead of a shared face
+
+#### Scenario: Clearing a value
+- **WHEN** the user chooses not to answer a metric
+- **THEN** the control shows no value and the session stores none
+
+#### Scenario: Reading the control with a screen reader
+- **WHEN** the user reaches the scale with a screen reader
+- **THEN** each option announces its metric, its number and its label
+
+#### Scenario: No emoji
+- **WHEN** the mood and focus controls are shown
+- **THEN** no emoji character appears in them
+
+### Requirement: A manually recorded practice can credit a repertoire song
+
+The system SHALL offer the repertoire song search on the blocks of a manually recorded practice that are of the repertoire category, SHALL let the user save the practice with or without a linked song, SHALL take the block's name from the chosen song, and SHALL count that block's time towards the linked song.
+
+#### Scenario: Opening the song search
+- **WHEN** the user registers a past practice and sets a block to the repertoire category
+- **THEN** the block offers the same searchable song picker used by the practice plan, and searching by title, artist or part filters the songs
+
+#### Scenario: Linking a song
+- **WHEN** the user chooses a song for a manual block
+- **THEN** the block takes the song title as its name and stores the song and its optional part
+
+#### Scenario: Saving without a song
+- **WHEN** the user saves a manual practice with a repertoire block that has no song
+- **THEN** the block keeps the typed name and the practice is saved
+
+#### Scenario: Crediting the song
+- **WHEN** a manual practice block is linked to a song
+- **THEN** the repertoire shown in the app counts that block's time and parts as practice of that song
+
+#### Scenario: Changing the category
+- **WHEN** the user changes a linked manual block to another category
+- **THEN** the song reference is removed and the typed name stays editable
+
+#### Scenario: The chosen song disappears
+- **WHEN** a manual practice block references a song that no longer exists
+- **THEN** the saved practice still loads and keeps the name it stored
+
+#### Scenario: Editing the saved practice
+- **WHEN** the user edits a manually recorded practice in the session editor and saves it
+- **THEN** the song and part links of its blocks are preserved

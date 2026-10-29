@@ -1,0 +1,184 @@
+{
+  "sets": [
+    {
+      "id": "daddario-exl110",
+      "brand": "D'Addario",
+      "model": "EXL110",
+      "name": "Regular Light",
+      "kind": "electric",
+      "unit": "in",
+      "gauges": [10, 13, 17, 26, 36, 46]
+    },
+    {
+      "id": "daddario-exl120",
+      "brand": "D'Addario",
+      "model": "EXL120",
+      "name": "Super Light",
+      "kind": "electric",
+      "unit": "in",
+      "gauges": [9, 11, 16, 24, 32, 42]
+    },
+    {
+      "id": "daddario-nyxl1046",
+      "brand": "D'Addario",
+      "model": "NYXL1046",
+      "name": "Regular Light",
+      "kind": "electric",
+      "unit": "in",
+      "gauges": [10, 13, 17, 26, 36, 46]
+    },
+    {
+      "id": "ernieball-2221",
+      "brand": "Ernie Ball",
+      "model": "2221",
+      "name": "Regular Slinky",
+      "kind": "electric",
+      "unit": "in",
+      "gauges": [10, 13, 17, 26, 36, 46]
+    },
+    {
+      "id": "ernieball-2223",
+      "brand": "Ernie Ball",
+      "model": "2223",
+      "name": "Super Slinky",
+      "kind": "electric",
+      "unit": "in",
+      "gauges": [9, 11, 16, 24, 32, 42]
+    },
+    {
+      "id": "ernieball-2222",
+      "brand": "Ernie Ball",
+      "model": "2222",
+      "name": "Hybrid Slinky",
+      "kind": "electric",
+      "unit": "in",
+      "gauges": [9, 11, 16, 26, 36, 46]
+    },
+    {
+      "id": "elixir-12052",
+      "brand": "Elixir",
+      "model": "12052",
+      "name": "Nanoweb Light",
+      "kind": "electric",
+      "unit": "in",
+      "gauges": [10, 13, 17, 26, 36, 46]
+    },
+    {
+      "id": "elixir-12050",
+      "brand": "Elixir",
+      "model": "12050",
+      "name": "Optiweb Super Light",
+      "kind": "electric",
+      "unit": "in",
+      "gauges": [9, 11, 16, 24, 32, 42]
+    },
+    {
+      "id": "fender-250l",
+      "brand": "Fender",
+      "model": "250L",
+      "name": "SuperSonic 250",
+      "kind": "electric",
+      "unit": "in",
+      "gauges": [9, 11, 16, 24, 32, 42]
+    },
+    {
+      "id": "gibson-brite-wires",
+      "brand": "Gibson",
+      "model": "Brite Wires",
+      "name": "Light",
+      "kind": "electric",
+      "unit": "in",
+      "gauges": [10, 13, 17, 26, 36, 46]
+    },
+    {
+      "id": "daddario-ej16",
+      "brand": "D'Addario",
+      "model": "EJ16",
+      "name": "Phosphor Bronze Light",
+      "kind": "acoustic",
+      "unit": "in",
+      "gauges": [12, 16, 24, 32, 45, 53]
+    },
+    {
+      "id": "daddario-ej15",
+      "brand": "D'Addario",
+      "model": "EJ15",
+      "name": "Phosphor Bronze Extra Light",
+      "kind": "acoustic",
+      "unit": "in",
+      "gauges": [10, 14, 23, 30, 39, 47]
+    },
+    {
+      "id": "elixir-16052",
+      "brand": "Elixir",
+      "model": "16052",
+      "name": "Nanoweb Phosphor Bronze Light",
+      "kind": "acoustic",
+      "unit": "in",
+      "gauges": [12, 16, 24, 32, 45, 53]
+    },
+    {
+      "id": "ernieball-2146",
+      "brand": "Ernie Ball",
+      "model": "2146",
+      "name": "Earthwood 80/20 Medium Light",
+      "kind": "acoustic",
+      "unit": "in",
+      "gauges": [12, 16, 24, 32, 44, 54]
+    },
+    {
+      "id": "martin-msp4100",
+      "brand": "Martin",
+      "model": "MSP4100",
+      "name": "SP Phosphor Bronze Light",
+      "kind": "acoustic",
+      "unit": "in",
+      "gauges": [12, 16, 25, 32, 42, 54]
+    },
+    {
+      "id": "daddario-ej45",
+      "brand": "D'Addario",
+      "model": "EJ45",
+      "name": "Pro-Arte Normal",
+      "kind": "classical",
+      "unit": "mm",
+      "gauges": [0.71, 0.81, 1.02, 0.74, 0.91, 1.09]
+    },
+    {
+      "id": "daddario-ej46",
+      "brand": "D'Addario",
+      "model": "EJ46",
+      "name": "Pro-Arte Hard",
+      "kind": "classical",
+      "unit": "mm",
+      "gauges": [0.73, 0.83, 1.03, 0.76, 0.94, 1.12]
+    },
+    {
+      "id": "savarez-500cr",
+      "brand": "Savarez",
+      "model": "500CR",
+      "name": "Cristal Corum Normal",
+      "kind": "classical",
+      "unit": "mm",
+      "gauges": [0.72, 0.82, 1.03, 0.75, 0.93, 1.1]
+    },
+    {
+      "id": "labella-2001",
+      "brand": "La Bella",
+      "model": "2001",
+      "name": "Medium",
+      "kind": "classical",
+      "unit": "mm",
+      "gauges": [0.73, 0.83, 1.03, 0.77, 0.95, 1.11]
+    },
+    {
+      "id": "augustine-classic",
+      "brand": "Augustine",
+      "model": "Classic",
+      "name": "Normal",
+      "kind": "classical",
+      "unit": "mm",
+      "gauges": [0.74, 0.84, 1.04, 0.76, 0.94, 1.1]
+    }
+  ]
+}

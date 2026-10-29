@@ -27,6 +27,8 @@ test("uses safe defaults when persisted state is absent", () => {
     customChords: [],
     weeklySchedule: DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
     practiceGoals: DEFAULT_PRACTICE_GOALS,
+    guitars: [],
+    guitarEntries: [],
   });
 });
 
@@ -101,6 +103,8 @@ test("preserves valid collections and normalizes optional persisted settings", (
         6: null,
       },
       practiceGoals: { dailyMinutes: 90, weeklyDays: 3 },
+      guitars: [],
+      guitarEntries: [],
     },
   );
 });
@@ -152,6 +156,8 @@ test("replaces malformed collections and settings with defaults", () => {
       customChords: [],
       weeklySchedule: DEFAULT_WEEKLY_ROUTINE_SCHEDULE,
       practiceGoals: DEFAULT_PRACTICE_GOALS,
+      guitars: [],
+      guitarEntries: [],
     },
   );
 });

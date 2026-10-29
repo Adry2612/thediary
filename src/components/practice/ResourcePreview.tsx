@@ -32,19 +32,16 @@ export function ResourcePreview({
     }
 
     return (
-      <div>
-        <iframe
-          src={safeUrl}
-          title={resource.title}
-          className="h-[24rem] w-full border-0 bg-white sm:h-[32rem]"
-          loading="lazy"
-          allow="fullscreen"
-        />
+      <div className="flex flex-col items-start gap-3 p-5 sm:p-6">
+        <p className="text-sm text-muted">
+          Este material se abre en {RESOURCE_LABELS.songsterr}, fuera de la
+          aplicación.
+        </p>
         <a
           href={safeUrl}
           target="_blank"
-          rel="noreferrer"
-          className="mt-3 inline-block text-sm text-muted underline underline-offset-4"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-10 items-center rounded-md border border-line px-3 text-sm text-ink transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
         >
           Abrir {RESOURCE_LABELS.songsterr} en otra pestaña
         </a>
@@ -127,6 +124,25 @@ export function ResourcePreview({
 
   if (error) return <p className="p-6 text-sm text-red-300">{error}</p>;
   if (!url) return <p className="p-6 text-sm text-muted">Cargando archivo…</p>;
+  if (resource.kind === "image") {
+    return (
+      <div className="flex flex-col items-center gap-3 p-4 sm:p-5">
+        <img
+          src={url}
+          alt={resource.title}
+          className="max-h-[32rem] max-w-full object-contain"
+        />
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-muted underline underline-offset-4 hover:text-ink"
+        >
+          Abrir imagen en otra pestaña
+        </a>
+      </div>
+    );
+  }
   if (resource.kind === "audio") {
     return (
       <div className="p-5">

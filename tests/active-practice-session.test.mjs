@@ -74,3 +74,48 @@ test("keeps the guitar type of the running practice and can clear it", () => {
 
   useActivePracticeSessionStore.getState().clearActiveSession();
 });
+
+test("keeps the session target and can clear it", () => {
+  useActivePracticeSessionStore.getState().setActiveSession({
+    id: "practice-session-target",
+    name: "Práctica libre",
+    isCountUp: true,
+    phases: [
+      { id: "free", name: "Práctica libre", durationMinutes: 1, skill: "repertoire" },
+    ],
+  });
+
+  useActivePracticeSessionStore.getState().setTargetMinutes(30);
+  assert.equal(
+    useActivePracticeSessionStore.getState().activeSession?.targetMinutes,
+    30,
+  );
+
+  useActivePracticeSessionStore.getState().setTargetMinutes(null);
+  assert.equal(
+    "targetMinutes" in
+      (useActivePracticeSessionStore.getState().activeSession ?? {}),
+    false,
+  );
+
+  useActivePracticeSessionStore.getState().clearActiveSession();
+});
+
+test("keeps the specific guitar of the running practice", () => {
+  useActivePracticeSessionStore.getState().setActiveSession({
+    id: "practice-session-guitar",
+    name: "Con guitarra",
+    guitarId: "guitar-1",
+    guitarType: "electric",
+    phases: [
+      { id: "a", name: "Técnica", durationMinutes: 5, skill: "technique" },
+    ],
+  });
+
+  assert.equal(
+    useActivePracticeSessionStore.getState().activeSession?.guitarId,
+    "guitar-1",
+  );
+
+  useActivePracticeSessionStore.getState().clearActiveSession();
+});

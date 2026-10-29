@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   createPracticePlanFromSession,
-  createQuickRepertoirePlan,
   createTemplatePlan,
   type PracticeLaunchSession,
 } from "@/utils/practice-launch";
@@ -37,9 +36,11 @@ interface UseRequestedLaunchOptions {
 }
 
 /**
- * Arranca la práctica que pide la URL (`quickRepertoire`, `template`, `session`)
+ * Atiende la práctica que pide la URL (`quickRepertoire`, `template`, `session`)
  * una sola vez por petición, esperando a que el estado esté hidratado y sin
- * pisar una sesión que ya esté en marcha.
+ * pisar una sesión que ya esté en marcha. La práctica rápida de repertorio se
+ * entrega como pendiente para que la pantalla confirme la guitarra antes de
+ * arrancar.
  */
 export function useRequestedLaunch({
   requestedTemplateId,
@@ -62,6 +63,8 @@ export function useRequestedLaunch({
   const [templateLaunchError, setTemplateLaunchError] = useState<string | null>(
     null,
   );
+  const [pendingQuickRepertoire, setPendingQuickRepertoire] =
+    useState<RepertoireItem | null>(null);
   const launchedTemplateId = useRef<string | null>(null);
   const launchedSessionId = useRef<string | null>(null);
   const launchedQuickRepertoireId = useRef<string | null>(null);
@@ -86,13 +89,12 @@ export function useRequestedLaunch({
       return;
     }
 
-    launch(createQuickRepertoirePlan(item));
+    setPendingQuickRepertoire(item);
     setTemplateLaunchError(null);
   }, [
     activeSession,
     activeSessionHydrated,
     hasHydrated,
-    launch,
     repertoireItems,
     requestedQuickRepertoireId,
     templateNotFound,
@@ -195,5 +197,10 @@ export function useRequestedLaunch({
     requestedSessionId,
   ]);
 
-  return { templateLaunchError, setTemplateLaunchError };
+  return {
+    templateLaunchError,
+    setTemplateLaunchError,
+    pendingQuickRepertoire,
+    clearPendingQuickRepertoire: () => setPendingQuickRepertoire(null),
+  };
 }

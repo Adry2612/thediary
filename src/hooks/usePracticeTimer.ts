@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  shouldSignalBlockEnd,
   synchronizePracticeTimer,
   type PracticeTimerPlanItem,
   type PracticeTimerRuntime,
@@ -12,8 +13,15 @@ import type {
   PracticeSkill,
   PracticeTimerResult,
 } from "@/types/practice";
-import type { PracticeSound } from "@/utils/practice-sounds";
-import { enablePlaybackAudioSession } from "@/services/audio-session";
+import {
+  DEFAULT_PRACTICE_END_SOUND,
+  DEFAULT_PRACTICE_START_SOUND,
+  type PracticeSound,
+} from "@/utils/practice-sounds";
+import {
+  playPracticeSound,
+  stopPracticeSounds,
+} from "@/services/practice-sound";
 
 type TimerSnapshot = {
   elapsedSeconds: number;
@@ -78,13 +86,18 @@ export function usePracticeTimer(
   onPhaseChange?: (phase: PracticePhase) => void,
   onComplete?: (result: PracticeTimerResult) => void,
   countUp = false,
-  startSound: PracticeSound = 'voice',
-  endSound: PracticeSound = 'alarm',
+  startSound: PracticeSound = DEFAULT_PRACTICE_START_SOUND,
+  endSound: PracticeSound = DEFAULT_PRACTICE_END_SOUND,
+  targetSeconds: number | null = null,
 ) {
+  const targetMs =
+    targetSeconds !== null && targetSeconds > 0 ? targetSeconds * 1000 : null;
   const phasePlan = useMemo(() => validatePhases(phases), [phases]);
   const phasePlanKey = getPracticePlanKey(phases);
   const phasePlanRef = useRef(phasePlan);
   phasePlanRef.current = phasePlan;
+  const [isTargetReached, setIsTargetReached] = useState(false);
+  const alertedTargetRef = useRef<number | null>(null);
   const [snapshot, setSnapshot] = useState<TimerSnapshot>(() =>
     createSnapshot(
       {
@@ -115,49 +128,20 @@ export function usePracticeTimer(
     isRunning: false,
     awaitingPhaseAdvance: false,
   });
-  const audioContextRef = useRef<AudioContext | null>(null);
   const onPhaseChangeRef = useRef(onPhaseChange);
   const onCompleteRef = useRef(onComplete);
   onPhaseChangeRef.current = onPhaseChange;
   onCompleteRef.current = onComplete;
 
-  const playTransitionTone = useCallback((isStartingBlock: boolean) => {
-    if (typeof window === 'undefined') return;
-
-    try {
-      const AudioContextConstructor =
-        window.AudioContext ??
-        (window as typeof window & { webkitAudioContext?: typeof AudioContext })
-          .webkitAudioContext;
-      if (!AudioContextConstructor) return;
-      enablePlaybackAudioSession();
-      const context =
-        audioContextRef.current ?? new AudioContextConstructor();
-      audioContextRef.current = context;
-      if (context.state === 'suspended') void context.resume();
-
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      const now = context.currentTime;
-      const sound = isStartingBlock ? startSound : endSound;
-      oscillator.type = sound === 'voice' ? 'sawtooth' : sound === 'alarm' ? 'square' : 'sine';
-      oscillator.frequency.value = sound === 'voice'
-        ? (isStartingBlock ? 520 : 390)
-        : sound === 'alarm'
-          ? (isStartingBlock ? 1_200 : 700)
-          : (isStartingBlock ? 880 : 330);
-      gain.gain.setValueAtTime(0.0001, now);
-      const duration = sound === 'bell' ? 0.8 : sound === 'alarm' ? 0.35 : 0.28;
-      gain.gain.exponentialRampToValueAtTime(0.24, now + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start(now);
-      oscillator.stop(now + duration + 0.02);
-    } catch {
-      // Audio is optional; the timer must continue if the browser blocks it.
-    }
-  }, [endSound, startSound]);
+  const playTransitionTone = useCallback(
+    (isStartingBlock: boolean) => {
+      playPracticeSound(
+        isStartingBlock ? startSound : endSound,
+        isStartingBlock ? "start" : "end",
+      );
+    },
+    [endSound, startSound],
+  );
 
   const completeSession = useCallback(
     (runtime: PracticeTimerRuntime, completed: boolean) => {
@@ -168,6 +152,7 @@ export function usePracticeTimer(
         ]),
       ) as Record<PracticeSkill, number>;
 
+      setIsTargetReached(false);
       onCompleteRef.current?.({
         elapsedSeconds: Math.floor(runtime.elapsedMs / 1000),
         startedAt: new Date(runtime.startedAtMs ?? Date.now()).toISOString(),
@@ -219,18 +204,32 @@ export function usePracticeTimer(
       const runtime = runtimeRef.current;
       if (!runtime.isRunning) return;
 
+      const activeTargetMs =
+        targetMs !== null && alertedTargetRef.current !== targetMs
+          ? targetMs
+          : null;
       const result = synchronizePracticeTimer(
         runtime,
         phasePlan,
         now,
         countUp,
         continueAfterBlockTime,
+        activeTargetMs,
       );
       if (result.completed) {
         runtimeRef.current = result.runtime;
         publishSnapshot(result.runtime);
         playTransitionTone(false);
         completeSession(result.runtime, true);
+        return;
+      }
+
+      if (result.targetReached) {
+        runtimeRef.current = result.runtime;
+        publishSnapshot(result.runtime);
+        alertedTargetRef.current = targetMs;
+        playTransitionTone(false);
+        setIsTargetReached(true);
         return;
       }
 
@@ -255,7 +254,9 @@ export function usePracticeTimer(
       }
 
       runtimeRef.current = result.runtime;
-      if (result.runtime.awaitingPhaseAdvance) playTransitionTone(false);
+      if (shouldSignalBlockEnd(runtime, result.runtime)) {
+        playTransitionTone(false);
+      }
       publishSnapshot(result.runtime);
     },
     [
@@ -266,8 +267,11 @@ export function usePracticeTimer(
       phasePlan,
       playTransitionTone,
       publishSnapshot,
+      targetMs,
     ],
   );
+
+  useEffect(() => stopPracticeSounds, []);
 
   useEffect(() => {
     if (!snapshot.isRunning) return;
@@ -275,6 +279,28 @@ export function usePracticeTimer(
     const intervalId = window.setInterval(() => synchronize(Date.now()), 250);
     return () => window.clearInterval(intervalId);
   }, [snapshot.isRunning, synchronize]);
+
+  useEffect(() => {
+    alertedTargetRef.current = null;
+    setIsTargetReached(false);
+  }, [targetMs]);
+
+  useEffect(() => {
+    if (targetMs === null) return;
+    if (runtimeRef.current.elapsedMs < targetMs) return;
+    if (alertedTargetRef.current === targetMs) return;
+
+    const pausedRuntime: PracticeTimerRuntime = {
+      ...runtimeRef.current,
+      isRunning: false,
+      awaitingPhaseAdvance: false,
+    };
+    runtimeRef.current = pausedRuntime;
+    alertedTargetRef.current = targetMs;
+    publishSnapshot(pausedRuntime);
+    playTransitionTone(false);
+    setIsTargetReached(true);
+  }, [targetMs, playTransitionTone, publishSnapshot]);
 
   useEffect(() => {
     const runtime: PracticeTimerRuntime = {
@@ -289,11 +315,14 @@ export function usePracticeTimer(
       awaitingPhaseAdvance: false,
     };
 
+    alertedTargetRef.current = null;
+    setIsTargetReached(false);
     runtimeRef.current = runtime;
     publishSnapshot(runtime);
   }, [countUp, phasePlanKey, publishSnapshot]);
 
   const resume = useCallback(() => {
+    setIsTargetReached(false);
     const runtime = runtimeRef.current;
     if (runtime.isRunning || runtime.phaseIndex >= phasePlan.length) {
       return;
@@ -337,6 +366,7 @@ export function usePracticeTimer(
   }, [publishSnapshot, synchronize]);
 
   const skip = useCallback(() => {
+    setIsTargetReached(false);
     const now = Date.now();
     synchronize(now);
 
@@ -358,7 +388,7 @@ export function usePracticeTimer(
 
     runtimeRef.current = nextRuntime;
     if (nextPhase) {
-      playTransitionTone(false);
+      if (!runtime.awaitingPhaseAdvance) playTransitionTone(false);
       window.setTimeout(() => playTransitionTone(true), 220);
       onPhaseChangeRef.current?.(nextPhase);
     }
@@ -367,6 +397,7 @@ export function usePracticeTimer(
   }, [completeSession, phasePlan, playTransitionTone, publishSnapshot, synchronize]);
 
   const finish = useCallback(() => {
+    setIsTargetReached(false);
     const now = Date.now();
     synchronize(now);
 
@@ -397,6 +428,8 @@ export function usePracticeTimer(
       awaitingPhaseAdvance: false,
     };
 
+    alertedTargetRef.current = null;
+    setIsTargetReached(false);
     runtimeRef.current = runtime;
     publishSnapshot(runtime);
   }, [publishSnapshot]);
@@ -409,6 +442,7 @@ export function usePracticeTimer(
     elapsedSeconds: snapshot.elapsedSeconds,
     startedAt: snapshot.startedAt,
     isRunning: snapshot.isRunning,
+    isTargetReached,
     awaitingPhaseAdvance: snapshot.awaitingPhaseAdvance,
     remainingSeconds: snapshot.remainingSeconds,
     phaseElapsedSeconds: snapshot.phaseElapsedSeconds,

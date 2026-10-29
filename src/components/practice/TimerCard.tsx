@@ -1,17 +1,25 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { CheckboxField } from "@/components/ui/CheckboxField";
 import { DialogHeader } from "@/components/ui/DialogHeader";
+import { Field, TextField } from "@/components/ui/Field";
 import { ModalDialog } from "@/components/ui/ModalDialog";
+import { Toast } from "@/components/ui/Toast";
 import { ToggleChip } from "@/components/ui/ToggleChip";
 import { ToggleGroup } from "@/components/ui/ToggleGroup";
 import { SearchIcon, SettingsIcon } from "@/components/ui/icons";
 import { SongPickerDialog } from "@/components/practice/SongPickerDialog";
 import { useDialogModal } from "@/hooks/useDialogModal";
-import { PRACTICE_SOUND_OPTIONS, type PracticeSound } from "@/utils/practice-sounds";
+import {
+  PRACTICE_SOUND_LABEL_KEYS,
+  PRACTICE_SOUNDS,
+  type PracticeSound,
+} from "@/utils/practice-sounds";
+import { playPracticeSound } from "@/services/practice-sound";
+import { normalizeTargetMinutes } from "@/utils/practice-target";
 import type { PracticeTimerController } from "@/hooks/usePracticeTimer";
 import type { RepertoireItem } from "@/types/practice";
 import {
@@ -32,6 +40,9 @@ type TimerCardProps = {
   setPracticeStartSound: (sound: PracticeSound) => void;
   practiceEndSound: PracticeSound;
   setPracticeEndSound: (sound: PracticeSound) => void;
+  /** Objetivo de la sesión en minutos; sin valor si no hay. */
+  targetMinutes?: number;
+  onChangeTargetMinutes: (value: number | null) => void;
   /** Artista del bloque de repertorio que se está practicando, si lo tiene. */
   artist?: string;
   /** Título resuelto del bloque; en repertorio es siempre el de la canción. */
@@ -50,6 +61,8 @@ export function TimerCard({
   setPracticeStartSound,
   practiceEndSound,
   setPracticeEndSound,
+  targetMinutes,
+  onChangeTargetMinutes,
   artist,
   title,
   repertoireSongs,
@@ -57,9 +70,16 @@ export function TimerCard({
 }: TimerCardProps) {
   const [isOptionsDialogOpen, setIsOptionsDialogOpen] = useState(false);
   const [isSongPickerOpen, setIsSongPickerOpen] = useState(false);
+  const [targetEnabled, setTargetEnabled] = useState(Boolean(targetMinutes));
+  const [targetValue, setTargetValue] = useState(String(targetMinutes ?? 30));
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const optionsTitleId = useId();
-  const { dialogRef: optionsDialogRef, handleCancel: handleOptionsCancel } =
-    useDialogModal(isOptionsDialogOpen, () => setIsOptionsDialogOpen(false));
+  const targetInputId = useId();
+  const {
+    dialogRef: optionsDialogRef,
+    handleCancel: handleOptionsCancel,
+    isClosing: isOptionsClosing,
+  } = useDialogModal(isOptionsDialogOpen, () => setIsOptionsDialogOpen(false));
   const timerText = useI18nSection("timer");
   const practiceText = useI18nSection("practice");
   const skills = useI18nSection("skills");
@@ -68,6 +88,7 @@ export function TimerCard({
     awaitingPhaseAdvance,
     elapsedSeconds,
     isRunning,
+    isTargetReached,
     remainingSeconds,
     pause,
     reset,
@@ -86,6 +107,63 @@ export function TimerCard({
     0,
     phaseElapsedSeconds - phasePlannedSeconds,
   );
+  const parsedTarget = normalizeTargetMinutes(targetValue);
+  const targetInvalid = targetEnabled && parsedTarget === undefined;
+
+  /**
+   * El bloque terminado se sigue con el estado real del temporizador, no con el
+   * derivado que oculta la espera cuando el reloj continúa en overtime. Así el
+   * aviso aparece también en ese modo.
+   */
+  const blockFinished = timer.awaitingPhaseAdvance && !isCompleted;
+
+  useEffect(() => {
+    if (!isTargetReached) return;
+    setToastMessage(
+      targetMinutes
+        ? `${timerText.targetReachedToast} · ${targetMinutes} min`
+        : timerText.targetReachedToast,
+    );
+  }, [isTargetReached, targetMinutes, timerText.targetReachedToast]);
+
+  useEffect(() => {
+    if (!blockFinished || isTargetReached) return;
+    setToastMessage(timerText.blockFinishedToast);
+  }, [blockFinished, isTargetReached, timerText.blockFinishedToast]);
+
+  useEffect(() => {
+    if (!isTargetReached && !blockFinished) setToastMessage(null);
+  }, [blockFinished, isTargetReached]);
+
+  /**
+   * Si el bloque termina con la pestaña en segundo plano, el aviso de cinco
+   * segundos pasa desapercibido. Al volver a la pestaña se recuerda mientras
+   * siga pendiente avanzar.
+   */
+  useEffect(() => {
+    if (!blockFinished || isTargetReached) return;
+    function reshownOnReturn() {
+      if (document.visibilityState === "visible") {
+        setToastMessage(timerText.blockFinishedToast);
+      }
+    }
+    document.addEventListener("visibilitychange", reshownOnReturn);
+    window.addEventListener("focus", reshownOnReturn);
+    return () => {
+      document.removeEventListener("visibilitychange", reshownOnReturn);
+      window.removeEventListener("focus", reshownOnReturn);
+    };
+  }, [blockFinished, isTargetReached, timerText.blockFinishedToast]);
+
+  function handleTargetEnabled(enabled: boolean) {
+    setTargetEnabled(enabled);
+    onChangeTargetMinutes(enabled ? (parsedTarget ?? null) : null);
+  }
+
+  function handleTargetValue(value: string) {
+    setTargetValue(value);
+    onChangeTargetMinutes(normalizeTargetMinutes(value) ?? null);
+  }
 
   const timerAction = getTimerAction(
     isRunning,
@@ -115,7 +193,7 @@ export function TimerCard({
               ? skills[currentPhase.skill]
               : timerText.completedSession}
           </span>
-          {!isCountUp && currentPhase && !isCompleted && (
+          {currentPhase && !isCompleted && (
             <button
               type="button"
               onClick={() => setIsOptionsDialogOpen(true)}
@@ -191,18 +269,10 @@ export function TimerCard({
           </p>
         )}
 
-        {awaitingPhaseAdvance && (
-          <p
-            className="mb-5 border border-accent-green-fg/30 bg-accent-green-bg px-4 py-3 text-sm text-accent-green-fg"
-            role="status"
-            aria-live="polite"
-          >
-            {timerText.completeBlockNotice}
-          </p>
-        )}
 
         <ModalDialog
           dialogRef={optionsDialogRef}
+          isClosing={isOptionsClosing}
           labelledBy={optionsTitleId}
           onCancel={handleOptionsCancel}
           onClose={() => setIsOptionsDialogOpen(false)}
@@ -210,7 +280,6 @@ export function TimerCard({
         >
           <div className="p-5 text-left sm:p-6">
             <DialogHeader
-              eyebrow={timerText.soundOptions}
               titleId={optionsTitleId}
               title={timerText.practiceSettingsTitle}
               description={timerText.practiceSettingsDescription}
@@ -218,6 +287,42 @@ export function TimerCard({
               closeLabel={timerText.closeSettings}
             />
 
+            <section className="mt-6 border-t border-line pt-5">
+              <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+                {timerText.targetSection}
+              </h3>
+              <p className="mt-1.5 text-xs leading-5 text-muted">
+                {timerText.targetSectionDescription}
+              </p>
+              <div className="mt-3 rounded-lg border border-line p-3.5">
+                <CheckboxField
+                  checked={targetEnabled}
+                  onChange={(event) => handleTargetEnabled(event.target.checked)}
+                  label={timerText.targetEnable}
+                  className="text-sm text-ink"
+                />
+                {targetEnabled && (
+                  <Field
+                    label={timerText.targetMinutes}
+                    htmlFor={targetInputId}
+                    error={targetInvalid ? timerText.targetInvalid : null}
+                    className="mt-3 max-w-40"
+                  >
+                    <TextField
+                      id={targetInputId}
+                      type="number"
+                      min={1}
+                      step={1}
+                      inputMode="numeric"
+                      value={targetValue}
+                      onChange={(event) => handleTargetValue(event.target.value)}
+                    />
+                  </Field>
+                )}
+              </div>
+            </section>
+
+            {!isCountUp && (
             <section className="mt-6 border-t border-line pt-5">
               <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
                 {timerText.flowSection}
@@ -249,6 +354,7 @@ export function TimerCard({
                 </div>
               </div>
             </section>
+            )}
 
             <section className="mt-6 border-t border-line pt-5">
               <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
@@ -266,14 +372,17 @@ export function TimerCard({
                     aria-label={timerText.startSound}
                     className="mt-2 gap-1.5"
                   >
-                    {PRACTICE_SOUND_OPTIONS.map((option) => (
+                    {PRACTICE_SOUNDS.map((sound) => (
                       <ToggleChip
-                        key={option.value}
-                        selected={practiceStartSound === option.value}
+                        key={sound}
+                        selected={practiceStartSound === sound}
                         size="sm"
-                        onClick={() => setPracticeStartSound(option.value)}
+                        onClick={() => {
+                          setPracticeStartSound(sound);
+                          playPracticeSound(sound, "start");
+                        }}
                       >
-                        {option.label}
+                        {timerText[PRACTICE_SOUND_LABEL_KEYS[sound]]}
                       </ToggleChip>
                     ))}
                   </ToggleGroup>
@@ -286,14 +395,17 @@ export function TimerCard({
                     aria-label={timerText.endSound}
                     className="mt-2 gap-1.5"
                   >
-                    {PRACTICE_SOUND_OPTIONS.map((option) => (
+                    {PRACTICE_SOUNDS.map((sound) => (
                       <ToggleChip
-                        key={option.value}
-                        selected={practiceEndSound === option.value}
+                        key={sound}
+                        selected={practiceEndSound === sound}
                         size="sm"
-                        onClick={() => setPracticeEndSound(option.value)}
+                        onClick={() => {
+                          setPracticeEndSound(sound);
+                          playPracticeSound(sound, "end");
+                        }}
                       >
-                        {option.label}
+                        {timerText[PRACTICE_SOUND_LABEL_KEYS[sound]]}
                       </ToggleChip>
                     ))}
                   </ToggleGroup>
@@ -361,6 +473,12 @@ export function TimerCard({
         selectedSongId={currentPhase?.repertoireItemId}
         onSelect={(song) => onChangeRepertoireSong?.(song.id)}
         onClose={() => setIsSongPickerOpen(false)}
+      />
+      <Toast
+        message={toastMessage ?? ""}
+        open={Boolean(toastMessage)}
+        durationMs={8000}
+        onDismiss={() => setToastMessage(null)}
       />
     </>
   );

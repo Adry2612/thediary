@@ -1,6 +1,7 @@
 import {
   PRACTICE_SKILLS,
   type GuitarType,
+  type PracticeMetricValue,
   type PracticePhase,
   type PracticeSkill,
   type PracticeTimerResult,
@@ -11,6 +12,7 @@ import {
   getBlockAverageBpms,
   type MetronomeBpmSample,
 } from "./metronome-bpm.ts";
+import { normalizePracticeMetricValue } from "./practice-metrics.ts";
 
 interface CreatePracticeSessionRecordInput {
   id: string;
@@ -21,6 +23,17 @@ interface CreatePracticeSessionRecordInput {
   notes: string;
   phaseNotes: Record<number, string>;
   guitarType?: GuitarType;
+  /** Guitarra concreta de Mi equipo, si se eligió. */
+  guitarId?: string;
+  /**
+   * Estado final de la práctica cuando no coincide con el del temporizador,
+   * por ejemplo una práctica libre que termina el usuario.
+   */
+  completed?: boolean;
+  /** Estado de ánimo al empezar, si la métrica estaba activa y se respondió. */
+  mood?: PracticeMetricValue;
+  /** Nivel de foco al empezar, si la métrica estaba activa y se respondió. */
+  focus?: PracticeMetricValue;
   /** Línea temporal de BPM de la sesión; sin ella no hay BPM por bloque. */
   bpmSamples?: MetronomeBpmSample[];
   /** Bloques durante los que el metrónomo llegó a sonar. */
@@ -36,9 +49,15 @@ export function createPracticeSessionRecord({
   notes,
   phaseNotes,
   guitarType,
+  guitarId,
+  completed: storedCompleted,
+  mood: storedMood,
+  focus: storedFocus,
   bpmSamples,
   metronomeBlockIndexes,
 }: CreatePracticeSessionRecordInput): SessionRecord {
+  const mood = normalizePracticeMetricValue(storedMood);
+  const focus = normalizePracticeMetricValue(storedFocus);
   const blockAverageBpms =
     bpmSamples && bpmSamples.length > 0
       ? getBlockAverageBpms(
@@ -54,10 +73,13 @@ export function createPracticeSessionRecord({
     startedAt: result.startedAt,
     durationSeconds: result.elapsedSeconds,
     averageBpm,
-    completed: result.completed,
+    completed: storedCompleted ?? result.completed,
     skillSeconds: normalizeSkillSeconds(result.skillSeconds),
     notes: notes.trim() || undefined,
     ...(guitarType ? { guitarType } : {}),
+    ...(guitarId ? { guitarId } : {}),
+    ...(mood ? { mood } : {}),
+    ...(focus ? { focus } : {}),
     phases: result.phases.map((phase, index) => ({
       ...phase,
       name: phases[index]?.name ?? phase.name,
@@ -118,12 +140,28 @@ function normalizeSessionPhase(
 
 /** Rellena las categorías que falten en una sesión cargada de datos antiguos. */
 export function normalizeSessionRecord(session: SessionRecord): SessionRecord {
-  const { guitarType: storedGuitarType, phases, ...rest } = session;
+  const {
+    guitarType: storedGuitarType,
+    guitarId: storedGuitarId,
+    mood: storedMood,
+    focus: storedFocus,
+    phases,
+    ...rest
+  } = session;
   const guitarType = normalizeGuitarType(storedGuitarType);
+  const guitarId =
+    typeof storedGuitarId === "string" && storedGuitarId.trim() !== ""
+      ? storedGuitarId
+      : undefined;
+  const mood = normalizePracticeMetricValue(storedMood);
+  const focus = normalizePracticeMetricValue(storedFocus);
 
   return {
     ...rest,
     ...(guitarType ? { guitarType } : {}),
+    ...(guitarId ? { guitarId } : {}),
+    ...(mood ? { mood } : {}),
+    ...(focus ? { focus } : {}),
     skillSeconds: normalizeSkillSeconds(session.skillSeconds),
     ...(phases ? { phases: phases.map(normalizeSessionPhase) } : {}),
   };

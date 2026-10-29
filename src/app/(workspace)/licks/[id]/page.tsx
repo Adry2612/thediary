@@ -10,6 +10,8 @@ import { LickTab } from "@/components/licks/LickTab";
 import { TechniqueBadges } from "@/components/licks/TechniqueBadges";
 import { TabPlaybackBar } from "@/components/repertoire/TabPlaybackBar";
 import { BackLink } from "@/components/ui/BackLink";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PageShell } from "@/components/ui/PageShell";
 import { Button } from "@/components/ui/Button";
 import { EditIcon, TrashIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
@@ -40,23 +42,18 @@ export default function LickDetailPage({ params }: Props) {
 
   if (!hasHydrated) {
     return (
-      <main className="mx-auto max-w-5xl px-5 py-16 text-sm text-muted">
-        {text.loading}
-      </main>
+      <PageShell>
+        <p className="text-sm text-muted">{text.loading}</p>
+      </PageShell>
     );
   }
 
   if (!lick) {
     return (
-      <main className="mx-auto max-w-5xl px-5 py-16 sm:px-8">
+      <PageShell>
         <BackLink href="/licks">{text.back}</BackLink>
-        <h1 className="mt-8 font-sans text-3xl font-semibold tracking-tight text-ink">
-          {text.notFound}
-        </h1>
-        <p className="mt-3 max-w-xl text-sm text-muted">
-          {text.notFoundDescription}
-        </p>
-      </main>
+        <PageHeader className="mt-8" title={text.notFound} description={text.notFoundDescription} />
+      </PageShell>
     );
   }
 
@@ -65,66 +62,65 @@ export default function LickDetailPage({ params }: Props) {
   const lastPractised = getLastPracticedLabel(text, lick.lastPracticedAt, today);
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+    <PageShell>
       <BackLink href="/licks">{text.back}</BackLink>
 
-      <header className="mt-6 flex flex-wrap items-start justify-between gap-6">
-        <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-            {text.editorEyebrow}
-          </p>
-          <h1 className="mt-3 font-sans text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            {title}
-          </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="rounded-md border border-line px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
-              {lick.key ?? text.noKey}
-            </span>
-            <TechniqueBadges techniques={lick.techniques} />
-          </div>
-          <p className="mt-3 text-xs text-muted">
-            {text.lastPracticed}: {lastPractised} · {text.practiceCount}:{" "}
-            {lick.practiceCount}
-          </p>
-          {song ? (
-            <p className="mt-2 text-xs text-muted">
-              {text.linkedSong}:{" "}
-              <Link
-                href={`/repertoire/${song.id}`}
-                className="text-ink underline underline-offset-4 hover:text-ink/80"
-              >
-                {song.title}
-              </Link>
+      <PageHeader
+        className="mt-6"
+        title={title}
+        description={
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md border border-line px-2 py-1 font-mono text-xs uppercase tracking-[0.12em] text-muted">
+                {lick.key ?? text.noKey}
+              </span>
+              <TechniqueBadges techniques={lick.techniques} />
+            </div>
+            <p className="mt-3 text-sm text-muted">
+              {text.lastPracticed}: {lastPractised} · {text.practiceCount}:{" "}
+              {lick.practiceCount}
             </p>
-          ) : (
-            <p className="mt-2 text-xs text-muted">{text.noLinkedSong}</p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="field"
-            onClick={() => setEditing(true)}
-          >
-            <EditIcon className="size-4" />
-            {text.edit}
-          </Button>
-          <button
-            type="button"
-            aria-label={`${text.delete}: ${title}`}
-            onClick={() => {
-              if (!window.confirm(text.deleteConfirm)) return;
-              deleteLick(lick.id);
-              router.push("/licks");
-            }}
-            className="inline-flex size-11 items-center justify-center rounded-md border border-line text-muted transition hover:border-red-300/50 hover:text-red-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
-          >
-            <TrashIcon className="size-4" />
-          </button>
-        </div>
-      </header>
+            {song ? (
+              <p className="mt-2 text-sm text-muted">
+                {text.linkedSong}:{" "}
+                <Link
+                  href={`/repertoire/${song.id}`}
+                  className="text-ink underline underline-offset-4 hover:text-ink/80"
+                >
+                  {song.title}
+                </Link>
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-muted">{text.noLinkedSong}</p>
+            )}
+          </>
+        }
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="field"
+              onClick={() => setEditing(true)}
+            >
+              <EditIcon className="size-4" />
+              {text.edit}
+            </Button>
+            <button
+              type="button"
+              aria-label={`${text.delete}: ${title}`}
+              onClick={() => {
+                if (!window.confirm(text.deleteConfirm)) return;
+                deleteLick(lick.id);
+                router.push("/licks");
+              }}
+              className="inline-flex size-11 items-center justify-center rounded-md border border-line text-muted transition hover:border-red-300/50 hover:text-red-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
+            >
+              <TrashIcon className="size-4" />
+            </button>
+          </div>
+        }
+      />
 
       <section className="mt-8">
         <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">
@@ -164,6 +160,6 @@ export default function LickDetailPage({ params }: Props) {
           onClose={() => setEditing(false)}
         />
       ) : null}
-    </main>
+    </PageShell>
   );
 }

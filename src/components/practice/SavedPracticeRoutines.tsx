@@ -45,7 +45,10 @@ export function SavedPracticeRoutines({
               <div className="min-w-0">
                 <p className="truncate font-medium text-ink">{routine.name}</p>
                 <p className="mt-2 font-mono text-xs text-muted">
-                  {routine.phases.length} {text.blocksCount} ·{" "}
+                  {routine.phases.length}{" "}
+                  {routine.phases.length === 1 ?
+                    text.blockSingular
+                  : text.blocksCount}{" "}·{" "}
                   {getPracticePlanDuration(routine.phases)} {text.total}
                 </p>
               </div>
@@ -54,9 +57,9 @@ export function SavedPracticeRoutines({
                   type="button"
                   variant="primary"
                   onClick={() => onStart(routine.id)}
-                  aria-label={`${text.startRoutine} ${routine.name}`}
+                  aria-label={`${text.reviewRoutine} ${routine.name}`}
                 >
-                  {text.startRoutine}
+                  {text.reviewRoutine}
                 </Button>
                 <Button
                   type="button"

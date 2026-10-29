@@ -35,7 +35,6 @@ export function TechniquePickerDialog({
   return (
     <SearchPickerDialog
       open={open}
-      eyebrow={text.techniqueName}
       title={text.techniquePickerTitle}
       description={text.techniquePickerDescription}
       searchLabel={text.techniquePickerSearch}

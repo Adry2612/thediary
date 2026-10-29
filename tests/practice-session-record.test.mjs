@@ -91,6 +91,73 @@ test("builds a saved session from timer results and phase metadata", () => {
   assert.notEqual(record.phases?.[0].resources?.[0], phases[0].resources[0]);
 });
 
+test("stores the specific guitar used", () => {
+  const record = createPracticeSessionRecord({
+    id: "session-guitar",
+    title: "Con guitarra",
+    averageBpm: 0,
+    result: {
+      elapsedSeconds: 600,
+      startedAt: "2026-10-08T12:00:00.000Z",
+      completed: true,
+      skillSeconds: {
+        technique: 600,
+        theory: 0,
+        repertoire: 0,
+        lick: 0,
+        improvisation: 0,
+      },
+      phases: [{ id: 1, name: "Escalas", skill: "technique", elapsedSeconds: 600 }],
+    },
+    phases: [{ id: 1, name: "Escalas", durationMinutes: 10, skill: "technique" }],
+    guitarType: "electric",
+    guitarId: "guitar-1",
+    notes: "",
+    phaseNotes: {},
+  });
+
+  assert.equal(record.guitarId, "guitar-1");
+  assert.equal(normalizeSessionRecord(record).guitarId, "guitar-1");
+  assert.equal(
+    normalizeSessionRecord({
+      ...record,
+      guitarId: "   ",
+    }).guitarId,
+    undefined,
+  );
+});
+
+test("overrides the timer completion for a free practice", () => {
+  const record = createPracticeSessionRecord({
+    id: "free-session",
+    title: "Práctica libre",
+    averageBpm: 0,
+    result: {
+      elapsedSeconds: 600,
+      startedAt: "2026-10-08T12:00:00.000Z",
+      completed: false,
+      skillSeconds: {
+        technique: 0,
+        theory: 0,
+        repertoire: 600,
+        lick: 0,
+        improvisation: 0,
+      },
+      phases: [
+        { id: 1, name: "Canción", skill: "repertoire", elapsedSeconds: 600 },
+      ],
+    },
+    phases: [
+      { id: 1, name: "Canción", durationMinutes: 1, skill: "repertoire" },
+    ],
+    completed: true,
+    notes: "",
+    phaseNotes: {},
+  });
+
+  assert.equal(record.completed, true);
+});
+
 test("stores the guitar type and the average BPM of each block", () => {
   const record = createPracticeSessionRecord({
     id: "session-bpm",
@@ -295,4 +362,79 @@ test("omits blank session and phase notes", () => {
 
   assert.equal(record.notes, undefined);
   assert.equal(record.phases?.[0].notes, undefined);
+});
+
+test("stores mood and focus only when they were answered", () => {
+  const result = {
+    elapsedSeconds: 60,
+    startedAt: "2026-10-08T12:00:00.000Z",
+    completed: true,
+    skillSeconds: {
+      technique: 60,
+      theory: 0,
+      repertoire: 0,
+      lick: 0,
+      improvisation: 0,
+    },
+    phases: [
+      { id: 1, name: "Escalas", skill: "technique", elapsedSeconds: 60 },
+    ],
+  };
+  const phases = [
+    { id: 1, name: "Escalas", durationMinutes: 1, skill: "technique" },
+  ];
+
+  const withMetrics = createPracticeSessionRecord({
+    id: "session-metrics",
+    title: "Con métricas",
+    averageBpm: 0,
+    result,
+    phases,
+    notes: "",
+    phaseNotes: {},
+    mood: 4,
+    focus: 2,
+  });
+  const withoutMetrics = createPracticeSessionRecord({
+    id: "session-no-metrics",
+    title: "Sin métricas",
+    averageBpm: 0,
+    result,
+    phases,
+    notes: "",
+    phaseNotes: {},
+  });
+
+  assert.equal(withMetrics.mood, 4);
+  assert.equal(withMetrics.focus, 2);
+  assert.equal("mood" in withoutMetrics, false);
+  assert.equal("focus" in withoutMetrics, false);
+});
+
+test("drops stored metric values outside the five-point scale", () => {
+  const base = {
+    id: "session-metrics-normalize",
+    startedAt: "2026-10-08T12:00:00.000Z",
+    durationSeconds: 120,
+    averageBpm: 0,
+    skillSeconds: {
+      technique: 60,
+      theory: 0,
+      repertoire: 60,
+      lick: 0,
+      improvisation: 0,
+    },
+  };
+
+  const normalized = normalizeSessionRecord({
+    ...base,
+    mood: 9,
+    focus: 3,
+  });
+  const missing = normalizeSessionRecord({ ...base });
+
+  assert.equal("mood" in normalized, false);
+  assert.equal(normalized.focus, 3);
+  assert.equal("mood" in missing, false);
+  assert.equal("focus" in missing, false);
 });

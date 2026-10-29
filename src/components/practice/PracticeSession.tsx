@@ -34,6 +34,7 @@ import {
   getSessionStatus,
 } from "@/utils/practice-session-status";
 import { createPracticeSessionRecord } from "@/utils/practice-session-record";
+import { targetMinutesToSeconds } from "@/utils/practice-target";
 import { getPhaseMaterials } from "@/utils/practice-materials";
 import { normalizeRepertoirePhaseNames } from "@/utils/practice-plan";
 import {
@@ -51,20 +52,29 @@ import {
   type ActivePracticeSession,
 } from "@/stores/useActivePracticeSessionStore";
 import { usePracticeStore } from "@/stores/usePracticeStore";
-import type { PracticeTimerResult } from "@/types/practice";
+import type {
+  PracticeMetricValue,
+  PracticeTimerResult,
+} from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 export function PracticeSession({ session }: { session: ActivePracticeSession }) {
   const text = useI18nSection("practice");
   const timerText = useI18nSection("timer");
   const licksText = useI18nSection("licks");
+  const pathname = usePathname();
+  const isPracticeRoute = pathname === "/practice";
   const { id: sessionId, name, phases } = session;
   const [isCompleted, setIsCompleted] = useState(false);
   const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
   const [pendingResult, setPendingResult] =
     useState<PracticeTimerResult | null>(null);
-  const timerCardRef = useRef<HTMLDivElement>(null);
-  const isTimerVisible = useElementVisibility(timerCardRef);
+  const {
+    ref: timerCardRef,
+    element: timerCardElement,
+    isVisible: isTimerVisible,
+    hasMeasured: isTimerMeasured,
+  } = useElementVisibility<HTMLDivElement>("0px", pathname);
   const sessionSavedRef = useRef(false);
   const completionHandledRef = useRef(false);
   const addSession = usePracticeStore((state) => state.addSession);
@@ -95,11 +105,14 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const setGuitarType = useActivePracticeSessionStore(
     (state) => state.setGuitarType,
   );
+  const setTargetMinutes = useActivePracticeSessionStore(
+    (state) => state.setTargetMinutes,
+  );
   const { lastGuitarType } = useGuitarPreference();
-  const pathname = usePathname();
-  const isPracticeRoute = pathname === "/practice";
   const { isMounted: isBarMounted, isVisible: isBarVisible } =
-    useAnimatedPresence(!isPracticeRoute || !isTimerVisible);
+    useAnimatedPresence(
+      !isPracticeRoute || (isTimerMeasured && !isTimerVisible),
+    );
   const router = useRouter();
   const {
     bpm: metronomeBpm,
@@ -127,6 +140,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     session.isCountUp ?? false,
     practiceStartSound,
     practiceEndSound,
+    targetMinutesToSeconds(session.targetMinutes),
   );
   const timerElapsedSecondsRef = useRef(timer.elapsedSeconds);
   timerElapsedSecondsRef.current = timer.elapsedSeconds;
@@ -195,6 +209,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     sessionNotes: string,
     phaseNotes: Record<number, string>,
     updateRoutine = false,
+    metrics: { mood?: PracticeMetricValue; focus?: PracticeMetricValue } = {},
   ) {
     if (!pendingResult || sessionSavedRef.current) return;
 
@@ -217,6 +232,10 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         notes: sessionNotes,
         phaseNotes,
         guitarType: session.guitarType,
+        guitarId: session.guitarId,
+        completed: session.isCountUp ? true : pendingResult.completed,
+        mood: metrics.mood,
+        focus: metrics.focus,
         bpmSamples: bpmSamplesRef.current,
         metronomeBlockIndexes: metronomeBlocksRef.current,
       }),
@@ -260,7 +279,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   }
 
   function scrollToTimerCard() {
-    const element = timerCardRef.current;
+    const element = timerCardElement;
     if (!element) return;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -320,6 +339,8 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         setPracticeStartSound={setPracticeStartSound}
         practiceEndSound={practiceEndSound}
         setPracticeEndSound={setPracticeEndSound}
+        targetMinutes={session.targetMinutes}
+        onChangeTargetMinutes={setTargetMinutes}
         artist={currentRepertoireItem?.artist}
         title={currentRepertoireItem?.title ?? currentPhase?.name}
         repertoireSongs={repertoireSongs}
@@ -431,7 +452,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
       <main
         className={
           isPracticeRoute
-            ? `mx-auto w-full ${isSplitView ? "max-w-7xl" : "max-w-5xl"} space-y-6 px-5 pb-16 pt-6 sm:px-8 sm:pb-24 sm:pt-8`
+            ? "mx-auto w-full max-w-7xl 2xl:max-w-[96rem] space-y-6 px-5 pt-6 pb-16 sm:px-8 sm:pt-8 sm:pb-24"
             : "hidden"
         }
         aria-hidden={!isPracticeRoute}

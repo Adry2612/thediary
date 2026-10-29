@@ -9,6 +9,7 @@ export const RESOURCE_LABELS: Record<PracticeResourceKind, string> = {
   songsterr: "Songsterr",
   pdf: "PDF",
   audio: "Audio",
+  image: "Imagen",
   guitarpro: "Guitar Pro",
   youtube: "YouTube",
   spotify: "Spotify",

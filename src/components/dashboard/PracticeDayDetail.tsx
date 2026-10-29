@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { PracticeSessionDetails } from "@/components/dashboard/PracticeSessionDetails";
 import { BackLink } from "@/components/ui/BackLink";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { PageShell } from "@/components/ui/PageShell";
 import { SessionEditor } from "@/components/dashboard/SessionEditor";
 import { PracticeRecordingItem } from "@/components/practice/PracticeRecordingItem";
 import { getLocalDateKey } from "@/utils/local-date";
@@ -98,24 +100,21 @@ export function PracticeDayDetail({ dateKey }: PracticeDayDetailProps) {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+    <PageShell>
       <BackLink href="/dashboard">Volver al dashboard</BackLink>
-      <header className="mt-8">
-        <p className="font-mono text-xs uppercase tracking-[0.12em] text-muted">
-          Detalle de práctica
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-          {formatDateLabel(dateKey, "es-ES", true)}
-        </h1>
-        {hasHydrated && (
-          <p className="mt-3 text-base text-muted">
-            {sessions.length}{" "}
-            {sessions.length === 1
-              ? "sesión registrada"
-              : "sesiones registradas"}
-          </p>
-        )}
-      </header>
+      <PageHeader
+        className="mt-8"
+        title={formatDateLabel(dateKey, "es-ES", true)}
+        description={
+          hasHydrated
+            ? `${sessions.length} ${
+                sessions.length === 1
+                  ? "sesión registrada"
+                  : "sesiones registradas"
+              }`
+            : undefined
+        }
+      />
 
       {recordingsError && (
         <p className="mt-6 text-sm text-red-300" role="alert">
@@ -204,6 +203,6 @@ export function PracticeDayDetail({ dateKey }: PracticeDayDetailProps) {
           </p>
         </section>
       )}
-    </main>
+    </PageShell>
   );
 }

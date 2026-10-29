@@ -7,6 +7,7 @@ import type {
   SessionRecord,
 } from "../types/practice.ts";
 import { normalizePracticePhaseLinks } from "./practice-plan.ts";
+import { normalizeTargetMinutes } from "./practice-target.ts";
 
 export interface PracticeLaunchPlan {
   name: string;
@@ -15,6 +16,10 @@ export interface PracticeLaunchPlan {
   guitarType?: GuitarType;
   /** Rutina guardada de la que sale el plan, si la hubo. */
   templateId?: string;
+  /** Tiempo objetivo opcional de la sesión, en minutos. */
+  targetMinutes?: number;
+  /** Guitarra concreta de Mi equipo, si se eligió. */
+  guitarId?: string;
 }
 
 /** Plan listo para abrir sesión, con lo que la sesión necesita además. */
@@ -50,10 +55,21 @@ export function createQuickPracticePlan(
  */
 export function createQuickRepertoirePlan(
   item: RepertoireItem,
+  options: {
+    guitarType?: GuitarType;
+    guitarId?: string;
+    targetMinutes?: number;
+  } = {},
 ): PracticeLaunchSession {
+  const guitarType = options.guitarType ?? item.guitarType;
+  const guitarId = options.guitarId;
+  const targetMinutes = normalizeTargetMinutes(options.targetMinutes);
+
   return {
     name: item.title,
-    ...(item.guitarType ? { guitarType: item.guitarType } : {}),
+    ...(guitarType ? { guitarType } : {}),
+    ...(guitarId ? { guitarId } : {}),
+    ...(targetMinutes ? { targetMinutes } : {}),
     phases: [
       {
         id: `quick-${item.id}`,
@@ -82,7 +98,7 @@ export function createTemplatePlan(
 }
 
 export function createPracticePlanFromSession(
-  session: Pick<SessionRecord, "title" | "phases" | "guitarType">,
+  session: Pick<SessionRecord, "title" | "phases" | "guitarType" | "guitarId">,
 ): PracticeLaunchPlan | null {
   if (!session.phases?.length) return null;
 
@@ -104,5 +120,6 @@ export function createPracticePlanFromSession(
       }),
     ),
     ...(session.guitarType ? { guitarType: session.guitarType } : {}),
+    ...(session.guitarId ? { guitarId: session.guitarId } : {}),
   };
 }

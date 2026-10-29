@@ -6,12 +6,15 @@ import { SavedRoutines } from '@/components/dashboard/SavedRoutines';
 import { TodaysRoutinePlan } from '@/components/dashboard/TodaysRoutinePlan';
 import { WeeklyRoutinePlanner } from '@/components/dashboard/WeeklyRoutinePlanner';
 import { PracticeGoalsCard } from '@/components/dashboard/PracticeGoalsCard';
+import { StringsReminder } from '@/components/home/StringsReminder';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { parseDateKey } from '@/utils/practice-calendar';
 import type { WeekdayIndex } from '@/utils/weekly-routine-schedule';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { useAppData } from '@/components/providers/AppDataProvider';
 import { HomeSkeleton } from '@/components/ui/Skeletons';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PageShell } from '@/components/ui/PageShell';
 
 export function HomeView({ todayKey }: { todayKey: string }) {
   const home = useI18nSection('home');
@@ -35,15 +38,8 @@ export function HomeView({ todayKey }: { todayKey: string }) {
   }
 
   return (
-    <main className='mx-auto min-h-screen max-w-7xl px-5 py-12 sm:px-8 sm:py-16'>
-      <header className='enter mb-8'>
-        <h1 className='mt-3 font-sans text-3xl leading-tight font-semibold tracking-tight text-zinc-100 sm:text-4xl'>
-          {home.title}
-        </h1>
-        <p className='mt-4 max-w-2xl text-base font-medium text-zinc-400 sm:text-lg'>
-          {home.description}
-        </p>
-      </header>
+    <PageShell>
+      <PageHeader title={home.title} description={home.description} />
 
       <TodaysRoutinePlan
         routine={todaysRoutine}
@@ -54,6 +50,10 @@ export function HomeView({ todayKey }: { todayKey: string }) {
 
       <div className='mt-5'>
         <PracticeGoalsCard />
+      </div>
+
+      <div className='mt-5'>
+        <StringsReminder today={today} />
       </div>
 
       <div className='mt-5'>
@@ -78,6 +78,6 @@ export function HomeView({ todayKey }: { todayKey: string }) {
           hasHydrated={hasHydrated}
         />
       </div>
-    </main>
+    </PageShell>
   );
 }

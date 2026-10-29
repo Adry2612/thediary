@@ -7,12 +7,13 @@ import { useI18nSection } from '@/i18n/I18nProvider';
 import { useTutorial } from '@/components/tutorial/TutorialProvider';
 import { useHeaderAutoHide } from '@/hooks/useHeaderAutoHide';
 import { SettingsIcon } from '@/components/ui/icons';
+import { HEADER_COLUMN_CLASSES } from '@/components/ui/PageShell';
 
 const NAVIGATION = [
   { href: '/', label: 'home' },
   { href: '/dashboard', label: 'dashboard' },
   { href: '/practice', label: 'practice' },
-  { href: '/metronome', label: 'metronome' },
+  { href: '/tools', label: 'tools' },
   { href: '/recordings', label: 'recordings' },
   { href: '/repertoire', label: 'repertoire' },
   { href: '/licks', label: 'licks' },
@@ -107,7 +108,7 @@ export function SiteNavigation() {
       >
         <nav
           aria-label={navigation.main}
-          className='mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-6 px-5 sm:px-8'
+          className={`${HEADER_COLUMN_CLASSES} flex min-h-16 items-center justify-between gap-6`}
         >
           <Link
             href='/'
@@ -140,7 +141,7 @@ export function SiteNavigation() {
         </nav>
         {currentSection && (
           <div className='border-t border-line md:hidden'>
-            <div className='mx-auto max-w-7xl px-5 py-2 sm:px-8'>
+            <div className={`${HEADER_COLUMN_CLASSES} py-2`}>
               <p className='truncate text-xs font-medium text-muted'>
                 {currentSection}
               </p>
@@ -149,7 +150,7 @@ export function SiteNavigation() {
         )}
         {isMenuOpen && (
           <div id='mobile-navigation-menu' className='navigation-menu-enter border-t border-line bg-surface md:hidden'>
-            <div className='mx-auto max-w-7xl px-5 py-3 sm:px-8'>
+            <div className={`${HEADER_COLUMN_CLASSES} py-3`}>
               <ul className='space-y-1'>{renderNavigationItems(() => setIsMenuOpen(false))}</ul>
               <div className='mt-3 border-t border-line pt-3'>
                 {settingsLink(() => setIsMenuOpen(false))}

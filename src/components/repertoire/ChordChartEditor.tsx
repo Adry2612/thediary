@@ -124,7 +124,7 @@ export function ChordChartEditor({ value, onChange }: ChordChartEditorProps) {
 
       {isEditing ? (
         <TextArea
-          className="mt-4 min-h-72 font-mono text-sm"
+          className="mt-4 min-h-72 font-mono"
           value={lyrics}
           autoFocus
           spellCheck={false}

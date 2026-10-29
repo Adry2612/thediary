@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/Field';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { PageShell } from '@/components/ui/PageShell';
 import { AccountSkeleton } from '@/components/ui/Skeletons';
 import { useAccountView } from '@/hooks/useAccountView';
 import { useI18nSection } from '@/i18n/I18nProvider';
@@ -16,14 +18,10 @@ export function AccountView() {
   }
 
   return (
-    <main className='mx-auto max-w-3xl px-5 py-12 sm:px-8'>
-      <p className='text-xs uppercase tracking-[0.12em] text-muted'>
-        {account.eyebrow}
-      </p>
-      <h1 className='mt-2 font-sans text-3xl font-semibold tracking-tight'>
-        {account.title}
-      </h1>
+    <PageShell>
+      <PageHeader title={account.title} />
 
+      <div className='max-w-3xl'>
       {view.configurationError && (
         <p
           className='mt-6 rounded-lg border border-red-400/30 bg-red-400/5 p-4 text-sm text-red-200'
@@ -219,6 +217,7 @@ export function AccountView() {
           {view.message}
         </p>
       )}
-    </main>
+      </div>
+    </PageShell>
   );
 }

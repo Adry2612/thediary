@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/Field";
@@ -8,6 +8,8 @@ import { LickTab } from "@/components/licks/LickTab";
 import { TabEditor } from "@/components/repertoire/TabEditor";
 import { EditIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
+import { useDialogMotion } from "@/hooks/useDialogMotion";
+import { useDeferredClose } from "@/hooks/useDeferredClose";
 import { createId } from "@/utils/create-id";
 import { normalizeMusicalKey, MUSICAL_KEYS } from "@/utils/licks/keys";
 import { detectTabKey } from "@/utils/licks/key-detection";
@@ -32,7 +34,8 @@ export function LickEditorModal({
   onClose: () => void;
 }) {
   const text = useI18nSection("licks");
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const { dialogRef, isClosing: isMotionClosing } = useDialogMotion(true);
+  const { isClosing, requestClose } = useDeferredClose(onClose);
   const [title, setTitle] = useState(lick?.title ?? "");
   const hasLegacyTab = Boolean(lick && !lick.tab && lick.tabContent?.trim());
   const [tab, setTab] = useState<RepertoireTab>(() => normalizeTab(lick?.tab));
@@ -50,12 +53,6 @@ export function LickEditorModal({
     lick?.targetBpm !== undefined ? String(lick.targetBpm) : "",
   );
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (!dialog.open) dialog.showModal();
-  }, []);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -123,31 +120,29 @@ export function LickEditorModal({
         : {}),
       practiceCount: lick?.practiceCount ?? 0,
     });
-    onClose();
+    requestClose();
   }
 
   return (
     <dialog
       ref={dialogRef}
       aria-labelledby="lick-editor-title"
+      data-closing={isClosing || isMotionClosing ? "true" : undefined}
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        requestClose();
       }}
       onClick={(event) => {
-        if (event.target === dialogRef.current) onClose();
+        if (event.target === dialogRef.current) requestClose();
       }}
-      className="fixed inset-0 m-auto max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[min(100%-2.5rem,46rem)] overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70 sm:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:w-[min(100%-1rem,46rem)]"
+      className="overlay-motion fixed inset-0 m-auto max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[min(100%-2.5rem,46rem)] overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70 sm:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:w-[min(100%-1rem,46rem)]"
     >
       <form onSubmit={submit} className="p-5 sm:p-7">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-              {text.editorEyebrow}
-            </p>
             <h2
               id="lick-editor-title"
-              className="mt-2 font-sans text-xl font-semibold tracking-tight text-ink"
+              className="font-sans text-xl font-semibold tracking-tight text-ink"
             >
               {lick ? text.editTitle : text.createTitle}
             </h2>
@@ -157,7 +152,7 @@ export function LickEditorModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => requestClose()}
             aria-label={text.close}
             className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line text-muted transition hover:bg-white/5 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
           >
@@ -351,7 +346,7 @@ export function LickEditorModal({
         ) : null}
 
         <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-line pt-5">
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={() => requestClose()}>
             {text.cancel}
           </Button>
           <Button type="submit" variant="primary">

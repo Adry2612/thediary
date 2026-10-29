@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { AdjustableNumber } from "@/components/ui/AdjustableNumber";
@@ -9,10 +9,11 @@ import { MetronomeSettings } from "@/components/practice/MetronomeSettings";
 import { MetronomeTempoSlider } from "@/components/practice/MetronomeTempoSlider";
 import { MAX_BPM, MIN_BPM, useMetronome } from "@/hooks/useMetronome";
 import { getMetronomeMeter } from "@/utils/metronome-meter";
+import { getBeatState } from "@/utils/metronome-beat-pattern";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 type MetronomeCardProps = {
-  variant?: "default" | "large";
+  variant?: "default" | "large" | "block";
   onBpmChange?: (bpm: number) => void;
   stopOnUnmount?: boolean;
   compact?: boolean;
@@ -24,7 +25,8 @@ export function MetronomeCard({
   stopOnUnmount = true,
   compact = false,
 }: MetronomeCardProps) {
-  const isLarge = variant === "large";
+  const isLarge = variant === "large" || variant === "block";
+  const isBlock = variant === "block";
   const text = useI18nSection("metronome");
   const {
     audioError,
@@ -47,8 +49,27 @@ export function MetronomeCard({
     subdivision,
     meterSignature,
     tempoRamp,
+    voice,
+    setVoice,
+    beatPattern,
+    cycleBeat,
+    toggleBeatMute,
   } = useMetronome();
   const meter = getMetronomeMeter(meterSignature);
+  function handleBeatKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    beat: number,
+  ) {
+    if (event.key === "m" || event.key === "M") {
+      event.preventDefault();
+      toggleBeatMute(beat);
+      return;
+    }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      cycleBeat(beat);
+    }
+  }
 
   useEffect(() => {
     onBpmChange?.(bpm);
@@ -61,39 +82,72 @@ export function MetronomeCard({
 
   return (
     <Card
-      className={`enter ${isLarge ? "mx-auto w-full max-w-3xl p-8 sm:p-12" : compact ? "p-5 sm:p-6" : ""}`}
+      bare={isBlock}
+      className={`enter ${isBlock ? "" : isLarge ? "mx-auto w-full max-w-3xl p-8 sm:p-12" : compact ? "p-5 sm:p-6" : ""}`}
       style={{ "--index": 1 } as CSSProperties}
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-sm uppercase tracking-[0.05em] text-muted">
-             {text.title}
-          </h2>
-          <div className="mt-1 flex items-center gap-2 font-mono text-xs text-muted">
+      {isBlock ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 font-mono text-xs text-muted">
             <span
               aria-hidden="true"
               className={`size-2 rounded-full bg-accent-green-fg transition duration-100 ${
                 isPulsing ? "scale-100 opacity-100" : "scale-75 opacity-35"
               }`}
             />
-             <span>{isRunning ? `${text.active} · ${meterSignature}` : meterSignature}</span>
+            <span>
+              {isRunning ? `${text.active} · ${meterSignature}` : meterSignature}
+            </span>
           </div>
+          <MetronomeSettings
+            subdivision={subdivision}
+            volume={volume}
+            meterSignature={meterSignature}
+            tempoRamp={tempoRamp}
+            voice={voice}
+            setSubdivision={setSubdivision}
+            setVolume={setVolume}
+            setMeterSignature={setMeterSignature}
+            setTempoRamp={setTempoRamp}
+            setVoice={setVoice}
+          />
         </div>
-        <MetronomeSettings
-          subdivision={subdivision}
-          volume={volume}
-          meterSignature={meterSignature}
-          tempoRamp={tempoRamp}
-          setSubdivision={setSubdivision}
-          setVolume={setVolume}
-          setMeterSignature={setMeterSignature}
-          setTempoRamp={setTempoRamp}
-        />
-      </div>
+      ) : (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm uppercase tracking-[0.05em] text-muted">
+               {text.title}
+            </h2>
+            <div className="mt-1 flex items-center gap-2 font-mono text-xs text-muted">
+              <span
+                aria-hidden="true"
+                className={`size-2 rounded-full bg-accent-green-fg transition duration-100 ${
+                  isPulsing ? "scale-100 opacity-100" : "scale-75 opacity-35"
+                }`}
+              />
+               <span>{isRunning ? `${text.active} · ${meterSignature}` : meterSignature}</span>
+            </div>
+          </div>
+          <MetronomeSettings
+            subdivision={subdivision}
+            volume={volume}
+            meterSignature={meterSignature}
+            tempoRamp={tempoRamp}
+            voice={voice}
+            setSubdivision={setSubdivision}
+            setVolume={setVolume}
+            setMeterSignature={setMeterSignature}
+            setTempoRamp={setTempoRamp}
+            setVoice={setVoice}
+          />
+        </div>
+      )}
 
       <div
         data-tour-target={isLarge ? "metronome-controls" : undefined}
-        className={isLarge ? "mt-10 sm:mt-14" : compact ? "mt-5" : "mt-8"}
+        className={
+          isBlock ? "mt-6" : isLarge ? "mt-10 sm:mt-14" : compact ? "mt-5" : "mt-8"
+        }
       >
         <div className="flex items-center justify-between gap-4">
           <Button
@@ -140,21 +194,54 @@ export function MetronomeCard({
         </div>
 
         <div
-          className="mt-6 grid grid-cols-4 gap-2"
+          className="mt-6 flex flex-wrap justify-center gap-2"
            aria-label={`${text.beats} ${meterSignature}`}
           role="group"
         >
-          {Array.from({ length: meter.beatsPerMeasure }, (_, beat) => (
-            <div key={beat} className="flex flex-col items-center gap-2">
-              <span
-                role='img'
-                 aria-label={`${text.beat} ${beat + 1}${activeBeat === beat ? `, ${text.activeBeat}` : ""}`}
-                className={`size-3 rounded-full transition duration-100 ${
-                  activeBeat === beat
-                    ? "scale-110 bg-accent-green-fg opacity-100"
-                    : "bg-white/15 opacity-70"
-                } ${isPulsing && activeBeat === beat ? "ring-4 ring-accent-green-bg" : ""}`}
-              />
+          <p className="sr-only">{text.beatPatternHint}</p>
+          {Array.from({ length: meter.beatsPerMeasure }, (_, beat) => {
+            const beatState = getBeatState(beatPattern, beat);
+            const stateLabel =
+              beatState === "accent" ? text.beatStateAccent
+              : beatState === "accentClosed" ? text.beatStateClosed
+              : beatState === "muted" ? text.beatStateMuted
+              : text.beatStateNormal;
+            const isActiveBeat = activeBeat === beat;
+            const dotShape =
+              beatState === "accent" ? "size-3.5 bg-accent-green-fg"
+              : beatState === "accentClosed" ?
+                "size-3.5 bg-accent-green-fg/40 ring-1 ring-accent-green-fg"
+              : beatState === "muted" ?
+                "size-3 border border-white/40 bg-transparent"
+              : "size-3 bg-white/15";
+            const isHighlighted = isPulsing && isActiveBeat;
+
+            return (
+            <div
+              key={beat}
+              className="flex flex-col items-center gap-2"
+              style={{ flex: "0 0 calc((100% - 1.5rem) / 4)" }}
+            >
+              <button
+                type="button"
+                aria-label={`${text.beat} ${beat + 1}, ${stateLabel}${isActiveBeat ? `, ${text.activeBeat}` : ""}`}
+                title={text.beatPatternHint}
+                style={{ touchAction: "manipulation" }}
+                onClick={() => cycleBeat(beat)}
+                onKeyDown={(event) => handleBeatKeyDown(event, beat)}
+                className="flex size-7 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`relative flex items-center justify-center rounded-full transition duration-100 ${dotShape} ${
+                    isActiveBeat ? "scale-110 opacity-100" : "opacity-70"
+                  } ${isHighlighted ? "ring-4 ring-accent-green-bg" : ""}`}
+                >
+                  {beatState === "muted" && (
+                    <span className="absolute h-px w-4 rotate-45 bg-muted" />
+                  )}
+                </span>
+              </button>
               <span className="flex h-2.5 items-center gap-1" aria-hidden="true">
                 {Array.from({ length: subdivision }, (_, subBeat) => (
                   <span
@@ -171,7 +258,8 @@ export function MetronomeCard({
                 {beat + 1}
               </span>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <MetronomeTempoSlider value={bpm} onChange={setBpm} />

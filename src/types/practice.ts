@@ -10,11 +10,18 @@ export const PRACTICE_SKILLS = [
 
 export type PracticeSkill = (typeof PRACTICE_SKILLS)[number];
 
+/** Métrica de bienestar declarada en una sesión. */
+export type PracticeMetric = "mood" | "focus";
+
+/** Valor de una métrica de bienestar, de 1 (peor) a 5 (mejor). */
+export type PracticeMetricValue = 1 | 2 | 3 | 4 | 5;
+
 export const PRACTICE_RESOURCE_KINDS = [
   "songsterr",
   "guitarpro",
   "pdf",
   "audio",
+  "image",
   "youtube",
   "spotify",
   "tab",
@@ -218,6 +225,12 @@ export interface SessionRecord {
   notes?: string;
   /** Guitarra con la que se practicó. Sin valor si no se eligió. */
   guitarType?: GuitarType;
+  /** Guitarra concreta de Mi equipo, si se eligió. */
+  guitarId?: string;
+  /** Estado de ánimo al empezar la práctica; solo si se registró. */
+  mood?: PracticeMetricValue;
+  /** Nivel de foco al empezar la práctica; solo si se registró. */
+  focus?: PracticeMetricValue;
   phases?: SessionPhaseRecord[];
 }
 

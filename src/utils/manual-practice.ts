@@ -13,10 +13,16 @@ export type ManualPracticeInput = {
     name: string;
     durationMinutes: number;
     skill: PracticeSkill;
+    repertoireItemId?: string;
+    repertoirePartId?: string;
   }[];
   notes: string;
   guitarType?: GuitarType;
+  guitarId?: string;
 };
+
+/** Canción mínima que necesita el registro manual para enlazar un bloque. */
+export type ManualPracticeSong = { id: string; title: string };
 
 /**
  * Bloque tal como se edita en el formulario de práctica manual: la duración es
@@ -31,6 +37,9 @@ export type ManualPracticeBlockDraft = {
   name: string;
   durationMinutes: string;
   skill: PracticeSkill;
+  /** Canción del repertorio a la que acredita el tiempo, si el usuario la enlaza. */
+  repertoireItemId?: string;
+  repertoirePartId?: string;
 };
 
 /** Bloque nuevo, con los valores con los que abre el formulario. */
@@ -43,6 +52,49 @@ export function createManualPracticeBlockDraft(): ManualPracticeBlockDraft {
   };
 }
 
+/** Enlaza el bloque con una canción: el nombre pasa a ser el título de la canción. */
+export function linkManualPracticeSong(
+  block: ManualPracticeBlockDraft,
+  song: ManualPracticeSong,
+  partId?: string,
+): ManualPracticeBlockDraft {
+  return {
+    ...block,
+    name: song.title,
+    repertoireItemId: song.id,
+    repertoirePartId: partId || undefined,
+  };
+}
+
+/** Cambia solo la parte elegida, manteniendo la canción enlazada. */
+export function changeManualPracticeSongPart(
+  block: ManualPracticeBlockDraft,
+  partId?: string,
+): ManualPracticeBlockDraft {
+  return { ...block, repertoirePartId: partId || undefined };
+}
+
+/** Quita el enlace y deja el nombre editable otra vez. */
+export function clearManualPracticeSong(
+  block: ManualPracticeBlockDraft,
+): ManualPracticeBlockDraft {
+  const { repertoireItemId, repertoirePartId, ...rest } = block;
+  return rest;
+}
+
+/**
+ * Cambia el tipo de práctica. Solo los bloques de repertorio pueden acreditar
+ * una canción, así que cualquier otro tipo suelta el enlace.
+ */
+export function changeManualPracticeSkill(
+  block: ManualPracticeBlockDraft,
+  skill: PracticeSkill,
+): ManualPracticeBlockDraft {
+  return skill === "repertoire"
+    ? { ...block, skill }
+    : clearManualPracticeSong({ ...block, skill });
+}
+
 /**
  * Valor local `AAAA-MM-DDTHH:MM` que pide un input `datetime-local`. Resta el
  * desplazamiento del huso para que el campo muestre la hora del reloj del
@@ -53,15 +105,37 @@ export function toLocalDateTimeInputValue(date: Date): string {
   return localDate.toISOString().slice(0, 16);
 }
 
-/** Pasa los bloques editados a los bloques que valida `createManualPracticeRecord`. */
+/**
+ * Pasa los bloques editados a los bloques que valida
+ * `createManualPracticeRecord`. Con la lista de canciones, un enlace huérfano
+ * se descarta en vez de guardar una referencia que ya no existe.
+ */
 export function manualPracticeBlocksFromDrafts(
   blocks: ManualPracticeBlockDraft[],
+  songs: readonly ManualPracticeSong[] = [],
 ): ManualPracticeInput["blocks"] {
-  return blocks.map(({ name, durationMinutes, skill }) => ({
-    name,
-    durationMinutes: Number(durationMinutes),
-    skill,
-  }));
+  const songsById = new Map(songs.map((song) => [song.id, song]));
+
+  return blocks.map(
+    ({ name, durationMinutes, skill, repertoireItemId, repertoirePartId }) => {
+      const song = repertoireItemId ? songsById.get(repertoireItemId) : undefined;
+      const keepLink = Boolean(repertoireItemId && (songs.length === 0 || song));
+
+      return {
+        name: song?.title ?? name,
+        durationMinutes: Number(durationMinutes),
+        skill,
+        ...(keepLink
+          ? {
+              repertoireItemId,
+              ...(repertoirePartId
+                ? { repertoirePartId }
+                : {}),
+            }
+          : {}),
+      };
+    },
+  );
 }
 
 export function createManualPracticeRecord(
@@ -114,6 +188,12 @@ export function createManualPracticeRecord(
       skill: block.skill,
       durationMinutes: block.durationMinutes,
       elapsedSeconds,
+      ...(block.repertoireItemId
+        ? { repertoireItemId: block.repertoireItemId }
+        : {}),
+      ...(block.repertoireItemId && block.repertoirePartId
+        ? { repertoirePartId: block.repertoirePartId }
+        : {}),
     };
   });
   const durationSeconds = phases.reduce(
@@ -143,6 +223,7 @@ export function createManualPracticeRecord(
     skillSeconds,
     notes: notes || undefined,
     ...(input.guitarType ? { guitarType: input.guitarType } : {}),
+    ...(input.guitarId ? { guitarId: input.guitarId } : {}),
     phases,
   };
 }

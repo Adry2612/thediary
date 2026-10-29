@@ -96,14 +96,43 @@ export function normalizeSongsterrUrl(value: string): string | null {
 export function getPracticeFileKind(
   fileName: string,
   mimeType = "",
-): "audio" | "guitarpro" | "pdf" | null {
+): "audio" | "guitarpro" | "pdf" | "image" | null {
   const extension = fileName.split(".").at(-1)?.toLowerCase();
   if (extension === "pdf") return "pdf";
   if (["gp", "gpx", "gp3", "gp4", "gp5"].includes(extension ?? "")) {
     return "guitarpro";
   }
   if (isSupportedPracticeAudio(fileName, mimeType)) return "audio";
+  if (isSupportedPracticeImage(fileName, mimeType)) return "image";
   return null;
+}
+
+const PRACTICE_IMAGE_EXTENSIONS = new Set([
+  "avif",
+  "gif",
+  "jpeg",
+  "jpg",
+  "png",
+  "webp",
+]);
+
+const PRACTICE_IMAGE_MIME_TYPES = new Set([
+  "image/avif",
+  "image/gif",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+export function isSupportedPracticeImage(
+  fileName: string,
+  mimeType: string,
+): boolean {
+  const extension = fileName.split(".").at(-1)?.toLowerCase();
+  return (
+    PRACTICE_IMAGE_MIME_TYPES.has(mimeType) ||
+    PRACTICE_IMAGE_EXTENSIONS.has(extension ?? "")
+  );
 }
 
 const PRACTICE_AUDIO_EXTENSIONS = new Set([

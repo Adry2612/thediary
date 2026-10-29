@@ -6,6 +6,8 @@ import { EditIcon, TrashIcon } from '@/components/ui/icons';
 import { PracticeRecordingItem } from '@/components/practice/PracticeRecordingItem';
 import { PracticeSessionPhases } from '@/components/dashboard/PracticeSessionPhases';
 import { formatClock } from '@/utils/format';
+import { getPracticeMetricLabelKey } from '@/utils/practice-metrics';
+import { useI18nSection } from '@/i18n/I18nProvider';
 import type { PracticeAudioRecording } from "@/types/practice-library";
 import type { RepertoireItem, SessionRecord } from '@/types/practice';
 import type { GuitarLick } from '@/types/lick';
@@ -39,10 +41,29 @@ export function PracticeSessionDetails({
   onDelete,
 }: PracticeSessionDetailsProps) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const text = useI18nSection('practice');
+  const metrics = [
+    session.mood ?
+      {
+        metric: 'mood' as const,
+        title: text.metricMood,
+        value: session.mood,
+        label: text[getPracticeMetricLabelKey('mood', session.mood)],
+      }
+    : null,
+    session.focus ?
+      {
+        metric: 'focus' as const,
+        title: text.metricFocus,
+        value: session.focus,
+        label: text[getPracticeMetricLabelKey('focus', session.focus)],
+      }
+    : null,
+  ].filter((metric) => metric !== null);
   const status =
-    session.completed === undefined ? 'Registrada'
-    : session.completed ? 'Completada'
-    : 'Finalizada antes de completar la rutina';
+    session.completed === undefined ? text.statusRegistered
+    : session.completed ? text.statusCompleted
+    : text.statusFinishedEarly;
 
   return (
     <article className='rounded-xl border border-line bg-surface p-6 sm:p-8'>
@@ -109,6 +130,28 @@ export function PracticeSessionDetails({
           )}
         </div>
       </header>
+
+      {metrics.length > 0 && (
+        <section
+          aria-label={text.completionWellbeing}
+          className='mt-5 flex flex-wrap gap-2'
+        >
+          {metrics.map((metric) => (
+            <p
+              key={metric.metric}
+              className='inline-flex items-center gap-2 rounded-full border border-line bg-canvas/50 px-3 py-1.5 text-sm text-ink'
+            >
+              <span className='text-[10px] uppercase tracking-[0.08em] text-muted'>
+                {metric.title}
+              </span>
+              <span>{metric.label}</span>
+              <span className='font-mono text-xs tabular-nums text-muted'>
+                {metric.value}/5
+              </span>
+            </p>
+          ))}
+        </section>
+      )}
 
       <PracticeSessionPhases
         sessionId={session.id}

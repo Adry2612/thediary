@@ -1,11 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  changeManualPracticeSkill,
+  changeManualPracticeSongPart,
+  clearManualPracticeSong,
   createManualPracticeBlockDraft,
   createManualPracticeRecord,
+  linkManualPracticeSong,
   manualPracticeBlocksFromDrafts,
   toLocalDateTimeInputValue,
 } from "../src/utils/manual-practice.ts";
+import { getRepertoireItemPracticeStats } from "../src/utils/repertoire-analytics.ts";
 
 test("creates a historical session from its blocks, duration, skills, and notes", () => {
   const record = createManualPracticeRecord({
@@ -196,4 +201,84 @@ test("records a session built from an untouched draft form", () => {
   assert.equal(record.title, "Práctica manual");
   assert.equal(record.durationSeconds, 30 * 60);
   assert.equal(record.phases[0].skill, "technique");
+});
+
+test("links a repertoire song and names the block after it", () => {
+  const block = createManualPracticeBlockDraft();
+  const linked = linkManualPracticeSong(
+    { ...block, name: "Nombre libre", skill: "repertoire" },
+    { id: "song-1", title: "Blackbird" },
+  );
+
+  assert.equal(linked.name, "Blackbird");
+  assert.equal(linked.repertoireItemId, "song-1");
+  assert.equal(linked.repertoirePartId, undefined);
+
+  const withPart = changeManualPracticeSongPart(linked, "part-2");
+  assert.equal(withPart.repertoirePartId, "part-2");
+
+  const cleared = clearManualPracticeSong(withPart);
+  assert.equal(cleared.name, "Blackbird");
+  assert.equal(cleared.repertoireItemId, undefined);
+  assert.equal("repertoirePartId" in cleared, false);
+});
+
+test("changing the practice type drops the song link outside repertoire", () => {
+  const linked = linkManualPracticeSong(
+    { ...createManualPracticeBlockDraft(), skill: "repertoire" },
+    { id: "song-1", title: "Blackbird" },
+    "part-1",
+  );
+
+  const stillLinked = changeManualPracticeSkill(linked, "repertoire");
+  assert.equal(stillLinked.repertoireItemId, "song-1");
+  assert.equal(stillLinked.repertoirePartId, "part-1");
+
+  const technique = changeManualPracticeSkill(linked, "technique");
+  assert.equal(technique.repertoireItemId, undefined);
+  assert.equal("repertoirePartId" in technique, false);
+});
+
+test("drops a link to a song that no longer exists and keeps the stored name", () => {
+  const linked = linkManualPracticeSong(
+    { ...createManualPracticeBlockDraft(), skill: "repertoire" },
+    { id: "song-1", title: "Blackbird" },
+  );
+
+  const [kept] = manualPracticeBlocksFromDrafts([linked], [
+    { id: "song-1", title: "Blackbird" },
+  ]);
+  assert.equal(kept.repertoireItemId, "song-1");
+  assert.equal(kept.name, "Blackbird");
+
+  const [orphan] = manualPracticeBlocksFromDrafts([linked], [
+    { id: "song-2", title: "Otra" },
+  ]);
+  assert.equal(orphan.repertoireItemId, undefined);
+  assert.equal(orphan.name, "Blackbird");
+});
+
+test("stores the song link in the saved phase and credits its time", () => {
+  const block = linkManualPracticeSong(
+    { ...createManualPracticeBlockDraft(), skill: "repertoire", durationMinutes: "20" },
+    { id: "song-1", title: "Blackbird" },
+    "part-1",
+  );
+  const record = createManualPracticeRecord({
+    title: "Práctica antigua",
+    startedAtLocal: "2026-10-07T18:30",
+    blocks: manualPracticeBlocksFromDrafts([block], [
+      { id: "song-1", title: "Blackbird" },
+    ]),
+    notes: "",
+  });
+
+  assert.equal(record.phases[0].repertoireItemId, "song-1");
+  assert.equal(record.phases[0].repertoirePartId, "part-1");
+  assert.equal(record.phases[0].name, "Blackbird");
+  assert.equal(record.skillSeconds.repertoire, 1200);
+
+  const stats = getRepertoireItemPracticeStats([record]).get("song-1");
+  assert.equal(stats?.practiceSeconds, 1200);
+  assert.equal(stats?.sessionCount, 1);
 });

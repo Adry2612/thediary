@@ -11,6 +11,7 @@ import {
   type CatalogSearchStatus,
 } from '@/hooks/useCatalogSearch';
 import { useDialogModal } from '@/hooks/useDialogModal';
+import { useDeferredClose } from '@/hooks/useDeferredClose';
 import { useI18nSection } from '@/i18n/I18nProvider';
 import { MIN_CATALOG_QUERY_LENGTH } from '@/utils/catalog-results';
 
@@ -55,7 +56,10 @@ export function CatalogSearchDialog({
   const text = useI18nSection('repertoire');
   const titleId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const { dialogRef, handleCancel } = useDialogModal(true, onClose);
+  const closeDialog = useDeferredClose(onClose);
+  const { dialogRef, handleCancel } = useDialogModal(true, () =>
+    closeDialog.requestClose(),
+  );
   const initial = normalize(initialQuery);
   const [query, setQuery] = useState(initial);
   const lastQueryRef = useRef(initial);
@@ -107,8 +111,10 @@ export function CatalogSearchDialog({
   }
 
   function choose(candidate: CatalogCandidate) {
-    onSelect(candidate);
-    onClose();
+    closeDialog.requestClose(() => {
+      onSelect(candidate);
+      onClose();
+    });
   }
 
   const statusMessage = getStatusMessage(status, results.length, text);
@@ -118,9 +124,9 @@ export function CatalogSearchDialog({
       dialogRef={dialogRef}
       labelledBy={titleId}
       onCancel={handleCancel}
-      onClose={onClose}
+      isClosing={closeDialog.isClosing}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) closeDialog.requestClose();
       }}
       variant='lg'
     >
@@ -131,7 +137,7 @@ export function CatalogSearchDialog({
           // vaciarlo y no cierra la modal. Aquí Escape cierra siempre.
           if (event.key === 'Escape') {
             event.preventDefault();
-            onClose();
+            closeDialog.requestClose();
           }
         }}
       >
@@ -139,7 +145,7 @@ export function CatalogSearchDialog({
           titleId={titleId}
           title={text.catalogSearchTitle}
           description={text.catalogSearchHint}
-          onClose={onClose}
+          onClose={closeDialog.requestClose}
           closeLabel={text.close}
         />
 

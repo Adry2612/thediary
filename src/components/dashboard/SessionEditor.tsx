@@ -13,6 +13,8 @@ import {
   type EditableSessionBlock,
 } from "@/utils/practice-session-editing";
 import { createId } from "@/utils/create-id";
+import { usePracticeStore } from "@/stores/usePracticeStore";
+import { useI18nSection } from "@/i18n/I18nProvider";
 import { PRACTICE_SKILLS, type SessionRecord } from "@/types/practice";
 
 interface SessionEditorProps {
@@ -35,6 +37,8 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
   const [draft, setDraft] = useState<EditableSession>(() =>
     toEditableSession(session),
   );
+  const guitars = usePracticeStore((state) => state.guitars);
+  const practiceText = useI18nSection("practice");
   const [error, setError] = useState<string | null>(null);
 
   const derivedMinutes = draft.blocks.reduce(
@@ -144,6 +148,30 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
           }
         />
       </div>
+
+      {guitars.length > 1 && (
+        <div className="mt-4 block max-w-56 text-xs text-muted">
+          {practiceText.guitar}
+          <SelectField
+            className="mt-1"
+            ariaLabel={practiceText.guitarAria}
+            value={draft.guitarId ?? "none"}
+            options={[
+              { value: "none", label: practiceText.guitarNone },
+              ...guitars.map((guitar) => ({
+                value: guitar.id,
+                label: guitar.name,
+              })),
+            ]}
+            onChange={(value) =>
+              setDraft((current) => ({
+                ...current,
+                guitarId: value === "none" ? null : value,
+              }))
+            }
+          />
+        </div>
+      )}
 
       <section className="mt-6 border-t border-line pt-5">
         <div className="flex flex-wrap items-baseline justify-between gap-3">

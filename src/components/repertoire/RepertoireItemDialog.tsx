@@ -5,6 +5,7 @@ import { DialogHeader } from '@/components/ui/DialogHeader';
 import { ModalDialog } from '@/components/ui/ModalDialog';
 import { RepertoireSongForm } from '@/components/repertoire/RepertoireSongForm';
 import { useDialogModal } from '@/hooks/useDialogModal';
+import { useDeferredClose } from '@/hooks/useDeferredClose';
 import { useI18nSection } from '@/i18n/I18nProvider';
 
 interface RepertoireItemDialogProps {
@@ -23,7 +24,10 @@ export function RepertoireItemDialog({
 }: RepertoireItemDialogProps) {
   const text = useI18nSection('repertoire');
   const titleId = useId();
-  const { dialogRef, handleCancel } = useDialogModal(true, onClose);
+  const closeDialog = useDeferredClose(onClose);
+  const { dialogRef, handleCancel } = useDialogModal(true, () =>
+    closeDialog.requestClose(),
+  );
 
   useEffect(() => {
     // `showModal` enfoca el primer control del diálogo; el título es el punto
@@ -41,22 +45,25 @@ export function RepertoireItemDialog({
       dialogRef={dialogRef}
       labelledBy={titleId}
       onCancel={handleCancel}
-      onClose={onClose}
+      isClosing={closeDialog.isClosing}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) closeDialog.requestClose();
       }}
       variant='wide'
     >
       <div className='p-5 sm:p-6'>
         <DialogHeader
-          eyebrow={text.library}
           titleId={titleId}
           title={text.newItemTitle}
           description={text.newItemDescription}
-          onClose={onClose}
+          onClose={closeDialog.requestClose}
           closeLabel={text.close}
         />
-        <RepertoireSongForm onCreated={onCreated} />
+        <RepertoireSongForm
+          onCreated={(itemId) =>
+            closeDialog.requestClose(() => onCreated(itemId))
+          }
+        />
       </div>
     </ModalDialog>
   );

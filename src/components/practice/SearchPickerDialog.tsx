@@ -12,7 +12,6 @@ import {
 
 interface SearchPickerDialogProps {
   open: boolean;
-  eyebrow: string;
   title: string;
   description: string;
   searchLabel: string;
@@ -32,7 +31,6 @@ interface SearchPickerDialogProps {
  */
 export function SearchPickerDialog({
   open,
-  eyebrow,
   title,
   description,
   searchLabel,
@@ -46,7 +44,7 @@ export function SearchPickerDialog({
   onClose,
 }: SearchPickerDialogProps) {
   const titleId = useId();
-  const { dialogRef, handleCancel } = useDialogModal(open, onClose);
+  const { dialogRef, handleCancel, isClosing } = useDialogModal(open, onClose);
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const hasItems = items.length > 0;
@@ -73,12 +71,12 @@ export function SearchPickerDialog({
       labelledBy={titleId}
       onCancel={handleCancel}
       onClose={onClose}
+      isClosing={isClosing}
       variant="lg"
       className="max-w-xl"
     >
       <div className="p-5 sm:p-6">
         <DialogHeader
-          eyebrow={eyebrow}
           titleId={titleId}
           title={title}
           description={description}

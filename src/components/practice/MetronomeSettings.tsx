@@ -17,29 +17,51 @@ import {
   isTempoRampIntervalUnit,
   MAX_TEMPO_RAMP_INTERVAL_BY_UNIT,
 } from "@/utils/metronome-tempo-ramp";
+import {
+  METRONOME_VOICES,
+  normalizeMetronomeVoice,
+  type MetronomeVoice,
+} from "@/utils/metronome-voice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import type { MetronomeSettingsProps } from "@/types/metronome";
+
+/** Clave de traducción de cada voz del catálogo. */
+const VOICE_LABEL_KEYS: Record<MetronomeVoice, string> = {
+  studio: "voiceStudio",
+  wood: "voiceWood",
+  bell: "voiceBell",
+  hihat: "voiceHihat",
+  beep: "voiceBeep",
+  rimshot: "voiceRimshot",
+  shaker: "voiceShaker",
+};
 
 export function MetronomeSettings({
   subdivision,
   volume,
   meterSignature,
   tempoRamp,
+  voice,
   setSubdivision,
   setVolume,
   setMeterSignature,
   setTempoRamp,
+  setVoice,
 }: MetronomeSettingsProps) {
   const text = useI18nSection("metronome");
   const [isOpen, setIsOpen] = useState(false);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
-  const { dialogRef: settingsDialogRef, handleCancel } = useDialogModal(
+  const { dialogRef: settingsDialogRef, handleCancel, isClosing } = useDialogModal(
     isOpen,
     () => setIsOpen(false),
   );
   const subdivisionGroupId = useId();
   const meter = getMetronomeMeter(meterSignature);
   const subdivisionOptions = getMetronomeSubdivisionOptions(meter);
+  const voiceOptions = METRONOME_VOICES.map((option) => ({
+    value: option,
+    label: text[VOICE_LABEL_KEYS[option]],
+  }));
   const tempoRampIntervalOptions = [
     { value: "bars", label: text.meter },
     { value: "seconds", label: "Seg." },
@@ -82,6 +104,7 @@ export function MetronomeSettings({
       <dialog
         ref={settingsDialogRef}
         aria-labelledby="metronome-settings-title"
+        data-closing={isClosing ? "true" : undefined}
         onCancel={handleCancel}
         onClose={() => {
           setIsOpen(false);
@@ -92,7 +115,7 @@ export function MetronomeSettings({
             setIsOpen(false);
           }
         }}
-        className="fixed inset-0 m-auto max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[min(100%-1rem,36rem)] overflow-x-hidden overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70 sm:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:w-[min(100%-2rem,36rem)]"
+        className="overlay-motion fixed inset-0 m-auto max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[min(100%-1rem,36rem)] overflow-x-hidden overflow-y-auto overscroll-contain border border-line bg-surface p-0 text-ink backdrop:bg-black/70 sm:max-h-[calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] sm:w-[min(100%-2rem,36rem)]"
       >
         <div className="p-4 sm:p-8">
           <div className="flex items-start justify-between gap-3">
@@ -131,6 +154,17 @@ export function MetronomeSettings({
                 value: signature,
                 label: signature,
               }))}
+            />
+          </div>
+
+          <div className="mt-6">
+             <div className="text-sm text-muted">{text.voice}</div>
+            <SelectField
+              className="mt-2"
+               ariaLabel={text.voiceAria}
+              value={voice}
+              onChange={(value) => setVoice(normalizeMetronomeVoice(value))}
+              options={voiceOptions}
             />
           </div>
 

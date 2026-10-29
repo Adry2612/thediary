@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   getPracticeFileKind,
   isSupportedPracticeAudio,
+  isSupportedPracticeImage,
   normalizeSongsterrUrl,
   validatePracticeTemplate,
 } from "../src/utils/practice-templates.ts";
@@ -136,4 +137,29 @@ test("accepts common audio formats as local backing tracks only", () => {
   assert.equal(isSupportedPracticeAudio("base.m4a", ""), true);
   assert.equal(isSupportedPracticeAudio("base.wav", "application/octet-stream"), true);
   assert.equal(isSupportedPracticeAudio("documento.pdf", "application/pdf"), false);
+});
+
+test("recognizes supported image files as study material", () => {
+  for (const fileName of [
+    "foto.jpg",
+    "foto.JPEG",
+    "diagrama.png",
+    "acorde.webp",
+    "scan.avif",
+    "animacion.gif",
+  ]) {
+    assert.equal(getPracticeFileKind(fileName), "image", fileName);
+  }
+  assert.equal(getPracticeFileKind("foto.svg"), null);
+  assert.equal(getPracticeFileKind("foto.heic"), null);
+  assert.equal(
+    getPracticeFileKind("sin-extension", "image/png"),
+    "image",
+  );
+});
+
+test("rejects image formats the preview cannot render", () => {
+  assert.equal(isSupportedPracticeImage("foto.jpg", "image/jpeg"), true);
+  assert.equal(isSupportedPracticeImage("foto.svg", "image/svg+xml"), false);
+  assert.equal(isSupportedPracticeImage("foto.heic", "image/heic"), false);
 });

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getPracticeAsset } from "@/services/practice-library";
-import { getCloudPracticeAsset } from "@/services/supabase/practice-files";
+import { getPracticeAssetForUser } from "@/services/practice-asset";
 import type { PracticeResource } from "@/types/practice";
 
 /**
@@ -29,10 +28,10 @@ export function GuitarProViewer({
     async function renderScore() {
       setError(null);
       setIsLoading(true);
-      const asset =
-        userId ?
-          await getCloudPracticeAsset(userId, resource.assetId!)
-        : await getPracticeAsset(resource.assetId!);
+      const asset = await getPracticeAssetForUser(
+        resource.assetId!,
+        userId,
+      );
       if (!asset) throw new Error("No se encontró el archivo Guitar Pro.");
       if (!isMounted) return;
 

@@ -31,7 +31,36 @@ import {
 } from "@/utils/metronome-tempo-ramp";
 import { enablePlaybackAudioSession } from "@/services/audio-session";
 import { scheduleMetronomeClick } from "@/services/metronome-audio";
-import { type PracticeSound } from "@/utils/practice-sounds";
+import {
+  readMetronomeBeatPattern,
+  saveMetronomeBeatPattern,
+} from "@/services/metronome-beat-pattern-storage";
+import {
+  createDefaultBeatPattern,
+  cycleBeatState,
+  toggleBeatMute as toggleMuteInPattern,
+  type MetronomeBeatPattern,
+} from "@/utils/metronome-beat-pattern";
+import {
+  DEFAULT_METRONOME_VOICE,
+  normalizeMetronomeVoice,
+  type MetronomeVoice,
+} from "@/utils/metronome-voice";
+import {
+  readMetronomeVoice,
+  saveMetronomeVoice,
+} from "@/services/metronome-voice-storage";
+import {
+  DEFAULT_PRACTICE_END_SOUND,
+  DEFAULT_PRACTICE_START_SOUND,
+  type PracticeSound,
+} from "@/utils/practice-sounds";
+import {
+  readPracticeEndSound,
+  readPracticeStartSound,
+  savePracticeEndSound,
+  savePracticeStartSound,
+} from "@/services/practice-sound-storage";
 import {
   closeMetronomeAudioContext,
   getOrCreateMetronomeAudioContext,
@@ -62,8 +91,10 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
   const [tempoRamp, setTempoRampState] = useState(
     DEFAULT_TEMPO_RAMP_SETTINGS,
   );
-  const [practiceStartSound, setPracticeStartSound] = useState<PracticeSound>("voice");
-  const [practiceEndSound, setPracticeEndSound] = useState<PracticeSound>("alarm");
+  const [practiceStartSound, setPracticeStartSoundState] =
+    useState<PracticeSound>(DEFAULT_PRACTICE_START_SOUND);
+  const [practiceEndSound, setPracticeEndSoundState] =
+    useState<PracticeSound>(DEFAULT_PRACTICE_END_SOUND);
   const [isRunning, setIsRunning] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [isPulsing, setIsPulsing] = useState(false);
@@ -71,11 +102,19 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
   const [activeSubdivision, setActiveSubdivision] = useState<number | null>(null);
   const [tapCount, setTapCount] = useState(0);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [beatPattern, setBeatPatternState] = useState<MetronomeBeatPattern>(
+    () => createDefaultBeatPattern(DEFAULT_METRONOME_METER.beatsPerMeasure),
+  );
+  const [voice, setVoiceState] = useState<MetronomeVoice>(
+    DEFAULT_METRONOME_VOICE,
+  );
 
   const bpmRef = useRef(bpm);
   const volumeRef = useRef(volume);
   const subdivisionRef = useRef(subdivision);
   const meterRef = useRef(DEFAULT_METRONOME_METER);
+  const beatPatternRef = useRef<MetronomeBeatPattern>(beatPattern);
+  const voiceRef = useRef<MetronomeVoice>(voice);
   const tempoRampRef = useRef(tempoRamp);
   const runningRef = useRef(false);
   const startingRef = useRef(false);
@@ -89,7 +128,7 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
   const nextTempoIncreaseAtRef = useRef<number | null>(null);
   const nextTempoIncreaseBarRef = useRef<number | null>(null);
   const schedulerRef = useRef<number | null>(null);
-  const activeOscillatorsRef = useRef(new Set<OscillatorNode>());
+  const activeSourcesRef = useRef(new Set<AudioScheduledSourceNode>());
   const pulseTimeoutsRef = useRef(new Set<number>());
   const tapTempoStateRef = useRef<TapTempoState>({
     lastTapTime: null,
@@ -108,6 +147,13 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     const nextVolume = clampMetronomeVolume(value);
     volumeRef.current = nextVolume;
     setVolumeState(nextVolume);
+  }, []);
+
+  const setVoice = useCallback((value: MetronomeVoice) => {
+    const nextVoice = normalizeMetronomeVoice(value);
+    voiceRef.current = nextVoice;
+    setVoiceState(nextVoice);
+    saveMetronomeVoice(nextVoice);
   }, []);
 
   const setSubdivision = useCallback((value: number) => {
@@ -134,9 +180,42 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     [],
   );
 
+  const setPracticeStartSound = useCallback((sound: PracticeSound) => {
+    setPracticeStartSoundState(sound);
+    savePracticeStartSound(sound);
+  }, []);
+
+  const setPracticeEndSound = useCallback((sound: PracticeSound) => {
+    setPracticeEndSoundState(sound);
+    savePracticeEndSound(sound);
+  }, []);
+
+  const rememberBeatPattern = useCallback((pattern: MetronomeBeatPattern) => {
+    beatPatternRef.current = pattern;
+    setBeatPatternState(pattern);
+    saveMetronomeBeatPattern(meterRef.current.signature, pattern);
+  }, []);
+
+  const cycleBeat = useCallback(
+    (beat: number) => rememberBeatPattern(cycleBeatState(beatPatternRef.current, beat)),
+    [rememberBeatPattern],
+  );
+
+  const toggleBeatMute = useCallback(
+    (beat: number) => rememberBeatPattern(toggleMuteInPattern(beatPatternRef.current, beat)),
+    [rememberBeatPattern],
+  );
+
   const setMeterSignature = useCallback(
     (signature: MetronomeMeterSignature) => {
-      meterRef.current = getMetronomeMeter(signature);
+      const meter = getMetronomeMeter(signature);
+      const nextPattern = readMetronomeBeatPattern(
+        signature,
+        meter.beatsPerMeasure,
+      );
+      meterRef.current = meter;
+      beatPatternRef.current = nextPattern;
+      setBeatPatternState(nextPattern);
       setMeterSignatureState(signature);
       beatNumberRef.current = 0;
       subdivisionNumberRef.current = 0;
@@ -164,11 +243,11 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     pulseReleaseTimeoutRef.current = null;
   }, []);
 
-  const stopActiveOscillators = useCallback(() => {
-    for (const oscillator of activeOscillatorsRef.current) {
-      oscillator.stop();
+  const stopActiveSources = useCallback(() => {
+    for (const source of activeSourcesRef.current) {
+      source.stop();
     }
-    activeOscillatorsRef.current.clear();
+    activeSourcesRef.current.clear();
   }, []);
 
   const scheduleVisualPulse = useCallback(
@@ -220,17 +299,21 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
       bpm: bpmRef.current,
       subdivision: subdivisionRef.current,
       beatsPerMeasure: meterRef.current.beatsPerMeasure,
+      beatPattern: beatPatternRef.current,
       tempoRamp: tempoRampRef.current,
     });
 
     for (const beat of schedule.beats) {
-      scheduleMetronomeClick({
-        context,
-        scheduledAt: beat.scheduledAt,
-        volume: volumeRef.current,
-        isDownbeat: beat.isDownbeat,
-        activeOscillators: activeOscillatorsRef.current,
-      });
+      if (beat.click !== "none") {
+        scheduleMetronomeClick({
+          context,
+          scheduledAt: beat.scheduledAt,
+          volume: volumeRef.current,
+          click: beat.click,
+          voice: voiceRef.current,
+          activeSources: activeSourcesRef.current,
+        });
+      }
       scheduleVisualPulse(
         context,
         beat.scheduledAt,
@@ -250,6 +333,23 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
   }, [scheduleVisualPulse]);
 
   useEffect(() => {
+    const meter = meterRef.current;
+    const stored = readMetronomeBeatPattern(
+      meter.signature,
+      meter.beatsPerMeasure,
+    );
+    beatPatternRef.current = stored;
+    setBeatPatternState(stored);
+
+    const storedVoice = readMetronomeVoice();
+    voiceRef.current = storedVoice;
+    setVoiceState(storedVoice);
+
+    setPracticeStartSoundState(readPracticeStartSound());
+    setPracticeEndSoundState(readPracticeEndSound());
+  }, []);
+
+  useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
@@ -259,14 +359,14 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
         window.clearInterval(schedulerRef.current);
       }
       clearPulseTimeouts();
-      stopActiveOscillators();
+      stopActiveSources();
 
       const context = audioContextRef.current;
       if (context && context.state !== "closed") {
         closeMetronomeAudioContext(context);
       }
     };
-  }, [clearPulseTimeouts, stopActiveOscillators]);
+  }, [clearPulseTimeouts, stopActiveSources]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -370,7 +470,7 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     setActiveBeat(null);
     setActiveSubdivision(null);
     clearPulseTimeouts();
-    stopActiveOscillators();
+    stopActiveSources();
 
     const context = audioContextRef.current;
     if (!context) return;
@@ -380,7 +480,7 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
         setAudioError(`No se pudo detener el audio: ${getErrorMessage(error)}`);
       }
     });
-  }, [clearPulseTimeouts, stopActiveOscillators]);
+  }, [clearPulseTimeouts, stopActiveSources]);
 
   const tapTempo = useCallback(() => {
     const update = getTapTempoUpdate(
@@ -409,6 +509,8 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     tapTempo,
     volume,
     subdivision,
+    voice,
+    setVoice,
     meterSignature,
     setMeterSignature,
     tempoRamp,
@@ -419,6 +521,9 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     setPracticeEndSound,
     activeBeat,
     activeSubdivision,
+    beatPattern,
+    cycleBeat,
+    toggleBeatMute,
   };
 }
 

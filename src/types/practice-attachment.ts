@@ -1,4 +1,11 @@
-export const ATTACHMENT_TYPES = ["tab", "pdf", "youtube", "spotify"] as const;
+export const ATTACHMENT_TYPES = [
+  "tab",
+  "pdf",
+  "image",
+  "songsterr",
+  "youtube",
+  "spotify",
+] as const;
 
 export type AttachmentType = (typeof ATTACHMENT_TYPES)[number];
 

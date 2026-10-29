@@ -18,6 +18,7 @@ import {
 } from "@/utils/practice-templates";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import { useGuitarPreference } from "@/hooks/useGuitarPreference";
+import { usePracticeGuitar } from "@/hooks/usePracticeGuitar";
 import type { GuitarType, PracticePhase, PracticeTemplate } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { createId } from "@/utils/create-id";
@@ -26,11 +27,13 @@ interface PracticePlanBuilderProps {
   initialName?: string;
   initialPhases: PracticePhase[];
   initialGuitarType?: GuitarType;
+  initialGuitarId?: string;
   initialTemplateId?: string;
   onStart: (
     name: string,
     phases: PracticePhase[],
     guitarType?: GuitarType,
+    guitarId?: string,
   ) => void;
 }
 
@@ -38,6 +41,7 @@ export function PracticePlanBuilder({
   initialName = "Mi sesión",
   initialPhases,
   initialGuitarType,
+  initialGuitarId,
   initialTemplateId,
   onStart,
 }: PracticePlanBuilderProps) {
@@ -47,6 +51,7 @@ export function PracticePlanBuilder({
   const deleteTemplate = usePracticeStore((state) => state.deleteTemplate);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
   const licks = usePracticeStore((state) => state.licks);
+  const guitars = usePracticeStore((state) => state.guitars);
   const { lastGuitarType, rememberGuitarType } = useGuitarPreference();
   const [name, setName] = useState(initialName);
   const [phases, setPhases] = useState(() =>
@@ -58,8 +63,18 @@ export function PracticePlanBuilder({
   const [guitarType, setGuitarType] = useState<GuitarType | undefined>(
     initialGuitarType,
   );
+  const {
+    guitarId,
+    setGuitarId,
+    rememberGuitar,
+    showSelector: showGuitarSelector,
+  } = usePracticeGuitar({ explicitId: initialGuitarId, guitars });
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [saveFeedback, setSaveFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const appliedTemplateRef = useRef<string | null>(null);
   const guitarTouchedRef = useRef(Boolean(initialGuitarType));
   const guitarOptions = [
@@ -104,6 +119,12 @@ export function PracticePlanBuilder({
     );
   }, [repertoireItems]);
 
+  useEffect(() => {
+    if (saveFeedback?.type !== "success") return;
+    const timeout = setTimeout(() => setSaveFeedback(null), 3000);
+    return () => clearTimeout(timeout);
+  }, [saveFeedback]);
+
   const updatePhase = useCallback(
     (phaseId: PracticePhase["id"], changes: Partial<PracticePhase>) => {
       setPhases((current) =>
@@ -135,6 +156,16 @@ export function PracticePlanBuilder({
     setError(null);
   }
 
+  function chooseGuitar(value: string) {
+    if (value === "none") {
+      setGuitarId(undefined);
+      return;
+    }
+    const guitar = guitars.find((candidate) => candidate.id === value);
+    if (!guitar) return;
+    setGuitarId(guitar.id);
+  }
+
   function createPhase() {
     setPhases((current) => [
       ...current,
@@ -160,27 +191,47 @@ export function PracticePlanBuilder({
     if (!validateCurrentPlan()) return;
 
     const templateId = selectedTemplateId || createId();
-    saveTemplate({
-      id: templateId,
-      name: name.trim(),
-      phases: clonePracticePhases(
-        normalizeRepertoirePhaseNames(phases, repertoireItems),
-      ),
-      ...(guitarType ? { guitarType } : {}),
-      updatedAt: new Date().toISOString(),
-    });
-    setSelectedTemplateId(templateId);
+    const isUpdate = Boolean(selectedTemplateId);
+
+    try {
+      saveTemplate({
+        id: templateId,
+        name: name.trim(),
+        phases: clonePracticePhases(
+          normalizeRepertoirePhaseNames(phases, repertoireItems),
+        ),
+        ...(guitarType ? { guitarType } : {}),
+        updatedAt: new Date().toISOString(),
+      });
+      const wasStored = usePracticeStore
+        .getState()
+        .templates.some((template) => template.id === templateId);
+      if (!wasStored) throw new Error(text.templateSaveError);
+
+      setSelectedTemplateId(templateId);
+      setSaveFeedback({
+        type: "success",
+        message: `${isUpdate ? text.templateUpdated : text.templateSaved} «${name.trim()}»`,
+      });
+    } catch {
+      setSaveFeedback({
+        type: "error",
+        message: text.templateSaveError,
+      });
+    }
   }
 
   function handleStart() {
     if (!validateCurrentPlan()) return;
     if (guitarType) rememberGuitarType(guitarType);
+    rememberGuitar();
     onStart(
       name.trim(),
       clonePracticePhases(
         normalizeRepertoirePhaseNames(phases, repertoireItems),
       ),
       guitarType,
+      guitarId,
     );
   }
 
@@ -246,19 +297,38 @@ export function PracticePlanBuilder({
             <SelectField
               className="mt-1"
               value={guitarType ?? "unspecified"}
-               ariaLabel={text.guitarAria}
+               ariaLabel={text.guitarTypeAria}
               options={guitarOptions}
               onChange={(value) => {
                 guitarTouchedRef.current = true;
-                setGuitarType(
+                const nextType =
                   value === "electric" || value === "acoustic"
                     ? value
-                    : undefined,
-                );
+                    : undefined;
+                setGuitarType(nextType);
               }}
             />
           </div>
         </div>
+
+        {showGuitarSelector && (
+          <div className="mt-4 block text-xs text-muted">
+            {text.guitar}
+            <SelectField
+              className="mt-1"
+              value={guitarId ?? "none"}
+              ariaLabel={text.guitarAria}
+              options={[
+                { value: "none", label: text.guitarNone },
+                ...guitars.map((guitar) => ({
+                  value: guitar.id,
+                  label: guitar.name,
+                })),
+              ]}
+              onChange={chooseGuitar}
+            />
+          </div>
+        )}
       </div>
 
       <div className="mt-6 space-y-4">
@@ -297,6 +367,18 @@ export function PracticePlanBuilder({
       <p className="mt-3 text-right font-mono text-xs text-muted">
          {getPracticePlanDuration(phases)} {text.total}
       </p>
+      <div className="mt-2 min-h-5 text-right text-sm" aria-live="polite">
+        {saveFeedback && (
+          <p
+            role={saveFeedback.type === "error" ? "alert" : "status"}
+            className={
+              saveFeedback.type === "error" ? "text-red-300" : "text-accent-green-fg"
+            }
+          >
+            {saveFeedback.message}
+          </p>
+        )}
+      </div>
       {error && (
         <p className="mt-3 text-sm text-red-300" role="alert">
           {error}

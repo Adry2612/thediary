@@ -25,11 +25,12 @@ export function FinishPracticeDialog({
   onFinish,
 }: FinishPracticeDialogProps) {
   const timerText = useI18nSection("timer");
-  const { dialogRef, handleCancel } = useDialogModal(open, onClose);
+  const { dialogRef, handleCancel, isClosing } = useDialogModal(open, onClose);
 
   return (
     <ModalDialog
       dialogRef={dialogRef}
+      isClosing={isClosing}
       onClose={onClose}
       onCancel={handleCancel}
     >

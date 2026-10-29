@@ -4,6 +4,7 @@ import { create } from "zustand";
 import type { GuitarType, PracticePhase, PracticeResource } from "@/types/practice";
 import { normalizePracticePhaseLinks } from "../utils/practice-plan.ts";
 import { normalizeGuitarType } from "../utils/practice-session-record.ts";
+import { normalizeTargetMinutes } from "../utils/practice-target.ts";
 
 const ACTIVE_SESSION_STORAGE_KEY = "thediary.active-practice-session";
 
@@ -17,11 +18,23 @@ function readStoredSession(): ActivePracticeSession | null {
     if (!session?.id || !session.name || !Array.isArray(session.phases)) {
       return null;
     }
-    const { guitarType: storedGuitarType, ...rest } = session;
+    const {
+      guitarType: storedGuitarType,
+      guitarId: storedGuitarId,
+      targetMinutes: storedTargetMinutes,
+      ...rest
+    } = session;
     const guitarType = normalizeGuitarType(storedGuitarType);
+    const guitarId =
+      typeof storedGuitarId === "string" && storedGuitarId.trim() !== ""
+        ? storedGuitarId
+        : undefined;
+    const targetMinutes = normalizeTargetMinutes(storedTargetMinutes);
     return {
       ...rest,
       ...(guitarType ? { guitarType } : {}),
+      ...(guitarId ? { guitarId } : {}),
+      ...(targetMinutes ? { targetMinutes } : {}),
       phases: session.phases.map(normalizePracticePhaseLinks),
     };
   } catch {
@@ -46,6 +59,10 @@ export interface ActivePracticeSession {
   isCountUp?: boolean;
   /** Guitarra elegida para esta sesión; sin valor si no se ha elegido. */
   guitarType?: GuitarType;
+  /** Guitarra concreta de Mi equipo, si se ha elegido. */
+  guitarId?: string;
+  /** Tiempo objetivo opcional de la sesión, en minutos enteros. */
+  targetMinutes?: number;
   /** Rutina guardada de la que salió la sesión, si la hubo. */
   templateId?: string;
 }
@@ -63,6 +80,7 @@ interface ActivePracticeSessionState {
     changes: Partial<PracticePhase>,
   ) => void;
   setGuitarType: (guitarType: GuitarType | null) => void;
+  setTargetMinutes: (targetMinutes: number | null) => void;
   clearActiveSession: () => void;
 }
 
@@ -108,6 +126,17 @@ export const useActivePracticeSessionStore =
       if (!activeSession) return {};
       const { guitarType: _current, ...rest } = activeSession;
       const nextSession = guitarType ? { ...rest, guitarType } : rest;
+      persistSession(nextSession);
+      return { activeSession: nextSession };
+    }),
+  setTargetMinutes: (targetMinutes) =>
+    set(({ activeSession }) => {
+      if (!activeSession) return {};
+      const normalized = normalizeTargetMinutes(targetMinutes);
+      const { targetMinutes: _current, ...rest } = activeSession;
+      const nextSession = normalized
+        ? { ...rest, targetMinutes: normalized }
+        : rest;
       persistSession(nextSession);
       return { activeSession: nextSession };
     }),

@@ -50,6 +50,7 @@ export function usePracticeAudioRecorder({
   const [recordingTitle, setRecordingTitle] = useState(sessionName);
   const [isRecording, setIsRecording] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
 
@@ -77,6 +78,23 @@ export function usePracticeAudioRecorder({
   useEffect(() => {
     void refreshRecordings();
   }, [refreshRecordings]);
+
+  useEffect(() => {
+    if (!isRecording) return;
+
+    const startedAt = recordingStartedAtRef.current;
+    const updateElapsed = () => {
+      setElapsedSeconds(
+        startedAt === null ?
+          0
+        : Math.max(0, Math.floor((performance.now() - startedAt) / 1000)),
+      );
+    };
+
+    updateElapsed();
+    const interval = window.setInterval(updateElapsed, 500);
+    return () => window.clearInterval(interval);
+  }, [isRecording]);
 
   useEffect(() => {
     if (shouldStop && recorderRef.current?.state === "recording") {
@@ -265,6 +283,7 @@ export function usePracticeAudioRecorder({
     setRecordingTitle,
     isRecording,
     isSaving,
+    elapsedSeconds,
     error,
     storageError,
     handleWaveformError,

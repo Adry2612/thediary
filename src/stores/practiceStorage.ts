@@ -85,6 +85,8 @@ export function createLocalPracticeStorage(): PracticeStorageAdapter {
           customChords: [],
           weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
           practiceGoals: { ...DEFAULT_PRACTICE_GOALS },
+          guitars: [],
+          guitarEntries: [],
         },
         version: 0,
       });
