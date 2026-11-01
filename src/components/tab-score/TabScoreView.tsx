@@ -1,22 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useI18nSection } from "@/i18n/I18nProvider";
-import {
-  ALPHA_TAB_FONT_DIRECTORY,
-  ALPHA_TAB_WORKER_URL,
-  configureAlphaTabEnvironment,
-} from "@/services/alpha-tab-environment";
+import { TabScoreCanvas, type TabScoreRenderStatus } from "@/components/tab-score/TabScoreCanvas";
 import {
   readShowStandardNotation,
   saveShowStandardNotation,
 } from "@/services/tab-score-preferences";
 import type { TabScore } from "@/types/tab-score";
 import { buildAlphaTex } from "@/utils/tab-score/alphatex";
+import { getStringCount } from "@/utils/tab-score/model";
 import { scoreToText } from "@/utils/tab-score/text";
-
-type AlphaTabApi = import("@coderline/alphatab").AlphaTabApi;
 
 export function TabScoreView({
   score,
@@ -36,9 +31,10 @@ export function TabScoreView({
 }) {
   const text = useI18nSection("tabScore");
   const [showStandardNotation, setShowStandardNotation] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const hostRef = useRef<HTMLDivElement>(null);
+  const [status, setStatus] = useState<TabScoreRenderStatus>({
+    loading: true,
+    error: null,
+  });
   const compact = variant === "compact";
 
   useEffect(() => {
@@ -58,74 +54,14 @@ export function TabScoreView({
     [visibleScore],
   );
   const alphaTex = useMemo(
-    () => buildAlphaTex(visibleScore, { standardNotation: showStandardNotation }),
+    () =>
+      buildAlphaTex(visibleScore, { standardNotation: showStandardNotation }),
     [visibleScore, showStandardNotation],
   );
-
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-
-    let disposed = false;
-    let api: AlphaTabApi | null = null;
-    setIsLoading(true);
-    setError(null);
-    host.replaceChildren();
-
-    void (async () => {
-      try {
-        const alphaTab = await import("@coderline/alphatab");
-        if (disposed) return;
-        configureAlphaTabEnvironment(alphaTab);
-        api = new alphaTab.AlphaTabApi(host, {
-          core: {
-            useWorkers: false,
-            fontDirectory: ALPHA_TAB_FONT_DIRECTORY,
-            scriptFile: ALPHA_TAB_WORKER_URL,
-          },
-          display: {
-            // Sin justificar, la última línea se queda a media anchura.
-            justifyLastSystem: true,
-          },
-          player: { enablePlayer: false },
-        });
-        api.error.on((renderError) => {
-          if (disposed) return;
-          setError(renderError.message);
-          setIsLoading(false);
-        });
-        if (compact) {
-          // En una tarjeta el nombre de la afinación ocupa más que la propia
-          // tablatura; se omite y se deja solo la pauta.
-          api.scoreLoaded.on((loadedScore) => {
-            for (const track of loadedScore.tracks) {
-              for (const staff of track.staves) {
-                staff.stringTuning.name = "";
-              }
-            }
-          });
-        }
-        api.renderFinished.on(() => {
-          if (!disposed) setIsLoading(false);
-        });
-        api.tex(alphaTex);
-      } catch (renderError) {
-        if (disposed) return;
-        setError(
-          renderError instanceof Error
-            ? renderError.message
-            : "No se pudo dibujar la tablatura.",
-        );
-        setIsLoading(false);
-      }
-    })();
-
-    return () => {
-      disposed = true;
-      api?.destroy();
-      host.replaceChildren();
-    };
-  }, [alphaTex, compact]);
+  const stringCount = useMemo(
+    () => getStringCount(visibleScore.tuning),
+    [visibleScore.tuning],
+  );
 
   function toggleStandardNotation() {
     setShowStandardNotation((current) => {
@@ -159,13 +95,15 @@ export function TabScoreView({
         </div>
       )}
 
-      <div
-        ref={hostRef}
-        className="w-full overflow-hidden"
-        aria-hidden={isLoading || error !== null}
+      <TabScoreCanvas
+        alphaTex={alphaTex}
+        stringCount={stringCount}
+        compact={compact}
+        onStatus={setStatus}
+        className={status.loading || status.error ? "invisible" : ""}
       />
 
-      {isLoading &&
+      {status.loading &&
         (compact ? (
           <div
             aria-hidden="true"
@@ -177,7 +115,7 @@ export function TabScoreView({
           </pre>
         ))}
 
-      {error && (
+      {status.error && (
         <div className="mt-2">
           <p role="alert" className="text-sm text-red-700">
             {text.error}
@@ -188,7 +126,7 @@ export function TabScoreView({
         </div>
       )}
 
-      {!isLoading && !error && (
+      {!status.loading && !status.error && (
         <pre className="sr-only">{textAlternative}</pre>
       )}
     </div>

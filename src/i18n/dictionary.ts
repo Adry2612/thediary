@@ -495,5 +495,21 @@ export type Dict = {
     error: string;
     standardNotation: string;
     textAlternative: string;
-  };
+    barLabel: string;
+    beatLabel: string;
+    stringLabel: string;
+    fretLabel: string;
+    restLabel: string;
+    noNoteLabel: string;
+    durationWhole: string;
+    durationHalf: string;
+    durationQuarter: string;
+    durationEighth: string;
+    durationSixteenth: string;
+    durationThirtySecond: string;
+    durationSixtyFourth: string;
+    dottedSuffix: string;
+    tripletSuffix: string;
+    noSelectionLabel: string;
+  },
 };

@@ -43,10 +43,10 @@
 
 ## 8. Editor: selección y entrada
 
-- [ ] 8.1 Crear `useTabScoreEditor` (estado de partitura, selección, historial, portapapeles y búfer de dígitos del traste) que enlaza las operaciones puras. Verificar con `npm run typecheck` y con un test del reductor puro que reproduce una secuencia escribir, deshacer y rehacer.
-- [ ] 8.2 Crear la capa superpuesta de ratón (clic a pulso y cuerda, resaltado por contorno y fondo, recolocación tras `renderFinished` y al cambiar el tamaño, scroll al pulso seleccionado). Verificar clicando una nota, un silencio y una posición vacía, y que cambiar la selección no vuelve a dibujar la partitura (contador de dibujos).
-- [ ] 8.3 Crear el manejador de teclado (flechas, Mayús, dígitos con dos cifras, Retroceso/Supr, Escape, Cmd/Ctrl+Z y Mayús+Z, C, X y V). Verificar escribiendo ocho notas solo con teclado.
-- [ ] 8.4 Añadir `role="application"`, la región `aria-live` con compás, pulso, cuerda, traste y duración, y la alternativa textual. Verificar con un test del texto del anuncio y con VoiceOver al mover la selección.
+- [x] 8.1 Crear `useTabScoreEditor` (estado de partitura, selección, historial, portapapeles y búfer de dígitos del traste) que enlaza las operaciones puras. Verificar con `npm run typecheck` y con un test del reductor puro que reproduce una secuencia escribir, deshacer y rehacer.
+- [x] 8.2 Crear la capa superpuesta de ratón (clic a pulso y cuerda, resaltado por contorno y fondo, recolocación tras `renderFinished` y al cambiar el tamaño, scroll al pulso seleccionado). Verificar clicando una nota, un silencio y una posición vacía, y que cambiar la selección no vuelve a dibujar la partitura (contador de dibujos).
+- [x] 8.3 Crear el manejador de teclado (flechas, Mayús, dígitos con dos cifras, Retroceso/Supr, Escape, Cmd/Ctrl+Z y Mayús+Z, C, X y V). Verificar escribiendo ocho notas solo con teclado.
+- [x] 8.4 Añadir `role="application"`, la región `aria-live` con compás, pulso, cuerda, traste y duración, y la alternativa textual. Verificar con un test del texto del anuncio y con VoiceOver al mover la selección.
 
 ## 9. Paleta
 
