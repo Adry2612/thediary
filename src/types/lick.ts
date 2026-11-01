@@ -1,4 +1,5 @@
 import type { RepertoireTab } from "./practice";
+import type { TabScore } from "./tab-score";
 
 /** Técnicas globales con las que se clasifica un lick completo. */
 export const TECHNIQUE_IDS = [
@@ -61,6 +62,8 @@ export interface GuitarLick {
   title: string;
   /** Tablatura creada con el editor visual. */
   tab?: RepertoireTab;
+  /** Tablatura como partitura; manda sobre `tab` cuando existe. */
+  score?: TabScore;
   /**
    * Tablatura antigua en texto plano. Solo se conserva como respaldo de los
    * licks migrados o creados antes del editor estructurado.

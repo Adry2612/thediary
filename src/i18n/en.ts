@@ -1030,4 +1030,11 @@ export const en: Dict = {
     finishAndSave: 'Finish and save',
     exitWithoutSaving: 'Exit without saving',
   },
+
+  tabScore: {
+    loading: 'Loading tablature…',
+    error: 'The tablature could not be drawn.',
+    standardNotation: 'Standard notation',
+    textAlternative: 'Tablature as text',
+  },
 };

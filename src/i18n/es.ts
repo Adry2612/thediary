@@ -1042,4 +1042,11 @@ export const es: Dict = {
     finishAndSave: 'Terminar y guardar',
     exitWithoutSaving: 'Salir sin guardar',
   },
+
+  tabScore: {
+    loading: 'Cargando tablatura…',
+    error: 'No se pudo dibujar la tablatura.',
+    standardNotation: 'Notación estándar',
+    textAlternative: 'Tablatura en texto',
+  },
 };

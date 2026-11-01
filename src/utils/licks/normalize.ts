@@ -3,6 +3,7 @@ import type { RepertoireTab } from "../../types/practice.ts";
 import { normalizeMusicalKey } from "./keys.ts";
 import { normalizeTechniques } from "./techniques.ts";
 import { normalizeTab } from "../repertoire-tab.ts";
+import { isTabScoreLike } from "../tab-score/model.ts";
 import { MAX_BPM, MIN_BPM } from "../metronome-tempo.ts";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -84,6 +85,7 @@ export function normalizeLick(value: unknown): GuitarLick | null {
   const techniques = normalizeTechniques(value.techniques);
   const targetBpm = normalizeLickBpm(value.targetBpm);
   const tab = normalizeStoredTab(value.tab);
+  const score = isTabScoreLike(value.score) ? value.score : undefined;
   const tabContent =
     typeof value.tabContent === "string" ? value.tabContent : undefined;
 
@@ -91,6 +93,7 @@ export function normalizeLick(value: unknown): GuitarLick | null {
     id: value.id,
     title: typeof value.title === "string" ? value.title : "",
     ...(tab ? { tab } : {}),
+    ...(score ? { score } : {}),
     ...(tabContent !== undefined ? { tabContent } : {}),
     ...(key ? { key } : {}),
     techniques,

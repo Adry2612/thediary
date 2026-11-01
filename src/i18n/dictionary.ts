@@ -489,4 +489,11 @@ export type Dict = {
     finishAndSave: string;
     exitWithoutSaving: string;
   };
+
+  tabScore: {
+    loading: string;
+    error: string;
+    standardNotation: string;
+    textAlternative: string;
+  };
 };
