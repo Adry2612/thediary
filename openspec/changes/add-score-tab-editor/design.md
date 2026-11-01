@@ -321,9 +321,20 @@ activado.
     táctil, donde no hay hover.
   - Los botones conservan `title` con el nombre y el motivo como respaldo del
     navegador.
-- **Tutorial.** Un botón de ayuda en la barra del editor abre un diálogo propio
-  (no el tutorial general de la app, que explica la navegación): pasos para
-  añadir una nota, escribir un acorde, cambiar la duración, crear un pulso
-  nuevo, moverse, los gestos de ratón y táctil y los atajos. Se cierra con
-  Escape y no toca la partitura. El texto vive en `tabScore.tutorial` para
-  seguir la regla de i18n del proyecto.
+- **Tutorial interactivo.** Un botón de ayuda en la barra del editor abre una
+  guía por pasos dentro del propio editor, no el tutorial general de la app.
+  Cada paso dice qué hacer, resalta el elemento que se va a usar y avanza solo
+  cuando la acción ocurre de verdad: un clic en la pauta, una nota más, un
+  acorde, el menú abierto, otra duración y un pulso partido. Quien no consiga
+  un paso puede saltarlo; cerrar el tutorial no pierde la partitura, y los
+  cambios hechos durante la guía se deshacen como cualquier otro.
+  - La detección compara el estado del editor con una foto tomada al entrar en
+    cada paso, no con valores absolutos: así funciona igual con una partitura
+    vacía que con una que ya tenga notas, y no avanza por notas que ya estaban.
+  - El panel es una tarjeta en el flujo del editor, encima de la partitura, no
+    un diálogo modal: se puede seguir escribiendo mientras está abierto y no
+    compite con la hoja táctil ni con la paleta. El resaltado es una clase
+    temporal sobre el elemento real (`tour-highlight`), no una capa que tape la
+    interacción.
+  - Los textos viven en `tabTutorial`, en español e inglés, como el resto de la
+    interfaz.

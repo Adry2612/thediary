@@ -590,21 +590,27 @@ export type Dict = {
     open: string;
     title: string;
     intro: string;
-    addTitle: string;
-    addBody: string;
+    undoHint: string;
+    step: string;
+    skip: string;
+    skipStep: string;
+    next: string;
+    close: string;
+    selectTitle: string;
+    selectBody: string;
+    writeTitle: string;
+    writeBody: string;
     chordTitle: string;
     chordBody: string;
+    menuTitle: string;
+    menuBody: string;
     durationTitle: string;
     durationBody: string;
     splitTitle: string;
     splitBody: string;
-    moveTitle: string;
-    moveBody: string;
-    pointerTitle: string;
-    pointerBody: string;
-    keyboardTitle: string;
-    keyboardBody: string;
-    close: string;
+    doneTitle: string;
+    doneBody: string;
+    doneHint: string;
   },
   tabPlayback: {
     play: string;

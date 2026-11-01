@@ -97,6 +97,13 @@
 - [x] 16.3 Añadir el botón y el diálogo de tutorial del editor con los pasos para añadir notas, acordes, duraciones, dividir pulsos, moverse, gestos y atajos; cerrarlo con Escape sin tocar la partitura. Verificar con teclado y en táctil.
 - [x] 16.4 Actualizar `docs/tab-score.md` y las cadenas de `es.ts`, `en.ts` y `dictionary.ts`; ejecutar `npm run typecheck`, `npm test` y `npm run build`. Verificar el recorrido completo: crear una nota en un compás lleno dividiendo un pulso, cambiar su duración desde los iconos y abrir el tutorial.
 
+## 17. Tutorial interactivo
+
+- [x] 17.1 Sustituir el diálogo estático por una tarjeta de pasos dentro del editor que resalte la zona de cada paso y avance al detectar la acción real (clic en la pauta, nota nueva, acorde, menú abierto, cambio de duración y pulso dividido), comparando con una foto tomada al entrar en el paso. Verificar con una partitura vacía y con una que ya tenga notas, y que saltar un paso no cambia nada.
+- [x] 17.2 Hacer la guía operable con teclado (leer, saltar paso, cerrar con Escape), anunciar el cambio de paso con `aria-live` y no bloquear el lienzo, el menú ni la hoja táctil mientras está abierta. Verificar con teclado y en 375 px.
+- [x] 17.3 Actualizar `tabTutorial` en `es.ts`, `en.ts` y `dictionary.ts` y `docs/tab-score.md` con los pasos y su detección; ejecutar `npm run typecheck`, `npm test` y `npm run build`.
+- [x] 17.4 Recorrer el tutorial completo en el navegador de principio a fin: seleccionar, escribir, acorde, abrir menú, cambiar duración, dividir pulso y cerrar; comprobar que cada paso avanza solo y que la partitura conserva lo escrito.
+
 ## Workflow follow-up
 
 - Archivar `add-score-tab-editor` antes que `add-score-tab-notation-extras`, que la amplía.

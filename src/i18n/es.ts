@@ -1143,31 +1143,38 @@ export const es: Dict = {
   },
   tabTutorial: {
     open: 'Tutorial',
-    title: 'Cómo editar la tablatura',
+    title: 'Aprende editando',
     intro:
-      'La partitura se edita desde el lienzo y el menú de la nota. Estos son los gestos que hacen falta.',
-    addTitle: 'Añadir una nota',
-    addBody:
-      'Haz clic en una cuerda y un pulso, o toca esa posición, y escribe el traste con el teclado (0–24). También puedes abrir el menú y elegir el traste con un toque.',
-    chordTitle: 'Añadir otra nota al mismo pulso',
+      'Vamos a hacerlo en esta misma partitura. La guía avanza sola cuando haces cada acción; si te atascas, puedes saltar el paso.',
+    undoHint:
+      'Los cambios de la guía se deshacen con el botón ↶ como cualquier otro.',
+    step: 'Paso',
+    skip: 'Saltar tutorial',
+    skipStep: 'Saltar paso',
+    next: 'Siguiente',
+    close: 'Cerrar',
+    selectTitle: 'Selecciona un pulso',
+    selectBody:
+      'Haz clic (o toca) dentro de la pauta, en la cuerda y el pulso donde quieras trabajar. Verás un recuadro verde: esa es la selección.',
+    writeTitle: 'Escribe un traste',
+    writeBody:
+      'Con el teclado, escribe un número del 0 al 24, por ejemplo 5. La nota aparece en el pulso y la cuerda seleccionados.',
+    chordTitle: 'Añade una segunda nota',
     chordBody:
-      'Con una nota seleccionada, cambia de cuerda con la flecha arriba o abajo y escribe otro traste. Las notas se acumulan en el mismo pulso formando un acorde.',
-    durationTitle: 'Cambiar la duración',
+      'Pulsa ↑ o ↓ para cambiar de cuerda y escribe otro traste. Las dos notas suenan juntas: acabas de escribir un acorde.',
+    menuTitle: 'Abre el menú de la nota',
+    menuBody:
+      'Haz doble clic, clic derecho o pulsación larga sobre la nota. También vale el botón de opciones de arriba. El menú se abre junto a la nota.',
+    durationTitle: 'Cambia la duración',
     durationBody:
-      'Con la nota seleccionada, abre su menú con doble clic, clic derecho, doble toque o pulsación larga, y elige la figura. El menú sigue abierto para cambiar también la técnica.',
-    splitTitle: 'Crear un hueco en un compás lleno',
+      'En el menú, elige otra figura, por ejemplo la corchea. La nota cambia de duración y el menú sigue abierto por si quieres añadir una técnica.',
+    splitTitle: 'Crea un pulso nuevo',
     splitBody:
-      'Si ya no caben más notas, elige «Dividir pulso»: el pulso se parte en dos de la mitad de duración y el segundo queda como silencio seleccionado, listo para escribir.',
-    moveTitle: 'Moverte por la partitura',
-    moveBody:
-      'Las flechas cambian de cuerda o de pulso. Mayús y una flecha amplían la selección. Retroceso borra la nota y Escape la deselecciona.',
-    pointerTitle: 'Ratón y pantalla táctil',
-    pointerBody:
-      'Un clic selecciona. Doble clic, clic derecho, doble toque o pulsación larga abren el menú de esa nota. En el móvil el menú es una hoja inferior con los trastes y no tapa la nota.',
-    keyboardTitle: 'Atajos de teclado',
-    keyboardBody:
-      'Dígitos: traste. Flechas: moverte. Mayús+flecha: seleccionar. Retroceso: borrar nota. Enter: abrir el menú. Escape: cerrar el menú. Cmd/Ctrl+Z: deshacer. Cmd/Ctrl+Mayús+Z: rehacer. Cmd/Ctrl+C, X y V: copiar, cortar y pegar.',
-    close: 'Entendido',
+      'Cierra el menú, selecciona un pulso y abre Opciones. En Ritmo, elige «Dividir pulso»: se parte en dos y el segundo queda seleccionado para escribir.',
+    doneTitle: 'Ya sabes lo básico',
+    doneBody:
+      'Selecciona, escribe trastes, usa las flechas para moverte y el menú para cambiar duración y técnicas. Puedes repetir esta guía con el botón ?.',
+    doneHint: 'Deshacer está en la barra de arriba, junto a Rehacer.',
   },
   tabPlayback: {
     play: 'Reproducir',

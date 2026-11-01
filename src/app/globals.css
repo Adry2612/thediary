@@ -203,6 +203,21 @@ dialog.overlay-motion[data-closing="true"]::backdrop {
   transform-origin: 50% 100%;
 }
 
+/* Zona que pide usar el paso actual del tutorial interactivo del editor. */
+.tour-highlight {
+  outline: 3px solid #f59e0b;
+  outline-offset: 4px;
+  border-radius: 8px;
+  animation: tour-highlight 1.4s ease-in-out infinite;
+}
+
+@keyframes tour-highlight {
+  50% {
+    outline-color: #fbbf24;
+    outline-offset: 7px;
+  }
+}
+
 ::view-transition-old(root) {
   animation: 150ms ease-in both tutorial-view-exit;
 }
@@ -230,6 +245,10 @@ dialog.overlay-motion[data-closing="true"]::backdrop {
   }
 
   .streak-flame {
+    animation: none;
+  }
+
+  .tour-highlight {
     animation: none;
   }
 

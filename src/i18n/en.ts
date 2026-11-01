@@ -1131,31 +1131,38 @@ export const en: Dict = {
   },
   tabTutorial: {
     open: 'Tutorial',
-    title: 'How to edit the tab',
+    title: 'Learn by doing',
     intro:
-      'The score is edited from the canvas and the note menu. These are the gestures you need.',
-    addTitle: 'Add a note',
-    addBody:
-      'Click a string and a beat, or tap that position, and type the fret with the keyboard (0–24). You can also open the menu and pick the fret with a tap.',
-    chordTitle: 'Add another note to the same beat',
+      'Let’s do it on this same score. The guide moves on by itself when you perform each action; if you get stuck, you can skip the step.',
+    undoHint:
+      'Anything the guide writes is undone with the ↶ button like any other edit.',
+    step: 'Step',
+    skip: 'Skip tutorial',
+    skipStep: 'Skip step',
+    next: 'Next',
+    close: 'Close',
+    selectTitle: 'Select a beat',
+    selectBody:
+      'Click (or tap) inside the tab, on the string and beat you want to work on. A green box marks the selection.',
+    writeTitle: 'Type a fret',
+    writeBody:
+      'On the keyboard, type a number from 0 to 24, for example 5. The note appears on the selected beat and string.',
+    chordTitle: 'Add a second note',
     chordBody:
-      'With a note selected, change strings with the up or down arrow and type another fret. Notes stack on the same beat to form a chord.',
+      'Press ↑ or ↓ to change strings and type another fret. Both notes sound together: you just wrote a chord.',
+    menuTitle: 'Open the note menu',
+    menuBody:
+      'Double-click, right-click or long press the note. The options button above works too. The menu opens next to the note.',
     durationTitle: 'Change the duration',
     durationBody:
-      'With the note selected, open its menu with a double-click, right-click, double-tap or long press, and pick the figure. The menu stays open so you can change the technique too.',
-    splitTitle: 'Make room in a full bar',
+      'In the menu, pick another figure, for example the eighth note. The note changes length and the menu stays open so you can add a technique.',
+    splitTitle: 'Create a new beat',
     splitBody:
-      'When no more notes fit, choose “Split beat”: the beat becomes two beats of half its length and the second one is left as a selected rest, ready to write on.',
-    moveTitle: 'Move around the score',
-    moveBody:
-      'The arrows change string or beat. Shift and an arrow extend the selection. Backspace deletes the note and Escape deselects it.',
-    pointerTitle: 'Mouse and touch screen',
-    pointerBody:
-      'A click selects. Double-click, right-click, double-tap or long press open the menu for that note. On a phone the menu is a bottom sheet with the frets that does not cover the note.',
-    keyboardTitle: 'Keyboard shortcuts',
-    keyboardBody:
-      'Digits: fret. Arrows: move. Shift+arrow: select. Backspace: delete note. Enter: open the menu. Escape: close the menu. Cmd/Ctrl+Z: undo. Cmd/Ctrl+Shift+Z: redo. Cmd/Ctrl+C, X and V: copy, cut and paste.',
-    close: 'Got it',
+      'Close the menu, select a beat and open Options. Under Rhythm, choose “Split beat”: it becomes two beats and the second one is selected for writing.',
+    doneTitle: 'You know the basics',
+    doneBody:
+      'Select, type frets, use the arrows to move and the menu to change duration and techniques. You can replay this guide with the ? button.',
+    doneHint: 'Undo is in the top bar, next to Redo.',
   },
   tabPlayback: {
     play: 'Play',

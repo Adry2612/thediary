@@ -120,9 +120,24 @@ tocar o al enfocar con el teclado, la franja bajo la cabecera muestra el nombre,
 el atajo declarado y el motivo por el que la opción no está disponible. El
 nombre accesible del botón es el texto completo, no el icono.
 
-El botón de ayuda de la barra del editor abre `TabScoreTutorial`, una guía de
-los gestos y atajos que no modifica la partitura y se cierra con Escape o con
-el botón «Entendido». Las cadenas viven en `tabTutorial` (`es.ts` y `en.ts`).
+El botón **Tutorial** de la barra del editor abre `TabScoreTutorial`, una guía
+interactiva sobre la partitura actual. Es una tarjeta fija, no un diálogo
+modal: se puede seguir escribiendo y el lienzo no se bloquea. Cada paso
+resalta su zona con `tour-highlight` y avanza solo cuando ocurre la acción:
+
+1. clic o toque dentro de la pauta;
+2. un traste escrito (se compara la identidad del `score`, así que también
+   vale cambiar el traste de una nota que ya existía);
+3. una segunda nota en el mismo pulso (acorde);
+4. el menú de la nota abierto;
+5. una duración distinta en el pulso seleccionado;
+6. un pulso más en el compás, es decir, «Dividir pulso».
+
+La detección usa una foto del estado tomada al entrar en cada paso, no valores
+absolutos: una partitura que ya tenía notas no salta pasos sola. «Saltar paso»
+avanza sin tocar nada, «Saltar tutorial» y Escape cierran la guía, y lo escrito
+durante ella queda en la partitura (se deshace con ↶). Las cadenas viven en
+`tabTutorial` (`es.ts` y `en.ts`).
 
 ## Añadir una técnica
 

@@ -262,21 +262,33 @@ The system SHALL show every palette option as an icon, SHALL describe the option
 - **WHEN** the user opens the palette on a touch device
 - **THEN** the description of the touched option is visible inside the sheet without needing to hover
 
-### Requirement: The editor includes a short tutorial
+### Requirement: The editor includes an interactive tutorial
 
-The system SHALL offer a tutorial button in the editor that opens a short guide on adding notes, writing chords, changing durations, creating beats, moving the selection, the pointer and touch gestures and the keyboard shortcuts, SHALL close it without changing the tab, and SHALL be operable with the keyboard.
+The system SHALL offer a tutorial button that opens a step-by-step guide over the editor itself, SHALL highlight the area each step uses, SHALL advance when the user actually performs the action, SHALL let the user skip a step or close the tutorial at any time, and SHALL keep the score and the editor usable while the guide is open.
 
-#### Scenario: Opening the tutorial
+#### Scenario: Starting the tutorial
 - **WHEN** the user presses the tutorial button
-- **THEN** a dialog explains the editing gestures and shortcuts
+- **THEN** a card explains the first step and the part of the editor it uses is highlighted
+
+#### Scenario: Advancing by doing
+- **WHEN** the user performs the action the step asks for, such as writing a fret
+- **THEN** the guide moves to the next step without needing another button
+
+#### Scenario: Already written notes do not count
+- **WHEN** the tutorial starts on a score that already has notes
+- **THEN** the guide waits for a new action instead of skipping steps on its own
+
+#### Scenario: Skipping a step
+- **WHEN** the user presses the skip-step button
+- **THEN** the guide moves on without undoing anything
 
 #### Scenario: Closing the tutorial
 - **WHEN** the user presses Escape or the close button
-- **THEN** the dialog closes and the tab is unchanged
+- **THEN** the guide closes and the notes written during it stay in the score
 
 #### Scenario: Keyboard only
-- **WHEN** the user opens the tutorial with the keyboard
-- **THEN** the dialog takes the focus and can be read and closed without a pointer
+- **WHEN** the user opens and follows the tutorial with the keyboard
+- **THEN** every step can be read, skipped and closed without a pointer
 
 ### Requirement: Notes carry performance techniques
 

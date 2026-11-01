@@ -1,75 +1,220 @@
 "use client";
 
-import { useId } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { DialogHeader } from "@/components/ui/DialogHeader";
-import { ModalDialog } from "@/components/ui/ModalDialog";
-import { useDialogModal } from "@/hooks/useDialogModal";
 import { useI18nSection } from "@/i18n/I18nProvider";
+import type { TabScore } from "@/types/tab-score";
+import type { TabSelection } from "@/utils/tab-score/selection";
+import {
+  TAB_TUTORIAL_STEPS,
+  checkTutorialStep,
+  snapshotTutorial,
+  type TabTutorialSnapshot,
+  type TabTutorialStep,
+} from "@/utils/tab-score/tutorial";
 
-/** Guía breve del editor. No toca la partitura: solo explica los gestos. */
+const STEPS = TAB_TUTORIAL_STEPS;
+const ACTION_STEPS = STEPS.length - 1;
+
+function targetSelector(
+  step: TabTutorialStep,
+  paletteOpen: boolean,
+): string | null {
+  switch (step) {
+    case "select":
+    case "write":
+    case "chord":
+    case "menu":
+      return '[data-testid="tab-score-canvas"]';
+    case "duration":
+      return paletteOpen ? "[data-tab-palette]" : "[data-palette-toggle]";
+    case "split":
+      return paletteOpen
+        ? '[data-option-id="split-beat"]'
+        : "[data-palette-toggle]";
+    case "done":
+      return null;
+  }
+}
+
+/**
+ * Guía por pasos sobre el propio editor. No es modal: se puede seguir
+ * escribiendo y cada paso avanza al detectar la acción, comparando con una
+ * foto del estado tomada al entrar en el paso (no con valores absolutos).
+ */
 export function TabScoreTutorial({
   open,
+  score,
+  selection,
+  paletteOpen,
   onClose,
 }: {
   open: boolean;
+  score: TabScore;
+  selection: TabSelection;
+  paletteOpen: boolean;
   onClose: () => void;
 }) {
   const text = useI18nSection("tabTutorial");
-  const titleId = useId();
-  const { dialogRef, handleCancel, isClosing } = useDialogModal(open, onClose);
+  const [stepIndex, setStepIndex] = useState(0);
+  const snapshot = useRef<TabTutorialSnapshot | null>(null);
 
-  const sections: { title: string; body: string }[] = [
-    { title: text.addTitle, body: text.addBody },
-    { title: text.chordTitle, body: text.chordBody },
-    { title: text.durationTitle, body: text.durationBody },
-    { title: text.splitTitle, body: text.splitBody },
-    { title: text.moveTitle, body: text.moveBody },
-    { title: text.pointerTitle, body: text.pointerBody },
-    { title: text.keyboardTitle, body: text.keyboardBody },
-  ];
+  const advance = useCallback(() => {
+    setStepIndex((index) => Math.min(index + 1, STEPS.length - 1));
+  }, []);
+
+  useEffect(() => {
+    if (!open) setStepIndex(0);
+  }, [open]);
+
+  const step = STEPS[stepIndex];
+
+  // Foto al entrar en el paso. A propósito no depende de `score`: si cambiara
+  // con cada nota, el paso nunca detectaría la acción.
+  useEffect(() => {
+    if (!open || step === "done") return;
+    snapshot.current = snapshotTutorial(score, selection, paletteOpen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, stepIndex]);
+
+  useEffect(() => {
+    if (!open) return;
+    const current = snapshot.current;
+    if (!current) return;
+
+    const result = checkTutorialStep(step, current, {
+      score,
+      selection,
+      paletteOpen,
+    });
+    snapshot.current = result.snapshot;
+    if (result.advance) advance();
+  }, [open, step, score, selection, paletteOpen, advance]);
+
+  useEffect(() => {
+    if (!open || step !== "select") return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Element | null;
+      if (target?.closest('[data-testid="tab-score-canvas"]')) advance();
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    return () =>
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+  }, [open, step, advance]);
+
+  const selector = targetSelector(step, paletteOpen);
+
+  useEffect(() => {
+    if (!open || !selector) return;
+    const element = document.querySelector(selector);
+    if (!element) return;
+    element.classList.add("tour-highlight");
+    element.scrollIntoView({
+      block: "nearest",
+      inline: "nearest",
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
+    return () => element.classList.remove("tour-highlight");
+  }, [open, selector]);
+
+  if (!open) return null;
+
+  const isDone = step === "done";
+  const copy =
+    step === "select"
+      ? { title: text.selectTitle, body: text.selectBody }
+      : step === "write"
+        ? { title: text.writeTitle, body: text.writeBody }
+        : step === "chord"
+          ? { title: text.chordTitle, body: text.chordBody }
+          : step === "menu"
+            ? { title: text.menuTitle, body: text.menuBody }
+            : step === "duration"
+              ? { title: text.durationTitle, body: text.durationBody }
+              : step === "split"
+                ? { title: text.splitTitle, body: text.splitBody }
+                : { title: text.doneTitle, body: text.doneBody };
 
   return (
-    <ModalDialog
-      dialogRef={dialogRef}
-      labelledBy={titleId}
-      isClosing={isClosing}
-      variant="lg"
-      onCancel={handleCancel}
-      className="rounded-2xl"
+    <section
+      data-tab-tutorial
+      aria-label={text.title}
+      aria-live="polite"
+      aria-atomic="true"
+      onKeyDown={(event) => {
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+      }}
+      className="fixed left-1/2 top-[calc(var(--app-safe-top)+0.75rem)] z-[60] max-h-[45dvh] w-[min(40rem,calc(100vw-1.5rem))] -translate-x-1/2 overflow-y-auto rounded-xl border border-amber-300 bg-amber-50 p-3 text-zinc-900 shadow-xl sm:p-4"
     >
-      <div className="p-5 sm:p-6">
-        <DialogHeader
-          title={text.title}
-          titleId={titleId}
-          description={text.intro}
-          onClose={onClose}
-          closeLabel={text.close}
-        />
-
-        <div className="mt-4 space-y-4">
-          {sections.map((section) => (
-            <section key={section.title}>
-              <h3 className="text-sm font-semibold text-ink">
-                {section.title}
-              </h3>
-              <p className="mt-1 max-w-prose text-sm leading-6 text-muted">
-                {section.body}
-              </p>
-            </section>
-          ))}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-800">
+            {isDone ? text.title : `${text.step} ${stepIndex + 1}/${ACTION_STEPS}`}
+          </p>
+          <h3 className="mt-0.5 text-sm font-semibold">{copy.title}</h3>
         </div>
-
-        <Button
+        <button
           type="button"
-          variant="primary"
-          size="field"
-          className="mt-5 w-full sm:w-auto"
           onClick={onClose}
+          aria-label={text.close}
+          className="flex size-7 shrink-0 items-center justify-center rounded border border-amber-300 text-amber-800"
         >
-          {text.close}
-        </Button>
+          <span aria-hidden="true">×</span>
+        </button>
       </div>
-    </ModalDialog>
+
+      <p className="mt-1 max-w-prose text-sm leading-6 text-zinc-700">
+        {copy.body}
+      </p>
+      <p className="mt-1 text-[11px] text-zinc-500">
+        {isDone ? text.doneHint : text.undoHint}
+      </p>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {!isDone && (
+          <>
+            <Button
+              type="button"
+              size="field"
+              variant="link"
+              onClick={onClose}
+              className="mr-auto text-amber-800 hover:text-amber-900"
+            >
+              {text.skip}
+            </Button>
+            <Button
+              type="button"
+              size="field"
+              variant="ghost"
+              onClick={advance}
+              className="border-amber-400 text-zinc-800 hover:bg-amber-100"
+            >
+              {text.skipStep}
+            </Button>
+            <Button type="button" size="field" variant="primary" onClick={advance}>
+              {text.next}
+            </Button>
+          </>
+        )}
+        {isDone && (
+          <Button
+            type="button"
+            size="field"
+            variant="primary"
+            onClick={onClose}
+            className="ml-auto"
+          >
+            {text.close}
+          </Button>
+        )}
+      </div>
+    </section>
   );
 }

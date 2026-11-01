@@ -285,6 +285,7 @@ export function TabScoreEditor({
     const dialog = target.closest("dialog");
     if (
       target.closest("[data-tab-palette]") ||
+      target.closest("[data-tab-tutorial]") ||
       (dialog && containerRef.current?.contains(dialog)) ||
       target instanceof HTMLInputElement ||
       target instanceof HTMLSelectElement
@@ -353,7 +354,8 @@ export function TabScoreEditor({
 
     if (key === "Escape") {
       event.preventDefault();
-      if (paletteOpen) setPaletteOpen(false);
+      if (tutorialOpen) setTutorialOpen(false);
+      else if (paletteOpen) setPaletteOpen(false);
       else editor.dispatch({ type: "clearSelection" });
     }
   }
@@ -410,14 +412,14 @@ export function TabScoreEditor({
         </Button>
         <Button
           type="button"
-          size="icon"
+          size="field"
           variant="ghost"
-          aria-label={tutorialText.open}
           title={tutorialText.open}
           onClick={() => setTutorialOpen(true)}
           className="ml-auto border-zinc-300 text-zinc-700 hover:bg-zinc-100"
         >
-          <HelpIcon />
+          <HelpIcon className="size-4" />
+          {tutorialText.open}
         </Button>
         <Button
           type="button"
@@ -434,6 +436,18 @@ export function TabScoreEditor({
           <SlidersIcon />
         </Button>
       </div>
+
+      <TabScoreTutorial
+        open={tutorialOpen}
+        score={editor.score}
+        selection={editor.selection}
+        paletteOpen={paletteOpen}
+        onClose={() => {
+          setTutorialOpen(false);
+          setPaletteOpen(false);
+          containerRef.current?.focus({ preventScroll: true });
+        }}
+      />
 
       <div className="flex items-center gap-1 overflow-x-auto border-b border-zinc-200 px-3 py-2">
         {editor.score.bars.map((bar, index) => {
@@ -694,13 +708,6 @@ export function TabScoreEditor({
         </div>
       )}
 
-      <TabScoreTutorial
-        open={tutorialOpen}
-        onClose={() => {
-          setTutorialOpen(false);
-          containerRef.current?.focus({ preventScroll: true });
-        }}
-      />
     </div>
   );
 }
