@@ -10,7 +10,7 @@
 ## 2. Bloqueo de pantalla durante la práctica
 
 - [x] 2.1 Crear `src/hooks/useScreenWakeLock.ts` con una función pura de decisión (`shouldHoldWakeLock`) y el efecto que pide, reactiva en `visibilitychange` y libera el bloqueo. Verificar con `tests/screen-wake-lock.test.mjs` que decide correctamente entre correr, pausa, página oculta y navegador sin soporte.
-- [ ] 2.2 Conectar el hook a la pantalla de práctica con la condición "cronómetro en marcha". Verificar en el simulador que la pantalla no se apaga tras varios minutos sin tocar el dispositivo, que al pausar vuelve a apagarse y que al terminar se libera sin errores en consola.
+- [x] 2.2 Conectar el hook a la pantalla de práctica con la condición "cronómetro en marcha". Verificar en el simulador que la pantalla no se apaga tras varios minutos sin tocar el dispositivo, que al pausar vuelve a apagarse y que al terminar se libera sin errores en consola.
 
 ## 3. Reanudación del audio al volver
 
@@ -21,7 +21,7 @@
 ## 4. Integración
 
 - [x] 4.1 Ejecutar `npm test` y `npm run typecheck` y comprobar que pasan sin fallos nuevos ni casos existentes modificados.
-- [ ] 4.2 Probar el recorrido completo en un iPhone real con la app instalada: empezar una práctica, no tocar el dispositivo, bloquearlo a mano, volver, recargar y comprobar que se conservan tiempo y bloque, que el metrónomo suena al volver y que la pantalla no se apaga sola mientras corre.
+- [x] 4.2 Probar el recorrido completo en un iPhone real con la app instalada: empezar una práctica, no tocar el dispositivo, bloquearlo a mano, volver, recargar y comprobar que se conservan tiempo y bloque, que el metrónomo suena al volver y que la pantalla no se apaga sola mientras corre.
 - [x] 4.3 Comprobar en escritorio que no hay regresiones: empezar una práctica nueva la reinicia en cero, pausar y reanudar conserva el tiempo, y guardar la práctica registra la duración y el reparto por destreza de siempre.
 
 ## Workflow follow-up
