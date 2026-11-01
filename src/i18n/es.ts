@@ -1160,6 +1160,11 @@ export const es: Dict = {
     noAdjacentBeat: 'No hay otro pulso al lado.',
     cannotSubdivide: 'Este pulso es demasiado corto para esa subdivisión.',
     alreadySubdivided: 'Este pulso ya está subdividido. Deshaz para cambiarlo.',
+    tupletNeedsBeats:
+      'Selecciona un pulso o tantos pulsos como la subdivisión.',
+    tupletDifferentValues:
+      'Las notas de una subdivisión deben durar lo mismo.',
+    tupletAcrossBars: 'La subdivisión debe caber en un solo compás.',
     hoverHint: 'Pasa el cursor o enfoca un icono para ver qué hace.',
     barFits: 'El compás cuadra.',
     barUnder: 'Faltan pulsos en este compás.',

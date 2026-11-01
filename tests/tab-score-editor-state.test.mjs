@@ -306,3 +306,40 @@ test("writes every note of a subdivision with the automatic advance", () => {
     );
   }
 });
+
+test("groups three notes into one triplet in a single undo step", () => {
+  const base = createEmptyScore();
+  base.bars[0].beats = Array.from({ length: 8 }, (_, index) => ({
+    id: `e${index}`,
+    duration: 8,
+    rest: true,
+    notes: [],
+  }));
+
+  const state = run(
+    [
+      { type: "select", position: { bar: 0, beat: 0, string: 0 } },
+      {
+        type: "select",
+        position: { bar: 0, beat: 2, string: 0 },
+        extend: true,
+      },
+      { type: "divideBeat", tuplet: 3 },
+    ],
+    base,
+  );
+
+  const beats = state.score.bars[0].beats;
+  assert.deepEqual(
+    beats.slice(0, 3).map((entry) => entry.tuplet),
+    [3, 3, 3],
+  );
+  assert.equal(beats[3].tuplet, undefined);
+  assert.equal(beats.length, 9);
+  assert.equal(state.history.past.length, 1);
+
+  const undone = tabScoreEditorReducer(state, { type: "undo" });
+  assert.equal(undone.score.bars[0].beats.length, 8);
+  assert.equal(undone.score.bars[0].beats[0].tuplet, undefined);
+  assert.equal(getBarTicks(undone.score.bars[0]), 3840);
+});

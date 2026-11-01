@@ -164,24 +164,37 @@ compás lleno, selecciona un pulso y elige **Dividir pulso** en el grupo Ritmo:
 tiene 64 pulsos (`beatLimit`); la paleta explica el motivo. Deshacer recupera
 el pulso original.
 
-### Subdividir un pulso
+### Subdividir un pulso o agrupar notas
 
 El grupo Ritmo abre **Subdivisión**, con tresillo, quintillo, seisillo, septillo,
-nonillo, decimillo y doceavo (3, 5, 6, 7, 9, 10 y 12). Al elegir una, cada pulso
-seleccionado se parte en N huecos iguales:
+nonillo, decimillo y doceavo (3, 5, 6, 7, 9, 10 y 12). Hay dos modos según lo
+que esté seleccionado.
+
+**Un solo pulso (antes de escribir las notas):** se parte en N huecos iguales.
 
 - la figura base se calcula para que N notas ocupen el tiempo que ya ocupaba el
   pulso (3:2, 5:4, 6:4, 7:4, 9:8, 10:8 y 12:8); la suma del compás no cambia;
 - el contenido del pulso se queda en el primer hueco y los demás nacen como
   silencios;
 - el cursor queda en el primer hueco, así que se escriben las N notas seguidas
-  con el avance automático;
-- un pulso con puntillo o ya subdividido no se puede dividir otra vez; el
-  selector explica el motivo (`cannotSubdivide`, `alreadySubdivided`);
-- un compás lleno de pulsos se rechaza con `beatLimit`;
-- en septillos y nonillos el reparto en ticks no es entero: el compás tolera
-  4 ticks de redondeo y no se marca como incompleto;
-- la división de todos los pulsos del tramo es un solo paso de deshacer.
+  con el avance automático.
+
+**Exactamente N pulsos (notas ya escritas):** se agrupan en una sola
+subdivisión, una nota por hueco.
+
+- las N notas pasan a ser un solo grupo (un tresillo, no N tresillos);
+- el tiempo que se libera, `figura × (N − M)`, se añade como silencio al final
+  del compás, así que la suma no cambia y las demás notas conservan su figura;
+- por ejemplo, tres corcheas seleccionadas y tresillo forman un tresillo de
+  corcheas (960 ticks) más una corchea de silencio;
+- la selección debe caber en un compás, tener exactamente N pulsos y todos la
+  misma figura; si no, el selector desactiva la opción y explica el motivo
+  (`tupletNeedsBeats`, `tupletDifferentValues`, `tupletAcrossBars`).
+
+En ambos modos, un pulso con puntillo o ya subdividido no se puede dividir otra
+vez (`cannotSubdivide`, `alreadySubdivided`), un compás lleno de pulsos se
+rechaza con `beatLimit`, los septillos y nonillos toleran 4 ticks de redondeo y
+la operación completa es un solo paso de deshacer.
 
 ### Iconos, descripción y tutorial
 

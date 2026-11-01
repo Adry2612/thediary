@@ -1148,6 +1148,11 @@ export const en: Dict = {
     noAdjacentBeat: 'There is no beat next to this one.',
     cannotSubdivide: 'This beat is too short for that subdivision.',
     alreadySubdivided: 'This beat is already subdivided. Undo to change it.',
+    tupletNeedsBeats:
+      'Select one beat or as many beats as the subdivision.',
+    tupletDifferentValues:
+      'The notes of a subdivision must have the same value.',
+    tupletAcrossBars: 'The subdivision must fit in one bar.',
     hoverHint: 'Hover or focus an icon to see what it does.',
     barFits: 'The bar adds up.',
     barUnder: 'This bar is missing beats.',

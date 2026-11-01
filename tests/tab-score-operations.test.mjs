@@ -585,18 +585,124 @@ test("refuses to exceed the beats of a bar", () => {
   assert.deepEqual(result, { error: "beatLimit" });
 });
 
-test("divides every beat of the selected range", () => {
-  const base = score([
-    beat({ id: "b1", duration: 4 }),
-    beat({ id: "b2", duration: 4 }),
-    beat({ id: "b3", duration: 2 }),
-  ]);
-  const result = divideBeat(base, { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 1, string: 0 } }, 3);
+test("groups the selected notes into one triplet instead of splitting each", () => {
+  const eighths = Array.from({ length: 8 }, (_, index) =>
+    beat({ id: `e${index}`, duration: 8 }),
+  );
+  const base = score(eighths);
+  const result = divideBeat(
+    base,
+    { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 2, string: 0 } },
+    3,
+  );
 
   assert.equal(isError(result), false);
-  assert.equal(result.score.bars[0].beats.length, 7);
-  assert.equal(result.score.bars[0].beats[0].tuplet, 3);
-  assert.equal(result.score.bars[0].beats[3].tuplet, 3);
+  const beats = result.score.bars[0].beats;
+  assert.deepEqual(
+    beats.slice(0, 3).map((entry) => [entry.duration, entry.tuplet]),
+    [
+      [8, 3],
+      [8, 3],
+      [8, 3],
+    ],
+  );
+  // Los cinco octavos restantes y un silencio de corchea por el tiempo liberado.
+  assert.deepEqual(
+    beats.slice(3, 8).map((entry) => entry.duration),
+    [8, 8, 8, 8, 8],
+  );
+  assert.equal(beats[8].rest, true);
+  assert.equal(beats[8].duration, 8);
   assert.deepEqual(result.selection, { bar: 0, beat: 0, string: 0 });
   assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
+});
+
+test("groups three quarters and leaves the freed quarter as a rest", () => {
+  const base = score([
+    beat({ id: "q1", duration: 4 }),
+    beat({ id: "q2", duration: 4 }),
+    beat({ id: "q3", duration: 4 }),
+    beat({ id: "q4", duration: 4 }),
+  ]);
+  const result = divideBeat(
+    base,
+    { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 2, string: 0 } },
+    3,
+  );
+
+  assert.equal(isError(result), false);
+  const beats = result.score.bars[0].beats;
+  assert.deepEqual(
+    beats.slice(0, 3).map((entry) => entry.tuplet),
+    [3, 3, 3],
+  );
+  assert.equal(beats.at(-1).rest, true);
+  assert.equal(beats.at(-1).duration, 4);
+  assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
+});
+
+test("groups a quintuplet of five eighths", () => {
+  const base = score(
+    Array.from({ length: 5 }, (_, index) => beat({ id: `e${index}`, duration: 8 })),
+  );
+  const result = divideBeat(
+    base,
+    { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 4, string: 0 } },
+    5,
+  );
+
+  assert.equal(isError(result), false);
+  const beats = result.score.bars[0].beats;
+  assert.equal(beats.slice(0, 5).every((entry) => entry.tuplet === 5), true);
+  assert.equal(beats.at(-1).rest, true);
+  assert.equal(beats.at(-1).duration, 8);
+  assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
+});
+
+test("refuses a group whose size or values do not match the subdivision", () => {
+  const three = score([
+    beat({ id: "a", duration: 8 }),
+    beat({ id: "b", duration: 8 }),
+    beat({ id: "c", duration: 8 }),
+  ]);
+  assert.deepEqual(
+    divideBeat(
+      three,
+      { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 2, string: 0 } },
+      5,
+    ),
+    { error: "tupletNeedsBeats" },
+  );
+
+  const mixed = score([
+    beat({ id: "a", duration: 8 }),
+    beat({ id: "b", duration: 4 }),
+    beat({ id: "c", duration: 8 }),
+  ]);
+  assert.deepEqual(
+    divideBeat(
+      mixed,
+      { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 2, string: 0 } },
+      3,
+    ),
+    { error: "tupletDifferentValues" },
+  );
+
+  const across = {
+    version: 2,
+    tuning: "EADGBE",
+    tempo: 90,
+    bars: [
+      { id: "bar-a", beats: [beat({ id: "a", duration: 8 })] },
+      { id: "bar-b", beats: [beat({ id: "b", duration: 8 }), beat({ id: "c", duration: 8 })] },
+    ],
+  };
+  assert.deepEqual(
+    divideBeat(
+      across,
+      { bar: 0, beat: 0, string: 0, anchor: { bar: 1, beat: 1, string: 0 } },
+      3,
+    ),
+    { error: "tupletAcrossBars" },
+  );
 });

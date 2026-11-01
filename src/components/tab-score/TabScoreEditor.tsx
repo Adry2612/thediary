@@ -736,7 +736,13 @@ export function TabScoreEditor({
                       ? paletteText.alreadySubdivided
                       : error === "beatLimit"
                         ? paletteText.beatLimit
-                        : null;
+                        : error === "tupletNeedsBeats"
+                          ? paletteText.tupletNeedsBeats
+                          : error === "tupletDifferentValues"
+                            ? paletteText.tupletDifferentValues
+                            : error === "tupletAcrossBars"
+                              ? paletteText.tupletAcrossBars
+                              : null;
 
                 return (
                   <button

@@ -31,20 +31,30 @@ Ver `proposal.md`. La selección ya es un `TabSelection` con `anchor` y `getRang
 - La normalización acepta solo los siete números; un valor desconocido se descarta y el pulso conserva su duración base. Los datos con `tuplet: 3` siguen valiendo.
 - Alternativa descartada: guardar `{ n, m }`. Las siete subdivisiones tiene proporción fija y un objeto complica la normalización sin aportar nada hasta que se admitan n:m.
 
-### 2. La subdivisión divide el pulso, no lo marca
+### 2. La subdivisión tiene dos modos: partir un pulso o agrupar notas
 
-La acción nueva `divideBeat` recibe la selección y el número `n`:
+La acción nueva `divideBeat` recibe la selección y el número `n`.
 
-1. Para cada pulso seleccionado calcula `T = getBeatTicks(pulso)`.
+**Con un solo pulso seleccionado (antes de escribir las notas):**
+
+1. Calcula `T = getBeatTicks(pulso)`.
 2. Calcula la figura base con `T / entran`; tiene que ser una duración entera de las admitidas (1–64). Si no lo es, la opción se desactiva con el motivo `cannotSubdivide`.
-3. Sustituye el pulso por `n` pulsos de esa figura, todos con `tuplet: n`; el primero conserva notas, silencio, puntillo y demás; los demás nacen como silencios.
+3. Sustituye el pulso por `n` pulsos de esa figura, todos con `tuplet: n`; el primero conserva notas, silencio y demás; los demás nacen como silencios.
 4. Comprueba el tope de 64 pulsos por compás (`beatLimit`) antes de insertar.
-5. Deja seleccionado el primer hueco del primer pulso dividido.
+5. Deja seleccionado el primer hueco, para escribir las N notas con el avance automático.
 
-Así el compás no cambia de suma y el usuario escribe las N notas con el avance automático que ya existe. Un pulso con puntillo o ya subdividido no se divide: la figura base no sería entera y las subdivisiones anidadas quedan fuera.
+**Con exactamente `n` pulsos seleccionados (después de escribir las notas):**
 
-- Alternativa descartada: agrupar las notas ya seleccionadas bajo un corchete como hace Guitar Pro al aplicarlo después de escribir. Obliga a decidir qué pasa si hay más notas que huecos, a recomponer los silencios y a modelar el grupo; se pospone.
-- Alternativa descartada: mantener el interruptor actual. Acorta el pulso, deja el compás descuadrado y no sirve para escribir el tresillo.
+1. Exige que estén en el mismo compás (`tupletAcrossBars`), que todos tengan la misma figura (`tupletDifferentValues`) y que ninguno esté subdividido ni tenga puntillo (`alreadySubdivided` / `cannotSubdivide`).
+2. A cada pulso le pone `tuplet: n` conservando su figura: los N notas pasan a ser un solo grupo de N en el tiempo de M, no N grupos independientes.
+3. El tiempo liberado, `figura × (n − m)`, se añade como silencios **al final del compás**. El resto de notas no cambia de figura y el compás sigue sumando lo mismo.
+4. Comprueba el tope de 64 pulsos y deja seleccionado el primer pulso del grupo.
+
+Ejemplo: tres corcheas seleccionadas y tresillo → las tres corcheas se convierten en un tresillo de corcheas (960 ticks) y se añade una corchea de silencio al final; el compás mide lo mismo. Lo mismo con tres negras y un silencio de negra.
+
+- Alternativa descartada (era el primer comportamiento y el usuario lo rechazó): dividir cada pulso seleccionado en N huecos. Con tres notas seleccionadas salían nueve huecos, no un tresillo.
+- Alternativa descartada: mover las notas siguientes para absorber el tiempo liberado sin añadir silencios. Cambia la posición de notas que el usuario no ha tocado; el silencio al final es más predecible.
+- Alternativa descartada: mantener el interruptor antiguo. Acorta el pulso, deja el compás descuadrado y no sirve para agrupar.
 
 ### 3. Tolerancia de redondeo en 7 y 9
 
@@ -78,7 +88,8 @@ La división se calcula entera y se apila una vez en el historial; deshacer recu
 - [El redondeo de 7 y 9 deja el compás a pocos ticks] → Tolerancia de 4 ticks solo en compases con subdivisiones; los demás siguen exactos.
 - [Arrastrar en táctil puede chocar con el desplazamiento o con la pulsación larga] → `touch-action: pan-y`, umbral de 8 px y cancelación de la pulsación larga al mover.
 - [Un pulso ya subdividido no se puede volver a dividir ni convertir] → La opción se desactiva con el motivo; deshacer lo revierte. Se documenta como límite.
-- [El usuario espera que la subdivisión agrupe notas ya escritas] → La ayuda del diálogo dice que parte el pulso y coloca las notas en los huecos; el caso de agrupar queda para otro cambio.
+- [Al agrupar, el tiempo liberado se convierte en silencio al final del compás] → Es predecible y no mueve las notas que el usuario no ha seleccionado; el compás sigue sumando lo mismo.
+- [Una selección de 2, 4 o más notas no forma un grupo de 3] → El diálogo desactiva esa subdivisión y pide un pulso o exactamente N; no adivina qué notas agrupar.
 
 ## Migration Plan
 

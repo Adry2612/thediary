@@ -29,6 +29,12 @@
 - [x] 5.1 Ejecutar `npm run typecheck`, `npm test` y `npm run build`; verificar que los tres terminan sin fallos nuevos.
 - [x] 5.2 Recorrer en el navegador: arrastrar para marcar tres pulsos, aplicar una duración al tramo, dividir un pulso en tresillo, escribir las tres notas, comprobar el compás exacto, probar quintillo y septillo, deshacer, repetir con teclado y a 375 px en táctil. Anotar el resultado.
 
+## 6. Agrupar notas existentes
+
+- [x] 6.1 Al seleccionar exactamente N pulsos, agruparlos en una sola subdivisión (una nota por hueco) y añadir el tiempo liberado como silencios al final del compás. Verificar con tests de tres corcheas, tres negras y cinco corcheas.
+- [x] 6.2 Rechazar con motivo las selecciones de tamaño distinto, las figuras distintas y las que cruzan compás; verificar en el selector.
+- [x] 6.3 Actualizar la spec, el diseño, la documentación y el recorrido del navegador: tres notas seleccionadas + tresillo forman un solo grupo con su silencio, no nueve huecos.
+
 ## Workflow follow-up
 
 - Aplicar después de archivar `add-score-tab-editor`; al archivar, comprobar que el requisito del tresillo de esa capacidad y el selector de subdivisiones de esta no se contradicen.

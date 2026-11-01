@@ -54,7 +54,10 @@ export type TabOperationError =
   | "beatLimit"
   | "cannotMove"
   | "cannotSubdivide"
-  | "alreadySubdivided";
+  | "alreadySubdivided"
+  | "tupletNeedsBeats"
+  | "tupletDifferentValues"
+  | "tupletAcrossBars";
 
 export type TabOperationResult =
   | { score: TabScore; selection: TabSelection }
@@ -498,8 +501,9 @@ export function tupletBaseDuration(
 }
 
 /**
- * Parte cada pulso seleccionado en N huecos iguales, conservando su duración
- * total: el contenido se queda en el primero y los demás nacen como silencios.
+ * Aplica una subdivisión a la selección. Con un pulso lo parte en N huecos del
+ * mismo tiempo total; con tantos pulsos como la subdivisión, los agrupa en un
+ * solo grupo de N notas y añade al final del compás el tiempo que se libera.
  */
 export function divideBeat(
   score: TabScore,
@@ -513,49 +517,103 @@ export function divideBeat(
   const positions = getRangeBeats(score, selection);
   if (positions.length === 0) return { error: "noSelection" };
 
-  for (const position of positions) {
-    const beat = getBeatAt(score, position.bar, position.beat);
-    if (!beat) return { error: "noSelection" };
-    if (beat.tuplet) return { error: "alreadySubdivided" };
-    if (!tupletBaseDuration(beat, tuplet)) return { error: "cannotSubdivide" };
+  if (positions.length === 1) {
+    return divideOneBeat(score, positions[0], tuplet, selection);
   }
 
-  const growth = new Map<number, number>();
-  for (const position of positions) {
-    growth.set(
-      position.bar,
-      (growth.get(position.bar) ?? 0) + tuplet - 1,
-    );
-  }
-  for (const [barIndex, extra] of growth) {
-    const count = score.bars[barIndex]?.beats.length ?? 0;
-    if (count + extra > TAB_MAX_BEATS_PER_BAR) return { error: "beatLimit" };
-  }
+  return groupBeats(score, positions, tuplet, selection);
+}
 
-  let next = score;
-  for (const position of [...positions].reverse()) {
-    const beat = getBeatAt(next, position.bar, position.beat);
-    if (!beat) continue;
-    const duration = tupletBaseDuration(beat, tuplet);
-    if (!duration) continue;
+function divideOneBeat(
+  score: TabScore,
+  position: { bar: number; beat: number },
+  tuplet: TabTuplet,
+  selection: TabSelection,
+): TabOperationResult {
+  const beat = getBeatAt(score, position.bar, position.beat);
+  if (!beat) return { error: "noSelection" };
+  if (beat.tuplet) return { error: "alreadySubdivided" };
 
-    const slots: TabBeat[] = [
-      { ...beat, duration, tuplet },
-      ...Array.from({ length: tuplet - 1 }, () => {
-        const rest = createRestBeat(duration);
-        rest.tuplet = tuplet;
-        return rest;
-      }),
-    ];
-    next = replaceBeatsAt(next, position.bar, position.beat, slots);
+  const duration = tupletBaseDuration(beat, tuplet);
+  if (!duration) return { error: "cannotSubdivide" };
+
+  const bar = score.bars[position.bar];
+  if (!bar || bar.beats.length + tuplet - 1 > TAB_MAX_BEATS_PER_BAR) {
+    return { error: "beatLimit" };
   }
 
-  const first = positions[0];
+  const slots: TabBeat[] = [
+    { ...beat, duration, tuplet },
+    ...Array.from({ length: tuplet - 1 }, () => {
+      const rest = createRestBeat(duration);
+      rest.tuplet = tuplet;
+      return rest;
+    }),
+  ];
+  const next = replaceBeatsAt(score, position.bar, position.beat, slots);
+
   return {
     score: next,
     selection: clampSelection(next, {
-      bar: first.bar,
-      beat: first.beat,
+      bar: position.bar,
+      beat: position.beat,
+      string: selection.string,
+    }),
+  };
+}
+
+function groupBeats(
+  score: TabScore,
+  positions: { bar: number; beat: number }[],
+  tuplet: TabTuplet,
+  selection: TabSelection,
+): TabOperationResult {
+  const barIndex = positions[0].bar;
+  if (positions.some((position) => position.bar !== barIndex)) {
+    return { error: "tupletAcrossBars" };
+  }
+
+  if (positions.length !== tuplet) return { error: "tupletNeedsBeats" };
+
+  const beats = positions.map((position) =>
+    getBeatAt(score, position.bar, position.beat),
+  );
+  if (beats.some((beat) => beat === null)) return { error: "noSelection" };
+  if (beats.some((beat) => beat!.tuplet)) return { error: "alreadySubdivided" };
+  if (beats.some((beat) => beat!.dots === 1)) return { error: "cannotSubdivide" };
+
+  const first = beats[0]!;
+  if (beats.some((beat) => beat!.duration !== first.duration)) {
+    return { error: "tupletDifferentValues" };
+  }
+
+  const base = getBeatTicks(first);
+  const freed = base * (tuplet - TAB_TUPLET_IN_TIME[tuplet]);
+  const rests = createRestBeats(freed);
+
+  const bar = score.bars[barIndex];
+  if (!bar) return { error: "noSelection" };
+  if (bar.beats.length + rests.length > TAB_MAX_BEATS_PER_BAR) {
+    return { error: "beatLimit" };
+  }
+
+  let next = score;
+  for (const position of positions) {
+    next = replaceBeat(next, position.bar, position.beat, (beat) => ({
+      ...beat,
+      tuplet,
+    }));
+  }
+  next = replaceBar(next, barIndex, (current) => ({
+    ...current,
+    beats: [...current.beats, ...rests],
+  }));
+
+  return {
+    score: next,
+    selection: clampSelection(next, {
+      bar: positions[0].bar,
+      beat: positions[0].beat,
       string: selection.string,
     }),
   };

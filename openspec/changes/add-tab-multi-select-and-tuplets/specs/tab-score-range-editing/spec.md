@@ -34,9 +34,9 @@ The system SHALL mark a range of consecutive beats when the user presses over th
 - **WHEN** the user extends the selection with Shift + click or Shift + arrow keys
 - **THEN** the range grows exactly as when dragging
 
-### Requirement: A beat can be divided into an irregular subdivision
+### Requirement: A beat or a group of notes can be made into an irregular subdivision
 
-The system SHALL offer subdivisions of 3, 5, 6, 7, 9, 10 and 12 equal parts, SHALL replace each selected beat with that many slots whose total length equals the original beat, SHALL keep the existing content in the first slot and make the remaining slots rests, SHALL select the first slot, and SHALL keep the bar's total length.
+The system SHALL offer subdivisions of 3, 5, 6, 7, 9, 10 and 12. A single selected beat SHALL be divided into that many slots of the same total, with the content in the first slot. Exactly that many selected beats SHALL be grouped into one subdivision, one note per slot, adding the freed time as rests at the end of the bar. The bar SHALL keep its total, the first slot SHALL be selected, and a selection that does not fit SHALL be rejected with a reason.
 
 #### Scenario: Dividing a quarter into a triplet
 - **WHEN** the user selects a quarter rest and chooses the subdivision of 3
@@ -58,9 +58,25 @@ The system SHALL offer subdivisions of 3, 5, 6, 7, 9, 10 and 12 equal parts, SHA
 - **WHEN** the tab is drawn and played
 - **THEN** the subdivision is shown with its number and the playback uses its ratio
 
-#### Scenario: Several beats selected
-- **WHEN** the user selects several beats and chooses a subdivision
-- **THEN** every selected beat is divided into that many slots and the bar keeps its total length
+#### Scenario: Grouping three written notes
+- **WHEN** the user selects three eighth notes and chooses the subdivision of 3
+- **THEN** the three notes form one triplet group —not three separate triplets— and an eighth rest fills the freed time at the end of the bar
+
+#### Scenario: Grouping three quarters
+- **WHEN** the user selects three quarter notes and chooses the subdivision of 3
+- **THEN** the three notes form one triplet group and a quarter rest fills the freed time
+
+#### Scenario: The group size does not match
+- **WHEN** the user selects two beats and chooses the subdivision of 3
+- **THEN** the action is disabled and the description asks for one beat or exactly three
+
+#### Scenario: Notes with different values
+- **WHEN** the selected notes do not all have the same figure
+- **THEN** the action is disabled and the description says they must last the same
+
+#### Scenario: The group crosses a bar line
+- **WHEN** the selection spans more than one bar
+- **THEN** the action is disabled and the description says it must fit in one bar
 
 #### Scenario: A beat that is already subdivided
 - **WHEN** the selected beat already belongs to a subdivision

@@ -604,6 +604,9 @@ export type Dict = {
     noAdjacentBeat: string;
     cannotSubdivide: string;
     alreadySubdivided: string;
+    tupletNeedsBeats: string;
+    tupletDifferentValues: string;
+    tupletAcrossBars: string;
     hoverHint: string;
     barFits: string;
     barUnder: string;
