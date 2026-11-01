@@ -226,3 +226,19 @@ activado.
 - `isReadyForPlayback` pasa a `true` tras cargar el SoundFont (~1 s en local).
 - Verificado en Chromium; queda probar Safari de iPhone al integrar la barra de
   reproducción.
+
+## Contrato de sincronización (11.4)
+
+- El estado de práctica se guarda y sincroniza como un JSON completo: el campo
+  `score` viaja dentro de cada elemento del repertorio y de cada lick, así que
+  no hace falta tocar el esquema de Supabase ni el de la copia local.
+- `normalizePracticeData` conserva el `score` válido y la rejilla original; hay
+  un test de ida y vuelta por `JSON.stringify`/`parse` en
+  `tests/tab-score-sync.test.mjs`.
+- La app iOS (`feat/ios-native-app`) decodifica `RepertoireItem` y `GuitarLick`
+  como un `JSONObject` opaco y lo vuelve a codificar sin interpretarlo
+  (`apps/ios-native/TheDiary/Models/PracticeModels.swift`). Un `score` que no
+  conoce se conserva intacto al sincronizar desde el móvil.
+- La normalización de la rejilla reordena las claves de cada nota al hidratar
+  (`normalizeTab`), pero no cambia ningún valor: `tab` sigue guardándose con los
+  mismos trastes, cuerdas y columnas tras editar la partitura.

@@ -9,6 +9,18 @@ test("uses the same translation structure in Spanish and English", () => {
   assert.deepEqual(Object.keys(translations.es.licks), Object.keys(translations.en.licks));
   assert.deepEqual(Object.keys(translations.es.settings), Object.keys(translations.en.settings));
   assert.deepEqual(Object.keys(translations.es.account), Object.keys(translations.en.account));
+  assert.deepEqual(
+    Object.keys(translations.es.tabScore).sort(),
+    Object.keys(translations.en.tabScore).sort(),
+  );
+  assert.deepEqual(
+    Object.keys(translations.es.tabPalette).sort(),
+    Object.keys(translations.en.tabPalette).sort(),
+  );
+  assert.deepEqual(
+    Object.keys(translations.es.tabPlayback).sort(),
+    Object.keys(translations.en.tabPlayback).sort(),
+  );
 });
 
 test("returns the translated text for nested keys", () => {

@@ -62,10 +62,10 @@
 
 ## 11. Integración y datos
 
-- [ ] 11.1 Sustituir el editor del diálogo de licks (`LickEditorModal`) por el nuevo: abre la partitura migrada, guarda solo `score` y conserva `tab` y `tabContent`. Verificar con un lick con rejilla: editar, guardar, recargar y comprobar en el JSON guardado que `tab` no cambió.
-- [ ] 11.2 Sustituir el editor en `RepertoireSongEditor`, `RepertoireSongForm` y `useRepertoireSongDraft`, respetando `isTabEditorEnabled` y la afinación del ítem. Verificar con una canción con afinación alternativa y con la bandera apagada.
-- [ ] 11.3 Añadir las cadenas de toda la interfaz nueva a `src/i18n/es.ts`, `en.ts` y `dictionary.ts`. Verificar con `npm run typecheck` y con un test que compare las claves entre idiomas.
-- [ ] 11.4 Comprobar la sincronización y el contrato: guardar un ítem con `score`, recargar desde Supabase y verificar que vuelve igual; revisar con `git grep` en `feat/ios-native-app` que `GuitarLick` y los ítems de repertorio se decodifican como JSON opaco y anotar el resultado en `design.md`.
+- [x] 11.1 Sustituir el editor del diálogo de licks (`LickEditorModal`) por el nuevo: abre la partitura migrada, guarda solo `score` y conserva `tab` y `tabContent`. Verificar con un lick con rejilla: editar, guardar, recargar y comprobar en el JSON guardado que `tab` no cambió.
+- [x] 11.2 Sustituir el editor en `RepertoireSongEditor`, `RepertoireSongForm` y `useRepertoireSongDraft`, respetando `isTabEditorEnabled` y la afinación del ítem. Verificar con una canción con afinación alternativa y con la bandera apagada.
+- [x] 11.3 Añadir las cadenas de toda la interfaz nueva a `src/i18n/es.ts`, `en.ts` y `dictionary.ts`. Verificar con `npm run typecheck` y con un test que compare las claves entre idiomas.
+- [x] 11.4 Comprobar la sincronización y el contrato: guardar un ítem con `score`, recargar desde Supabase y verificar que vuelve igual; revisar con `git grep` en `feat/ios-native-app` que `GuitarLick` y los ítems de repertorio se decodifican como JSON opaco y anotar el resultado en `design.md`.
 
 ## 12. Retirada del editor antiguo
 

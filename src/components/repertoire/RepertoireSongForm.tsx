@@ -7,12 +7,11 @@ import { TextField } from '@/components/ui/Field';
 import { SelectField } from '@/components/ui/SelectField';
 import { ChordChartEditor } from '@/components/repertoire/ChordChartEditor';
 import { CatalogSearchDialog } from '@/components/repertoire/CatalogSearchDialog';
-import { TabEditor } from '@/components/repertoire/TabEditor';
+import { TabScoreEditor } from '@/components/tab-score/TabScoreEditor';
 import { isTabEditorEnabled } from '@/utils/feature-flags';
 import { createRepertoireItem, REPERTOIRE_DIFFICULTIES } from '@/utils/repertoire-item';
 import { getDifficultyLabel } from '@/utils/difficulty-labels';
 import { normalizeChordChart } from '@/utils/repertoire-chord-chart';
-import { normalizeTab } from '@/utils/repertoire-tab';
 import { buildCatalogQuery } from '@/utils/repertoire-catalog';
 import { parseTuningNotes } from '@/utils/chords';
 import {
@@ -79,15 +78,14 @@ export function RepertoireSongForm({
     setResources,
     chordChart,
     setChordChart,
-    tab,
-    setTab,
+    score,
+    setScore,
     finalTuning,
   } = useRepertoireSongDraft();
   const [isSaving, setIsSaving] = useState(false);
   const [isCatalogSearchOpen, setIsCatalogSearchOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const normalizedTab = normalizeTab(tab, finalTuning || undefined);
 
   async function addItem(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -116,7 +114,6 @@ export function RepertoireSongForm({
     const itemId = createId();
     try {
       const normalizedChart = normalizeChordChart(chordChart);
-      const savedTab = normalizeTab(tab, finalTuning || undefined);
 
       saveRepertoireItem(
         createRepertoireItem({
@@ -140,7 +137,10 @@ export function RepertoireSongForm({
           resources: resources.length > 0 ? resources : undefined,
           chordChart:
             normalizedChart.lines.length > 0 ? normalizedChart : undefined,
-          tab: savedTab.notes.length > 0 ? savedTab : undefined,
+          score: {
+            ...score,
+            tuning: finalTuning || score.tuning,
+          },
           updatedAt: new Date().toISOString(),
         }),
       );
@@ -354,7 +354,11 @@ export function RepertoireSongForm({
 
       <ChordChartEditor value={chordChart} onChange={setChordChart} />
       {isTabEditorEnabled ? (
-        <TabEditor value={normalizedTab} onChange={setTab} />
+        <TabScoreEditor
+          initialScore={score}
+          label={text.tabTitle}
+          onChange={setScore}
+        />
       ) : null}
 
       <Button

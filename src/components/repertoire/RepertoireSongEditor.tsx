@@ -1,10 +1,10 @@
 'use client';
 
 import { ChordChartEditor } from '@/components/repertoire/ChordChartEditor';
-import { TabEditor } from '@/components/repertoire/TabEditor';
+import { TabScoreEditor } from '@/components/tab-score/TabScoreEditor';
 import { isTabEditorEnabled } from '@/utils/feature-flags';
 import { normalizeChordChart } from '@/utils/repertoire-chord-chart';
-import { normalizeTab } from '@/utils/repertoire-tab';
+import { resolveTabScore } from '@/utils/tab-score/resolve';
 import type { RepertoireItem } from '@/types/practice';
 
 /**
@@ -19,7 +19,11 @@ export function RepertoireSongEditor({
   onSave: (item: RepertoireItem) => void;
 }) {
   const chordChart = normalizeChordChart(item.chordChart);
-  const tab = normalizeTab(item.tab, item.tuning);
+  const score = resolveTabScore({
+    score: item.score,
+    tab: item.tab,
+    tuning: item.tuning,
+  });
 
   function update(patch: Partial<RepertoireItem>) {
     onSave({ ...item, ...patch, updatedAt: new Date().toISOString() });
@@ -32,7 +36,11 @@ export function RepertoireSongEditor({
         onChange={(next) => update({ chordChart: next })}
       />
       {isTabEditorEnabled ? (
-        <TabEditor value={tab} onChange={(next) => update({ tab: next })} />
+        <TabScoreEditor
+          initialScore={score}
+          label={item.title}
+          onChange={(next) => update({ score: next })}
+        />
       ) : null}
     </>
   );

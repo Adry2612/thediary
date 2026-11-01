@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/Field";
 import { LickTab } from "@/components/licks/LickTab";
-import { TabEditor } from "@/components/repertoire/TabEditor";
+import { TabScoreEditor } from "@/components/tab-score/TabScoreEditor";
 import { EditIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { useDialogMotion } from "@/hooks/useDialogMotion";
@@ -19,8 +19,9 @@ import {
 } from "@/utils/licks/techniques";
 import { MAX_BPM, MIN_BPM } from "@/utils/metronome-tempo";
 import { normalizeTab } from "@/utils/repertoire-tab";
+import { resolveTabScore } from "@/utils/tab-score/resolve";
 import type { GuitarLick, TechniqueId } from "@/types/lick";
-import type { RepertoireItem, RepertoireTab } from "@/types/practice";
+import type { RepertoireItem } from "@/types/practice";
 
 export function LickEditorModal({
   lick,
@@ -37,10 +38,17 @@ export function LickEditorModal({
   const { dialogRef, isClosing: isMotionClosing } = useDialogMotion(true);
   const { isClosing, requestClose } = useDeferredClose(onClose);
   const [title, setTitle] = useState(lick?.title ?? "");
-  const hasLegacyTab = Boolean(lick && !lick.tab && lick.tabContent?.trim());
-  const [tab, setTab] = useState<RepertoireTab>(() => normalizeTab(lick?.tab));
+  const hasLegacyTab = Boolean(
+    lick && !lick.score && !lick.tab && lick.tabContent?.trim(),
+  );
+  const [score, setScore] = useState(() =>
+    resolveTabScore({ score: lick?.score, tab: lick?.tab }),
+  );
   const [useVisualTab, setUseVisualTab] = useState(!hasLegacyTab);
-  const detectedKey = useMemo(() => detectTabKey(tab), [tab]);
+  const detectedKey = useMemo(
+    () => detectTabKey(normalizeTab(lick?.tab)),
+    [lick?.tab],
+  );
   const [key, setKey] = useState(lick?.key ?? "");
   const [keyIsAuto, setKeyIsAuto] = useState(!lick?.key);
   const [techniques, setTechniques] = useState<TechniqueId[]>(
@@ -102,7 +110,8 @@ export function LickEditorModal({
     onSave({
       id: lick?.id ?? createId(),
       title: trimmedTitle,
-      ...(useVisualTab ? { tab: normalizeTab(tab) } : {}),
+      ...(useVisualTab ? { score } : {}),
+      ...(lick?.tab ? { tab: lick.tab } : {}),
       ...(!useVisualTab && lick?.tabContent
         ? { tabContent: lick.tabContent }
         : {}),
@@ -195,11 +204,10 @@ export function LickEditorModal({
                     {text.tabConvertHint}
                   </p>
                 ) : null}
-                <TabEditor
-                  value={tab}
-                  onChange={setTab}
-                  defaultOpen
-                  bpm={Number(targetBpm) || undefined}
+                <TabScoreEditor
+                  initialScore={score}
+                  label={text.tabTitle}
+                  onChange={setScore}
                 />
               </>
             ) : (

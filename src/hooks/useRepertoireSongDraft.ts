@@ -2,7 +2,8 @@
 
 import { useCallback, useState } from "react";
 import { emptyChordChart } from "@/utils/repertoire-chord-chart";
-import { normalizeTab } from "@/utils/repertoire-tab";
+import { createEmptyScore } from "@/utils/tab-score/model";
+import type { TabScore } from "@/types/tab-score";
 import type { CatalogCandidate, CatalogSource } from "@/types/catalog";
 import type {
   GuitarType,
@@ -34,7 +35,7 @@ export function useRepertoireSongDraft() {
   const [isFutureLearn, setIsFutureLearn] = useState(false);
   const [resources, setResources] = useState<PracticeResource[]>([]);
   const [chordChart, setChordChart] = useState(() => emptyChordChart());
-  const [tab, setTab] = useState(() => normalizeTab(undefined));
+  const [score, setScore] = useState<TabScore>(() => createEmptyScore());
 
   const finalTuning = tuning === "Otra..." ? customTuning.trim() : tuning.trim();
 
@@ -88,8 +89,8 @@ export function useRepertoireSongDraft() {
     setResources,
     chordChart,
     setChordChart,
-    tab,
-    setTab,
+    score,
+    setScore,
     finalTuning,
   };
 }
