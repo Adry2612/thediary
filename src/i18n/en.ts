@@ -1121,4 +1121,14 @@ export const en: Dict = {
     barUnder: 'This bar is missing beats.',
     barOver: 'This bar has extra beats.',
   },
+  tabPlayback: {
+    play: 'Play',
+    pause: 'Pause',
+    stop: 'Stop',
+    fromSelection: 'From the beat',
+    speed: 'Speed',
+    previewNote: 'Preview each note',
+    soundUnavailable: 'The sound could not be loaded; you can keep editing.',
+    loadingSound: 'Loading sound…',
+  },
 };

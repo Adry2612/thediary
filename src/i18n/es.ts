@@ -1133,4 +1133,14 @@ export const es: Dict = {
     barUnder: 'Faltan pulsos en este compás.',
     barOver: 'Sobran pulsos en este compás.',
   },
+  tabPlayback: {
+    play: 'Reproducir',
+    pause: 'Pausar',
+    stop: 'Detener',
+    fromSelection: 'Desde el pulso',
+    speed: 'Velocidad',
+    previewNote: 'Escuchar cada nota',
+    soundUnavailable: 'No se pudo cargar el sonido; puedes seguir editando.',
+    loadingSound: 'Cargando sonido…',
+  },
 };

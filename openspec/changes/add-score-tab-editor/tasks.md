@@ -57,8 +57,8 @@
 
 ## 10. Reproducción
 
-- [ ] 10.1 Crear `src/services/tab-score-player.ts` y su hook (importación dinámica, descarga del SoundFont al primer sonido, reproducir/pausar/parar, desde el principio o desde la selección, cursor con scroll, velocidad sin tocar el tempo guardado). Verificar que no hay petición del SoundFont antes de pulsar y que reproducir desde un pulso empieza en él.
-- [ ] 10.2 Crear la barra de reproducción, el mensaje de fallo de carga y el interruptor de vista previa de nota (preferencia por dispositivo con su almacén y su test). Verificar con el SoundFont bloqueado en la red que el mensaje aparece y la edición sigue funcionando, y con el interruptor activo que cada nota escrita suena una vez.
+- [x] 10.1 Crear `src/services/tab-score-player.ts` y su hook (importación dinámica, descarga del SoundFont al primer sonido, reproducir/pausar/parar, desde el principio o desde la selección, cursor con scroll, velocidad sin tocar el tempo guardado). Verificar que no hay petición del SoundFont antes de pulsar y que reproducir desde un pulso empieza en él.
+- [x] 10.2 Crear la barra de reproducción, el mensaje de fallo de carga y el interruptor de vista previa de nota (preferencia por dispositivo con su almacén y su test). Verificar con el SoundFont bloqueado en la red que el mensaje aparece y la edición sigue funcionando, y con el interruptor activo que cada nota escrita suena una vez.
 
 ## 11. Integración y datos
 

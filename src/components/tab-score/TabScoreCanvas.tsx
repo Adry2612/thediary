@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   ALPHA_TAB_FONT_DIRECTORY,
+  ALPHA_TAB_SOUNDFONT_URL,
   ALPHA_TAB_WORKER_URL,
   configureAlphaTabEnvironment,
 } from "@/services/alpha-tab-environment";
@@ -29,19 +30,41 @@ export type TabScoreLayoutBar = Rect & {
 };
 export type TabScoreLayout = TabScoreLayoutBar[];
 
-function toRect(bounds: { x: number; y: number; w: number; h: number }): Rect {
-  return {
-    x: bounds.x,
-    y: bounds.y,
-    w: bounds.w,
-    h: bounds.h,
-  };
-}
-
 export type TabScoreRenderStatus = {
   loading: boolean;
   error: string | null;
 };
+
+export type TabScorePlaybackState = {
+  ready: boolean;
+  playing: boolean;
+  error: string | null;
+};
+
+export type TabScorePlayerControls = {
+  play: () => void;
+  playFrom: (position: { bar: number; beat: number }) => void;
+  pause: () => void;
+  stop: () => void;
+  setSpeed: (speed: number) => void;
+};
+
+export type TabScorePreviewRequest = {
+  bar: number;
+  beat: number;
+  string: number;
+  token: number;
+};
+
+const INITIAL_PLAYBACK_STATE: TabScorePlaybackState = {
+  ready: false,
+  playing: false,
+  error: null,
+};
+
+function toRect(bounds: Rect): Rect {
+  return { x: bounds.x, y: bounds.y, w: bounds.w, h: bounds.h };
+}
 
 export function TabScoreCanvas({
   alphaTex,
@@ -49,13 +72,17 @@ export function TabScoreCanvas({
   label,
   compact = false,
   interactive = false,
+  playback = false,
   selection,
   selectedBeats = [],
+  previewRequest,
   onSelect,
   onStatus,
   onRender,
   onLayout,
   onFocusBox,
+  onControls,
+  onPlaybackState,
   className = "",
 }: {
   alphaTex: string;
@@ -63,24 +90,61 @@ export function TabScoreCanvas({
   label?: string;
   compact?: boolean;
   interactive?: boolean;
+  playback?: boolean;
   selection?: TabSelection;
   selectedBeats?: { bar: number; beat: number }[];
-  onSelect?: (position: { bar: number; beat: number; string: number }, extend: boolean) => void;
+  previewRequest?: TabScorePreviewRequest | null;
+  onSelect?: (
+    position: { bar: number; beat: number; string: number },
+    extend: boolean,
+  ) => void;
   onStatus?: (status: TabScoreRenderStatus) => void;
   onRender?: () => void;
   onLayout?: (layout: TabScoreLayout) => void;
   /** Caja de la selección en coordenadas de viewport, para anclar la paleta. */
-  onFocusBox?: (box: { x: number; y: number; w: number; h: number } | null) => void;
+  onFocusBox?: (box: Rect | null) => void;
+  onControls?: (controls: TabScorePlayerControls | null) => void;
+  onPlaybackState?: (state: TabScorePlaybackState) => void;
   className?: string;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const focusRef = useRef<HTMLDivElement>(null);
-  const callbacks = useRef({ onStatus, onRender, onSelect, onLayout, onFocusBox });
-  callbacks.current = { onStatus, onRender, onSelect, onLayout, onFocusBox };
+  const apiRef = useRef<AlphaTabApi | null>(null);
+  const createdTexRef = useRef<string | null>(null);
+  const alphaTexRef = useRef(alphaTex);
+  alphaTexRef.current = alphaTex;
+  const soundFontRequested = useRef(false);
+  const lastPreviewToken = useRef(0);
+  const previewRef = useRef(previewRequest);
+  previewRef.current = previewRequest;
+  const playbackState = useRef<TabScorePlaybackState>(INITIAL_PLAYBACK_STATE);
+  const callbacks = useRef({
+    onStatus,
+    onRender,
+    onSelect,
+    onLayout,
+    onFocusBox,
+    onControls,
+    onPlaybackState,
+  });
+  callbacks.current = {
+    onStatus,
+    onRender,
+    onSelect,
+    onLayout,
+    onFocusBox,
+    onControls,
+    onPlaybackState,
+  };
   const [layout, setLayout] = useState<TabScoreLayout>([]);
   const [renderCount, setRenderCount] = useState(0);
   const previousSelection = useRef<string>("");
+
+  const emitPlayback = useCallback((patch: Partial<TabScorePlaybackState>) => {
+    playbackState.current = { ...playbackState.current, ...patch };
+    callbacks.current.onPlaybackState?.(playbackState.current);
+  }, []);
 
   const measure = useCallback((api: AlphaTabApi) => {
     const lookup = api.boundsLookup;
@@ -120,12 +184,59 @@ export function TabScoreCanvas({
     return bars;
   }, []);
 
+  const ensureSoundFont = useCallback(
+    async (api: AlphaTabApi) => {
+      if (api.isReadyForPlayback) return true;
+      if (!soundFontRequested.current) {
+        soundFontRequested.current = true;
+        try {
+          // Se descarga aquí y no con `loadSoundFontFromUrl` para poder avisar
+          // del fallo en cuanto ocurre y no depender de eventos internos.
+          const response = await fetch(ALPHA_TAB_SOUNDFONT_URL);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = new Uint8Array(await response.arrayBuffer());
+          api.loadSoundFont(data, false);
+        } catch {
+          emitPlayback({ ready: false, error: "soundFont" });
+          return false;
+        }
+      }
+      const deadline = performance.now() + 15000;
+      return new Promise<boolean>((resolve) => {
+        const check = () => {
+          if (api.isReadyForPlayback) resolve(true);
+          else if (performance.now() > deadline) {
+            emitPlayback({ ready: false, error: "soundFont" });
+            resolve(false);
+          } else window.setTimeout(check, 100);
+        };
+        check();
+      });
+    },
+    [emitPlayback],
+  );
+
+  const playNoteAt = useCallback(
+    (api: AlphaTabApi, request: TabScorePreviewRequest) => {
+      const bar = api.score?.tracks?.[0]?.staves?.[0]?.bars?.[request.bar];
+      const beat = bar?.voices?.[0]?.beats?.[request.beat];
+      const note = beat?.notes?.find(
+        (candidate) => candidate.string === request.string + 1,
+      );
+      if (!note) return;
+      void ensureSoundFont(api).then((ready) => {
+        if (!ready) return;
+        api.playNote(note);
+      });
+    },
+    [ensureSoundFont],
+  );
+
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
 
     let disposed = false;
-    let api: AlphaTabApi | null = null;
     callbacks.current.onStatus?.({ loading: true, error: null });
     host.replaceChildren();
 
@@ -134,7 +245,7 @@ export function TabScoreCanvas({
         const alphaTab = await import("@coderline/alphatab");
         if (disposed) return;
         configureAlphaTabEnvironment(alphaTab);
-        api = new alphaTab.AlphaTabApi(host, {
+        const api = new alphaTab.AlphaTabApi(host, {
           core: {
             useWorkers: false,
             includeNoteBounds: true,
@@ -145,8 +256,16 @@ export function TabScoreCanvas({
             // Sin justificar, la última línea se queda a media anchura.
             justifyLastSystem: true,
           },
-          player: { enablePlayer: false },
+          player: playback
+            ? {
+                enablePlayer: true,
+                enableCursor: true,
+                outputMode: 1,
+                scrollElement: "html,body",
+              }
+            : { enablePlayer: false },
         });
+        apiRef.current = api;
 
         api.error.on((renderError) => {
           if (disposed) return;
@@ -169,16 +288,60 @@ export function TabScoreCanvas({
         }
 
         api.renderFinished.on(() => {
-          if (disposed || !api) return;
+          if (disposed || !apiRef.current) return;
           callbacks.current.onStatus?.({ loading: false, error: null });
           callbacks.current.onRender?.();
-          const nextLayout = measure(api);
+          const nextLayout = measure(apiRef.current);
           callbacks.current.onLayout?.(nextLayout);
           setLayout(nextLayout);
           setRenderCount((count) => count + 1);
+
+          const request = previewRef.current;
+          if (playback && request && request.token !== lastPreviewToken.current) {
+            lastPreviewToken.current = request.token;
+            playNoteAt(apiRef.current, request);
+          }
         });
 
-        api.tex(alphaTex);
+        if (playback) {
+          api.playerReady.on(() => {
+            if (disposed) return;
+            emitPlayback({ ready: true, error: null });
+          });
+          api.playerStateChanged.on(() => {
+            if (disposed) return;
+            emitPlayback({ playing: api.playerState === 1 });
+          });
+          api.soundFontLoaded.on(() => {
+            if (disposed) return;
+            emitPlayback({ error: null });
+          });
+          callbacks.current.onControls?.({
+            play: () => {
+              void ensureSoundFont(api).then((ready) => {
+                if (ready) api.play();
+              });
+            },
+            playFrom: ({ bar, beat }) => {
+              const master = api.boundsLookup?.findMasterBarByIndex(bar);
+              const target = master?.bars[0]?.beats.find(
+                (bounds) => bounds.beat.index === beat,
+              );
+              if (target) api.tickPosition = target.beat.absolutePlaybackStart;
+              void ensureSoundFont(api).then((ready) => {
+                if (ready) api.play();
+              });
+            },
+            pause: () => api.pause(),
+            stop: () => api.stop(),
+            setSpeed: (speed) => {
+              api.playbackSpeed = Math.min(2, Math.max(0.25, speed));
+            },
+          });
+        }
+
+        createdTexRef.current = alphaTexRef.current;
+        api.tex(alphaTexRef.current);
       } catch (renderError) {
         if (disposed) return;
         callbacks.current.onStatus?.({
@@ -193,10 +356,21 @@ export function TabScoreCanvas({
 
     return () => {
       disposed = true;
-      api?.destroy();
+      apiRef.current?.destroy();
+      apiRef.current = null;
+      callbacks.current.onControls?.(null);
       host.replaceChildren();
     };
-  }, [alphaTex, compact, measure]);
+  }, [compact, playback, measure, emitPlayback, ensureSoundFont, playNoteAt]);
+
+  // Los cambios de partitura reaprovechan la instancia: recrearla en cada
+  // edición perdería el reproductor y el SoundFont ya cargado.
+  useEffect(() => {
+    const api = apiRef.current;
+    if (!api || createdTexRef.current === alphaTex) return;
+    createdTexRef.current = alphaTex;
+    api.tex(alphaTex);
+  }, [alphaTex]);
 
   // Acerca la selección a la vista cuando el usuario se mueve con el teclado o
   // elige un pulso fuera de pantalla.
@@ -317,8 +491,7 @@ export function TabScoreCanvas({
               (entry) => entry.index === beat,
             );
             if (!barLayout || !beatLayout) return null;
-            const isFocus =
-              bar === selection.bar && beat === selection.beat;
+            const isFocus = bar === selection.bar && beat === selection.beat;
             if (isFocus) return null;
             return (
               <div

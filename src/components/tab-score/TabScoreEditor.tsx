@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/Button";
 import {
   TabScoreCanvas,
   type TabScoreLayout,
+  type TabScorePlaybackState,
+  type TabScorePlayerControls,
   type TabScoreRenderStatus,
 } from "@/components/tab-score/TabScoreCanvas";
 import {
@@ -30,6 +32,10 @@ import {
   getPaletteState,
   type TabPaletteOption,
 } from "@/utils/tab-score/palette";
+import {
+  readNotePreview,
+  saveNotePreview,
+} from "@/services/tab-score-preferences";
 import { getScoreBarFill } from "@/utils/tab-score/ticks";
 import type {
   TabMoveDirection,
@@ -59,6 +65,7 @@ export function TabScoreEditor({
 }) {
   const text = useI18nSection("tabScore");
   const paletteText = useI18nSection("tabPalette");
+  const playbackText = useI18nSection("tabPlayback");
   const [status, setStatus] = useState<TabScoreRenderStatus>({
     loading: true,
     error: null,
@@ -69,6 +76,15 @@ export function TabScoreEditor({
   const [anchor, setAnchor] = useState<PaletteAnchor | null>(null);
   const [coarsePointer, setCoarsePointer] = useState(false);
   const [form, setForm] = useState<"time" | "tempo" | null>(null);
+  const [playback, setPlayback] = useState<TabScorePlaybackState>({
+    ready: false,
+    playing: false,
+    error: null,
+  });
+  const [speed, setSpeed] = useState(1);
+  const [notePreview, setNotePreview] = useState(false);
+  const [previewToken, setPreviewToken] = useState(0);
+  const playerRef = useRef<TabScorePlayerControls | null>(null);
   const [numerator, setNumerator] = useState("4");
   const [denominator, setDenominator] = useState<"2" | "4" | "8" | "16">("4");
   const [tempoDraft, setTempoDraft] = useState("90");
@@ -104,6 +120,18 @@ export function TabScoreEditor({
     [editor.score, editor.selection, editor.selectedBeats],
   );
   const barFill = getScoreBarFill(editor.score, editor.selection.bar);
+
+  useEffect(() => {
+    setNotePreview(readNotePreview());
+  }, []);
+
+  useEffect(() => {
+    playerRef.current?.setSpeed(speed);
+  }, [speed]);
+
+  function maybePreview() {
+    if (readNotePreview()) setPreviewToken((token) => token + 1);
+  }
 
   useEffect(() => {
     const query = window.matchMedia("(pointer: coarse)");
@@ -204,6 +232,7 @@ export function TabScoreEditor({
     if (/^[0-9]$/.test(key)) {
       event.preventDefault();
       editor.dispatch({ type: "digit", digit: key });
+      maybePreview();
       return;
     }
 
@@ -354,6 +383,76 @@ export function TabScoreEditor({
         )}
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 px-3 py-2">
+        <Button
+          type="button"
+          size="field"
+          variant={playback.playing ? "primary" : "ghost"}
+          onClick={() => {
+            if (playback.playing) playerRef.current?.pause();
+            else playerRef.current?.play();
+          }}
+          className={
+            playback.playing
+              ? ""
+              : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+          }
+        >
+          {playback.playing ? "■ " + playbackText.pause : "▶ " + playbackText.play}
+        </Button>
+        <Button
+          type="button"
+          size="field"
+          variant="ghost"
+          onClick={() => playerRef.current?.stop()}
+          className="border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+        >
+          {playbackText.stop}
+        </Button>
+        <Button
+          type="button"
+          size="field"
+          variant="ghost"
+          onClick={() =>
+            playerRef.current?.playFrom({
+              bar: editor.selection.bar,
+              beat: editor.selection.beat,
+            })
+          }
+          className="border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+        >
+          {playbackText.fromSelection}
+        </Button>
+        <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+          {playbackText.speed}
+          <select
+            value={speed}
+            onChange={(event) => setSpeed(Number(event.target.value))}
+            className="rounded-md border border-zinc-300 px-1.5 py-1 text-xs"
+          >
+            <option value={0.5}>0.5×</option>
+            <option value={0.75}>0.75×</option>
+            <option value={1}>1×</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+          <input
+            type="checkbox"
+            checked={notePreview}
+            onChange={(event) => {
+              setNotePreview(event.target.checked);
+              saveNotePreview(event.target.checked);
+            }}
+          />
+          {playbackText.previewNote}
+        </label>
+        {playback.error && (
+          <span role="alert" className="text-xs text-red-700">
+            {playbackText.soundUnavailable}
+          </span>
+        )}
+      </div>
+
       <pre data-testid="tab-score-text" className="sr-only">
         {textAlternative}
       </pre>
@@ -369,6 +468,21 @@ export function TabScoreEditor({
         onStatus={setStatus}
         onLayout={onLayout}
         onFocusBox={setAnchor}
+        playback
+        previewRequest={
+          notePreview
+            ? {
+                bar: editor.selection.bar,
+                beat: editor.selection.beat,
+                string: editor.selection.string,
+                token: previewToken,
+              }
+            : null
+        }
+        onControls={(controls) => {
+          playerRef.current = controls;
+        }}
+        onPlaybackState={setPlayback}
         className="p-3 sm:p-4"
       />
 
@@ -383,6 +497,7 @@ export function TabScoreEditor({
           for (const digit of String(Math.min(fret, TAB_MAX_FRET))) {
             editor.dispatch({ type: "digit", digit });
           }
+          maybePreview();
         }}
         onClose={() => {
           setPaletteOpen(false);

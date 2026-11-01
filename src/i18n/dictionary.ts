@@ -580,4 +580,14 @@ export type Dict = {
     barUnder: string;
     barOver: string;
   },
+  tabPlayback: {
+    play: string;
+    pause: string;
+    stop: string;
+    fromSelection: string;
+    speed: string;
+    previewNote: string;
+    soundUnavailable: string;
+    loadingSound: string;
+  },
 };
