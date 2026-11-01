@@ -9,6 +9,7 @@ import {
   duplicateBar,
   insertBarAfter,
   setDots,
+  splitBeat,
   setDuration,
   setRest,
   setTempo,
@@ -18,7 +19,10 @@ import {
   writeFret,
 } from "../src/utils/tab-score/operations.ts";
 import { moveSelection } from "../src/utils/tab-score/selection.ts";
-import { getScoreBarFill } from "../src/utils/tab-score/ticks.ts";
+import {
+  getBarTicks,
+  getScoreBarFill,
+} from "../src/utils/tab-score/ticks.ts";
 
 function beat(overrides = {}) {
   return { id: "beat-a", duration: 4, notes: [], rest: true, ...overrides };
@@ -251,6 +255,76 @@ test("changes the time signature and the tempo from a bar", () => {
     setTempo(base, { bar: 0, beat: 0, string: 0 }, 500),
     { error: "invalidTempo" },
   );
+});
+
+test("splits a beat in two and keeps the bar adding up", () => {
+  const base = score([
+    beat({ duration: 4, rest: false, notes: [{ string: 0, fret: 5 }] }),
+    beat({ duration: 2 }),
+    beat({ duration: 4 }),
+  ]);
+
+  const result = splitBeat(base, { bar: 0, beat: 0, string: 0 });
+  assert.equal(isError(result), false);
+  assert.equal(result.score.bars[0].beats.length, 4);
+  assert.equal(result.score.bars[0].beats[0].duration, 8);
+  assert.deepEqual(result.score.bars[0].beats[0].notes, [{ string: 0, fret: 5 }]);
+  assert.equal(result.score.bars[0].beats[1].duration, 8);
+  assert.equal(result.score.bars[0].beats[1].rest, true);
+  assert.deepEqual(result.selection, { bar: 0, beat: 1, string: 0 });
+  assert.equal(getScoreBarFill(result.score, 0), "exact");
+});
+
+test("splitting a rest leaves two rests and selects the second", () => {
+  const base = score([beat({ duration: 4 }), beat({ duration: 2 }), beat({ duration: 4 })]);
+
+  const result = splitBeat(base, { bar: 0, beat: 0, string: 2 });
+  assert.equal(result.score.bars[0].beats[0].rest, true);
+  assert.equal(result.score.bars[0].beats[1].rest, true);
+  assert.deepEqual(result.selection, { bar: 0, beat: 1, string: 2 });
+});
+
+test("splitting a dotted beat copies the dot into both halves", () => {
+  const base = score([
+    beat({ duration: 4, dots: 1 }),
+    beat({ duration: 4 }),
+  ]);
+
+  const result = splitBeat(base, { bar: 0, beat: 0, string: 0 });
+  assert.equal(result.score.bars[0].beats[0].duration, 8);
+  assert.equal(result.score.bars[0].beats[0].dots, 1);
+  assert.equal(result.score.bars[0].beats[1].duration, 8);
+  assert.equal(result.score.bars[0].beats[1].dots, 1);
+  assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
+});
+
+test("splitting a triplet beat copies the triplet into both halves", () => {
+  const base = score([
+    beat({ duration: 4, tuplet: 3 }),
+    beat({ duration: 4, tuplet: 3 }),
+    beat({ duration: 4, tuplet: 3 }),
+  ]);
+
+  const result = splitBeat(base, { bar: 0, beat: 0, string: 0 });
+  assert.equal(result.score.bars[0].beats[0].duration, 8);
+  assert.equal(result.score.bars[0].beats[0].tuplet, 3);
+  assert.equal(result.score.bars[0].beats[1].duration, 8);
+  assert.equal(result.score.bars[0].beats[1].tuplet, 3);
+  assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
+});
+
+test("refuses to split a sixty-fourth or a bar full of beats", () => {
+  const smallest = score([beat({ duration: 64 })]);
+  assert.deepEqual(splitBeat(smallest, { bar: 0, beat: 0, string: 0 }), {
+    error: "cannotSplit",
+  });
+
+  const many = score(
+    Array.from({ length: 64 }, (_, index) => beat({ id: `beat-${index}` })),
+  );
+  assert.deepEqual(splitBeat(many, { bar: 0, beat: 0, string: 0 }), {
+    error: "beatLimit",
+  });
 });
 
 test("moves the selection across beats, bars and strings", () => {

@@ -10,6 +10,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Button } from "@/components/ui/Button";
+import { HelpIcon, SlidersIcon } from "@/components/ui/icons";
+import { TabScoreTutorial } from "@/components/tab-score/TabScoreTutorial";
 import {
   TabScoreCanvas,
   type TabScoreHit,
@@ -66,6 +68,7 @@ export function TabScoreEditor({
 }) {
   const text = useI18nSection("tabScore");
   const paletteText = useI18nSection("tabPalette");
+  const tutorialText = useI18nSection("tabTutorial");
   const playbackText = useI18nSection("tabPlayback");
   const [status, setStatus] = useState<TabScoreRenderStatus>({
     loading: true,
@@ -74,6 +77,7 @@ export function TabScoreEditor({
   const editor = useTabScoreEditor({ initialScore, onChange });
   const containerRef = useRef<HTMLDivElement>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const [anchor, setAnchor] = useState<PaletteAnchor | null>(null);
   const [coarsePointer, setCoarsePointer] = useState(false);
   const [form, setForm] = useState<"time" | "tempo" | null>(null);
@@ -244,6 +248,16 @@ export function TabScoreEditor({
       setForm("tempo");
       return;
     }
+    if (action.type === "splitBeat") {
+      // El pulso nuevo queda seleccionado: se cierra la paleta y se devuelve el
+      // foco para poder escribir el traste sin un clic más.
+      editor.dispatch(action);
+      setPaletteOpen(false);
+      window.requestAnimationFrame(() =>
+        containerRef.current?.focus({ preventScroll: true }),
+      );
+      return;
+    }
     editor.dispatch(action);
   }
 
@@ -265,8 +279,13 @@ export function TabScoreEditor({
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement;
+    // El diálogo del tutorial se dibuja dentro del editor: sus teclas no son
+    // órdenes para la partitura. Un diálogo que envuelve al editor (por
+    // ejemplo, el de una canción) no activa este caso.
+    const dialog = target.closest("dialog");
     if (
       target.closest("[data-tab-palette]") ||
+      (dialog && containerRef.current?.contains(dialog)) ||
       target instanceof HTMLInputElement ||
       target instanceof HTMLSelectElement
     ) {
@@ -391,15 +410,28 @@ export function TabScoreEditor({
         </Button>
         <Button
           type="button"
-          size="field"
+          size="icon"
           variant="ghost"
-          data-palette-toggle
-          aria-expanded={paletteOpen}
-          disabled={!editor.selectionVisible}
-          onClick={togglePalette}
+          aria-label={tutorialText.open}
+          title={tutorialText.open}
+          onClick={() => setTutorialOpen(true)}
           className="ml-auto border-zinc-300 text-zinc-700 hover:bg-zinc-100"
         >
-          {paletteText.options}
+          <HelpIcon />
+        </Button>
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          data-palette-toggle
+          aria-label={paletteText.options}
+          aria-expanded={paletteOpen}
+          title={paletteText.options}
+          disabled={!editor.selectionVisible}
+          onClick={togglePalette}
+          className="border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+        >
+          <SlidersIcon />
         </Button>
       </div>
 
@@ -661,6 +693,14 @@ export function TabScoreEditor({
           </form>
         </div>
       )}
+
+      <TabScoreTutorial
+        open={tutorialOpen}
+        onClose={() => {
+          setTutorialOpen(false);
+          containerRef.current?.focus({ preventScroll: true });
+        }}
+      />
     </div>
   );
 }

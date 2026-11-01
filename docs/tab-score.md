@@ -97,6 +97,33 @@ desplazamiento es del anclaje del navegador, no del usuario. Los bloques con
 animación de entrada usan `animation-fill-mode: backwards` para no conservar un
 `transform` que rompa los elementos `fixed` que contiene la paleta.
 
+### Crear un pulso nuevo
+
+Un compás solo tiene los pulsos que ya existen. Para escribir una nota en un
+compás lleno, selecciona un pulso y elige **Dividir pulso** en el grupo Ritmo:
+
+- el pulso se parte en dos de la mitad de duración (una negra da dos corcheas);
+- el contenido actual se queda en el primero y el segundo nace como silencio;
+- el silencio nuevo queda seleccionado, listo para escribir el traste;
+- el puntillo y el tresillo se copian en las dos mitades, así que la suma del
+  compás no cambia.
+
+`splitBeat` rechaza dividir una semifusa (`cannotSplit`) o un compás que ya
+tiene 64 pulsos (`beatLimit`); la paleta explica el motivo. Deshacer recupera
+el pulso original.
+
+### Iconos, descripción y tutorial
+
+Cada opción de la paleta se dibuja con `TabPaletteIcon`, que elige el icono por
+el id (y cae al icono del grupo si la opción es nueva). Al pasar el cursor, al
+tocar o al enfocar con el teclado, la franja bajo la cabecera muestra el nombre,
+el atajo declarado y el motivo por el que la opción no está disponible. El
+nombre accesible del botón es el texto completo, no el icono.
+
+El botón de ayuda de la barra del editor abre `TabScoreTutorial`, una guía de
+los gestos y atajos que no modifica la partitura y se cierra con Escape o con
+el botón «Entendido». Las cadenas viven en `tabTutorial` (`es.ts` y `en.ts`).
+
 ## Añadir una técnica
 
 1. Añade el campo a `TabNote` en `src/types/tab-score.ts`.
@@ -104,7 +131,8 @@ animación de entrada usan `animation-fill-mode: backwards` para no conservar un
 3. Añade la operación o el `patch` en `operations.ts` / `editor-state.ts`.
 4. Emite la etiqueta correcta en `alphatex.ts`; si la técnica afecta a la nota
    anterior (ligaduras y deslizamientos), va en `transitionTags`.
-5. Añade la opción a `TAB_PALETTE` con su clave de traducción y un atajo único.
+5. Añade la opción a `TAB_PALETTE` con su clave de traducción y un atajo único,
+   y dibuja su icono en `TabPaletteIcon` (si falta, usa el del grupo).
 6. Cubre el caso en `tests/tab-score-operations.test.mjs`,
    `tests/tab-score-alphatex.test.mjs` y `tests/tab-score-palette.test.mjs`.
 7. Si la técnica debe sonar, revisa que alphaTab la reproduce en el navegador.

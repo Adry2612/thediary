@@ -535,6 +535,7 @@ export type Dict = {
     dot: string;
     triplet: string;
     rest: string;
+    splitBeat: string;
     tie: string;
     legatoHammer: string;
     legatoPull: string;
@@ -578,9 +579,32 @@ export type Dict = {
     requiresNote: string;
     requiresPreviousNote: string;
     barLimit: string;
+    cannotSplit: string;
+    beatLimit: string;
+    hoverHint: string;
     barFits: string;
     barUnder: string;
     barOver: string;
+  },
+  tabTutorial: {
+    open: string;
+    title: string;
+    intro: string;
+    addTitle: string;
+    addBody: string;
+    chordTitle: string;
+    chordBody: string;
+    durationTitle: string;
+    durationBody: string;
+    splitTitle: string;
+    splitBody: string;
+    moveTitle: string;
+    moveBody: string;
+    pointerTitle: string;
+    pointerBody: string;
+    keyboardTitle: string;
+    keyboardBody: string;
+    close: string;
   },
   tabPlayback: {
     play: string;

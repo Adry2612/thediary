@@ -1090,6 +1090,7 @@ export const es: Dict = {
     dot: 'Puntillo',
     triplet: 'Tresillo',
     rest: 'Silencio',
+    splitBeat: 'Dividir pulso',
     tie: 'Ligadura',
     legatoHammer: 'Hammer-on',
     legatoPull: 'Pull-off',
@@ -1133,9 +1134,40 @@ export const es: Dict = {
     requiresNote: 'Selecciona una nota primero.',
     requiresPreviousNote: 'Necesita una nota anterior en esa cuerda.',
     barLimit: 'Ya hay 64 compases.',
+    cannotSplit: 'Este pulso ya es una semifusa y no se puede dividir.',
+    beatLimit: 'Este compás ya tiene 64 pulsos.',
+    hoverHint: 'Pasa el cursor o enfoca un icono para ver qué hace.',
     barFits: 'El compás cuadra.',
     barUnder: 'Faltan pulsos en este compás.',
     barOver: 'Sobran pulsos en este compás.',
+  },
+  tabTutorial: {
+    open: 'Tutorial',
+    title: 'Cómo editar la tablatura',
+    intro:
+      'La partitura se edita desde el lienzo y el menú de la nota. Estos son los gestos que hacen falta.',
+    addTitle: 'Añadir una nota',
+    addBody:
+      'Haz clic en una cuerda y un pulso, o toca esa posición, y escribe el traste con el teclado (0–24). También puedes abrir el menú y elegir el traste con un toque.',
+    chordTitle: 'Añadir otra nota al mismo pulso',
+    chordBody:
+      'Con una nota seleccionada, cambia de cuerda con la flecha arriba o abajo y escribe otro traste. Las notas se acumulan en el mismo pulso formando un acorde.',
+    durationTitle: 'Cambiar la duración',
+    durationBody:
+      'Con la nota seleccionada, abre su menú con doble clic, clic derecho, doble toque o pulsación larga, y elige la figura. El menú sigue abierto para cambiar también la técnica.',
+    splitTitle: 'Crear un hueco en un compás lleno',
+    splitBody:
+      'Si ya no caben más notas, elige «Dividir pulso»: el pulso se parte en dos de la mitad de duración y el segundo queda como silencio seleccionado, listo para escribir.',
+    moveTitle: 'Moverte por la partitura',
+    moveBody:
+      'Las flechas cambian de cuerda o de pulso. Mayús y una flecha amplían la selección. Retroceso borra la nota y Escape la deselecciona.',
+    pointerTitle: 'Ratón y pantalla táctil',
+    pointerBody:
+      'Un clic selecciona. Doble clic, clic derecho, doble toque o pulsación larga abren el menú de esa nota. En el móvil el menú es una hoja inferior con los trastes y no tapa la nota.',
+    keyboardTitle: 'Atajos de teclado',
+    keyboardBody:
+      'Dígitos: traste. Flechas: moverte. Mayús+flecha: seleccionar. Retroceso: borrar nota. Enter: abrir el menú. Escape: cerrar el menú. Cmd/Ctrl+Z: deshacer. Cmd/Ctrl+Mayús+Z: rehacer. Cmd/Ctrl+C, X y V: copiar, cortar y pegar.',
+    close: 'Entendido',
   },
   tabPlayback: {
     play: 'Reproducir',

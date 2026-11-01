@@ -1078,6 +1078,7 @@ export const en: Dict = {
     dot: 'Dot',
     triplet: 'Triplet',
     rest: 'Rest',
+    splitBeat: 'Split beat',
     tie: 'Tie',
     legatoHammer: 'Hammer-on',
     legatoPull: 'Pull-off',
@@ -1121,9 +1122,40 @@ export const en: Dict = {
     requiresNote: 'Select a note first.',
     requiresPreviousNote: 'Needs a previous note on that string.',
     barLimit: 'There are already 64 bars.',
+    cannotSplit: 'This beat is already a sixty-fourth and cannot be split.',
+    beatLimit: 'This bar already holds 64 beats.',
+    hoverHint: 'Hover or focus an icon to see what it does.',
     barFits: 'The bar adds up.',
     barUnder: 'This bar is missing beats.',
     barOver: 'This bar has extra beats.',
+  },
+  tabTutorial: {
+    open: 'Tutorial',
+    title: 'How to edit the tab',
+    intro:
+      'The score is edited from the canvas and the note menu. These are the gestures you need.',
+    addTitle: 'Add a note',
+    addBody:
+      'Click a string and a beat, or tap that position, and type the fret with the keyboard (0–24). You can also open the menu and pick the fret with a tap.',
+    chordTitle: 'Add another note to the same beat',
+    chordBody:
+      'With a note selected, change strings with the up or down arrow and type another fret. Notes stack on the same beat to form a chord.',
+    durationTitle: 'Change the duration',
+    durationBody:
+      'With the note selected, open its menu with a double-click, right-click, double-tap or long press, and pick the figure. The menu stays open so you can change the technique too.',
+    splitTitle: 'Make room in a full bar',
+    splitBody:
+      'When no more notes fit, choose “Split beat”: the beat becomes two beats of half its length and the second one is left as a selected rest, ready to write on.',
+    moveTitle: 'Move around the score',
+    moveBody:
+      'The arrows change string or beat. Shift and an arrow extend the selection. Backspace deletes the note and Escape deselects it.',
+    pointerTitle: 'Mouse and touch screen',
+    pointerBody:
+      'A click selects. Double-click, right-click, double-tap or long press open the menu for that note. On a phone the menu is a bottom sheet with the frets that does not cover the note.',
+    keyboardTitle: 'Keyboard shortcuts',
+    keyboardBody:
+      'Digits: fret. Arrows: move. Shift+arrow: select. Backspace: delete note. Enter: open the menu. Escape: close the menu. Cmd/Ctrl+Z: undo. Cmd/Ctrl+Shift+Z: redo. Cmd/Ctrl+C, X and V: copy, cut and paste.',
+    close: 'Got it',
   },
   tabPlayback: {
     play: 'Play',

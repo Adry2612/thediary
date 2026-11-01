@@ -90,6 +90,13 @@
 - [x] 15.3 Evitar que el foco o el clic sintético del gesto táctil activen una opción sin querer, que el desplazamiento de la página cierre la paleta solo cuando lo hace el usuario y que el `transform` de las animaciones de entrada no rompa los elementos `fixed`. Verificar con la hoja abierta y cerrada y con la partitura a 375, 768 y 1280 px.
 - [x] 15.4 Repasar el recorrido completo en el diálogo real convertido en página: crear un lick desde `/licks/new`, editarlo, guardar, volver a abrirlo, cambiar duración y técnica desde el menú de la nota y comprobar que el `score` persistido coincide.
 
+## 16. Subdividir pulsos, menú por iconos y tutorial
+
+- [x] 16.1 Implementar `splitBeat` (dos pulsos de la mitad, contenido actual en el primero, silencio seleccionado en el segundo, puntillo y tresillo conservados, errores `cannotSplit` y `beatLimit`), su acción en `TabScoreEditor` y los motivos en la paleta. Verificar con tests de negra, silencio, puntillo, tresillo, semifusa, compás lleno de pulsos y deshacer.
+- [x] 16.2 Dar un icono a cada opción del catálogo (`TabPaletteIcon`), mostrar la paleta como rejilla de iconos y añadir la descripción al pasar el cursor o al enfocar (nombre, atajo y motivo), con franja visible en táctil y nombre accesible completo. Verificar en 375, 768 y 1280 px y con teclado.
+- [x] 16.3 Añadir el botón y el diálogo de tutorial del editor con los pasos para añadir notas, acordes, duraciones, dividir pulsos, moverse, gestos y atajos; cerrarlo con Escape sin tocar la partitura. Verificar con teclado y en táctil.
+- [x] 16.4 Actualizar `docs/tab-score.md` y las cadenas de `es.ts`, `en.ts` y `dictionary.ts`; ejecutar `npm run typecheck`, `npm test` y `npm run build`. Verificar el recorrido completo: crear una nota en un compás lleno dividiendo un pulso, cambiar su duración desde los iconos y abrir el tutorial.
+
 ## Workflow follow-up
 
 - Archivar `add-score-tab-editor` antes que `add-score-tab-notation-extras`, que la amplía.

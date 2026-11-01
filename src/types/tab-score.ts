@@ -75,6 +75,8 @@ export const TAB_TIME_SIGNATURE_DENOMINATORS = [2, 4, 8, 16] as const;
 
 export const TAB_MIN_BARS = 1;
 export const TAB_MAX_BARS = 64;
+/** Tope de pulsos por compás para que dividir no crezca sin freno. */
+export const TAB_MAX_BEATS_PER_BAR = 64;
 export const TAB_MIN_TEMPO = 30;
 export const TAB_MAX_TEMPO = 300;
 export const TAB_MIN_FRET = 0;

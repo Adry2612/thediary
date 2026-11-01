@@ -16,6 +16,9 @@ Además, la reproducción con audio se retiró en el refactor de capas y hoy sol
   - Una **paleta flotante** junto a la selección ofrece duraciones, silencio, ligadura, técnicas y acciones de compás, muestra lo que ya está activo y explica por qué una opción no está disponible.
   - Compases: añadir, insertar, duplicar y borrar; compás y tempo por compás. Un compás cuyos pulsos no suman su compás se marca, pero sigue siendo editable y guardable.
   - **Deshacer y rehacer**, y **copiar, cortar, pegar y borrar** nota, pulso o compás.
+  - **Dividir un pulso** en dos de la mitad de duración para crear un hueco nuevo dentro de un compás lleno, sin tener que borrar ni rehacer el compás.
+- **Menú por iconos con descripción.** La paleta muestra cada opción como un icono; al pasar el cursor o al enfocar con el teclado aparece su nombre, su atajo y el motivo por el que no está disponible, y en táctil la descripción queda visible en la propia hoja.
+- **Tutorial del editor.** Un botón de ayuda abre una guía breve de cómo añadir notas, cambiar la duración, moverse, usar los gestos y los atajos.
 - **Técnicas:** las que ya existen (ligado, deslizamiento, bend, vibrato, palm mute, let ring, tapping, armónicos, nota muerta, trémolo, trino, slap y pop) más **nota fantasma** y **acento** (normal y fuerte).
 - **Reproducción con sonido** con el SoundFont de alphaTab, cargado bajo demanda: desde el principio o desde la selección, con cursor, tempo ajustable y vista previa de la nota al escribirla.
 - **Migración sin pérdida.** Las tabs de rejilla existentes se abren como partitura conservando cuerda, traste, posición y técnicas de cada nota. Los licks con solo texto antiguo siguen mostrándose como texto.

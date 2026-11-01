@@ -122,6 +122,18 @@ test("applies techniques and bar actions through the reducer", () => {
   assert.equal(state.selection.bar, 1);
 });
 
+test("splits a beat and undoes it through the reducer", () => {
+  const split = run([{ type: "splitBeat" }]);
+
+  assert.equal(split.score.bars[0].beats.length, 2);
+  assert.equal(split.selection.beat, 1);
+  assert.equal(split.score.bars[0].beats[1].rest, true);
+
+  const undone = tabScoreEditorReducer(split, { type: "undo" });
+  assert.equal(undone.score.bars[0].beats.length, 1);
+  assert.equal(undone.selection.beat, 0);
+});
+
 test("replaceScore resets the history", () => {
   const state = run([
     { type: "digit", digit: "3" },

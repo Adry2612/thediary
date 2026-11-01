@@ -136,6 +136,29 @@ test("disables adding bars at the 64-bar limit", () => {
   assert.equal(state["bar-delete"].disabled, false);
 });
 
+test("explains why a beat cannot be split", () => {
+  const smallest = score([{ id: "b1", duration: 64, rest: true, notes: [] }]);
+  const tiny = stateFor(smallest, { bar: 0, beat: 0, string: 0 })["split-beat"];
+  assert.equal(tiny.disabled, true);
+  assert.equal(tiny.reason, "cannotSplit");
+
+  const many = score(
+    Array.from({ length: 64 }, (_, index) => ({
+      id: `b${index}`,
+      duration: 4,
+      rest: true,
+      notes: [],
+    })),
+  );
+  const full = stateFor(many, { bar: 0, beat: 0, string: 0 });
+  assert.equal(full["split-beat"].disabled, true);
+  assert.equal(full["split-beat"].reason, "beatLimit");
+
+  const normal = score([{ id: "b1", duration: 4, rest: true, notes: [] }]);
+  const available = stateFor(normal, { bar: 0, beat: 0, string: 0 });
+  assert.equal(available["split-beat"].disabled, false);
+});
+
 test("every shortcut is unique and the catalogue has no repeated ids", () => {
   const shortcuts = TAB_PALETTE.filter((option) => option.shortcut);
   assert.equal(getPaletteShortcuts().size, shortcuts.length);

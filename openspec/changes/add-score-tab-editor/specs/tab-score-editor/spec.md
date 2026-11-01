@@ -154,6 +154,30 @@ The system SHALL let the user set the duration of the selected beats from a whol
 - **WHEN** the new duration makes the bar add up to more or less than its time signature
 - **THEN** the bar is flagged and nothing else is rearranged
 
+### Requirement: A beat can be split to make room for another one
+
+The system SHALL let the user split the selected beat into two beats of half its duration, SHALL keep the current content in the first beat, SHALL make the second beat a rest, SHALL select the new beat, and SHALL keep the bar's total length unchanged.
+
+#### Scenario: Splitting a note in a full bar
+- **WHEN** the user splits a quarter note in a full 4/4 bar
+- **THEN** the bar holds the same note as an eighth followed by an eighth rest, and the new rest is selected
+
+#### Scenario: Splitting a rest
+- **WHEN** the user splits a rest
+- **THEN** both halves are rests and the second one is selected
+
+#### Scenario: Dotted and triplet beats
+- **WHEN** the user splits a dotted or triplet beat
+- **THEN** both halves keep the dot or the triplet and together last exactly as long as the original
+
+#### Scenario: A beat that cannot be split
+- **WHEN** the beat is already a sixty-fourth note or the bar already holds the maximum number of beats
+- **THEN** the option is disabled and the palette says why
+
+#### Scenario: Undoing a split
+- **WHEN** the user undoes a split
+- **THEN** the two beats become the original beat again
+
 ### Requirement: Rests and ties can be set on a beat
 
 The system SHALL let the user turn the selected beats into rests, SHALL let the user tie the selected note to the previous note on the same string, and SHALL remove a tie whose source note no longer exists.
@@ -217,6 +241,42 @@ The system SHALL show a palette next to the selection with the durations, rest, 
 #### Scenario: Closing the palette
 - **WHEN** the user presses Escape with the palette open
 - **THEN** the palette closes and the selection and the tab stay as they were
+
+### Requirement: The palette is made of icons with a visible description
+
+The system SHALL show every palette option as an icon, SHALL describe the option under the pointer or keyboard focus with its name, its shortcut and the reason it is unavailable, SHALL keep the full name as the accessible name of the button, and SHALL keep the description available on touch, where there is no hover.
+
+#### Scenario: Hovering an option
+- **WHEN** the user points at the eighth-note icon
+- **THEN** a description with its name and shortcut appears next to the icon
+
+#### Scenario: Focusing an option with the keyboard
+- **WHEN** the user moves the palette focus to an icon
+- **THEN** the same description appears and is announced with the option
+
+#### Scenario: An unavailable option
+- **WHEN** the user hovers an option that cannot apply
+- **THEN** the description says why instead of only dimming the icon
+
+#### Scenario: Touch
+- **WHEN** the user opens the palette on a touch device
+- **THEN** the description of the touched option is visible inside the sheet without needing to hover
+
+### Requirement: The editor includes a short tutorial
+
+The system SHALL offer a tutorial button in the editor that opens a short guide on adding notes, writing chords, changing durations, creating beats, moving the selection, the pointer and touch gestures and the keyboard shortcuts, SHALL close it without changing the tab, and SHALL be operable with the keyboard.
+
+#### Scenario: Opening the tutorial
+- **WHEN** the user presses the tutorial button
+- **THEN** a dialog explains the editing gestures and shortcuts
+
+#### Scenario: Closing the tutorial
+- **WHEN** the user presses Escape or the close button
+- **THEN** the dialog closes and the tab is unchanged
+
+#### Scenario: Keyboard only
+- **WHEN** the user opens the tutorial with the keyboard
+- **THEN** the dialog takes the focus and can be read and closed without a pointer
 
 ### Requirement: Notes carry performance techniques
 

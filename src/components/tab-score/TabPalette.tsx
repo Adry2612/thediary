@@ -20,6 +20,7 @@ import {
   type TabPaletteState,
 } from "@/utils/tab-score/palette";
 import { TAB_MAX_FRET } from "@/types/tab-score";
+import { TabPaletteIcon } from "@/components/tab-score/TabPaletteIcon";
 
 export type PaletteAnchor = { x: number; y: number; w: number; h: number };
 
@@ -83,6 +84,7 @@ export function TabPalette({
   const [position, setPosition] = useState<{ left: number; top: number } | null>(
     null,
   );
+  const [described, setDescribed] = useState<string | null>(null);
 
   const focusFirst = useCallback(() => {
     panelRef.current
@@ -125,7 +127,10 @@ export function TabPalette({
   }, [open, mode, anchor, state]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setDescribed(null);
+      return;
+    }
     const previous = document.activeElement as HTMLElement | null;
     focusFirst();
 
@@ -197,6 +202,17 @@ export function TabPalette({
     }
   }
 
+  const describedOption = described
+    ? (TAB_PALETTE.find((option) => option.id === described) ?? null)
+    : null;
+  const describedLabel = describedOption
+    ? ((text as Record<string, string>)[describedOption.labelKey] ??
+      describedOption.labelKey)
+    : "";
+  const describedReason = describedOption
+    ? reasonText(state[describedOption.id]?.reason, text)
+    : undefined;
+
   const frets = (
     <div className="mb-3 last:mb-0">
       <p className="mb-1 text-[10px] uppercase tracking-[0.12em] text-zinc-500">
@@ -262,18 +278,42 @@ export function TabPalette({
           : "fixed z-50 overflow-y-auto rounded-t-2xl border-t border-zinc-300 bg-white p-3 text-zinc-900 shadow-2xl"
       }
     >
-      <div className="sticky top-0 z-10 -mx-3 -mt-3 mb-2 flex items-center justify-between border-b border-zinc-200 bg-white px-3 py-2">
-        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
-          {text.options}
-        </span>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={text.close}
-          className="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-600"
+      <div className="sticky top-0 z-10 -mx-3 -mt-3 mb-2 border-b border-zinc-200 bg-white px-3 py-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+            {text.options}
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={text.close}
+            className="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-600"
+          >
+            ✕
+          </button>
+        </div>
+        <p
+          data-testid="tab-palette-description"
+          className="mt-1 min-h-4 text-[11px] leading-4 text-zinc-600"
         >
-          ✕
-        </button>
+          {describedOption ? (
+            <>
+              <span className="font-medium text-zinc-800">
+                {describedLabel}
+              </span>
+              {describedOption.shortcut && (
+                <kbd className="ml-1 font-mono text-[10px] text-zinc-500">
+                  {describedOption.shortcut}
+                </kbd>
+              )}
+              {describedReason && (
+                <span className="ml-1 text-amber-700">· {describedReason}</span>
+              )}
+            </>
+          ) : (
+            text.hoverHint
+          )}
+        </p>
       </div>
 
       {TAB_PALETTE_GROUPS.map((group) => {
@@ -285,13 +325,19 @@ export function TabPalette({
               <p className="mb-1 text-[10px] uppercase tracking-[0.12em] text-zinc-500">
                 {groupTitle(group, text)}
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="grid grid-cols-[repeat(7,2.5rem)] justify-start gap-1.5">
               {options.map((option) => {
                 const optionState = state[option.id] ?? {
                   active: false,
                   disabled: false,
                 };
                 const reason = reasonText(optionState.reason, text);
+                const name =
+                  (text as Record<string, string>)[option.labelKey] ??
+                  option.labelKey;
+                const label = `${name}${
+                  option.shortcut ? ` (${option.shortcut})` : ""
+                }${reason ? `. ${reason}` : ""}`;
                 return (
                   <button
                     key={option.id}
@@ -300,29 +346,26 @@ export function TabPalette({
                     data-option-id={option.id}
                     aria-pressed={optionState.active}
                     aria-disabled={optionState.disabled}
-                    disabled={optionState.disabled}
-                    title={reason}
-                    onClick={() => onAction(option)}
-                    className={`rounded-md border px-2 py-1.5 text-left text-xs transition ${
+                    aria-label={label}
+                    title={reason ? `${name} · ${reason}` : name}
+                    onPointerEnter={() => setDescribed(option.id)}
+                    onPointerLeave={() => setDescribed(null)}
+                    onFocus={() => setDescribed(option.id)}
+                    onBlur={() => setDescribed(null)}
+                    onClick={() => {
+                      if (!optionState.disabled) onAction(option);
+                    }}
+                    className={`flex size-10 items-center justify-center rounded-md border transition ${
                       optionState.active
                         ? "border-emerald-700 bg-emerald-700 text-white"
                         : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
-                    } disabled:cursor-not-allowed disabled:opacity-40`}
+                    } ${
+                      optionState.disabled
+                        ? "cursor-not-allowed opacity-40"
+                        : ""
+                    }`}
                   >
-                    <span>
-                      {(text as Record<string, string>)[option.labelKey] ??
-                        option.labelKey}
-                    </span>
-                    {option.shortcut && (
-                      <kbd className="ml-1.5 font-mono text-[10px] opacity-60">
-                        {option.shortcut}
-                      </kbd>
-                    )}
-                    {reason && (
-                      <span className="mt-0.5 block text-[10px] text-zinc-500">
-                        {reason}
-                      </span>
-                    )}
+                    <TabPaletteIcon id={option.id} group={option.group} />
                   </button>
                 );
               })}

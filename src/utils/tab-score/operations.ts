@@ -9,6 +9,7 @@ import type { TabBend } from "../../types/practice.ts";
 import {
   TAB_BEAT_DURATIONS,
   TAB_MAX_BARS,
+  TAB_MAX_BEATS_PER_BAR,
   TAB_MAX_FRET,
   TAB_MAX_TEMPO,
   TAB_MIN_FRET,
@@ -18,6 +19,7 @@ import {
 import {
   cloneTabBar,
   createRestBar,
+  createRestBeat,
   createRestBeats,
   createTabId,
   getStringCount,
@@ -39,7 +41,9 @@ export type TabOperationError =
   | "invalidDuration"
   | "invalidTempo"
   | "invalidTimeSignature"
-  | "barLimit";
+  | "barLimit"
+  | "cannotSplit"
+  | "beatLimit";
 
 export type TabOperationResult =
   | { score: TabScore; selection: TabSelection }
@@ -262,6 +266,42 @@ export function setDuration(
   }));
 
   return { score: next, selection: clampSelection(next, selection) };
+}
+
+/**
+ * Parte el pulso en dos de la mitad: el contenido se queda en el primero y el
+ * segundo nace como silencio seleccionado. La suma del compás no cambia porque
+ * el puntillo y el tresillo se copian en ambas mitades.
+ */
+export function splitBeat(
+  score: TabScore,
+  selection: TabSelection,
+): TabOperationResult {
+  const bar = score.bars[selection.bar];
+  const beat = bar?.beats[selection.beat];
+  if (!bar || !beat) return { error: "noSelection" };
+  if (beat.duration >= 64) return { error: "cannotSplit" };
+  if (bar.beats.length >= TAB_MAX_BEATS_PER_BAR) return { error: "beatLimit" };
+
+  const duration = (beat.duration * 2) as TabBeat["duration"];
+  const first: TabBeat = { ...beat, duration };
+  const second = createRestBeat(duration);
+  if (beat.dots === 1) second.dots = 1;
+  if (beat.tuplet === 3) second.tuplet = 3;
+
+  const beats = bar.beats.slice();
+  beats.splice(selection.beat, 1, first, second);
+  const bars = score.bars.slice();
+  bars[selection.bar] = { ...bar, beats };
+  const next = { ...score, bars };
+
+  return {
+    score: next,
+    selection: clampSelection(next, {
+      ...selection,
+      beat: selection.beat + 1,
+    }),
+  };
 }
 
 export function setDots(

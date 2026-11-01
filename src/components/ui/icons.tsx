@@ -55,6 +55,28 @@ export function ArrowLeftIcon({ className, ...props }: IconProps) {
   );
 }
 
+/** Opciones de la selección: el botón que abre la paleta de la tablatura. */
+export function SlidersIcon({ className, ...props }: IconProps) {
+  return (
+    <StrokeIcon className={className} {...props}>
+      <path d="M5 7h14M5 12h14M5 17h14" />
+      <circle cx="9" cy="7" r="2" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="12" r="2" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="17" r="2" fill="currentColor" stroke="none" />
+    </StrokeIcon>
+  );
+}
+
+export function HelpIcon({ className, ...props }: IconProps) {
+  return (
+    <StrokeIcon className={className} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2-2.5 3.7" />
+      <path d="M12 17h.01" />
+    </StrokeIcon>
+  );
+}
+
 export function SplitViewIcon({ className, ...props }: IconProps) {
   return (
     <StrokeIcon className={className} {...props}>

@@ -30,6 +30,7 @@ import {
   setTempo,
   setTimeSignature,
   setTuplet,
+  splitBeat,
   toggleTie,
   writeFret,
   type TabOperationError,
@@ -66,6 +67,7 @@ export type TabScoreEditorAction =
   | { type: "deleteNote" }
   | { type: "deleteBeat" }
   | { type: "setRest" }
+  | { type: "splitBeat" }
   | { type: "setDuration"; duration: number }
   | { type: "setDots"; dots: 0 | 1 }
   | { type: "setTuplet"; tuplet: 0 | 3 }
@@ -220,6 +222,9 @@ export function tabScoreEditorReducer(
 
     case "setRest":
       return withResult(state, setRest(state.score, selection));
+
+    case "splitBeat":
+      return withResult(state, splitBeat(state.score, selection));
 
     case "setDuration":
       return withResult(state, setDuration(state.score, selection, action.duration));

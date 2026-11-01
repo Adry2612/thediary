@@ -1,5 +1,8 @@
 import type { TabBeat, TabNote, TabScore } from "../../types/tab-score.ts";
-import { TAB_MAX_BARS } from "../../types/tab-score.ts";
+import {
+  TAB_MAX_BARS,
+  TAB_MAX_BEATS_PER_BAR,
+} from "../../types/tab-score.ts";
 import type { TabScoreEditorAction } from "./editor-state.ts";
 import {
   getBeatAt,
@@ -42,7 +45,9 @@ export type TabPaletteOption = {
 export type TabPaletteReason =
   | "requiresNote"
   | "requiresPreviousNote"
-  | "barLimit";
+  | "barLimit"
+  | "cannotSplit"
+  | "beatLimit";
 
 export type TabPaletteOptionState = {
   active: boolean;
@@ -122,6 +127,12 @@ export const TAB_PALETTE: readonly TabPaletteOption[] = [
     labelKey: "rest",
     shortcut: "r",
     action: { type: "setRest" },
+  },
+  {
+    id: "split-beat",
+    group: "rhythm",
+    labelKey: "splitBeat",
+    action: { type: "splitBeat" },
   },
   {
     id: "tie",
@@ -529,6 +540,21 @@ export function getPaletteState({
     ) {
       disabled = true;
       reason = "barLimit";
+    }
+
+    if (option.id === "split-beat") {
+      const bar = score.bars[selection.bar];
+      const beat = getBeatAt(score, selection.bar, selection.beat);
+      if (!beat) {
+        disabled = true;
+        reason = "requiresNote";
+      } else if (beat.duration >= 64) {
+        disabled = true;
+        reason = "cannotSplit";
+      } else if (bar && bar.beats.length >= TAB_MAX_BEATS_PER_BAR) {
+        disabled = true;
+        reason = "beatLimit";
+      }
     }
 
     state[option.id] = { active, disabled, reason };

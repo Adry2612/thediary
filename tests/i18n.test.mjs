@@ -21,6 +21,10 @@ test("uses the same translation structure in Spanish and English", () => {
     Object.keys(translations.es.tabPlayback).sort(),
     Object.keys(translations.en.tabPlayback).sort(),
   );
+  assert.deepEqual(
+    Object.keys(translations.es.tabTutorial).sort(),
+    Object.keys(translations.en.tabTutorial).sort(),
+  );
 });
 
 test("returns the translated text for nested keys", () => {

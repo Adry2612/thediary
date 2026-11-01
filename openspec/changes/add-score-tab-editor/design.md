@@ -292,3 +292,38 @@ activado.
   anclaje provoca un desplazamiento de anclaje que no debe cerrar el menú.
 - El foco de la paleta usa `preventScroll` para no devolver la página al
   principio al abrirla.
+
+## Subdividir pulsos, menú por iconos y tutorial (16)
+
+- **Dividir un pulso** es la operación que crea huecos nuevos sin romper la
+  suma del compás: sustituye el pulso seleccionado por dos pulsos de la mitad
+  de duración (misma duración base, mismo puntillo y mismo tresillo), deja el
+  contenido actual en el primero, convierte el segundo en silencio y selecciona
+  el segundo. Así, dividir una negra da dos corcheas, dividir una negra con
+  puntillo da dos corcheas con puntillo y los ticks del compás no cambian.
+  - Alternativa descartada: insertar un pulso de duración libre y encoger al
+    vecino. Obliga a decidir qué vecino se encoge y a reescribir su duración,
+    y produce compases que dejan de sumar con más facilidad.
+  - Alternativa descartada: insertar un silencio solo cuando el compás está
+    incompleto. No resuelve el caso que bloquea al usuario: un compás lleno en
+    el que quiere dos notas donde ahora hay una.
+  - Se rechaza dividir una semifusa (no hay figura menor) o un compás que ya
+    tiene 64 pulsos, con un motivo en la paleta. Deshacer recupera el pulso
+    original.
+- **Iconos con descripción.** `TabPaletteIcon` dibuja el icono de cada opción a
+  partir de su id; las opciones que añada `add-score-tab-notation-extras` y que
+  aún no tengan uno propio usan el icono de su grupo. El nombre accesible del
+  botón sigue siendo el texto completo, no el icono.
+  - La descripción vive en una franja fija bajo la cabecera de la paleta y se
+    actualiza al pasar el cursor, al tocar y al enfocar con el teclado. Se
+    prefiere a un bocadillo flotante porque la paleta tiene `overflow-y-auto` y
+    un bocadillo absoluto quedaría recortado; además la misma franja sirve en
+    táctil, donde no hay hover.
+  - Los botones conservan `title` con el nombre y el motivo como respaldo del
+    navegador.
+- **Tutorial.** Un botón de ayuda en la barra del editor abre un diálogo propio
+  (no el tutorial general de la app, que explica la navegación): pasos para
+  añadir una nota, escribir un acorde, cambiar la duración, crear un pulso
+  nuevo, moverse, los gestos de ratón y táctil y los atajos. Se cierra con
+  Escape y no toca la partitura. El texto vive en `tabScore.tutorial` para
+  seguir la regla de i18n del proyecto.
