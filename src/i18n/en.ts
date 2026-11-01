@@ -395,6 +395,7 @@ export const en: Dict = {
     toneLevel: 'Level',
     toneLevelAria: 'Tone level',
     toneStart: 'Start tone',
+    resumeAudio: 'Resume sound',
     toneStop: 'Stop tone',
     tonePlaying: 'Playing',
     toneNote: 'Equivalent note',
@@ -456,6 +457,7 @@ export const en: Dict = {
     beatPatternHint:
       'Click to cycle normal, open accent, closed accent and mute. From the keyboard, M mutes the beat.',
     startAudio: 'Activating audio…',
+    resumeAudio: 'Resume sound',
     stop: 'Stop metronome',
     start: 'Start metronome',
     tapTempo: 'Tap tempo',

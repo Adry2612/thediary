@@ -10,6 +10,17 @@ import {
 
 const SCHEDULE_AHEAD_SECONDS = 0.1;
 
+/**
+ * Reancla la planificación tras una suspensión: el siguiente pulso se programa
+ * por delante del tiempo actual para no soltar de golpe los pulsos perdidos.
+ */
+export function reanchorSchedule(
+  currentTime: number,
+  aheadSeconds = SCHEDULE_AHEAD_SECONDS,
+): number {
+  return currentTime + aheadSeconds;
+}
+
 export interface MetronomeScheduleState {
   nextBeatTime: number;
   beatNumber: number;

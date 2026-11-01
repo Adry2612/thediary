@@ -423,6 +423,7 @@ export type Dict = {
     toneLevel: string;
     toneLevelAria: string;
     toneStart: string;
+    resumeAudio: string;
     toneStop: string;
     tonePlaying: string;
     toneNote: string;

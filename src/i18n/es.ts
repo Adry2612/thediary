@@ -399,6 +399,7 @@ export const es: Dict = {
     toneLevel: 'Nivel',
     toneLevelAria: 'Nivel del tono',
     toneStart: 'Iniciar tono',
+    resumeAudio: 'Reactivar sonido',
     toneStop: 'Detener tono',
     tonePlaying: 'Sonando',
     toneNote: 'Nota equivalente',
@@ -460,6 +461,7 @@ export const es: Dict = {
     beatPatternHint:
       'Clic para recorrer normal, resalte abierto, resalte cerrado y silencio. Con el teclado, M silencia el pulso.',
     startAudio: 'Activando audio…',
+    resumeAudio: 'Reactivar sonido',
     stop: 'Detener metrónomo',
     start: 'Iniciar metrónomo',
     tapTempo: 'Tap tempo',

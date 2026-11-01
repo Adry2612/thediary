@@ -22,6 +22,14 @@ import {
   playPracticeSound,
   stopPracticeSounds,
 } from "@/services/practice-sound";
+import {
+  clearStoredTimer,
+  readStoredTimer,
+  resolveRestoredRuntime,
+  serializeTimer,
+  shouldRestoreTimer,
+  writeStoredTimer,
+} from "@/utils/practice-timer-storage";
 
 type TimerSnapshot = {
   elapsedSeconds: number;
@@ -89,9 +97,12 @@ export function usePracticeTimer(
   startSound: PracticeSound = DEFAULT_PRACTICE_START_SOUND,
   endSound: PracticeSound = DEFAULT_PRACTICE_END_SOUND,
   targetSeconds: number | null = null,
+  sessionId: string | null = null,
 ) {
   const targetMs =
     targetSeconds !== null && targetSeconds > 0 ? targetSeconds * 1000 : null;
+  const targetMsRef = useRef(targetMs);
+  targetMsRef.current = targetMs;
   const phasePlan = useMemo(() => validatePhases(phases), [phases]);
   const phasePlanKey = getPracticePlanKey(phases);
   const phasePlanRef = useRef(phasePlan);
@@ -132,6 +143,18 @@ export function usePracticeTimer(
   const onCompleteRef = useRef(onComplete);
   onPhaseChangeRef.current = onPhaseChange;
   onCompleteRef.current = onComplete;
+  const lastPersistAtRef = useRef(0);
+
+  const persist = useCallback(
+    (runtime: PracticeTimerRuntime) => {
+      if (!sessionId) return;
+      writeStoredTimer(
+        serializeTimer(sessionId, phasePlanKey, countUp, runtime),
+      );
+      lastPersistAtRef.current = Date.now();
+    },
+    [countUp, phasePlanKey, sessionId],
+  );
 
   const playTransitionTone = useCallback(
     (isStartingBlock: boolean) => {
@@ -153,6 +176,7 @@ export function usePracticeTimer(
       ) as Record<PracticeSkill, number>;
 
       setIsTargetReached(false);
+      clearStoredTimer();
       onCompleteRef.current?.({
         elapsedSeconds: Math.floor(runtime.elapsedMs / 1000),
         startedAt: new Date(runtime.startedAtMs ?? Date.now()).toISOString(),
@@ -227,6 +251,7 @@ export function usePracticeTimer(
       if (result.targetReached) {
         runtimeRef.current = result.runtime;
         publishSnapshot(result.runtime);
+        persist(result.runtime);
         alertedTargetRef.current = targetMs;
         playTransitionTone(false);
         setIsTargetReached(true);
@@ -250,6 +275,7 @@ export function usePracticeTimer(
           onPhaseChangeRef.current?.(nextPhase);
         }
         publishSnapshot(nextRuntime);
+        persist(nextRuntime);
         return;
       }
 
@@ -258,12 +284,16 @@ export function usePracticeTimer(
         playTransitionTone(false);
       }
       publishSnapshot(result.runtime);
+      if (now - lastPersistAtRef.current >= 1_000) {
+        persist(result.runtime);
+      }
     },
     [
       autoAdvance,
       completeSession,
       continueAfterBlockTime,
       countUp,
+      persist,
       phasePlan,
       playTransitionTone,
       publishSnapshot,
@@ -279,6 +309,17 @@ export function usePracticeTimer(
     const intervalId = window.setInterval(() => synchronize(Date.now()), 250);
     return () => window.clearInterval(intervalId);
   }, [snapshot.isRunning, synchronize]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    function handlePageHide() {
+      persist(runtimeRef.current);
+    }
+
+    window.addEventListener("pagehide", handlePageHide);
+    return () => window.removeEventListener("pagehide", handlePageHide);
+  }, [persist, sessionId]);
 
   useEffect(() => {
     alertedTargetRef.current = null;
@@ -297,12 +338,44 @@ export function usePracticeTimer(
     };
     runtimeRef.current = pausedRuntime;
     alertedTargetRef.current = targetMs;
+    persist(pausedRuntime);
     publishSnapshot(pausedRuntime);
     playTransitionTone(false);
     setIsTargetReached(true);
-  }, [targetMs, playTransitionTone, publishSnapshot]);
+  }, [targetMs, playTransitionTone, publishSnapshot, persist]);
 
   useEffect(() => {
+    const stored = readStoredTimer(phasePlanRef.current.length);
+    const restored =
+      sessionId !== null &&
+      shouldRestoreTimer(stored, {
+        sessionId,
+        planKey: phasePlanKey,
+        countUp,
+        phaseCount: phasePlanRef.current.length,
+      })
+        ? stored
+        : null;
+
+    if (restored) {
+      const resolved = resolveRestoredRuntime(
+        restored.runtime,
+        targetMsRef.current,
+      );
+      const runtime = resolved.runtime;
+
+      alertedTargetRef.current = resolved.targetReached
+        ? targetMsRef.current
+        : null;
+      setIsTargetReached(resolved.targetReached);
+      runtimeRef.current = runtime;
+      lastPersistAtRef.current = Date.now();
+      publishSnapshot(runtime);
+      return;
+    }
+
+    if (sessionId) clearStoredTimer();
+
     const runtime: PracticeTimerRuntime = {
       elapsedMs: 0,
       phaseElapsedMs: 0,
@@ -319,7 +392,7 @@ export function usePracticeTimer(
     setIsTargetReached(false);
     runtimeRef.current = runtime;
     publishSnapshot(runtime);
-  }, [countUp, phasePlanKey, publishSnapshot]);
+  }, [countUp, phasePlanKey, publishSnapshot, sessionId]);
 
   const resume = useCallback(() => {
     setIsTargetReached(false);
@@ -345,9 +418,11 @@ export function usePracticeTimer(
     };
     runtimeRef.current = nextRuntime;
     playTransitionTone(true);
+    persist(nextRuntime);
     publishSnapshot(nextRuntime);
   }, [
     continueAfterBlockTime,
+    persist,
     phasePlan,
     playTransitionTone,
     publishSnapshot,
@@ -362,8 +437,9 @@ export function usePracticeTimer(
 
     const pausedRuntime = { ...runtime, isRunning: false };
     runtimeRef.current = pausedRuntime;
+    persist(pausedRuntime);
     publishSnapshot(pausedRuntime);
-  }, [publishSnapshot, synchronize]);
+  }, [persist, publishSnapshot, synchronize]);
 
   const skip = useCallback(() => {
     setIsTargetReached(false);
@@ -392,9 +468,10 @@ export function usePracticeTimer(
       window.setTimeout(() => playTransitionTone(true), 220);
       onPhaseChangeRef.current?.(nextPhase);
     }
+    persist(nextRuntime);
     publishSnapshot(nextRuntime);
     if (!nextPhase) completeSession(nextRuntime, true);
-  }, [completeSession, phasePlan, playTransitionTone, publishSnapshot, synchronize]);
+  }, [completeSession, persist, phasePlan, playTransitionTone, publishSnapshot, synchronize]);
 
   const finish = useCallback(() => {
     setIsTargetReached(false);
@@ -430,6 +507,8 @@ export function usePracticeTimer(
 
     alertedTargetRef.current = null;
     setIsTargetReached(false);
+    clearStoredTimer();
+    lastPersistAtRef.current = 0;
     runtimeRef.current = runtime;
     publishSnapshot(runtime);
   }, [publishSnapshot]);
