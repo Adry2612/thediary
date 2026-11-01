@@ -57,7 +57,7 @@
 
 - [x] 8.1 Run `npm run typecheck` and `npm test`; verify both exit 0 with the new lick tests included and no existing test weakened.
 - [x] 8.2 Run `npm run build`; verify it succeeds (client/server boundaries are not covered by typecheck).
-- [ ] 8.3 Exercise the full flow on a copy of real data: migrate legacy licks, create and edit a lick, record BPM entries, mark one practised, link a song, delete the song, delete a lick, reload and sign in on a second session; verify counts, chart values and the forgotten-lick proposal match the specs at each step.
+- [x] 8.3 Exercise the full flow on a copy of real data: migrate legacy licks, create and edit a lick, record BPM entries, mark one practised, link a song, delete the song, delete a lick, reload and sign in on a second session; verify counts, chart values and the forgotten-lick proposal match the specs at each step.
 - [x] 8.4 Re-read the changed requirements in `specs/licks-library`, `specs/licks-analytics`, `specs/repertoire-library` and `specs/app-navigation` against the running app, including the empty states, unclassified groups and 30-day rule; verify each scenario is either observed or explicitly recorded as not covered by the available data.
 
 ## Workflow follow-up

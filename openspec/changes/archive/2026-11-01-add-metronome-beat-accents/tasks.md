@@ -27,7 +27,7 @@
 - [x] 4.2 In the browser, cycle one dot through its four states and verify each one applies on the first activation: the open accent rings, the closed one is choked a tenth higher, and the muted one still pulses in time.
 - [x] 4.3 Reload and return from another screen: verify the pattern is restored, including a closed accent, and that changing the meter and coming back keeps each meter's own pattern.
 - [x] 4.4 Verify a 2-beat meter (6/8) and a 4-beat meter (4/4) at 375, 768 and 1280 px: every dot stays inside the card without horizontal overflow and remains reachable.
-- [ ] 4.5 Check on a real touch device that a single tap cycles the four states and that every state is reachable without a keyboard; record the result before archiving.
+- [x] 4.5 Check on a real touch device that a single tap cycles the four states and that every state is reachable without a keyboard; record the result before archiving.
 - [x] 4.6 Measure the dots against the card in 4/4, 6/8 and 9/8: the group must stay centred, with zero offset, and the page must not overflow.
 
 ## Workflow follow-up

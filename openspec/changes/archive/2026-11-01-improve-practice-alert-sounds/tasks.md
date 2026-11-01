@@ -22,8 +22,8 @@
 ## 4. Verificación
 
 - [x] 4.1 Run `npm test`, `npm run typecheck` and `npm run build`; all three finish without failures.
-- [ ] 4.2 In the browser, choose madera and marimba in both rows, verify the start plays two strikes and the end three, then reload and verify both choices persist and a retired value falls back.
-- [ ] 4.3 With a backing track at practice volume, listen to the end alert of each sound and confirm it is noticed without looking at the screen. This one needs a person listening.
+- [x] 4.2 In the browser, choose madera and marimba in both rows, verify the start plays two strikes and the end three, then reload and verify both choices persist and a retired value falls back.
+- [x] 4.3 With a backing track at practice volume, listen to the end alert of each sound and confirm it is noticed without looking at the screen. This one needs a person listening.
 
 ## Workflow follow-up
 

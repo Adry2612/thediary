@@ -25,26 +25,6 @@ The system SHALL let the user choose, when creating or editing an item, one of t
 - **WHEN** the user changes the title, the artist, or any other field of an item that has a difficulty
 - **THEN** the app keeps the difficulty
 
-### Requirement: The type label is singular and steps aside when the list is filtered by type
-
-The system SHALL label each item with its type in the singular — "Canción" for a song and "Lick" for a lick —, and SHALL hide that label while the list is filtered by a single type.
-
-#### Scenario: A song shows the singular label
-- **WHEN** the list shows a song
-- **THEN** the item is labelled "Canción", not "Canciones"
-
-#### Scenario: Filtering by songs hides the label
-- **WHEN** the user filters the list by songs
-- **THEN** the items no longer show their type label
-
-#### Scenario: Filtering by licks hides the label
-- **WHEN** the user filters the list by licks
-- **THEN** the items no longer show their type label
-
-#### Scenario: Showing every type brings the label back
-- **WHEN** the user filters by all types
-- **THEN** each item shows its type label again
-
 ### Requirement: The practice time of an item is the time practiced on it
 
 The system SHALL count, for each item, the time of every completed practice phase linked to that item, whether or not the phase also names one of its parts, SHALL show that time on the item, SHALL add it to the library total, SHALL order the library by it, and SHALL link the item when a practice is started directly from it.
@@ -360,3 +340,19 @@ The system SHALL present catalog candidates in the order the provider ranks them
 #### Scenario: A narrow limit
 - **WHEN** more candidates survive than the requested number of results
 - **THEN** the first ones in provider order are kept and the rest are dropped
+
+### Requirement: The repertoire holds songs only
+
+The system SHALL create, list and edit only songs in the repertoire, SHALL offer no option to add a lick there, and SHALL keep licks in their own library.
+
+#### Scenario: Creating an item in the repertoire
+- **WHEN** the user opens the repertoire creation page
+- **THEN** the form offers no lick type and saves the item as a song
+
+#### Scenario: Filtering the repertoire
+- **WHEN** the user opens the repertoire list filters
+- **THEN** the filters describe songs and other song attributes, not licks or their techniques
+
+#### Scenario: A repertoire without licks
+- **WHEN** the user opens the repertoire list
+- **THEN** no lick is listed, even after licks have been saved in the licks library
