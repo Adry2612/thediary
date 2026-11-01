@@ -109,25 +109,30 @@ const VOICE_RECIPES: Record<MetronomeVoice, VoiceVariants> = {
       },
     }),
   },
-  // Cinco parciales inarmónicos (1 / 2 / 2,4 / 3 / 4,2) con colas largas: los
-  // ratios inarmónicos producen el "ding" metálico.
+  // Siete parciales con ratios 0,5 / 1 / 1,2 / 1,5 / 2 / 2,5 / 3 sobre 700 Hz
+  // y colas largas: el hum grave y los ratios inarmónicos producen el "ding"
+  // metálico, en vez del timbre agudo y casi armónico de un teléfono.
   bell: {
     normal: createRecipe({
       partials: [
-        { type: "sine", frequency: 980, gain: 0.2, decaySeconds: 0.6 },
-        { type: "sine", frequency: 1_960, gain: 0.11, decaySeconds: 0.5 },
-        { type: "sine", frequency: 2_352, gain: 0.09, decaySeconds: 0.42 },
-        { type: "sine", frequency: 2_940, gain: 0.06, decaySeconds: 0.34 },
-        { type: "sine", frequency: 4_116, gain: 0.04, decaySeconds: 0.26 },
+        { type: "sine", frequency: 350, gain: 0.06, decaySeconds: 0.9 },
+        { type: "sine", frequency: 700, gain: 0.16, decaySeconds: 0.8 },
+        { type: "sine", frequency: 840, gain: 0.07, decaySeconds: 0.62 },
+        { type: "sine", frequency: 1_050, gain: 0.05, decaySeconds: 0.55 },
+        { type: "sine", frequency: 1_400, gain: 0.09, decaySeconds: 0.45 },
+        { type: "sine", frequency: 1_750, gain: 0.04, decaySeconds: 0.35 },
+        { type: "sine", frequency: 2_100, gain: 0.02, decaySeconds: 0.28 },
       ],
     }),
     accent: createRecipe({
       partials: [
-        { type: "sine", frequency: 1_180, gain: 0.33, decaySeconds: 0.6 },
-        { type: "sine", frequency: 2_360, gain: 0.1815, decaySeconds: 0.5 },
-        { type: "sine", frequency: 2_832, gain: 0.1485, decaySeconds: 0.42 },
-        { type: "sine", frequency: 3_540, gain: 0.099, decaySeconds: 0.34 },
-        { type: "sine", frequency: 4_956, gain: 0.066, decaySeconds: 0.26 },
+        { type: "sine", frequency: 413, gain: 0.099, decaySeconds: 0.9 },
+        { type: "sine", frequency: 826, gain: 0.264, decaySeconds: 0.8 },
+        { type: "sine", frequency: 991.2, gain: 0.1155, decaySeconds: 0.62 },
+        { type: "sine", frequency: 1_239, gain: 0.0825, decaySeconds: 0.55 },
+        { type: "sine", frequency: 1_652, gain: 0.1485, decaySeconds: 0.45 },
+        { type: "sine", frequency: 2_065, gain: 0.066, decaySeconds: 0.35 },
+        { type: "sine", frequency: 2_478, gain: 0.033, decaySeconds: 0.28 },
       ],
     }),
   },

@@ -208,7 +208,7 @@ test("the woodblock layers three short modes and a click", () => {
   assert.equal(filter.frequencyValue.value, 5_000);
 });
 
-test("the bell layers five inharmonic partials with a long tail", () => {
+test("the bell layers seven inharmonic partials with a long tail", () => {
   const context = createAudioContextMock();
 
   schedule(context, { voice: "bell", click: "normal" });
@@ -216,8 +216,10 @@ test("the bell layers five inharmonic partials with a long tail", () => {
     ({ frequencyValue }) => frequencyValue.value,
   );
 
-  assert.equal(normalFrequencies.length, 5);
-  assert.deepEqual(normalFrequencies, [980, 1_960, 2_352, 2_940, 4_116]);
+  assert.equal(normalFrequencies.length, 7);
+  assert.deepEqual(normalFrequencies, [
+    350, 700, 840, 1_050, 1_400, 1_750, 2_100,
+  ]);
   assert.ok(context.oscillators[0].stoppedAt > 2.5);
 
   const accentContext = createAudioContextMock();
@@ -226,8 +228,8 @@ test("the bell layers five inharmonic partials with a long tail", () => {
     ({ frequencyValue }) => frequencyValue.value,
   );
 
-  assert.equal(accentFrequencies.length, 5);
-  for (let index = 0; index < 5; index += 1) {
+  assert.equal(accentFrequencies.length, 7);
+  for (let index = 0; index < 7; index += 1) {
     assert.ok(accentFrequencies[index] > normalFrequencies[index]);
   }
 });
