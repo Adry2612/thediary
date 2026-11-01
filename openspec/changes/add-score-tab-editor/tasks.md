@@ -50,10 +50,10 @@
 
 ## 9. Paleta
 
-- [ ] 9.1 Crear el catálogo `TAB_PALETTE` y `getPaletteState` (activo, desactivado y motivo) y derivar de él los atajos. Verificar con `tests/tab-score-palette.test.mjs`: opciones activas de una corchea con puntillo y palm mute, ligadura sin nota anterior, atajos únicos.
-- [ ] 9.2 Crear la paleta de escritorio como popover anclado, con colocación para no tapar el pulso, navegación con flechas, foco de retorno y Escape. Verificar en el navegador que no cubre la selección en la primera y en la última fila.
-- [ ] 9.3 Crear la hoja inferior táctil con la fila de trastes 0–24 y los mismos grupos, activada con `(pointer: coarse)`. Verificar con emulación táctil y en un móvil real que no oculta el pulso seleccionado.
-- [ ] 9.4 Crear las acciones de compás (insertar, duplicar, borrar, compás, tempo) y el aviso de compás desajustado con símbolo y texto. Verificar acortando una nota hasta que el compás se marque y corrigiéndolo hasta que desaparezca.
+- [x] 9.1 Crear el catálogo `TAB_PALETTE` y `getPaletteState` (activo, desactivado y motivo) y derivar de él los atajos. Verificar con `tests/tab-score-palette.test.mjs`: opciones activas de una corchea con puntillo y palm mute, ligadura sin nota anterior, atajos únicos.
+- [x] 9.2 Crear la paleta de escritorio como popover anclado, con colocación para no tapar el pulso, navegación con flechas, foco de retorno y Escape. Verificar en el navegador que no cubre la selección en la primera y en la última fila.
+- [x] 9.3 Crear la hoja inferior táctil con la fila de trastes 0–24 y los mismos grupos, activada con `(pointer: coarse)`. Verificar con emulación táctil y en un móvil real que no oculta el pulso seleccionado.
+- [x] 9.4 Crear las acciones de compás (insertar, duplicar, borrar, compás, tempo) y el aviso de compás desajustado con símbolo y texto. Verificar acortando una nota hasta que el compás se marque y corrigiéndolo hasta que desaparezca.
 
 ## 10. Reproducción
 

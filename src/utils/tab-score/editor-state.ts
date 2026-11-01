@@ -23,6 +23,7 @@ import {
   deleteNote,
   duplicateBar,
   insertBarAfter,
+  setBendFlag,
   setDots,
   setDuration,
   setRest,
@@ -68,6 +69,7 @@ export type TabScoreEditorAction =
   | { type: "setDuration"; duration: number }
   | { type: "setDots"; dots: 0 | 1 }
   | { type: "setTuplet"; tuplet: 0 | 3 }
+  | { type: "setBendFlag"; flag: "release" | "prebend"; value: boolean }
   | { type: "technique"; patch: TabTechniquePatch }
   | { type: "toggleTie" }
   | { type: "insertBar" }
@@ -227,6 +229,12 @@ export function tabScoreEditorReducer(
 
     case "setTuplet":
       return withResult(state, setTuplet(state.score, selection, action.tuplet));
+
+    case "setBendFlag":
+      return withResult(
+        state,
+        setBendFlag(state.score, selection, action.flag, action.value),
+      );
 
     case "technique":
       return withResult(state, applyTechnique(state.score, selection, action.patch));

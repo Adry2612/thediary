@@ -544,3 +544,42 @@ export function setTempo(
   const next = replaceBar(score, index, (bar) => ({ ...bar, tempo }));
   return { score: next, selection: clampSelection(next, selection) };
 }
+
+/** Activa o retira la liberación o el prebend sin perder la cantidad. */
+export function setBendFlag(
+  score: TabScore,
+  selection: TabSelection,
+  flag: "release" | "prebend",
+  value: boolean,
+): TabOperationResult {
+  const targets = getRangeBeats(score, selection)
+    .map((position) => ({
+      ...position,
+      note: getNoteAt(
+        getBeatAt(score, position.bar, position.beat),
+        selection.string,
+      ),
+    }))
+    .filter(
+      (target): target is { bar: number; beat: number; note: TabNote } =>
+        target.note !== null,
+    );
+
+  if (targets.length === 0) return { error: "noSelection" };
+
+  let next = score;
+  for (const target of targets) {
+    next = replaceBeat(next, target.bar, target.beat, (beat) => ({
+      ...beat,
+      notes: beat.notes.map((note) => {
+        if (note.string !== selection.string) return note;
+        const bend: TabBend = { ...(note.bend ?? { semitones: 1 }) };
+        if (value) bend[flag] = true;
+        else delete bend[flag];
+        return { ...note, bend };
+      }),
+    }));
+  }
+
+  return { score: next, selection: clampSelection(next, selection) };
+}

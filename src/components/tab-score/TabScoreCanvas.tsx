@@ -55,6 +55,7 @@ export function TabScoreCanvas({
   onStatus,
   onRender,
   onLayout,
+  onFocusBox,
   className = "",
 }: {
   alphaTex: string;
@@ -68,13 +69,15 @@ export function TabScoreCanvas({
   onStatus?: (status: TabScoreRenderStatus) => void;
   onRender?: () => void;
   onLayout?: (layout: TabScoreLayout) => void;
+  /** Caja de la selección en coordenadas de viewport, para anclar la paleta. */
+  onFocusBox?: (box: { x: number; y: number; w: number; h: number } | null) => void;
   className?: string;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
   const focusRef = useRef<HTMLDivElement>(null);
-  const callbacks = useRef({ onStatus, onRender, onSelect, onLayout });
-  callbacks.current = { onStatus, onRender, onSelect, onLayout };
+  const callbacks = useRef({ onStatus, onRender, onSelect, onLayout, onFocusBox });
+  callbacks.current = { onStatus, onRender, onSelect, onLayout, onFocusBox };
   const [layout, setLayout] = useState<TabScoreLayout>([]);
   const [renderCount, setRenderCount] = useState(0);
   const previousSelection = useRef<string>("");
@@ -259,6 +262,34 @@ export function TabScoreCanvas({
           h: Math.max(8, focusBar.h / stringCount - 4),
         }
       : undefined;
+
+  const focusX = focusBox?.x;
+  const focusY = focusBox?.y;
+  const focusW = focusBox?.w;
+  const focusH = focusBox?.h;
+
+  useEffect(() => {
+    if (!interactive || !selection) {
+      callbacks.current.onFocusBox?.(null);
+      return;
+    }
+    if (
+      focusX === undefined ||
+      focusY === undefined ||
+      focusW === undefined ||
+      focusH === undefined ||
+      !surfaceRef.current
+    ) {
+      return;
+    }
+    const rect = surfaceRef.current.getBoundingClientRect();
+    callbacks.current.onFocusBox?.({
+      x: rect.left + focusX,
+      y: rect.top + focusY,
+      w: focusW,
+      h: focusH,
+    });
+  }, [interactive, selection, focusX, focusY, focusW, focusH]);
 
   return (
     <div className={className}>
