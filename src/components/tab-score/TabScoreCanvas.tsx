@@ -81,6 +81,7 @@ export function TabScoreCanvas({
   onRender,
   onLayout,
   onFocusBox,
+  focusBoxVersion = 0,
   onControls,
   onPlaybackState,
   className = "",
@@ -103,6 +104,8 @@ export function TabScoreCanvas({
   onLayout?: (layout: TabScoreLayout) => void;
   /** Caja de la selección en coordenadas de viewport, para anclar la paleta. */
   onFocusBox?: (box: Rect | null) => void;
+  /** Cambia para forzar una nueva medición de la caja (p. ej. al abrir la paleta). */
+  focusBoxVersion?: number;
   onControls?: (controls: TabScorePlayerControls | null) => void;
   onPlaybackState?: (state: TabScorePlaybackState) => void;
   className?: string;
@@ -463,7 +466,7 @@ export function TabScoreCanvas({
       w: focusW,
       h: focusH,
     });
-  }, [interactive, selection, focusX, focusY, focusW, focusH]);
+  }, [interactive, selection, focusX, focusY, focusW, focusH, focusBoxVersion]);
 
   return (
     <div className={className}>

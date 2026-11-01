@@ -1072,6 +1072,7 @@ export const es: Dict = {
     close: 'Cerrar opciones',
     durations: 'Duración',
     rhythm: 'Ritmo',
+    ties: 'Ligaduras',
     techniques: 'Técnicas',
     bends: 'Bends',
     bars: 'Compás',

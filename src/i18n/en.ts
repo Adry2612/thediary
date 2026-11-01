@@ -1060,6 +1060,7 @@ export const en: Dict = {
     close: 'Close options',
     durations: 'Duration',
     rhythm: 'Rhythm',
+    ties: 'Ties',
     techniques: 'Techniques',
     bends: 'Bends',
     bars: 'Bar',

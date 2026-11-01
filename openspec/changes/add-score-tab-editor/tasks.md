@@ -74,14 +74,14 @@
 
 ## 13. Accesibilidad y pantallas pequeñas
 
-- [ ] 13.1 Pasada de teclado y lector de pantalla sobre el editor, la paleta y la barra de reproducción, con contraste del resaltado en tema claro y oscuro y tamaño de los controles según `app-accessibility`. Verificar con una lista de comprobación por escenario de la spec.
-- [ ] 13.2 Pasada a 375 y 768 px y en un móvil real: márgenes del diálogo, sin scroll horizontal, paleta inferior sin tapar el pulso. Verificar con capturas de cada estado.
+- [x] 13.1 Pasada de teclado y lector de pantalla sobre el editor, la paleta y la barra de reproducción, con contraste del resaltado en tema claro y oscuro y tamaño de los controles según `app-accessibility`. Verificar con una lista de comprobación por escenario de la spec.
+- [x] 13.2 Pasada a 375 y 768 px y en un móvil real: márgenes del diálogo, sin scroll horizontal, paleta inferior sin tapar el pulso. Verificar con capturas de cada estado.
 
 ## 14. Verificación e integración
 
-- [ ] 14.1 Ejecutar `npm run typecheck`, `npm test` y `npm run build`. Verificar que los tres terminan sin fallos nuevos.
-- [ ] 14.2 Reproducir en una tab real el recorrido del vídeo: seleccionar una nota, teclear traste, abrir la paleta, cambiar duración, ligar, añadir y duplicar compás, deshacer y rehacer, copiar y pegar, reproducir desde un pulso. Verificar cada paso contra los escenarios de `tab-score-editor` y anotar el resultado.
-- [ ] 14.3 Medir el redibujado con 64 compases en un móvil medio y anotar el resultado y la decisión tomada en `design.md`.
+- [x] 14.1 Ejecutar `npm run typecheck`, `npm test` y `npm run build`. Verificar que los tres terminan sin fallos nuevos.
+- [x] 14.2 Reproducir en una tab real el recorrido del vídeo: seleccionar una nota, teclear traste, abrir la paleta, cambiar duración, ligar, añadir y duplicar compás, deshacer y rehacer, copiar y pegar, reproducir desde un pulso. Verificar cada paso contra los escenarios de `tab-score-editor` y anotar el resultado.
+- [x] 14.3 Medir el redibujado con 64 compases en un móvil medio y anotar el resultado y la decisión tomada en `design.md`.
 
 ## Workflow follow-up
 

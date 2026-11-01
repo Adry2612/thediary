@@ -519,6 +519,7 @@ export type Dict = {
     close: string;
     durations: string;
     rhythm: string;
+    ties: string;
     techniques: string;
     bends: string;
     bars: string;

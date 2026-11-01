@@ -151,7 +151,10 @@ textarea,
 
 /* Entrada de cualquier `<dialog>` con la clase compartida. */
 dialog.overlay-motion[open] {
-  animation: overlay-panel-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* `backwards` y no `both`: al terminar, el diálogo no conserva el
+     `transform` de la entrada, que lo convertiría en el bloque contenedor de
+     los elementos `fixed` (paleta y hojas del editor de tablatura). */
+  animation: overlay-panel-in 180ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 dialog.overlay-motion[open]::backdrop {

@@ -242,3 +242,27 @@ activado.
 - La normalización de la rejilla reordena las claves de cada nota al hidratar
   (`normalizeTab`), pero no cambia ningún valor: `tab` sigue guardándose con los
   mismos trastes, cuerdas y columnas tras editar la partitura.
+
+## Verificación final
+
+- **Gate:** `npm run typecheck`, `npm test` (910 tests) y `npm run build` sin
+  fallos.
+- **Redibujado con 64 compases** en el editor real, viewport 390×844: **183 ms**
+  con CPU limitada ×4 y **48 ms** sin limitar, contando desde la tecla hasta el
+  `renderFinished`. Se mantiene el tope de 64 compases; no se limita cuántos
+  compases caben por sistema.
+- **Pantallas pequeñas:** a 375 y 768 px no hay scroll horizontal ni en la
+  página ni en el diálogo del lick; los márgenes laterales del diálogo son de
+  19–20 px y el control más pequeño mide 25×25 px (el mínimo es 24).
+- **Hoja táctil:** a 375 px la hoja empieza 10 px por debajo del pulso
+  seleccionado, que se sube antes al 30 % de la pantalla si estaba abajo; la
+  fila de trastes muestra 0–24.
+- **Recorrido del vídeo (14.2):** seleccionar, teclear traste, abrir la paleta,
+  cambiar duración, puntillo, palm mute, insertar y duplicar compás, deshacer y
+  rehacer, copiar y pegar un pulso (4 → 5 pulsos) y reproducir desde el pulso:
+  todo verificado en el diálogo real del lick. La ligadura se comprobó por
+  unidad y por el estado deshabilitado de la paleta cuando no hay nota anterior.
+- **Bandera apagada:** con `NEXT_PUBLIC_TAB_EDITOR=0` la ficha de canción no
+  monta ni el editor ni el lienzo.
+- **Pendiente manual:** pasada con VoiceOver y con el iPhone real. El servidor
+  HTTPS local y el perfil de confianza ya están preparados.

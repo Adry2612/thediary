@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   TAB_PALETTE,
+  TAB_PALETTE_GROUPS,
   getPaletteShortcuts,
   getPaletteState,
 } from "../src/utils/tab-score/palette.ts";
@@ -141,4 +142,12 @@ test("every shortcut is unique and the catalogue has no repeated ids", () => {
 
   const ids = new Set(TAB_PALETTE.map((option) => option.id));
   assert.equal(ids.size, TAB_PALETTE.length);
+});
+
+test("every group of the catalogue is rendered in the palette", () => {
+  const groups = new Set(TAB_PALETTE.map((option) => option.group));
+  for (const group of groups) {
+    assert.ok(TAB_PALETTE_GROUPS.includes(group), group);
+  }
+  assert.ok(groups.has("tie"));
 });

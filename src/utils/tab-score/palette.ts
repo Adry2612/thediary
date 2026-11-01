@@ -7,6 +7,15 @@ import {
   type TabSelection,
 } from "./selection.ts";
 
+export const TAB_PALETTE_GROUPS = [
+  "duration",
+  "rhythm",
+  "tie",
+  "technique",
+  "bend",
+  "bar",
+] as const;
+
 export type TabPaletteGroup =
   | "duration"
   | "rhythm"

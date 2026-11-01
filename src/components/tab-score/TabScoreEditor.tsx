@@ -84,6 +84,7 @@ export function TabScoreEditor({
   const [speed, setSpeed] = useState(1);
   const [notePreview, setNotePreview] = useState(false);
   const [previewToken, setPreviewToken] = useState(0);
+  const [anchorVersion, setAnchorVersion] = useState(0);
   const playerRef = useRef<TabScorePlayerControls | null>(null);
   const [numerator, setNumerator] = useState("4");
   const [denominator, setDenominator] = useState<"2" | "4" | "8" | "16">("4");
@@ -129,6 +130,42 @@ export function TabScoreEditor({
     playerRef.current?.setSpeed(speed);
   }, [speed]);
 
+  /**
+   * En una hoja táctil el pulso debe quedar por encima de la hoja. Si el
+   * diálogo está desplazado y la selección queda abajo, se sube primero.
+   */
+  function liftSelectionAboveSheet() {
+    window.requestAnimationFrame(() => {
+      const marker = containerRef.current?.querySelector<HTMLElement>(
+        '[data-testid="tab-score-canvas"] .z-30',
+      );
+      if (!marker) return;
+      const rect = marker.getBoundingClientRect();
+      const target = window.innerHeight * 0.3;
+      if (rect.top <= target) return;
+      const scroller = marker.closest("dialog");
+      if (scroller) {
+        scroller.scrollBy({ top: rect.top - target, behavior: "instant" });
+      } else {
+        window.scrollBy({ top: rect.top - target, behavior: "instant" });
+      }
+      window.requestAnimationFrame(() => {
+        setAnchorVersion((version) => version + 1);
+      });
+    });
+  }
+
+  function togglePalette() {
+    setPaletteOpen((open) => {
+      const next = !open;
+      if (next) {
+        setAnchorVersion((version) => version + 1);
+        if (coarsePointer) liftSelectionAboveSheet();
+      }
+      return next;
+    });
+  }
+
   function maybePreview() {
     if (readNotePreview()) setPreviewToken((token) => token + 1);
   }
@@ -143,6 +180,7 @@ export function TabScoreEditor({
 
   function select(position: TabPosition, extend: boolean) {
     editor.dispatch({ type: "select", position, extend });
+    containerRef.current?.focus({ preventScroll: true });
   }
 
   function handlePaletteOption(option: TabPaletteOption) {
@@ -184,7 +222,7 @@ export function TabScoreEditor({
       editor.dispatch({ type: "setTempo", tempo: Number(tempoDraft) });
     }
     setForm(null);
-    containerRef.current?.focus();
+    containerRef.current?.focus({ preventScroll: true });
   }
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
@@ -265,8 +303,8 @@ export function TabScoreEditor({
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement;
-    if (target.closest("[data-tab-palette]")) return;
-    containerRef.current?.focus();
+    if (!target.closest('[data-testid="tab-score-canvas"]')) return;
+    containerRef.current?.focus({ preventScroll: true });
   }
 
   return (
@@ -319,7 +357,7 @@ export function TabScoreEditor({
           variant="ghost"
           data-palette-toggle
           aria-expanded={paletteOpen}
-          onClick={() => setPaletteOpen((open) => !open)}
+          onClick={togglePalette}
           className="ml-auto border-zinc-300 text-zinc-700 hover:bg-zinc-100"
         >
           {paletteText.options}
@@ -468,6 +506,7 @@ export function TabScoreEditor({
         onStatus={setStatus}
         onLayout={onLayout}
         onFocusBox={setAnchor}
+        focusBoxVersion={anchorVersion}
         playback
         previewRequest={
           notePreview
@@ -501,9 +540,9 @@ export function TabScoreEditor({
         }}
         onClose={() => {
           setPaletteOpen(false);
-          containerRef.current?.focus();
+          containerRef.current?.focus({ preventScroll: true });
         }}
-        returnFocus={() => containerRef.current?.focus()}
+        returnFocus={() => containerRef.current?.focus({ preventScroll: true })}
       />
 
       {form && (

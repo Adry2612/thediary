@@ -12,6 +12,8 @@ import { useI18nSection } from "@/i18n/I18nProvider";
 import type { Dict } from "@/i18n/dictionary";
 import {
   TAB_PALETTE,
+  TAB_PALETTE_GROUPS,
+  type TabPaletteGroup,
   type TabPaletteOption,
   type TabPaletteOptionState,
   type TabPaletteState,
@@ -20,20 +22,12 @@ import { TAB_MAX_FRET } from "@/types/tab-score";
 
 export type PaletteAnchor = { x: number; y: number; w: number; h: number };
 
-const GROUP_ORDER = [
-  "duration",
-  "rhythm",
-  "technique",
-  "bend",
-  "bar",
-] as const;
-
 const POPOVER_WIDTH = 340;
 const GAP = 12;
 const MARGIN = 8;
 
 function groupTitle(
-  group: (typeof GROUP_ORDER)[number],
+  group: TabPaletteGroup,
   text: Dict["tabPalette"],
 ): string {
   switch (group) {
@@ -41,6 +35,8 @@ function groupTitle(
       return text.durations;
     case "rhythm":
       return text.rhythm;
+    case "tie":
+      return text.ties;
     case "technique":
       return text.techniques;
     case "bend":
@@ -220,14 +216,21 @@ export function TabPalette({
       role="dialog"
       aria-label={text.options}
       onKeyDown={handleKeyDown}
-      style={style}
+      style={
+        mode === "sheet" && style
+          ? {
+              ...style,
+              paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))",
+            }
+          : style
+      }
       className={
         mode === "popover"
           ? "fixed z-50 overflow-y-auto rounded-xl border border-zinc-300 bg-white p-3 text-zinc-900 shadow-xl"
-          : "fixed z-50 overflow-y-auto rounded-t-2xl border-t border-zinc-300 bg-white p-3 pb-6 text-zinc-900 shadow-2xl"
+          : "fixed z-50 overflow-y-auto rounded-t-2xl border-t border-zinc-300 bg-white p-3 text-zinc-900 shadow-2xl"
       }
     >
-      <div className="mb-2 flex items-center justify-between">
+      <div className="sticky top-0 z-10 -mx-3 -mt-3 mb-2 flex items-center justify-between border-b border-zinc-200 bg-white px-3 py-2">
         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
           {text.options}
         </span>
@@ -262,7 +265,7 @@ export function TabPalette({
         </div>
       )}
 
-      {GROUP_ORDER.map((group) => {
+      {TAB_PALETTE_GROUPS.map((group) => {
         const options = TAB_PALETTE.filter((option) => option.group === group);
         if (options.length === 0) return null;
         return (
