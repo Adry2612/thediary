@@ -35,6 +35,11 @@
 - [x] 6.2 Rechazar con motivo las selecciones con menos pulsos que la subdivisión, las figuras distintas y las que cruzan compás; con más pulsos, agrupar los primeros N. Verificar en el selector.
 - [x] 6.3 Actualizar la spec, el diseño, la documentación y el recorrido del navegador: tres notas seleccionadas + tresillo forman un solo grupo con su silencio, no nueve huecos.
 
+## 7. Selección por notas
+
+- [x] 7.1 Añadir `getSelectedNotes`: cruza los pulsos del tramo con las cuerdas entre el ancla y el foco y devuelve solo las notas que existen. Verificar con tests de una cuerda, un rectángulo de cuerdas, pulsos vacíos y sin ancla.
+- [x] 7.2 Dibujar una caja por nota seleccionada en vez del bloque de pulso, manteniendo el resaltado por pulso solo cuando no hay notas. Verificar en el navegador arrastrando sobre tres notas y comprobando que se resaltan las tres, no los pulsos.
+
 ## Workflow follow-up
 
 - Aplicar después de archivar `add-score-tab-editor`; al archivar, comprobar que el requisito del tresillo de esa capacidad y el selector de subdivisiones de esta no se contradicen.

@@ -6,7 +6,7 @@ Para cambiar varias notas a la vez solo existe Mayús + clic o Mayús + flechas,
 
 ## What Changes
 
-- **Seleccionar un tramo arrastrando.** Pulsar sobre la pauta y arrastrar en horizontal marca todos los pulsos intermedios, con ratón o con el dedo; el tramo se resalta mientras se arrastra y Mayús + clic o flechas sigue funcionando. En táctil, el arrastre vertical sigue desplazando la página.
+- **Seleccionar notas arrastrando.** Pulsar sobre la pauta y arrastrar marca las notas que hay dentro del rectángulo —pulsos y cuerdas—, con ratón o con el dedo; se resalta cada nota, no el pulso entero, y Mayús + clic o flechas sigue funcionando. En táctil, el arrastre vertical sigue desplazando la página.
 - **Selector de subdivisión.** El grupo Ritmo abre un selector con tresillo, quintillo, seisillo, septillo, nonillo, decimillo y doceavo (3, 5, 6, 7, 9, 10 y 12).
 - Al elegir una subdivisión, **cada pulso seleccionado se parte en N huecos iguales sin cambiar la suma del compás**: el contenido actual queda en el primer hueco, los demás nacen como silencios y el cursor se coloca en el primero para escribir las N notas seguidas.
 - Si ya hay notas escritas, **seleccionar exactamente N pulsos los agrupa en una sola subdivisión**, una nota por hueco, y el tiempo liberado se añade como silencio al final del compás. Seleccionar tres notas y elegir tresillo forma un tresillo, no tres tresillos.

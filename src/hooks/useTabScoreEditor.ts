@@ -12,6 +12,7 @@ import {
   getSelectedBeats,
   tabScoreEditorReducer,
 } from "@/utils/tab-score/editor-state";
+import { getSelectedNotes } from "@/utils/tab-score/selection";
 
 /**
  * Estado del editor de partituras: partitura, selección, historial y búfer del
@@ -52,6 +53,7 @@ export function useTabScoreEditor({
     selectionVisible: state.selectionVisible,
     error: state.error,
     selectedBeats: getSelectedBeats(state),
+    selectedNotes: getSelectedNotes(state.score, state.selection),
     canUndo: canUndo(state.history),
     canRedo: canRedo(state.history),
     dispatch,

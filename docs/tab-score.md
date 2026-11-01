@@ -93,14 +93,19 @@ La partitura ocupa todo el ancho de la columna. Dentro del lienzo:
 - en táctil la paleta es una hoja inferior con los trastes 0–24 y se coloca
   por debajo del pulso, reservando espacio para poder subirlo.
 
-### Seleccionar un tramo
+### Seleccionar notas
 
-Arrastrar en horizontal sobre la pauta marca todos los pulsos entre el punto de
-inicio y el final; el tramo se resalta y la paleta aplica sus cambios a todos los
-pulsos seleccionados. Con teclado, Mayús + clic y Mayús + flechas hacen lo
-mismo. En táctil el arrastre vertical sigue desplazando la página (`touch-action:
-pan-y`), el doble toque y la pulsación larga siguen abriendo el menú de la nota y
-un arrastre no lo abre.
+Arrastrar sobre la pauta marca **las notas** que quedan dentro del rectángulo
+entre el punto de inicio y el final: los pulsos intermedios y las cuerdas entre
+el ancla y el foco. Se resalta cada nota seleccionada, no el pulso entero; si el
+tramo no tiene notas (solo silencios), se resalta el pulso para no perder la
+selección. La paleta aplica los cambios de ritmo a los pulsos de esas notas y
+las técnicas a la cuerda enfocada.
+
+Con teclado, Mayús + clic y Mayús + flechas hacen lo mismo. En táctil el
+arrastre vertical sigue desplazando la página (`touch-action: pan-y`), el doble
+toque y la pulsación larga siguen abriendo el menú de la nota y un arrastre no lo
+abre.
 
 ### Escribir en cualquier punto
 

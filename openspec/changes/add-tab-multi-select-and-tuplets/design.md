@@ -64,10 +64,13 @@ Con 960 ticks por negra, un pulso de negra dividido en 7 o 9 no da ticks enteros
 - Alternativa descartada: subir la resolución de ticks. Cambia el modelo, AlphaTex y la reproducción para un caso raro.
 - Alternativa descartada: rechazar 7 y 9. El usuario las pidió y alphaTab las dibuja.
 
-### 4. Arrastrar para seleccionar
+### 4. Arrastrar para seleccionar notas
 
-En el lienzo, `pointerdown` sigue seleccionando el pulso de origen. Si el puntero se mueve más de 8 px en horizontal, se marca `dragging` y cada movimiento despacha `select` con `extend` hacia el pulso actual; `pointerup` termina y limpia el estado. El tramo se ve con el resaltado de `selectedBeats` que ya existe.
+En el lienzo, `pointerdown` sigue seleccionando el pulso de origen. Si el puntero se mueve más de 8 px en horizontal, se marca `dragging` y cada movimiento despacha `select` con `extend` hacia el pulso y la cuerda actuales; `pointerup` termina y limpia el estado.
 
+El tramo sigue siendo un rectángulo de pulsos por cuerdas, pero **lo que se resalta son las notas**: `getSelectedNotes` cruza los pulsos del tramo con el rango de cuerdas entre el ancla y el foco y devuelve solo las notas que existen. El lienzo dibuja una caja por nota; si el tramo no tiene notas (solo silencios), cae al resaltado por pulso para no perder la selección. Así el arrastre no marca bloques de pulso.
+
+- El tuplet y las operaciones de ritmo siguen usando los pulsos de las notas seleccionadas; las técnicas pueden ampliarse a todas las cuerdas del rectángulo en otro cambio.
 - `touch-action: pan-y` en la capa interactiva: el arrastre vertical lo sigue gestionando el navegador (desplaza la página) y el horizontal es nuestro.
 - Un arrastre cancela la pulsación larga y no dispara el doble toque; soltar tras arrastrar no abre el menú ni escribe.
 - Mayús + clic y Mayús + flechas se quedan como alternativa de teclado.

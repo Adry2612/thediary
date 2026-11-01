@@ -85,6 +85,7 @@ export function TabScoreCanvas({
   playback = false,
   selection,
   selectedBeats = [],
+  selectedNotes = [],
   previewRequest,
   onSelect,
   onNoteMenu,
@@ -105,6 +106,7 @@ export function TabScoreCanvas({
   playback?: boolean;
   selection?: TabSelection;
   selectedBeats?: { bar: number; beat: number }[];
+  selectedNotes?: { bar: number; beat: number; string: number }[];
   previewRequest?: TabScorePreviewRequest | null;
   onSelect?: (
     position: { bar: number; beat: number; string: number },
@@ -716,28 +718,58 @@ export function TabScoreCanvas({
 
         {interactive &&
           selection &&
-          selectedBeats.map(({ bar, beat }) => {
-            const barLayout = layout.find((entry) => entry.index === bar);
-            const beatLayout = barLayout?.beats.find(
-              (entry) => entry.index === beat,
-            );
-            if (!barLayout || !beatLayout) return null;
-            const isFocus = bar === selection.bar && beat === selection.beat;
-            if (isFocus) return null;
-            return (
-              <div
-                key={`${bar}:${beat}`}
-                aria-hidden="true"
-                className="pointer-events-none absolute z-20 rounded-sm bg-emerald-500/20"
-                style={{
-                  left: beatLayout.x,
-                  top: beatLayout.y,
-                  width: beatLayout.w,
-                  height: beatLayout.h,
-                }}
-              />
-            );
-          })}
+          (selectedNotes.length > 0
+            ? selectedNotes.map(({ bar, beat, string }) => {
+                if (
+                  bar === selection.bar &&
+                  beat === selection.beat &&
+                  string === selection.string
+                ) {
+                  return null;
+                }
+                const barLayout = layout.find((entry) => entry.index === bar);
+                const beatLayout = barLayout?.beats.find(
+                  (entry) => entry.index === beat,
+                );
+                const box = beatLayout?.notes.get(string);
+                if (!box) return null;
+                return (
+                  <div
+                    key={`${bar}:${beat}:${string}`}
+                    aria-hidden="true"
+                    className="pointer-events-none absolute z-20 rounded-sm bg-emerald-500/25"
+                    style={{
+                      left: box.x,
+                      top: box.y,
+                      width: box.w,
+                      height: box.h,
+                    }}
+                  />
+                );
+              })
+            : selectedBeats.map(({ bar, beat }) => {
+                const barLayout = layout.find((entry) => entry.index === bar);
+                const beatLayout = barLayout?.beats.find(
+                  (entry) => entry.index === beat,
+                );
+                if (!barLayout || !beatLayout) return null;
+                const isFocus =
+                  bar === selection.bar && beat === selection.beat;
+                if (isFocus) return null;
+                return (
+                  <div
+                    key={`${bar}:${beat}`}
+                    aria-hidden="true"
+                    className="pointer-events-none absolute z-20 rounded-sm bg-emerald-500/20"
+                    style={{
+                      left: beatLayout.x,
+                      top: beatLayout.y,
+                      width: beatLayout.w,
+                      height: beatLayout.h,
+                    }}
+                  />
+                );
+              }))}
 
         {interactive && focusBox && (
           <div

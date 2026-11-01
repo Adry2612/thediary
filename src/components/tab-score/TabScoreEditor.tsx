@@ -656,6 +656,7 @@ export function TabScoreEditor({
         interactive
         selection={editor.selectionVisible ? editor.selection : undefined}
         selectedBeats={editor.selectionVisible ? editor.selectedBeats : []}
+        selectedNotes={editor.selectionVisible ? editor.selectedNotes : []}
         onSelect={select}
         onNoteMenu={openNoteMenu}
         onStatus={setStatus}

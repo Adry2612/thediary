@@ -97,6 +97,34 @@ export function getRangeBeats(
   return positions;
 }
 
+/** Notas cubiertas por la selección: pulsos del tramo y cuerdas entre ancla y foco. */
+export function getSelectedNotes(
+  score: Pick<TabScore, "bars">,
+  selection: TabSelection,
+): { bar: number; beat: number; string: number }[] {
+  const focus = {
+    bar: selection.bar,
+    beat: selection.beat,
+    string: selection.string,
+  };
+  const other = selection.anchor ?? focus;
+  const firstString = Math.min(other.string, focus.string);
+  const lastString = Math.max(other.string, focus.string);
+  const notes: { bar: number; beat: number; string: number }[] = [];
+
+  for (const position of getRangeBeats(score, selection)) {
+    const beat = getBeatAt(score, position.bar, position.beat);
+    if (!beat) continue;
+    for (const note of beat.notes) {
+      if (note.string >= firstString && note.string <= lastString) {
+        notes.push({ ...position, string: note.string });
+      }
+    }
+  }
+
+  return notes;
+}
+
 function firstBeatBar(
   bars: TabBar[],
   from: number,

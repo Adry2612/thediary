@@ -2,17 +2,25 @@
 
 ## Purpose
 
-Lets the user mark a range of beats by dragging over the staff and divide the selected beats into irregular subdivisions such as triplets and quintuplets while the bar keeps its total length.
+Lets the user mark a group of notes by dragging over the staff and turn those notes into irregular subdivisions such as triplets and quintuplets while the bar keeps its total length.
 
 ## ADDED Requirements
 
-### Requirement: A range of beats can be marked by dragging
+### Requirement: A group of notes can be marked by dragging
 
-The system SHALL mark a range of consecutive beats when the user presses over the staff and drags horizontally with a mouse or a finger, SHALL highlight the range while dragging, SHALL keep Shift + click and Shift + arrows as alternatives, SHALL keep vertical scrolling on touch, and SHALL NOT write a note or open the note menu after a drag.
+The system SHALL mark the notes inside the rectangle dragged over the staff —the beats between the start and the end and the strings between them—, SHALL highlight each selected note instead of the whole beat, SHALL keep Shift + click and Shift + arrows as alternatives, SHALL keep vertical scrolling on touch, and SHALL NOT write a note or open the note menu after a drag.
 
-#### Scenario: Dragging across the staff
-- **WHEN** the user presses on the first beat and drags horizontally to the third beat
-- **THEN** the three beats are marked as the selection and shown highlighted
+#### Scenario: Dragging over three notes
+- **WHEN** the user presses on the first note and drags to the third note on the same string
+- **THEN** those three notes are highlighted and no other note is marked
+
+#### Scenario: Dragging across strings
+- **WHEN** the drag covers more than one string
+- **THEN** every note inside that rectangle is highlighted
+
+#### Scenario: Empty beats
+- **WHEN** the drag crosses a beat with no note on the selected strings
+- **THEN** that beat is not highlighted as a note
 
 #### Scenario: A click still selects one beat
 - **WHEN** the user presses and releases without moving past the drag threshold
@@ -20,7 +28,7 @@ The system SHALL mark a range of consecutive beats when the user presses over th
 
 #### Scenario: Dragging across bars
 - **WHEN** the drag ends on a later bar
-- **THEN** the selection covers every beat between the start and the end, across the bar line
+- **THEN** the selection covers the notes between the start and the end, across the bar line
 
 #### Scenario: Touch scrolling
 - **WHEN** the user drags vertically over the staff on a touch screen
