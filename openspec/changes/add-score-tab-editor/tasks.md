@@ -69,8 +69,8 @@
 
 ## 12. Retirada del editor antiguo
 
-- [ ] 12.1 Borrar `TabEditor`, `TabView`, `TabTechniquePicker`, `TabPlaybackBar`, `useTabEditorSelection`, `useTabPlayback` y la lógica de rejilla de `src/utils/repertoire-tab.ts`, conservando lo que la migración necesita (lectura y normalización de la rejilla). Actualizar o reemplazar `tests/repertoire-tab.test.mjs`, `tests/tab-playback.test.mjs`, `tests/licks-tab-text.test.mjs` y `tests/licks-tab-highlight.test.mjs`. Verificar con `grep` que no quedan importaciones rotas y con `npm run typecheck && npm test`.
-- [ ] 12.2 Documentar en `docs/tab-score.md` el modelo, la tabla de AlphaTex, cómo añadir una técnica y la regla de no tocar `tab`. Verificar que cada afirmación coincide con el código y con los tests.
+- [x] 12.1 Borrar `TabEditor`, `TabView`, `TabTechniquePicker`, `TabPlaybackBar`, `useTabEditorSelection`, `useTabPlayback` y la lógica de rejilla de `src/utils/repertoire-tab.ts`, conservando lo que la migración necesita (lectura y normalización de la rejilla). Actualizar o reemplazar `tests/repertoire-tab.test.mjs`, `tests/tab-playback.test.mjs`, `tests/licks-tab-text.test.mjs` y `tests/licks-tab-highlight.test.mjs`. Verificar con `grep` que no quedan importaciones rotas y con `npm run typecheck && npm test`.
+- [x] 12.2 Documentar en `docs/tab-score.md` el modelo, la tabla de AlphaTex, cómo añadir una técnica y la regla de no tocar `tab`. Verificar que cada afirmación coincide con el código y con los tests.
 
 ## 13. Accesibilidad y pantallas pequeñas
 
