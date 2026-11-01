@@ -1163,9 +1163,9 @@ export const es: Dict = {
     writeTitle: 'Escribe un traste',
     writeBody:
       'Con el teclado, escribe un número del 0 al 24, por ejemplo 5. La nota aparece en el punto y la cuerda donde has hecho clic.',
-    chordTitle: 'Añade una segunda nota',
-    chordBody:
-      'Pulsa ↑ o ↓ para cambiar de cuerda y escribe otro traste. Las dos notas suenan juntas: acabas de escribir un acorde.',
+    nextTitle: 'Escribe la siguiente',
+    nextBody:
+      'Escribe otro número, por ejemplo 7. La nota cae en el hueco siguiente sin volver a hacer clic. Así se escribe la frase seguida.',
     menuTitle: 'Abre el menú de la nota',
     menuBody:
       'Haz doble clic, clic derecho o pulsación larga sobre la nota. También vale el botón de opciones de arriba. El menú se abre junto a la nota.',

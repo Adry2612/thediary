@@ -604,8 +604,8 @@ export type Dict = {
     selectBody: string;
     writeTitle: string;
     writeBody: string;
-    chordTitle: string;
-    chordBody: string;
+    nextTitle: string;
+    nextBody: string;
     menuTitle: string;
     menuBody: string;
     durationTitle: string;

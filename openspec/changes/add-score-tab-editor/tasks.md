@@ -111,6 +111,13 @@
 - [x] 19.3 Conservar el punto del clic al abrir el menú en táctil, actualizar el tutorial (paso de mover) y las cadenas de `tabPalette` y `tabTutorial` en `es.ts`, `en.ts` y `dictionary.ts`.
 - [x] 19.4 Actualizar `docs/tab-score.md` y ejecutar `npm run typecheck`, `npm test` y `npm run build`; recorrer en el navegador clic en hueco + traste, clic en nota + traste, doble clic y mover, táctil y deshacer.
 
+## 20. Escribir seguido
+
+- [x] 20.1 Escribir la primera nota de un compás vacío como negra, preparar el hueco siguiente con el tamaño de la nota escrita y avanzar el cursor al terminar el traste; esperar con 1 y 2 la segunda cifra y avanzar al instante con 0 y 3–9. Verificar con tests de 0+3, 5+5, 12, 24, 25, negra, compás lleno y deshacer.
+- [x] 20.2 Al llegar al final del compás, saltar al siguiente y crearlo si no existe, con su primer hueco preparado al tamaño de la nota. Verificar con tests de varios compases y del límite de compases.
+- [x] 20.3 Actualizar el tutorial (paso «Escribe seguido»), `docs/tab-score.md` y las cadenas de `tabTutorial` en `es.ts`, `en.ts` y `dictionary.ts`.
+- [x] 20.4 Ejecutar `npm run typecheck`, `npm test` y `npm run build`; recorrer en el navegador `5 7 8 5`, un traste de dos cifras, el final del compás, el menú de duración, deshacer y táctil.
+
 ## Workflow follow-up
 
 - Archivar `add-score-tab-editor` antes que `add-score-tab-notation-extras`, que la amplía.

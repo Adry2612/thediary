@@ -88,7 +88,6 @@ export function TabScoreEditor({
   });
   const [speed, setSpeed] = useState(1);
   const [notePreview, setNotePreview] = useState(false);
-  const [previewToken, setPreviewToken] = useState(0);
   const [anchorVersion, setAnchorVersion] = useState(0);
   const playerRef = useRef<TabScorePlayerControls | null>(null);
   const savedPadding = useRef<string | null>(null);
@@ -198,9 +197,18 @@ export function TabScoreEditor({
     });
   }
 
-  function maybePreview() {
-    if (readNotePreview()) setPreviewToken((token) => token + 1);
-  }
+  // Espera breve tras 1 o 2 por si el traste es 10–24. El resto de cifras
+  // avanza al instante desde el reductor.
+  useEffect(() => {
+    if (paletteOpen) return;
+    if (editor.buffer !== "1" && editor.buffer !== "2") return;
+
+    const timer = window.setTimeout(
+      () => editor.dispatch({ type: "advance" }),
+      500,
+    );
+    return () => window.clearTimeout(timer);
+  }, [editor.buffer, editor.dispatch, paletteOpen]);
 
   /** Abre el menú de una nota allí donde se ha pulsado, sin ir a «Opciones». */
   function openNoteMenu(hit: TabScoreHit) {
@@ -345,7 +353,6 @@ export function TabScoreEditor({
     if (/^[0-9]$/.test(key)) {
       event.preventDefault();
       editor.dispatch({ type: "digit", digit: key });
-      maybePreview();
       return;
     }
 
@@ -615,12 +622,12 @@ export function TabScoreEditor({
         focusBoxVersion={anchorVersion}
         playback
         previewRequest={
-          notePreview
+          notePreview && editor.lastNote
             ? {
-                bar: editor.selection.bar,
-                beat: editor.selection.beat,
-                string: editor.selection.string,
-                token: previewToken,
+                bar: editor.lastNote.bar,
+                beat: editor.lastNote.beat,
+                string: editor.lastNote.string,
+                token: editor.previewSeq,
               }
             : null
         }
@@ -642,7 +649,6 @@ export function TabScoreEditor({
           for (const digit of String(Math.min(fret, TAB_MAX_FRET))) {
             editor.dispatch({ type: "digit", digit });
           }
-          maybePreview();
         }}
         onClose={() => {
           setPaletteOpen(false);

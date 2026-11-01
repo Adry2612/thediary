@@ -293,6 +293,39 @@ activado.
 - El foco de la paleta usa `preventScroll` para no devolver la página al
   principio al abrirla.
 
+## Escribir seguido (20)
+
+- **La nota se escribe primero; la duración se cuadra después.** Al escribir un
+  traste solo se mira el hueco actual, nunca se pide una figura antes. El menú
+  de la nota sigue siendo el sitio para cambiar la duración.
+- **Siempre queda un hueco detrás.** Antes de escribir, un silencio mayor que
+  una negra se parte en mitades hasta que el primer trozo es una negra (960
+  ticks). Así la primera nota de un compás vacío no se come el compás entero y
+  el cursor puede avanzar. Después de escribir, el silencio siguiente se parte
+  igual hasta que su primer trozo mide lo mismo que la nota.
+  - Alternativa descartada: escribir una redonda en el compás vacío. Dejaría el
+    compás lleno y el segundo número sobrescribiría la nota.
+  - Alternativa descartada: partir la nota ya escrita para hacer sitio. La nota
+    cambiaría de duración después de escribirla.
+- **El avance espera solo cuando hace falta.** Con `1` y `2` la nota se escribe
+  al instante, pero el cursor espera 500 ms por si llega la segunda cifra de un
+  traste 10–24; el temporizador vive en `TabScoreEditor` y despacha `advance`.
+  Con `0` y del `3` al `9` no puede haber segunda cifra: se avanza al momento.
+  Un `2` seguido de `5` cierra el `2` y escribe el `5` en el hueco siguiente.
+  - Alternativa descartada: esperar siempre la segunda cifra. Un `5` se quedaría
+    escrito sin avanzar y la escritura seguiría sin ser seguida.
+- **El avance pertenece a la misma edición.** La preparación del hueco siguiente
+  se calcula antes de apilar el historial, así que deshacer quita la nota, el
+  hueco preparado y el compás creado, si lo hubo, en un solo paso. Los dos
+  dígitos de un traste siguen compartiendo `coalesceKey`.
+- **Final del compás.** Si hay compás siguiente, el cursor salta a su primer
+  pulso; si no, se crea uno con `addBar` y se prepara su primer hueco con el
+  tamaño de la última nota. El límite de 64 compases devuelve `barLimit` y deja
+  el cursor donde estaba.
+- La vista previa de sonido usa `lastNote` (la posición de la nota recién
+  escrita), no la selección actual: con el avance automático la selección ya es
+  el hueco siguiente y sonaría vacío.
+
 ## Colocación libre y mover notas (19)
 
 - **El clic guarda una fracción, no una columna.** `TabScoreHit` añade la

@@ -178,6 +178,30 @@ The system SHALL offer moving the selected beat one position left or right insid
 - **WHEN** the user moves a beat with a different duration than its neighbour
 - **THEN** the bar keeps its total length and is not flagged
 
+### Requirement: Notes can be written in sequence
+
+The system SHALL write the first note of an empty bar as a quarter note, SHALL prepare the next slot with the same duration as the note just written, SHALL move the cursor to that slot once the fret is complete, SHALL keep the bar adding up, SHALL jump to the next bar when the current bar ends and create one if it does not exist, SHALL wait briefly after a first digit of 1 or 2 so that frets from 10 to 24 can be typed, and SHALL advance immediately after 0 and 3 to 9.
+
+#### Scenario: Writing a riff
+- **WHEN** the user clicks at the start of an empty bar and types 5, 7, 8 and 5
+- **THEN** four quarter notes fill the bar and each digit leaves the cursor on the next slot
+
+#### Scenario: Two-digit fret
+- **WHEN** the user types 1 and then 2 before the pause ends
+- **THEN** the same note becomes fret 12 and the cursor moves once to the next slot
+
+#### Scenario: Digits that cannot start a two-digit fret
+- **WHEN** the user types 0 and then 3
+- **THEN** the bar gets fret 0 and then fret 3, one after the other
+
+#### Scenario: End of the bar
+- **WHEN** the user writes a note on the last beat of the last bar
+- **THEN** a new bar is created and the cursor waits on its first slot with the same duration
+
+#### Scenario: Undo
+- **WHEN** the user undoes a note written in sequence
+- **THEN** the note and the slot prepared for it disappear in one step, along with any bar created with it
+
 ### Requirement: The duration of a beat can be set from whole to sixty-fourth
 
 The system SHALL let the user set the duration of the selected beats from a whole note to a sixty-fourth note, with an optional dot or as a triplet, and SHALL change only the durations of the selected beats.

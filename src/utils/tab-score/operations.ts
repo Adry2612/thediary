@@ -24,7 +24,11 @@ import {
   createTabId,
   getStringCount,
 } from "./model.ts";
-import { getTimeSignatureTicks, resolveTimeSignature } from "./ticks.ts";
+import {
+  getBeatTicks,
+  getTimeSignatureTicks,
+  resolveTimeSignature,
+} from "./ticks.ts";
 import {
   clampSelection,
   getBeatAt,
@@ -375,6 +379,72 @@ export function moveBeat(
     score: next,
     selection: clampSelection(next, { ...selection, beat: target }),
   };
+}
+
+/**
+ * Parte un silencio en mitades hasta que su primer trozo cabe en `maxTicks`.
+ * Deja siempre un hueco del tamaño adecuado detrás de la nota escrita.
+ */
+export function fitRestBeat(
+  score: TabScore,
+  bar: number,
+  beat: number,
+  maxTicks: number,
+): TabScore {
+  let next = score;
+
+  // Seis mitades bastan para bajar de una redonda a una semifusa.
+  for (let step = 0; step < 6; step++) {
+    const current = next.bars[bar]?.beats[beat];
+    if (!current?.rest) break;
+    if (getBeatTicks(current) <= maxTicks) break;
+
+    const split = splitBeat(next, { bar, beat, string: 0 });
+    if ("error" in split) break;
+    next = split.score;
+  }
+
+  return next;
+}
+
+/**
+ * Deja el cursor en el hueco siguiente al de la nota escrita, con el mismo
+ * tamaño que esa nota. Si el compás se ha terminado, pasa al siguiente y lo
+ * crea cuando no existe.
+ */
+export function advanceAfterWrite(
+  score: TabScore,
+  selection: TabSelection,
+): TabOperationResult {
+  const bar = score.bars[selection.bar];
+  const beat = bar?.beats[selection.beat];
+  if (!bar || !beat) return { error: "noSelection" };
+
+  const size = getBeatTicks(beat);
+  const nextBeat = selection.beat + 1;
+
+  if (nextBeat < bar.beats.length) {
+    const next = fitRestBeat(score, selection.bar, nextBeat, size);
+    return {
+      score: next,
+      selection: clampSelection(next, { ...selection, beat: nextBeat }),
+    };
+  }
+
+  const nextBar = selection.bar + 1;
+  if (nextBar < score.bars.length) {
+    const next = fitRestBeat(score, nextBar, 0, size);
+    return {
+      score: next,
+      selection: clampSelection(next, { ...selection, bar: nextBar, beat: 0 }),
+    };
+  }
+
+  const added = addBar(score, selection);
+  if ("error" in added) return { score, selection: { ...selection } };
+
+  const next = fitRestBeat(added.score, added.selection.bar, 0, size);
+  return { score: next, selection: clampSelection(next, added.selection) };
 }
 
 export function setDots(

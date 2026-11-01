@@ -26,7 +26,7 @@ test("describes the action steps in order and ends in done", () => {
   assert.deepEqual(TAB_TUTORIAL_STEPS, [
     "select",
     "write",
-    "chord",
+    "next",
     "menu",
     "duration",
     "move",
@@ -63,12 +63,12 @@ test("a note that was already there does not complete the write step", () => {
   );
 });
 
-test("the chord step waits for a new note on the selected beat", () => {
+test("the next step waits for one more written note", () => {
   const one = score([beat({ rest: false, notes: [{ string: 0, fret: 5 }] })]);
   const snapshot = snapshotTutorial(one, selection, false);
 
   assert.equal(
-    checkTutorialStep("chord", snapshot, {
+    checkTutorialStep("next", snapshot, {
       score: one,
       selection,
       paletteOpen: false,
@@ -77,18 +77,13 @@ test("the chord step waits for a new note on the selected beat", () => {
   );
 
   const two = score([
-    beat({
-      rest: false,
-      notes: [
-        { string: 0, fret: 5 },
-        { string: 1, fret: 7 },
-      ],
-    }),
+    beat({ rest: false, notes: [{ string: 0, fret: 5 }] }),
+    beat({ id: "beat-b", rest: false, notes: [{ string: 0, fret: 7 }] }),
   ]);
   assert.equal(
-    checkTutorialStep("chord", snapshot, {
+    checkTutorialStep("next", snapshot, {
       score: two,
-      selection,
+      selection: { bar: 0, beat: 1, string: 0 },
       paletteOpen: false,
     }).advance,
     true,

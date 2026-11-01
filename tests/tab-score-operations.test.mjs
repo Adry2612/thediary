@@ -3,10 +3,12 @@ import test from "node:test";
 import {
   applyTechnique,
   addBar,
+  advanceAfterWrite,
   deleteBar,
   deleteBeat,
   deleteNote,
   duplicateBar,
+  fitRestBeat,
   insertBarAfter,
   moveBeat,
   setDots,
@@ -25,6 +27,7 @@ import {
   getBarTicks,
   getScoreBarFill,
 } from "../src/utils/tab-score/ticks.ts";
+import { TAB_TICKS_PER_QUARTER } from "../src/types/tab-score.ts";
 
 function beat(overrides = {}) {
   return { id: "beat-a", duration: 4, notes: [], rest: true, ...overrides };
@@ -387,6 +390,75 @@ test("moves a beat between its neighbours and stops at the edges", () => {
     moveBeat(base, { bar: 0, beat: 2, string: 0 }, "right"),
     { error: "cannotMove" },
   );
+});
+
+test("fits a whole rest into quarter notes so a write has a next slot", () => {
+  const value = score([beat({ duration: 1 })]);
+  const fitted = fitRestBeat(value, 0, 0, TAB_TICKS_PER_QUARTER);
+
+  assert.deepEqual(
+    fitted.bars[0].beats.map((entry) => entry.duration),
+    [4, 4, 2],
+  );
+  assert.equal(getBarTicks(fitted.bars[0]), getBarTicks(value.bars[0]));
+});
+
+test("advances to the next beat and splits the rest to the same size", () => {
+  const value = score([
+    beat({ rest: false, notes: [{ string: 0, fret: 5 }] }),
+    beat({ id: "beat-b", duration: 2 }),
+  ]);
+  const result = advanceAfterWrite(value, { bar: 0, beat: 0, string: 0 });
+
+  assert.equal(isError(result), false);
+  assert.deepEqual(result.selection, { bar: 0, beat: 1, string: 0 });
+  assert.deepEqual(
+    result.score.bars[0].beats.map((entry) => entry.duration),
+    [4, 4, 4],
+  );
+  assert.equal(
+    getBarTicks(result.score.bars[0]),
+    getBarTicks(value.bars[0]),
+  );
+});
+
+test("advances into the next bar and prepares its first slot", () => {
+  const value = {
+    version: 2,
+    tuning: "EADGBE",
+    tempo: 90,
+    bars: [
+      { id: "bar-a", beats: [beat({ rest: false, notes: [{ string: 0, fret: 5 }] })] },
+      { id: "bar-b", beats: [beat({ id: "beat-b", duration: 1 })] },
+    ],
+  };
+  const result = advanceAfterWrite(value, { bar: 0, beat: 0, string: 2 });
+
+  assert.equal(isError(result), false);
+  assert.deepEqual(result.selection, { bar: 1, beat: 0, string: 2 });
+  assert.deepEqual(
+    result.score.bars[1].beats.map((entry) => entry.duration),
+    [4, 4, 2],
+  );
+});
+
+test("creates a bar at the end and stops at the bar limit", () => {
+  const value = score([beat({ rest: false, notes: [{ string: 0, fret: 5 }] })]);
+  const created = advanceAfterWrite(value, { bar: 0, beat: 0, string: 0 });
+
+  assert.equal(isError(created), false);
+  assert.equal(created.score.bars.length, 2);
+  assert.deepEqual(created.selection, { bar: 1, beat: 0, string: 0 });
+
+  const bars = Array.from({ length: 64 }, (_, index) => ({
+    id: `bar-${index}`,
+    beats: [beat({ rest: false, notes: [{ string: 0, fret: 1 }] })],
+  }));
+  const full = { version: 2, tuning: "EADGBE", tempo: 90, bars };
+  const atLimit = advanceAfterWrite(full, { bar: 63, beat: 0, string: 0 });
+
+  assert.equal(atLimit.score.bars.length, 64);
+  assert.deepEqual(atLimit.selection, { bar: 63, beat: 0, string: 0 });
 });
 
 test("moves the selection across beats, bars and strings", () => {

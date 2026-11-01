@@ -84,7 +84,7 @@ La partitura ocupa todo el ancho de la columna. Dentro del lienzo:
 - un clic o un toque seleccionan la cuerda y el punto horizontal; si el punto
   cae lejos de una nota, la primera cifra crea el hueco justo ahí;
 - las flechas mueven la selección, Mayús la extiende y los dígitos escriben el
-  traste (0–24, con dos cifras);
+  traste (0–24, con dos cifras) y avanzan al hueco siguiente;
 - un doble clic, un clic derecho o una pulsación larga abren la paleta de esa
   posición sin pasar por el botón «Opciones»; desde ahí se elige la duración,
   el silencio, las ligaduras y las técnicas de la selección;
@@ -102,6 +102,27 @@ acorde). Si cae en el primer 18 % del pulso, se escribe al inicio sin partir.
 En táctil el punto se conserva al abrir el menú con doble toque o pulsación
 larga: al elegir el traste en la hoja, la nota cae donde se tocó, no al inicio
 del pulso.
+
+### Escribir seguido
+
+Con la nota ya escrita no hace falta volver al ratón: el cursor salta al hueco
+siguiente, del mismo tamaño, y se puede escribir la frase con números seguidos
+(`5 7 8 5`).
+
+- En un compás vacío la primera nota es una **negra**: así no se come el compás y
+  siempre queda sitio detrás. Si la nota cae en un silencio mayor, el editor lo
+  parte en mitades hasta dejar un hueco del tamaño de la negra.
+- Después de escribir, el silencio siguiente se parte igual hasta que su primer
+  trozo mide lo mismo que la nota, y el cursor se coloca ahí.
+- `1` y `2` esperan medio segundo por si el traste es de dos cifras (10–24); `0`
+  y del `3` al `9` avanzan al instante. Un `2` seguido de `5` cierra el `2` y
+  escribe el `5` en el hueco siguiente.
+- Al terminar el compás, el cursor pasa al siguiente; si no existe, se crea. Al
+  llegar a los 64 compases se queda donde está.
+- La preparación del hueco siguiente y la nota comparten un solo paso de
+  deshacer, también cuando el paso crea un compás.
+- La duración se cambia después desde el menú de la nota; la vista previa suena
+  la nota recién escrita, no el hueco siguiente.
 
 ### Mover una nota
 
@@ -148,10 +169,11 @@ resalta su zona con `tour-highlight` y avanza solo cuando ocurre la acción:
 1. clic o toque dentro de la pauta;
 2. un traste escrito (se compara la identidad del `score`, así que también
    vale cambiar el traste de una nota que ya existía);
-3. una segunda nota en el mismo pulso (acorde);
+3. otra nota escrita seguida, que deja el cursor en el hueco siguiente;
 4. el menú de la nota abierto;
 5. una duración distinta en el pulso seleccionado;
-6. un pulso más en el compás, es decir, «Dividir pulso».
+6. mover la nota a otro pulso con el grupo **Posición**;
+7. un pulso más en el compás, es decir, «Dividir pulso».
 
 La detección usa una foto del estado tomada al entrar en cada paso, no valores
 absolutos: una partitura que ya tenía notas no salta pasos sola. «Saltar paso»

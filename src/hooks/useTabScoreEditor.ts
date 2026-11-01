@@ -47,6 +47,8 @@ export function useTabScoreEditor({
     score: state.score,
     selection: state.selection,
     buffer: state.buffer,
+    lastNote: state.lastNote,
+    previewSeq: state.previewSeq ?? 0,
     selectionVisible: state.selectionVisible,
     error: state.error,
     selectedBeats: getSelectedBeats(state),

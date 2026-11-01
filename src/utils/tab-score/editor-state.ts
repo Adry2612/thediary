@@ -1,4 +1,5 @@
 import type { TabScore } from "../../types/tab-score.ts";
+import { TAB_TICKS_PER_QUARTER } from "../../types/tab-score.ts";
 import {
   copyBars,
   copyBeats,
@@ -17,11 +18,13 @@ import {
 } from "./history.ts";
 import {
   addBar,
+  advanceAfterWrite,
   applyTechnique,
   deleteBar,
   deleteBeat,
   deleteNote,
   duplicateBar,
+  fitRestBeat,
   insertBarAfter,
   moveBeat,
   setBendFlag,
@@ -69,6 +72,17 @@ export type TabScoreEditorState = {
     string: number;
     fraction: number;
   };
+  /**
+   * Posición de la última nota escrita. La vista previa suena esa nota aunque
+   * el cursor ya haya avanzado al hueco siguiente.
+   */
+  lastNote?: {
+    bar: number;
+    beat: number;
+    string: number;
+  };
+  /** Sube con cada nota escrita para que la vista previa suene una vez. */
+  previewSeq?: number;
 };
 
 export type TabScoreEditorAction =
@@ -77,6 +91,7 @@ export type TabScoreEditorAction =
   | { type: "move"; direction: TabMoveDirection; extend?: boolean }
   | { type: "moveBeat"; direction: "left" | "right" }
   | { type: "digit"; digit: string }
+  | { type: "advance" }
   | { type: "commitBuffer" }
   | { type: "deleteNote" }
   | { type: "deleteBeat" }
@@ -147,15 +162,48 @@ function clearError(state: TabScoreEditorState): TabScoreEditorState {
   return state.error === undefined ? state : { ...state, error: undefined };
 }
 
-/** Aplica un dígito: escribe el traste y deja el búfer para la segunda cifra. */
-function applyDigit(state: TabScoreEditorState, digit: string): TabScoreEditorState {
-  if (!/^[0-9]$/.test(digit)) return state;
+/**
+ * Cierra la nota escrita: prepara el hueco siguiente, guarda un solo paso de
+ * historial y deja el cursor en ese hueco o en la propia nota si aún se espera
+ * la segunda cifra.
+ */
+function finishNote(
+  state: TabScoreEditorState,
+  score: TabScore,
+  selection: TabSelection,
+  advance: boolean,
+  buffer: string,
+): TabScoreEditorState {
+  const next = advanceAfterWrite(score, selection);
+  const finalScore = "error" in next ? score : next.score;
+  const finalSelection =
+    advance && !("error" in next) ? next.selection : selection;
+  const key = `fret:${selection.bar}:${selection.beat}:${selection.string}`;
 
-  const candidate = `${state.buffer}${digit}`;
-  // Un 25 o mayor no puede ser un traste: se conserva el último válido.
-  if (Number(candidate) > 24) return state;
-  const fret = Number(candidate);
+  return {
+    ...state,
+    score: finalScore,
+    selection: finalSelection,
+    history: pushHistory(state.history, finalScore, finalSelection, key),
+    buffer,
+    lastNote: {
+      bar: selection.bar,
+      beat: selection.beat,
+      string: selection.string,
+    },
+    previewSeq: (state.previewSeq ?? 0) + 1,
+    selectionVisible: true,
+    error: undefined,
+    pending: undefined,
+  };
+}
 
+/** Escribe el traste en la posición elegida y prepara el hueco siguiente. */
+function writeDigit(
+  state: TabScoreEditorState,
+  digit: string,
+): TabScoreEditorState {
+  const fret = Number(digit);
   let score = state.score;
   let selection = state.selection;
   const pending = state.pending;
@@ -173,22 +221,55 @@ function applyDigit(state: TabScoreEditorState, digit: string): TabScoreEditorSt
     }
   }
 
+  // En un compás vacío la primera nota es una negra: así no se come el compás
+  // y siempre queda un hueco detrás para seguir escribiendo.
+  score = fitRestBeat(score, selection.bar, selection.beat, TAB_TICKS_PER_QUARTER);
+
   const result = writeFret(score, selection, fret);
   if ("error" in result) {
     return { ...state, error: result.error, buffer: "", pending: undefined };
   }
 
-  const key = `fret:${result.selection.bar}:${result.selection.beat}:${result.selection.string}`;
-  return {
-    ...state,
-    score: result.score,
-    selection: result.selection,
-    history: pushHistory(state.history, result.score, result.selection, key),
-    buffer: candidate,
-    selectionVisible: true,
-    error: undefined,
-    pending: undefined,
-  };
+  // Con 1 o 2 se espera por si el traste es 10–24; el resto avanza al momento.
+  const wait = digit === "1" || digit === "2";
+  return finishNote(state, result.score, result.selection, !wait, wait ? digit : "");
+}
+
+/** Aplica un dígito: escribe el traste y avanza al hueco siguiente. */
+function applyDigit(state: TabScoreEditorState, digit: string): TabScoreEditorState {
+  if (!/^[0-9]$/.test(digit)) return state;
+
+  // Segunda cifra de un traste 10–24: completa la nota ya escrita.
+  if (state.buffer === "1" || state.buffer === "2") {
+    const candidate = Number(`${state.buffer}${digit}`);
+
+    if (candidate <= 24) {
+      const result = writeFret(state.score, state.selection, candidate);
+      if ("error" in result) {
+        return { ...state, error: result.error, buffer: "", pending: undefined };
+      }
+      return finishNote(state, result.score, result.selection, true, "");
+    }
+
+    // 25 o más no es un traste: la primera cifra se queda como nota y el
+    // dígito nuevo empieza la siguiente.
+    const advanced = advanceAfterWrite(state.score, state.selection);
+    if ("error" in advanced) {
+      return { ...state, buffer: "", error: advanced.error, pending: undefined };
+    }
+
+    return writeDigit(
+      {
+        ...state,
+        score: advanced.score,
+        selection: advanced.selection,
+        buffer: "",
+      },
+      digit,
+    );
+  }
+
+  return writeDigit(state, digit);
 }
 
 export function tabScoreEditorReducer(
@@ -276,6 +357,26 @@ export function tabScoreEditorReducer(
 
     case "digit":
       return applyDigit(state, action.digit);
+
+    case "advance": {
+      // Termina la espera de la segunda cifra: solo mueve el cursor, porque el
+      // hueco siguiente ya se preparó al escribir la nota.
+      if (state.buffer === "") return clearError(state);
+
+      const next = advanceAfterWrite(state.score, state.selection);
+      const score = "error" in next ? state.score : next.score;
+      const nextSelection = "error" in next ? state.selection : next.selection;
+
+      return {
+        ...state,
+        score,
+        selection: nextSelection,
+        history: { ...state.history, present: { score, selection: nextSelection } },
+        buffer: "",
+        pending: undefined,
+        error: undefined,
+      };
+    }
 
     case "commitBuffer":
       return state.buffer === "" ? clearError(state) : { ...state, buffer: "" };

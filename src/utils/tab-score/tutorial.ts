@@ -4,7 +4,7 @@ import type { TabSelection } from "./selection.ts";
 export const TAB_TUTORIAL_STEPS = [
   "select",
   "write",
-  "chord",
+  "next",
   "menu",
   "duration",
   "move",
@@ -18,7 +18,6 @@ export type TabTutorialSnapshot = {
   score: TabScore;
   bar: number;
   beat: number;
-  beatNotes: number;
   duration: string;
   beats: number;
   /** En el paso del menú, si se ha visto cerrado antes de abrirlo. */
@@ -44,7 +43,6 @@ export function snapshotTutorial(
     score,
     bar: selection.bar,
     beat: selection.beat,
-    beatNotes: beat?.notes.length ?? 0,
     duration: beat ? durationKey(beat) : "",
     beats: score.bars[selection.bar]?.beats.length ?? 0,
     sawClosed: !paletteOpen,
@@ -77,11 +75,9 @@ export function checkTutorialStep(
 
   const beat = beatAt(current.score, current.selection);
 
-  if (step === "chord") {
-    return {
-      snapshot,
-      advance: (beat?.notes.length ?? 0) > snapshot.beatNotes,
-    };
+  if (step === "next") {
+    // La siguiente nota se escribe en otro pulso: cualquier edición nueva vale.
+    return { snapshot, advance: current.score !== snapshot.score };
   }
 
   if (step === "duration") {

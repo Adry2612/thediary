@@ -23,7 +23,7 @@ function targetSelector(
   switch (step) {
     case "select":
     case "write":
-    case "chord":
+    case "next":
     case "menu":
       return '[data-testid="tab-score-canvas"]';
     case "duration":
@@ -130,8 +130,8 @@ export function TabScoreTutorial({
       ? { title: text.selectTitle, body: text.selectBody }
       : step === "write"
         ? { title: text.writeTitle, body: text.writeBody }
-        : step === "chord"
-          ? { title: text.chordTitle, body: text.chordBody }
+        : step === "next"
+          ? { title: text.nextTitle, body: text.nextBody }
           : step === "menu"
             ? { title: text.menuTitle, body: text.menuBody }
             : step === "duration"

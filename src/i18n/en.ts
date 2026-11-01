@@ -1151,9 +1151,9 @@ export const en: Dict = {
     writeTitle: 'Type a fret',
     writeBody:
       'On the keyboard, type a number from 0 to 24, for example 5. The note appears at the point and string you clicked.',
-    chordTitle: 'Add a second note',
-    chordBody:
-      'Press ↑ or ↓ to change strings and type another fret. Both notes sound together: you just wrote a chord.',
+    nextTitle: 'Write the next note',
+    nextBody:
+      'Type another number, for example 7. The note lands on the next slot without clicking again. That is how the phrase is written in one go.',
     menuTitle: 'Open the note menu',
     menuBody:
       'Double-click, right-click or long press the note. The options button above works too. The menu opens next to the note.',
