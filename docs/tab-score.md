@@ -83,6 +83,8 @@ La partitura ocupa todo el ancho de la columna. Dentro del lienzo:
 
 - un clic o un toque seleccionan la cuerda y el punto horizontal; si el punto
   cae lejos de una nota, la primera cifra crea el hueco justo ahí;
+- arrastrar en horizontal marca un tramo de pulsos; Mayús + clic y Mayús +
+  flechas hacen lo mismo con el teclado;
 - las flechas mueven la selección, Mayús la extiende y los dígitos escriben el
   traste (0–24, con dos cifras) y avanzan al hueco siguiente;
 - un doble clic, un clic derecho o una pulsación larga abren la paleta de esa
@@ -90,6 +92,15 @@ La partitura ocupa todo el ancho de la columna. Dentro del lienzo:
   el silencio, las ligaduras y las técnicas de la selección;
 - en táctil la paleta es una hoja inferior con los trastes 0–24 y se coloca
   por debajo del pulso, reservando espacio para poder subirlo.
+
+### Seleccionar un tramo
+
+Arrastrar en horizontal sobre la pauta marca todos los pulsos entre el punto de
+inicio y el final; el tramo se resalta y la paleta aplica sus cambios a todos los
+pulsos seleccionados. Con teclado, Mayús + clic y Mayús + flechas hacen lo
+mismo. En táctil el arrastre vertical sigue desplazando la página (`touch-action:
+pan-y`), el doble toque y la pulsación larga siguen abriendo el menú de la nota y
+un arrastre no lo abre.
 
 ### Escribir en cualquier punto
 
@@ -152,6 +163,25 @@ compás lleno, selecciona un pulso y elige **Dividir pulso** en el grupo Ritmo:
 `splitBeat` rechaza dividir una semifusa (`cannotSplit`) o un compás que ya
 tiene 64 pulsos (`beatLimit`); la paleta explica el motivo. Deshacer recupera
 el pulso original.
+
+### Subdividir un pulso
+
+El grupo Ritmo abre **Subdivisión**, con tresillo, quintillo, seisillo, septillo,
+nonillo, decimillo y doceavo (3, 5, 6, 7, 9, 10 y 12). Al elegir una, cada pulso
+seleccionado se parte en N huecos iguales:
+
+- la figura base se calcula para que N notas ocupen el tiempo que ya ocupaba el
+  pulso (3:2, 5:4, 6:4, 7:4, 9:8, 10:8 y 12:8); la suma del compás no cambia;
+- el contenido del pulso se queda en el primer hueco y los demás nacen como
+  silencios;
+- el cursor queda en el primer hueco, así que se escriben las N notas seguidas
+  con el avance automático;
+- un pulso con puntillo o ya subdividido no se puede dividir otra vez; el
+  selector explica el motivo (`cannotSubdivide`, `alreadySubdivided`);
+- un compás lleno de pulsos se rechaza con `beatLimit`;
+- en septillos y nonillos el reparto en ticks no es entero: el compás tolera
+  4 ticks de redondeo y no se marca como incompleto;
+- la división de todos los pulsos del tramo es un solo paso de deshacer.
 
 ### Iconos, descripción y tutorial
 

@@ -228,3 +228,25 @@ test("createRestBar fills its time signature", () => {
     1,
   );
 });
+
+test("keeps every allowed subdivision and drops unknown ones", () => {
+  for (const tuplet of [3, 5, 6, 7, 9, 10, 12]) {
+    const normalized = normalizeTabScore({
+      version: 2,
+      tuning: "EADGBE",
+      tempo: 90,
+      bars: [{ id: "bar-a", beats: [beat({ tuplet })] }],
+    });
+    assert.equal(normalized.bars[0].beats[0].tuplet, tuplet);
+  }
+
+  const dropped = normalizeTabScore({
+    version: 2,
+    tuning: "EADGBE",
+    tempo: 90,
+    bars: [{ id: "bar-a", beats: [beat({ tuplet: 4 })] }],
+  });
+  assert.equal(dropped.bars[0].beats[0].tuplet, undefined);
+  assert.equal(dropped.bars[0].beats[0].duration, 4);
+  assert.deepEqual(dropped.bars[0].beats[0].notes, [{ string: 0, fret: 3 }]);
+});

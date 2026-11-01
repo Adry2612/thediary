@@ -1063,7 +1063,15 @@ export const es: Dict = {
     durationThirtySecond: 'fusa',
     durationSixtyFourth: 'semifusa',
     dottedSuffix: 'con puntillo',
-    tripletSuffix: 'tresillo',
+    tupletSuffixes: {
+      3: 'tresillo',
+      5: 'quintillo',
+      6: 'seisillo',
+      7: 'septillo',
+      9: 'nonillo',
+      10: 'decimillo',
+      12: 'doceavo',
+    },
     noSelectionLabel: 'Sin selección',
     undo: 'Deshacer',
     noteMenuHint:
@@ -1089,7 +1097,17 @@ export const es: Dict = {
     durationThirtySecond: 'Fusa',
     durationSixtyFourth: 'Semifusa',
     dot: 'Puntillo',
-    triplet: 'Tresillo',
+    subdivision: 'Subdivisión',
+    subdivisionTitle: 'Subdividir el pulso',
+    subdivisionHint:
+      'Elige en cuántos huecos iguales se parte el pulso. El compás no cambia y el cursor queda en el primero.',
+    tuplet3: 'Tresillo (3:2)',
+    tuplet5: 'Quintillo (5:4)',
+    tuplet6: 'Seisillo (6:4)',
+    tuplet7: 'Septillo (7:4)',
+    tuplet9: 'Nonillo (9:8)',
+    tuplet10: 'Decimillo (10:8)',
+    tuplet12: 'Doceavo (12:8)',
     rest: 'Silencio',
     splitBeat: 'Dividir pulso',
     moveLeft: 'Mover a la izquierda',
@@ -1140,6 +1158,8 @@ export const es: Dict = {
     cannotSplit: 'Este pulso ya es una semifusa y no se puede dividir.',
     beatLimit: 'Este compás ya tiene 64 pulsos.',
     noAdjacentBeat: 'No hay otro pulso al lado.',
+    cannotSubdivide: 'Este pulso es demasiado corto para esa subdivisión.',
+    alreadySubdivided: 'Este pulso ya está subdividido. Deshaz para cambiarlo.',
     hoverHint: 'Pasa el cursor o enfoca un icono para ver qué hace.',
     barFits: 'El compás cuadra.',
     barUnder: 'Faltan pulsos en este compás.',
@@ -1159,7 +1179,7 @@ export const es: Dict = {
     close: 'Cerrar',
     selectTitle: 'Selecciona un pulso',
     selectBody:
-      'Haz clic (o toca) dentro de la pauta, en la cuerda y el punto donde quieras trabajar. El editor creará el hueco justo ahí. Verás un recuadro verde: esa es la selección.',
+      'Haz clic (o toca) dentro de la pauta, en la cuerda y el punto donde quieras trabajar. El editor creará el hueco justo ahí. También puedes arrastrar en horizontal para marcar varios pulsos. Verás un recuadro verde: esa es la selección.',
     writeTitle: 'Escribe un traste',
     writeBody:
       'Con el teclado, escribe un número del 0 al 24, por ejemplo 5. La nota aparece en el punto y la cuerda donde has hecho clic.',
@@ -1171,7 +1191,7 @@ export const es: Dict = {
       'Haz doble clic, clic derecho o pulsación larga sobre la nota. También vale el botón de opciones de arriba. El menú se abre junto a la nota.',
     durationTitle: 'Cambia la duración',
     durationBody:
-      'En el menú, elige otra figura, por ejemplo la corchea. La nota cambia de duración y el menú sigue abierto por si quieres añadir una técnica.',
+      'En el menú, elige otra figura, por ejemplo la corchea. La nota cambia de duración y el menú sigue abierto. Para tresillos y otras subdivisiones, usa Subdivisión.',
     moveTitle: 'Mueve la nota',
     moveBody:
       'Con el menú abierto, usa las flechas de Posición para mover la nota a izquierda o derecha. Cambia de sitio sin romper el compás.',

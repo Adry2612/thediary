@@ -7,6 +7,7 @@ import {
   deleteBar,
   deleteBeat,
   deleteNote,
+  divideBeat,
   duplicateBar,
   fitRestBeat,
   insertBarAfter,
@@ -20,6 +21,7 @@ import {
   setTimeSignature,
   setTuplet,
   toggleTie,
+  tupletBaseDuration,
   writeFret,
 } from "../src/utils/tab-score/operations.ts";
 import { moveSelection } from "../src/utils/tab-score/selection.ts";
@@ -489,4 +491,112 @@ test("moves the selection across beats, bars and strings", () => {
   );
   assert.deepEqual(extended.anchor, { bar: 0, beat: 0, string: 0 });
   assert.equal(extended.beat, 1);
+});
+
+test("derives the base figure of every subdivision", () => {
+  assert.equal(tupletBaseDuration(beat({ duration: 4 }), 3), 8);
+  assert.equal(tupletBaseDuration(beat({ duration: 4 }), 5), 16);
+  assert.equal(tupletBaseDuration(beat({ duration: 4 }), 6), 16);
+  assert.equal(tupletBaseDuration(beat({ duration: 4 }), 7), 16);
+  assert.equal(tupletBaseDuration(beat({ duration: 4 }), 9), 32);
+  assert.equal(tupletBaseDuration(beat({ duration: 4 }), 10), 32);
+  assert.equal(tupletBaseDuration(beat({ duration: 4 }), 12), 32);
+  assert.equal(tupletBaseDuration(beat({ duration: 64 }), 3), null);
+  assert.equal(tupletBaseDuration(beat({ duration: 4, dots: 1 }), 3), null);
+  assert.equal(tupletBaseDuration(beat({ duration: 4, tuplet: 3 }), 3), null);
+});
+
+test("divides a quarter into a triplet without changing the bar", () => {
+  const base = score([
+    beat({ id: "b1", duration: 4, rest: false, notes: [{ string: 0, fret: 5 }] }),
+    beat({ id: "b2", duration: 2 }),
+    beat({ id: "b3", duration: 4 }),
+  ]);
+  const result = divideBeat(base, { bar: 0, beat: 0, string: 0 }, 3);
+
+  assert.equal(isError(result), false);
+  assert.equal(result.score.bars[0].beats.length, 5);
+  assert.equal(result.score.bars[0].beats[0].duration, 8);
+  assert.equal(result.score.bars[0].beats[0].tuplet, 3);
+  assert.deepEqual(result.score.bars[0].beats[0].notes, [{ string: 0, fret: 5 }]);
+  assert.equal(result.score.bars[0].beats[1].rest, true);
+  assert.equal(result.score.bars[0].beats[1].tuplet, 3);
+  assert.equal(result.score.bars[0].beats[2].tuplet, 3);
+  assert.deepEqual(result.selection, { bar: 0, beat: 0, string: 0 });
+  assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
+});
+
+test("divides an eighth into a quintuplet and a quarter into a septuplet", () => {
+  const fifth = divideBeat(
+    score([beat({ duration: 8 })]),
+    { bar: 0, beat: 0, string: 0 },
+    5,
+  );
+  assert.equal(isError(fifth), false);
+  assert.equal(fifth.score.bars[0].beats.length, 5);
+  assert.equal(fifth.score.bars[0].beats[0].duration, 32);
+  assert.equal(fifth.score.bars[0].beats[0].tuplet, 5);
+
+  const seventh = divideBeat(
+    score([beat({ duration: 4 })]),
+    { bar: 0, beat: 0, string: 1 },
+    7,
+  );
+  assert.equal(isError(seventh), false);
+  assert.equal(seventh.score.bars[0].beats.length, 7);
+  assert.equal(seventh.score.bars[0].beats[0].duration, 16);
+  assert.equal(seventh.score.bars[0].beats[0].tuplet, 7);
+  assert.equal(seventh.selection.string, 1);
+  assert.ok(Math.abs(getBarTicks(seventh.score.bars[0]) - 960) <= 4);
+});
+
+test("refuses subdivisions that do not fit or are already applied", () => {
+  const tooShort = divideBeat(
+    score([beat({ duration: 64 })]),
+    { bar: 0, beat: 0, string: 0 },
+    3,
+  );
+  assert.deepEqual(tooShort, { error: "cannotSubdivide" });
+
+  const dotted = divideBeat(
+    score([beat({ duration: 4, dots: 1 })]),
+    { bar: 0, beat: 0, string: 0 },
+    3,
+  );
+  assert.deepEqual(dotted, { error: "cannotSubdivide" });
+
+  const already = divideBeat(
+    score([beat({ duration: 8, tuplet: 3 })]),
+    { bar: 0, beat: 0, string: 0 },
+    5,
+  );
+  assert.deepEqual(already, { error: "alreadySubdivided" });
+});
+
+test("refuses to exceed the beats of a bar", () => {
+  const beats = Array.from({ length: 64 }, (_, index) =>
+    beat({ id: `b-${index}`, duration: 32 }),
+  );
+  const result = divideBeat(
+    { version: 2, tuning: "EADGBE", tempo: 90, bars: [{ id: "bar-a", beats }] },
+    { bar: 0, beat: 0, string: 0 },
+    3,
+  );
+  assert.deepEqual(result, { error: "beatLimit" });
+});
+
+test("divides every beat of the selected range", () => {
+  const base = score([
+    beat({ id: "b1", duration: 4 }),
+    beat({ id: "b2", duration: 4 }),
+    beat({ id: "b3", duration: 2 }),
+  ]);
+  const result = divideBeat(base, { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 1, string: 0 } }, 3);
+
+  assert.equal(isError(result), false);
+  assert.equal(result.score.bars[0].beats.length, 7);
+  assert.equal(result.score.bars[0].beats[0].tuplet, 3);
+  assert.equal(result.score.bars[0].beats[3].tuplet, 3);
+  assert.deepEqual(result.selection, { bar: 0, beat: 0, string: 0 });
+  assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
 });

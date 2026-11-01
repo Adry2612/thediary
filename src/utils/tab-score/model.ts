@@ -6,6 +6,7 @@ import type {
   TabNote,
   TabScore,
   TabTimeSignature,
+  TabTuplet,
 } from "../../types/tab-score.ts";
 import {
   TAB_BEAT_DURATIONS,
@@ -15,6 +16,7 @@ import {
   TAB_MIN_FRET,
   TAB_MIN_TEMPO,
   TAB_TIME_SIGNATURE_DENOMINATORS,
+  TAB_TUPLETS,
 } from "../../types/tab-score.ts";
 import { DEFAULT_TIME_SIGNATURE, getTimeSignatureTicks } from "./ticks.ts";
 
@@ -153,7 +155,12 @@ function normalizeBeat(value: unknown, stringCount: number): TabBeat {
   };
 
   if (value.dots === 1) beat.dots = 1;
-  if (value.tuplet === 3) beat.tuplet = 3;
+  if (
+    typeof value.tuplet === "number" &&
+    (TAB_TUPLETS as readonly number[]).includes(value.tuplet)
+  ) {
+    beat.tuplet = value.tuplet as TabTuplet;
+  }
 
   return beat;
 }

@@ -509,7 +509,15 @@ export type Dict = {
     durationThirtySecond: string;
     durationSixtyFourth: string;
     dottedSuffix: string;
-    tripletSuffix: string;
+    tupletSuffixes: {
+      3: string;
+      5: string;
+      6: string;
+      7: string;
+      9: string;
+      10: string;
+      12: string;
+    };
     noSelectionLabel: string;
     undo: string;
     noteMenuHint: string;
@@ -534,7 +542,16 @@ export type Dict = {
     durationThirtySecond: string;
     durationSixtyFourth: string;
     dot: string;
-    triplet: string;
+    subdivision: string;
+    subdivisionTitle: string;
+    subdivisionHint: string;
+    tuplet3: string;
+    tuplet5: string;
+    tuplet6: string;
+    tuplet7: string;
+    tuplet9: string;
+    tuplet10: string;
+    tuplet12: string;
     rest: string;
     splitBeat: string;
     moveLeft: string;
@@ -585,6 +602,8 @@ export type Dict = {
     cannotSplit: string;
     beatLimit: string;
     noAdjacentBeat: string;
+    cannotSubdivide: string;
+    alreadySubdivided: string;
     hoverHint: string;
     barFits: string;
     barUnder: string;

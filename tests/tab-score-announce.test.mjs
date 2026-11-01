@@ -22,7 +22,15 @@ const labels = {
   durationThirtySecond: "fusa",
   durationSixtyFourth: "semifusa",
   dottedSuffix: "con puntillo",
-  tripletSuffix: "tresillo",
+  tupletSuffixes: {
+    3: "tresillo",
+    5: "quintillo",
+    6: "seisillo",
+    7: "septillo",
+    9: "nonillo",
+    10: "decimillo",
+    12: "doceavo",
+  },
 };
 
 function score(beats) {
@@ -100,7 +108,7 @@ test("announces nothing selected", () => {
   );
 });
 
-test("describes every duration with dots and triplets", () => {
+test("describes every duration with dots and subdivisions", () => {
   assert.equal(describeBeatDuration({ duration: 1 }, labels), "redonda");
   assert.equal(describeBeatDuration({ duration: 2 }, labels), "blanca");
   assert.equal(describeBeatDuration({ duration: 4 }, labels), "negra");
@@ -111,4 +119,23 @@ test("describes every duration with dots and triplets", () => {
     describeBeatDuration({ duration: 4, dots: 1, tuplet: 3 }, labels),
     "negra con puntillo tresillo",
   );
+});
+
+test("names every subdivision", () => {
+  const names = [
+    [3, "tresillo"],
+    [5, "quintillo"],
+    [6, "seisillo"],
+    [7, "septillo"],
+    [9, "nonillo"],
+    [10, "decimillo"],
+    [12, "doceavo"],
+  ];
+
+  for (const [tuplet, name] of names) {
+    assert.equal(
+      describeBeatDuration({ duration: 8, tuplet }, labels),
+      `corchea ${name}`,
+    );
+  }
 });

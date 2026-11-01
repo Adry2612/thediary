@@ -7,6 +7,7 @@ import {
 } from "../src/utils/tab-score/editor-state.ts";
 import { createEmptyScore } from "../src/utils/tab-score/model.ts";
 import { clearClipboard } from "../src/utils/tab-score/clipboard.ts";
+import { getBarTicks } from "../src/utils/tab-score/ticks.ts";
 
 function run(actions, initial = createEmptyScore()) {
   return actions.reduce(tabScoreEditorReducer, createEditorState(initial));
@@ -251,4 +252,57 @@ test("replaceScore resets the history", () => {
 
   assert.equal(state.score.tuning, "DADGAD");
   assert.equal(state.history.past.length, 0);
+});
+
+test("divides a beat into a triplet and undoes it in one step", () => {
+  const base = createEmptyScore();
+  base.bars[0].beats = [{ id: "beat-a", duration: 4, rest: true, notes: [] }];
+
+  const state = run([{ type: "divideBeat", tuplet: 3 }], base);
+  assert.equal(state.score.bars[0].beats.length, 3);
+  assert.equal(state.selection.beat, 0);
+  assert.equal(state.history.past.length, 1);
+
+  const undone = tabScoreEditorReducer(state, { type: "undo" });
+  assert.equal(undone.score.bars[0].beats.length, 1);
+  assert.equal(undone.score.bars[0].beats[0].tuplet, undefined);
+
+  const redone = tabScoreEditorReducer(undone, { type: "redo" });
+  assert.equal(redone.score.bars[0].beats.length, 3);
+  assert.equal(redone.score.bars[0].beats[0].tuplet, 3);
+});
+
+test("writes every note of a subdivision with the automatic advance", () => {
+  for (const [tuplet, count] of [
+    [3, 3],
+    [5, 5],
+    [7, 7],
+  ]) {
+    const base = createEmptyScore();
+    base.bars[0].beats = [
+      { id: "beat-a", duration: 4, rest: true, notes: [] },
+      { id: "beat-b", duration: 2, rest: true, notes: [] },
+    ];
+
+    const state = run(
+      [
+        { type: "divideBeat", tuplet },
+        ...Array.from({ length: count }, () => ({
+          type: "digit",
+          digit: "3",
+        })),
+      ],
+      base,
+    );
+
+    const slots = state.score.bars[0].beats.slice(0, count);
+    assert.equal(slots.length, count);
+    assert.deepEqual(
+      slots.map((slot) => slot.notes[0]?.fret ?? null),
+      Array.from({ length: count }, () => 3),
+    );
+    assert.ok(
+      Math.abs(getBarTicks(state.score.bars[0]) - 2880) <= 4,
+    );
+  }
 });

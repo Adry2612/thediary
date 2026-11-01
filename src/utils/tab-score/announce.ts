@@ -1,4 +1,8 @@
-import type { TabBeat, TabScore } from "../../types/tab-score.ts";
+import type {
+  TabBeat,
+  TabScore,
+  TabTuplet,
+} from "../../types/tab-score.ts";
 import { getBeatAt, getNoteAt, type TabSelection } from "./selection.ts";
 
 export type TabScoreAnnouncementLabels = {
@@ -17,7 +21,7 @@ export type TabScoreAnnouncementLabels = {
   durationThirtySecond: string;
   durationSixtyFourth: string;
   dottedSuffix: string;
-  tripletSuffix: string;
+  tupletSuffixes: Record<TabTuplet, string>;
 };
 
 const DURATION_LABELS: Record<
@@ -39,7 +43,7 @@ export function describeBeatDuration(
 ): string {
   const parts = [labels[DURATION_LABELS[beat.duration] ?? "durationQuarter"]];
   if (beat.dots === 1) parts.push(labels.dottedSuffix);
-  if (beat.tuplet === 3) parts.push(labels.tripletSuffix);
+  if (beat.tuplet) parts.push(labels.tupletSuffixes[beat.tuplet]);
   return parts.join(" ");
 }
 

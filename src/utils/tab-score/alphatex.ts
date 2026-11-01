@@ -177,7 +177,7 @@ function renderContent(tokens: NoteToken[], rest: boolean): string {
 
 function renderBeat(beat: TabBeat, tokens: NoteToken[]): string {
   const parts = [`:${beat.duration}`];
-  if (beat.tuplet === 3) parts.push("{tu 3}");
+  if (beat.tuplet) parts.push(`{tu ${beat.tuplet}}`);
   parts.push(renderContent(tokens, beat.rest === true));
   if (beat.dots === 1) parts.push("{d}");
   return parts.join(" ");

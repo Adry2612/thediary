@@ -170,6 +170,12 @@ export function TabScoreCanvas({
     opened: boolean;
   } | null>(null);
   const lastTap = useRef<{ time: number; x: number; y: number } | null>(null);
+  const drag = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+    dragging: boolean;
+  } | null>(null);
 
   /**
    * En táctil, el menú aparece bajo el dedo antes de que llegue el `click`
@@ -195,6 +201,11 @@ export function TabScoreCanvas({
   }, []);
 
   useEffect(() => clearLongPress, [clearLongPress]);
+
+  const endDrag = useCallback(() => {
+    drag.current = null;
+    clearLongPress();
+  }, [clearLongPress]);
 
   const emitPlayback = useCallback((patch: Partial<TabScorePlaybackState>) => {
     playbackState.current = { ...playbackState.current, ...patch };
@@ -528,6 +539,13 @@ export function TabScoreCanvas({
     const hit = hitTest(event.clientX, event.clientY);
     if (!hit) return;
 
+    drag.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      dragging: false,
+    };
+
     if (interactive && onSelect) {
       onSelect(hit.position, event.shiftKey, hit);
     }
@@ -550,17 +568,37 @@ export function TabScoreCanvas({
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     const pending = longPress.current;
-    if (!pending) return;
-    if (
-      Math.hypot(event.clientX - pending.x, event.clientY - pending.y) > 10
-    ) {
+    if (pending) {
+      if (
+        Math.hypot(event.clientX - pending.x, event.clientY - pending.y) > 10
+      ) {
+        clearLongPress();
+      }
+    }
+
+    const current = drag.current;
+    if (!current || current.pointerId !== event.pointerId) return;
+
+    const dx = event.clientX - current.x;
+    const dy = event.clientY - current.y;
+    if (!current.dragging) {
+      // Solo el arrastre claramente horizontal marca un tramo: el vertical
+      // sigue desplazando la página en táctil.
+      if (Math.abs(dx) <= 8 || Math.abs(dx) <= Math.abs(dy)) return;
+      current.dragging = true;
       clearLongPress();
     }
+
+    const hit = hitTest(event.clientX, event.clientY);
+    if (hit) callbacks.current.onSelect?.(hit.position, true, hit);
   }
 
   function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    const dragged = drag.current?.dragging === true;
     const openedByLongPress = longPress.current?.opened === true;
+    drag.current = null;
     clearLongPress();
+    if (dragged) return;
     if (openedByLongPress) return;
     if (event.pointerType !== "touch" || !onNoteMenu) return;
 
@@ -668,11 +706,11 @@ export function TabScoreCanvas({
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            onPointerCancel={clearLongPress}
-            onPointerLeave={clearLongPress}
+            onPointerCancel={endDrag}
+            onPointerLeave={endDrag}
             onContextMenu={handleContextMenu}
             onDoubleClick={handleDoubleClick}
-            className="absolute inset-0 z-10 cursor-pointer"
+            className="absolute inset-0 z-10 cursor-pointer touch-pan-y"
           />
         )}
 

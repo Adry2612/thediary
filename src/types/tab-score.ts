@@ -9,6 +9,22 @@ import type {
 /** Duración de un pulso como fracción de redonda: 1 = redonda, 4 = negra. */
 export type TabBeatDuration = 1 | 2 | 4 | 8 | 16 | 32 | 64;
 
+/** Subdivisiones irregulares admitidas: N notas en el tiempo de M. */
+export const TAB_TUPLETS = [3, 5, 6, 7, 9, 10, 12] as const;
+
+export type TabTuplet = (typeof TAB_TUPLETS)[number];
+
+/** Notas de la figura base que ocupa cada subdivisión (3:2, 5:4…). */
+export const TAB_TUPLET_IN_TIME: Record<TabTuplet, number> = {
+  3: 2,
+  5: 4,
+  6: 4,
+  7: 4,
+  9: 8,
+  10: 8,
+  12: 8,
+};
+
 export type TabAccent = "normal" | "heavy";
 
 export type TabTimeSignature = {
@@ -44,7 +60,7 @@ export type TabBeat = {
   id: string;
   duration: TabBeatDuration;
   dots?: 1;
-  tuplet?: 3;
+  tuplet?: TabTuplet;
   rest?: boolean;
   notes: TabNote[];
 };

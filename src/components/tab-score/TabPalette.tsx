@@ -60,6 +60,7 @@ function reasonText(
   if (reason === "cannotSplit") return text.cannotSplit;
   if (reason === "beatLimit") return text.beatLimit;
   if (reason === "noAdjacentBeat") return text.noAdjacentBeat;
+  if (reason === "alreadySubdivided") return text.alreadySubdivided;
   return undefined;
 }
 

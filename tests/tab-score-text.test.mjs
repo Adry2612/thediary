@@ -91,3 +91,41 @@ test("text is unchanged after normalizing the same score", () => {
 
   assert.equal(scoreToText(normalizeTabScore(raw)), scoreToText(raw));
 });
+
+test("names every subdivision in the text alternative", () => {
+  const names = {
+    3: "tresillo",
+    5: "quintillo",
+    6: "seisillo",
+    7: "septillo",
+    9: "nonillo",
+    10: "decimillo",
+    12: "doceavo",
+  };
+
+  for (const [tuplet, name] of Object.entries(names)) {
+    const score = {
+      version: 2,
+      tuning: "EADGBE",
+      tempo: 90,
+      bars: [
+        {
+          id: "bar-a",
+          timeSignature: { numerator: 4, denominator: 4 },
+          beats: [
+            {
+              id: "beat-a",
+              duration: 8,
+              tuplet: Number(tuplet),
+              notes: [{ string: 0, fret: 3 }],
+            },
+          ],
+        },
+      ],
+    };
+    assert.equal(
+      scoreToText(score).split("\n")[1],
+      `  Pulso 1: 1/8 (${name}), cuerda 1 traste 3`,
+    );
+  }
+});

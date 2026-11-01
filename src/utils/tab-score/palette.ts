@@ -41,7 +41,8 @@ export type TabPaletteOption = {
     | { type: "bendRelease" }
     | { type: "bendPrebend" }
     | { type: "openTimeSignature" }
-    | { type: "openTempo" };
+    | { type: "openTempo" }
+    | { type: "openTuplet" };
 };
 
 export type TabPaletteReason =
@@ -50,7 +51,8 @@ export type TabPaletteReason =
   | "barLimit"
   | "cannotSplit"
   | "beatLimit"
-  | "noAdjacentBeat";
+  | "noAdjacentBeat"
+  | "alreadySubdivided";
 
 export type TabPaletteOptionState = {
   active: boolean;
@@ -118,11 +120,11 @@ export const TAB_PALETTE: readonly TabPaletteOption[] = [
     action: { type: "setDots", dots: 1 },
   },
   {
-    id: "tuplet",
+    id: "subdivision",
     group: "rhythm",
-    labelKey: "triplet",
+    labelKey: "subdivision",
     shortcut: "u",
-    action: { type: "setTuplet", tuplet: 3 },
+    action: { type: "openTuplet" },
   },
   {
     id: "rest",
@@ -463,8 +465,8 @@ export function getPaletteState({
           if (option.id === "dots") {
             return beats.length > 0 && beats.every((beat) => beat.dots === 1);
           }
-          if (option.id === "tuplet") {
-            return beats.length > 0 && beats.every((beat) => beat.tuplet === 3);
+          if (option.id === "subdivision") {
+            return beats.length > 0 && beats.every((beat) => beat.tuplet !== undefined);
           }
           if (option.id === "rest") {
             return beats.length > 0 && beats.every((beat) => beat.rest === true);
@@ -581,6 +583,16 @@ export function getPaletteState({
       } else if (bar && bar.beats.length >= TAB_MAX_BEATS_PER_BAR) {
         disabled = true;
         reason = "beatLimit";
+      }
+    }
+
+    if (option.id === "subdivision") {
+      if (beats.length === 0) {
+        disabled = true;
+        reason = "requiresNote";
+      } else if (beats.some((beat) => beat.tuplet !== undefined)) {
+        disabled = true;
+        reason = "alreadySubdivided";
       }
     }
 

@@ -1,4 +1,4 @@
-import type { TabScore } from "../../types/tab-score.ts";
+import type { TabScore, TabTuplet } from "../../types/tab-score.ts";
 import { TAB_TICKS_PER_QUARTER } from "../../types/tab-score.ts";
 import {
   copyBars,
@@ -23,6 +23,7 @@ import {
   deleteBar,
   deleteBeat,
   deleteNote,
+  divideBeat,
   duplicateBar,
   fitRestBeat,
   insertBarAfter,
@@ -97,6 +98,7 @@ export type TabScoreEditorAction =
   | { type: "deleteBeat" }
   | { type: "setRest" }
   | { type: "splitBeat" }
+  | { type: "divideBeat"; tuplet: TabTuplet }
   | { type: "setDuration"; duration: number }
   | { type: "setDots"; dots: 0 | 1 }
   | { type: "setTuplet"; tuplet: 0 | 3 }
@@ -392,6 +394,12 @@ export function tabScoreEditorReducer(
 
     case "splitBeat":
       return withResult(state, splitBeat(state.score, selection));
+
+    case "divideBeat":
+      return withResult(
+        state,
+        divideBeat(state.score, selection, action.tuplet),
+      );
 
     case "setDuration":
       return withResult(state, setDuration(state.score, selection, action.duration));

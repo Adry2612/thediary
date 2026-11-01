@@ -1,4 +1,4 @@
-import type { TabScore } from "../../types/tab-score.ts";
+import type { TabScore, TabTuplet } from "../../types/tab-score.ts";
 import type { TabSelection } from "./selection.ts";
 
 export const TAB_TUTORIAL_STEPS = [
@@ -28,7 +28,11 @@ function beatAt(score: TabScore, selection: TabSelection) {
   return score.bars[selection.bar]?.beats[selection.beat] ?? null;
 }
 
-function durationKey(beat: { duration: number; dots?: 1; tuplet?: 3 }): string {
+function durationKey(beat: {
+  duration: number;
+  dots?: 1;
+  tuplet?: TabTuplet;
+}): string {
   return `${beat.duration}/${beat.dots ?? 0}/${beat.tuplet ?? 0}`;
 }
 

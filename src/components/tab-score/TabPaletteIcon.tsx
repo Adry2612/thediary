@@ -117,7 +117,7 @@ function content(id: string, group: TabPaletteGroup) {
       return note({ flags: 4 });
     case "dots":
       return note({ dot: true });
-    case "tuplet":
+    case "subdivision":
       return (
         <>
           {glyph("3")}

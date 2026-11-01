@@ -1,9 +1,11 @@
 import type {
   TabBar,
   TabBeat,
+  TabBeatDuration,
   TabNote,
   TabScore,
   TabTimeSignature,
+  TabTuplet,
 } from "../../types/tab-score.ts";
 import type { TabBend } from "../../types/practice.ts";
 import {
@@ -15,6 +17,8 @@ import {
   TAB_MIN_FRET,
   TAB_MIN_TEMPO,
   TAB_TIME_SIGNATURE_DENOMINATORS,
+  TAB_TUPLETS,
+  TAB_TUPLET_IN_TIME,
 } from "../../types/tab-score.ts";
 import {
   cloneTabBar,
@@ -48,7 +52,9 @@ export type TabOperationError =
   | "barLimit"
   | "cannotSplit"
   | "beatLimit"
-  | "cannotMove";
+  | "cannotMove"
+  | "cannotSubdivide"
+  | "alreadySubdivided";
 
 export type TabOperationResult =
   | { score: TabScore; selection: TabSelection }
@@ -87,6 +93,19 @@ function replaceBeat(
   const bars = score.bars.slice();
   bars[barIndex] = { ...bar, beats };
   return { ...score, bars };
+}
+
+function replaceBeatsAt(
+  score: TabScore,
+  barIndex: number,
+  beatIndex: number,
+  beats: TabBeat[],
+): TabScore {
+  return replaceBar(score, barIndex, (bar) => {
+    const list = bar.beats.slice();
+    list.splice(beatIndex, 1, ...beats);
+    return { ...bar, beats: list };
+  });
 }
 
 function replaceBar(
@@ -460,6 +479,86 @@ export function setDots(
   });
 
   return { score: next, selection: clampSelection(next, selection) };
+}
+
+/**
+ * Figura base que hay que dar a cada hueco para que N notas ocupen el tiempo de
+ * M y el pulso mida lo mismo. `null` si el pulso no admite esa subdivisión.
+ */
+export function tupletBaseDuration(
+  beat: Pick<TabBeat, "duration" | "dots" | "tuplet">,
+  tuplet: TabTuplet,
+): TabBeatDuration | null {
+  if (beat.tuplet || beat.dots === 1) return null;
+
+  const duration = beat.duration * TAB_TUPLET_IN_TIME[tuplet];
+  return (TAB_BEAT_DURATIONS as readonly number[]).includes(duration)
+    ? (duration as TabBeatDuration)
+    : null;
+}
+
+/**
+ * Parte cada pulso seleccionado en N huecos iguales, conservando su duración
+ * total: el contenido se queda en el primero y los demás nacen como silencios.
+ */
+export function divideBeat(
+  score: TabScore,
+  selection: TabSelection,
+  tuplet: TabTuplet,
+): TabOperationResult {
+  if (!(TAB_TUPLETS as readonly number[]).includes(tuplet)) {
+    return { error: "cannotSubdivide" };
+  }
+
+  const positions = getRangeBeats(score, selection);
+  if (positions.length === 0) return { error: "noSelection" };
+
+  for (const position of positions) {
+    const beat = getBeatAt(score, position.bar, position.beat);
+    if (!beat) return { error: "noSelection" };
+    if (beat.tuplet) return { error: "alreadySubdivided" };
+    if (!tupletBaseDuration(beat, tuplet)) return { error: "cannotSubdivide" };
+  }
+
+  const growth = new Map<number, number>();
+  for (const position of positions) {
+    growth.set(
+      position.bar,
+      (growth.get(position.bar) ?? 0) + tuplet - 1,
+    );
+  }
+  for (const [barIndex, extra] of growth) {
+    const count = score.bars[barIndex]?.beats.length ?? 0;
+    if (count + extra > TAB_MAX_BEATS_PER_BAR) return { error: "beatLimit" };
+  }
+
+  let next = score;
+  for (const position of [...positions].reverse()) {
+    const beat = getBeatAt(next, position.bar, position.beat);
+    if (!beat) continue;
+    const duration = tupletBaseDuration(beat, tuplet);
+    if (!duration) continue;
+
+    const slots: TabBeat[] = [
+      { ...beat, duration, tuplet },
+      ...Array.from({ length: tuplet - 1 }, () => {
+        const rest = createRestBeat(duration);
+        rest.tuplet = tuplet;
+        return rest;
+      }),
+    ];
+    next = replaceBeatsAt(next, position.bar, position.beat, slots);
+  }
+
+  const first = positions[0];
+  return {
+    score: next,
+    selection: clampSelection(next, {
+      bar: first.bar,
+      beat: first.beat,
+      string: selection.string,
+    }),
+  };
 }
 
 export function setTuplet(

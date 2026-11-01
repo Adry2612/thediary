@@ -1051,7 +1051,15 @@ export const en: Dict = {
     durationThirtySecond: 'thirty-second',
     durationSixtyFourth: 'sixty-fourth',
     dottedSuffix: 'dotted',
-    tripletSuffix: 'triplet',
+    tupletSuffixes: {
+      3: 'triplet',
+      5: 'quintuplet',
+      6: 'sextuplet',
+      7: 'septuplet',
+      9: 'nonuplet',
+      10: 'decuplet',
+      12: 'duodecuplet',
+    },
     noSelectionLabel: 'No selection',
     undo: 'Undo',
     noteMenuHint:
@@ -1077,7 +1085,17 @@ export const en: Dict = {
     durationThirtySecond: 'Thirty-second',
     durationSixtyFourth: 'Sixty-fourth',
     dot: 'Dot',
-    triplet: 'Triplet',
+    subdivision: 'Subdivision',
+    subdivisionTitle: 'Subdivide the beat',
+    subdivisionHint:
+      'Pick how many equal slots the beat is split into. The bar length does not change and the cursor stays on the first slot.',
+    tuplet3: 'Triplet (3:2)',
+    tuplet5: 'Quintuplet (5:4)',
+    tuplet6: 'Sextuplet (6:4)',
+    tuplet7: 'Septuplet (7:4)',
+    tuplet9: 'Nonuplet (9:8)',
+    tuplet10: 'Decuplet (10:8)',
+    tuplet12: 'Duodecuplet (12:8)',
     rest: 'Rest',
     splitBeat: 'Split beat',
     moveLeft: 'Move left',
@@ -1128,6 +1146,8 @@ export const en: Dict = {
     cannotSplit: 'This beat is already a sixty-fourth and cannot be split.',
     beatLimit: 'This bar already holds 64 beats.',
     noAdjacentBeat: 'There is no beat next to this one.',
+    cannotSubdivide: 'This beat is too short for that subdivision.',
+    alreadySubdivided: 'This beat is already subdivided. Undo to change it.',
     hoverHint: 'Hover or focus an icon to see what it does.',
     barFits: 'The bar adds up.',
     barUnder: 'This bar is missing beats.',
@@ -1147,7 +1167,7 @@ export const en: Dict = {
     close: 'Close',
     selectTitle: 'Select a beat',
     selectBody:
-      'Click (or tap) inside the tab, on the string and point you want to work on. The editor creates the slot right there. A green box marks the selection.',
+      'Click (or tap) inside the tab, on the string and point you want to work on. The editor creates the slot right there. You can also drag horizontally to mark several beats. A green box marks the selection.',
     writeTitle: 'Type a fret',
     writeBody:
       'On the keyboard, type a number from 0 to 24, for example 5. The note appears at the point and string you clicked.',
@@ -1159,7 +1179,7 @@ export const en: Dict = {
       'Double-click, right-click or long press the note. The options button above works too. The menu opens next to the note.',
     durationTitle: 'Change the duration',
     durationBody:
-      'In the menu, pick another figure, for example the eighth note. The note changes length and the menu stays open so you can add a technique.',
+      'In the menu, pick another figure, for example the eighth note. The note changes length and the menu stays open. For triplets and other subdivisions, use Subdivision.',
     moveTitle: 'Move the note',
     moveBody:
       'With the menu open, use the Position arrows to move the note left or right. It changes place without breaking the bar.',

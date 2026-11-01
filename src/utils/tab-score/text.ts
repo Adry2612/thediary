@@ -3,6 +3,7 @@ import type {
   TabBeat,
   TabNote,
   TabScore,
+  TabTuplet,
 } from "../../types/tab-score.ts";
 import { resolveTimeSignature } from "./ticks.ts";
 
@@ -14,9 +15,19 @@ const BEND_LABELS: Record<number, string> = {
   2: "2 tonos",
 };
 
+const TUPLET_NAMES: Record<TabTuplet, string> = {
+  3: "tresillo",
+  5: "quintillo",
+  6: "seisillo",
+  7: "septillo",
+  9: "nonillo",
+  10: "decimillo",
+  12: "doceavo",
+};
+
 function durationLabel(beat: Pick<TabBeat, "duration" | "dots" | "tuplet">) {
   const dots = beat.dots === 1 ? " con puntillo" : "";
-  const tuplet = beat.tuplet === 3 ? " (tresillo)" : "";
+  const tuplet = beat.tuplet ? ` (${TUPLET_NAMES[beat.tuplet]})` : "";
   return `1/${beat.duration}${dots}${tuplet}`;
 }
 

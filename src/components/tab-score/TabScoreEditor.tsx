@@ -27,10 +27,17 @@ import {
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { useTabScoreEditor } from "@/hooks/useTabScoreEditor";
 import type { TabScore } from "@/types/tab-score";
-import { TAB_MAX_FRET, TAB_MAX_TEMPO, TAB_MIN_TEMPO } from "@/types/tab-score";
+import {
+  TAB_MAX_FRET,
+  TAB_MAX_TEMPO,
+  TAB_MIN_TEMPO,
+  TAB_TUPLETS,
+  type TabTuplet,
+} from "@/types/tab-score";
 import { announceSelection } from "@/utils/tab-score/announce";
 import { buildAlphaTex } from "@/utils/tab-score/alphatex";
 import { getStringCount } from "@/utils/tab-score/model";
+import { divideBeat } from "@/utils/tab-score/operations";
 import {
   getPaletteState,
   type TabPaletteOption,
@@ -51,6 +58,16 @@ const ARROW_DIRECTIONS: Record<string, TabMoveDirection> = {
   ArrowRight: "right",
   ArrowUp: "up",
   ArrowDown: "down",
+};
+
+const TUPLET_LABEL_KEYS: Record<TabTuplet, string> = {
+  3: "tuplet3",
+  5: "tuplet5",
+  6: "tuplet6",
+  7: "tuplet7",
+  9: "tuplet9",
+  10: "tuplet10",
+  12: "tuplet12",
 };
 
 export function TabScoreEditor({
@@ -76,11 +93,12 @@ export function TabScoreEditor({
   });
   const editor = useTabScoreEditor({ initialScore, onChange });
   const containerRef = useRef<HTMLDivElement>(null);
+  const tupletDialogRef = useRef<HTMLDivElement>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [anchor, setAnchor] = useState<PaletteAnchor | null>(null);
   const [coarsePointer, setCoarsePointer] = useState(false);
-  const [form, setForm] = useState<"time" | "tempo" | null>(null);
+  const [form, setForm] = useState<"time" | "tempo" | "tuplet" | null>(null);
   const [playback, setPlayback] = useState<TabScorePlaybackState>({
     ready: false,
     playing: false,
@@ -238,6 +256,26 @@ export function TabScoreEditor({
     return () => query.removeEventListener("change", update);
   }, []);
 
+  // El selector de subdivisiones se abre desde la paleta, así que el foco no
+  // está dentro del diálogo: Escape se escucha en la ventana y se lleva el foco
+  // al editor al cerrar.
+  useEffect(() => {
+    if (form !== "tuplet") return;
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      setForm(null);
+      containerRef.current?.focus({ preventScroll: true });
+    }
+
+    window.addEventListener("keydown", handleEscape, true);
+    tupletDialogRef.current?.focus({ preventScroll: true });
+
+    return () => window.removeEventListener("keydown", handleEscape, true);
+  }, [form]);
+
   function select(position: TabPosition, extend: boolean, hit?: TabScoreHit) {
     // Si el clic cae en un hueco (lejos de una nota ya dibujada), la primera
     // cifra partirá el pulso en ese punto. Sobre una nota, selecciona para
@@ -271,6 +309,10 @@ export function TabScoreEditor({
     if (action.type === "openTempo") {
       setTempoDraft(String(editor.score.tempo));
       setForm("tempo");
+      return;
+    }
+    if (action.type === "openTuplet") {
+      setForm("tuplet");
       return;
     }
     if (action.type === "splitBeat") {
@@ -657,7 +699,84 @@ export function TabScoreEditor({
         returnFocus={() => containerRef.current?.focus({ preventScroll: true })}
       />
 
-      {form && (
+      {form === "tuplet" && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={paletteText.subdivisionTitle}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+          <div
+            ref={tupletDialogRef}
+            tabIndex={-1}
+            className="w-full max-w-sm rounded-xl bg-white p-4 text-zinc-900 shadow-xl outline-none"
+          >
+            <h3 className="text-sm font-semibold">
+              {paletteText.subdivisionTitle}
+            </h3>
+            <p className="mt-1 text-xs leading-5 text-zinc-600">
+              {paletteText.subdivisionHint}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {TAB_TUPLETS.map((tuplet) => {
+                const result = divideBeat(
+                  editor.score,
+                  editor.selection,
+                  tuplet,
+                );
+                const error = "error" in result ? result.error : null;
+                const label =
+                  paletteText[
+                    TUPLET_LABEL_KEYS[tuplet] as keyof typeof paletteText
+                  ];
+                const reason =
+                  error === "cannotSubdivide"
+                    ? paletteText.cannotSubdivide
+                    : error === "alreadySubdivided"
+                      ? paletteText.alreadySubdivided
+                      : error === "beatLimit"
+                        ? paletteText.beatLimit
+                        : null;
+
+                return (
+                  <button
+                    key={tuplet}
+                    type="button"
+                    disabled={error !== null}
+                    onClick={() => {
+                      editor.dispatch({ type: "divideBeat", tuplet });
+                      setForm(null);
+                      setPaletteOpen(false);
+                      containerRef.current?.focus({ preventScroll: true });
+                    }}
+                    className="rounded-md border border-zinc-300 px-2 py-2 text-left text-sm text-zinc-900 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {label}
+                    {reason && (
+                      <span className="mt-0.5 block text-[11px] font-normal text-zinc-500">
+                        {reason}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button
+                type="button"
+                size="field"
+                variant="ghost"
+                onClick={() => setForm(null)}
+                className="border-zinc-300 text-zinc-700"
+              >
+                {paletteText.close}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {form && form !== "tuplet" && (
         <div
           role="dialog"
           aria-modal="true"

@@ -1,0 +1,89 @@
+# Design
+
+## Context
+
+Ver `proposal.md`. La selección ya es un `TabSelection` con `anchor` y `getRangeBeats` devuelve los pulsos del tramo; la paleta aplica duración y técnicas a ese tramo. El lienzo selecciona en `pointerdown`, y el menú de la nota usa pulsación larga y doble toque. El pulso guarda `tuplet?: 3` y `getBeatTicks` lo multiplica por 2/3; AlphaTex emite `{tu 3}`. El compás se compara en ticks enteros y se marca si no cuadra.
+
+## Goals / Non-Goals
+
+**Goals:**
+
+- Marcar un tramo arrastrando, con ratón y con dedo, sin romper el desplazamiento vertical ni los gestos del menú.
+- Subdividir cada pulso seleccionado en 3, 5, 6, 7, 9, 10 o 12 huecos iguales conservando su duración total.
+- Dibujar y reproducir la subdivisión con su número.
+- Cargar los tresillos ya guardados sin migración.
+
+**Non-Goals:**
+
+- Subdivisiones anidadas.
+- Proporciones n:m personalizadas.
+- Agrupar notas ya escritas bajo un corchete.
+- Quitar o convertir una subdivisión creada (se deshace).
+- Cambiar el tamaño de la selección por cuerdas: el tramo sigue siendo de pulsos.
+
+## Decisions
+
+### 1. `tuplet` pasa a ser el número de la subdivisión
+
+`TabBeat.tuplet` admite `3 | 5 | 6 | 7 | 9 | 10 | 12`. Una tabla `TUPLET_RATIOS` guarda la proporción de cada una —3:2, 5:4, 6:4, 7:4, 9:8, 10:8 y 12:8— y `getBeatTicks` multiplica por `entran / n`.
+
+- AlphaTex emite `{tu n}`; alphaTab admite esas variantes simples.
+- La normalización acepta solo los siete números; un valor desconocido se descarta y el pulso conserva su duración base. Los datos con `tuplet: 3` siguen valiendo.
+- Alternativa descartada: guardar `{ n, m }`. Las siete subdivisiones tiene proporción fija y un objeto complica la normalización sin aportar nada hasta que se admitan n:m.
+
+### 2. La subdivisión divide el pulso, no lo marca
+
+La acción nueva `divideBeat` recibe la selección y el número `n`:
+
+1. Para cada pulso seleccionado calcula `T = getBeatTicks(pulso)`.
+2. Calcula la figura base con `T / entran`; tiene que ser una duración entera de las admitidas (1–64). Si no lo es, la opción se desactiva con el motivo `cannotSubdivide`.
+3. Sustituye el pulso por `n` pulsos de esa figura, todos con `tuplet: n`; el primero conserva notas, silencio, puntillo y demás; los demás nacen como silencios.
+4. Comprueba el tope de 64 pulsos por compás (`beatLimit`) antes de insertar.
+5. Deja seleccionado el primer hueco del primer pulso dividido.
+
+Así el compás no cambia de suma y el usuario escribe las N notas con el avance automático que ya existe. Un pulso con puntillo o ya subdividido no se divide: la figura base no sería entera y las subdivisiones anidadas quedan fuera.
+
+- Alternativa descartada: agrupar las notas ya seleccionadas bajo un corchete como hace Guitar Pro al aplicarlo después de escribir. Obliga a decidir qué pasa si hay más notas que huecos, a recomponer los silencios y a modelar el grupo; se pospone.
+- Alternativa descartada: mantener el interruptor actual. Acorta el pulso, deja el compás descuadrado y no sirve para escribir el tresillo.
+
+### 3. Tolerancia de redondeo en 7 y 9
+
+Con 960 ticks por negra, un pulso de negra dividido en 7 o 9 no da ticks enteros. `getBeatTicks` redondea cada hueco y la suma puede quedar 1–3 ticks por debajo o por encima. `getBarFill` acepta una tolerancia de 4 ticks cuando el compás contiene subdivisiones; el resto de compases sigue comparando exacto.
+
+- Alternativa descartada: subir la resolución de ticks. Cambia el modelo, AlphaTex y la reproducción para un caso raro.
+- Alternativa descartada: rechazar 7 y 9. El usuario las pidió y alphaTab las dibuja.
+
+### 4. Arrastrar para seleccionar
+
+En el lienzo, `pointerdown` sigue seleccionando el pulso de origen. Si el puntero se mueve más de 8 px en horizontal, se marca `dragging` y cada movimiento despacha `select` con `extend` hacia el pulso actual; `pointerup` termina y limpia el estado. El tramo se ve con el resaltado de `selectedBeats` que ya existe.
+
+- `touch-action: pan-y` en la capa interactiva: el arrastre vertical lo sigue gestionando el navegador (desplaza la página) y el horizontal es nuestro.
+- Un arrastre cancela la pulsación larga y no dispara el doble toque; soltar tras arrastrar no abre el menú ni escribe.
+- Mayús + clic y Mayús + flechas se quedan como alternativa de teclado.
+- Alternativa descartada: tocar el primero y el último. Necesita un modo o un intervalo y choca con el doble toque que ya abre el menú.
+
+### 5. Selector de subdivisión en la paleta
+
+El grupo Ritmo cambia el botón de tresillo por **Subdivisión**, que abre un diálogo pequeño con los siete números y su proporción. Cada opción muestra su nombre (tresillo, quintillo…) y, si no cabe, el motivo por el que está desactivada. Elegir una opción aplica la división y cierra el diálogo; Escape cierra sin tocar nada.
+
+- Alternativa descartada: siete iconos más en la paleta. Crece la rejilla y no hay sitio para explicar el motivo de cada uno.
+- El diálogo reutiliza el patrón de los de compás y tempo (`form` en `TabScoreEditor`).
+
+### 6. Una sola edición por subdivisión
+
+La división se calcula entera y se apila una vez en el historial; deshacer recupera el pulso original con su contenido y su duración. Los dos dígitos de un traste siguen compartiendo paso.
+
+## Risks / Trade-offs
+
+- [El redondeo de 7 y 9 deja el compás a pocos ticks] → Tolerancia de 4 ticks solo en compases con subdivisiones; los demás siguen exactos.
+- [Arrastrar en táctil puede chocar con el desplazamiento o con la pulsación larga] → `touch-action: pan-y`, umbral de 8 px y cancelación de la pulsación larga al mover.
+- [Un pulso ya subdividido no se puede volver a dividir ni convertir] → La opción se desactiva con el motivo; deshacer lo revierte. Se documenta como límite.
+- [El usuario espera que la subdivisión agrupe notas ya escritas] → La ayuda del diálogo dice que parte el pulso y coloca las notas en los huecos; el caso de agrupar queda para otro cambio.
+
+## Migration Plan
+
+No hay migración ni subida de versión: `tuplet: 3` sigue siendo válido y los compases sin subdivisiones se leen igual. Si se revierte el cambio, los pulsos con 5, 6, 7, 9, 10 o 12 se cargarían descartando el número y conservando la figura base, sin perder el resto de la partitura.
+
+## Open Questions
+
+Ninguna.

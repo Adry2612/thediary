@@ -191,3 +191,25 @@ test("every group of the catalogue is rendered in the palette", () => {
   }
   assert.ok(groups.has("tie"));
 });
+
+test("explains why a subdivided beat cannot be subdivided again", () => {
+  const value = score([
+    { id: "b1", duration: 8, tuplet: 3, rest: true, notes: [] },
+  ]);
+  const state = stateFor(value, { bar: 0, beat: 0, string: 0 });
+
+  assert.equal(state.subdivision.active, true);
+  assert.equal(state.subdivision.disabled, true);
+  assert.equal(state.subdivision.reason, "alreadySubdivided");
+});
+
+test("enables the subdivision picker on a plain beat", () => {
+  const value = score([
+    { id: "b1", duration: 4, rest: true, notes: [] },
+  ]);
+  const state = stateFor(value, { bar: 0, beat: 0, string: 0 });
+
+  assert.equal(state.subdivision.active, false);
+  assert.equal(state.subdivision.disabled, false);
+  assert.equal(state.subdivision.reason, undefined);
+});

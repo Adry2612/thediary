@@ -106,3 +106,47 @@ test("flags each bar of a score with its inherited signature", () => {
   assert.equal(getScoreBarFill(score, 2), "under");
   assert.equal(getBarTicks(score.bars[0]), 2880);
 });
+
+test("applies every subdivision ratio", () => {
+  const expected = {
+    3: 640,
+    5: 768,
+    6: 640,
+    7: 549,
+    9: 853,
+    10: 768,
+    12: 640,
+  };
+
+  for (const [tuplet, ticks] of Object.entries(expected)) {
+    assert.equal(getBeatTicks(beat(4, { tuplet: Number(tuplet) })), ticks);
+  }
+});
+
+test("does not flag the rounding of sevens and nines", () => {
+  const fourFour = { numerator: 4, denominator: 4 };
+  const quarters = [
+    beat(4),
+    beat(4),
+    beat(4),
+  ];
+  const seven = Array.from({ length: 7 }, (_, index) =>
+    beat(16, { id: `seven-${index}`, tuplet: 7 }),
+  );
+  const nine = Array.from({ length: 9 }, (_, index) =>
+    beat(32, { id: `nine-${index}`, tuplet: 9 }),
+  );
+
+  assert.equal(
+    getBarFill({ beats: [...quarters, ...seven] }, fourFour),
+    "exact",
+  );
+  assert.equal(
+    getBarFill({ beats: [...quarters, ...nine] }, fourFour),
+    "exact",
+  );
+  assert.equal(
+    getBarFill({ beats: [beat(2), beat(4), beat(8)] }, fourFour),
+    "under",
+  );
+});
