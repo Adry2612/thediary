@@ -204,7 +204,17 @@ export function TabScoreEditor({
 
   /** Abre el menú de una nota allí donde se ha pulsado, sin ir a «Opciones». */
   function openNoteMenu(hit: TabScoreHit) {
-    editor.dispatch({ type: "select", position: hit.position });
+    if (hit.nearNote) {
+      editor.dispatch({ type: "select", position: hit.position });
+    } else {
+      // En táctil el traste se elige desde el propio menú: hay que conservar
+      // el punto pulsado para que la nota caiga ahí y no al inicio del pulso.
+      editor.dispatch({
+        type: "selectAt",
+        position: hit.position,
+        fraction: hit.fraction,
+      });
+    }
     setAnchor(hit.box);
     setAnchorVersion((version) => version + 1);
     setPaletteOpen(true);
@@ -220,8 +230,15 @@ export function TabScoreEditor({
     return () => query.removeEventListener("change", update);
   }, []);
 
-  function select(position: TabPosition, extend: boolean) {
-    editor.dispatch({ type: "select", position, extend });
+  function select(position: TabPosition, extend: boolean, hit?: TabScoreHit) {
+    // Si el clic cae en un hueco (lejos de una nota ya dibujada), la primera
+    // cifra partirá el pulso en ese punto. Sobre una nota, selecciona para
+    // editar o para añadir otra cuerda del acorde.
+    if (!extend && hit && !hit.nearNote) {
+      editor.dispatch({ type: "selectAt", position, fraction: hit.fraction });
+    } else {
+      editor.dispatch({ type: "select", position, extend });
+    }
     containerRef.current?.focus({ preventScroll: true });
   }
 

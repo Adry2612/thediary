@@ -1067,7 +1067,7 @@ export const es: Dict = {
     noSelectionLabel: 'Sin selección',
     undo: 'Deshacer',
     noteMenuHint:
-      'Doble clic, clic derecho o pulsación larga: opciones de la nota.',
+      'Clic en cualquier punto y escribe el traste. Doble clic, clic derecho o pulsación larga: opciones de la nota.',
     redo: 'Rehacer',
   },
   tabPalette: {
@@ -1075,6 +1075,7 @@ export const es: Dict = {
     close: 'Cerrar opciones',
     durations: 'Duración',
     rhythm: 'Ritmo',
+    position: 'Posición',
     ties: 'Ligaduras',
     techniques: 'Técnicas',
     bends: 'Bends',
@@ -1091,6 +1092,8 @@ export const es: Dict = {
     triplet: 'Tresillo',
     rest: 'Silencio',
     splitBeat: 'Dividir pulso',
+    moveLeft: 'Mover a la izquierda',
+    moveRight: 'Mover a la derecha',
     tie: 'Ligadura',
     legatoHammer: 'Hammer-on',
     legatoPull: 'Pull-off',
@@ -1136,6 +1139,7 @@ export const es: Dict = {
     barLimit: 'Ya hay 64 compases.',
     cannotSplit: 'Este pulso ya es una semifusa y no se puede dividir.',
     beatLimit: 'Este compás ya tiene 64 pulsos.',
+    noAdjacentBeat: 'No hay otro pulso al lado.',
     hoverHint: 'Pasa el cursor o enfoca un icono para ver qué hace.',
     barFits: 'El compás cuadra.',
     barUnder: 'Faltan pulsos en este compás.',
@@ -1155,10 +1159,10 @@ export const es: Dict = {
     close: 'Cerrar',
     selectTitle: 'Selecciona un pulso',
     selectBody:
-      'Haz clic (o toca) dentro de la pauta, en la cuerda y el pulso donde quieras trabajar. Verás un recuadro verde: esa es la selección.',
+      'Haz clic (o toca) dentro de la pauta, en la cuerda y el punto donde quieras trabajar. El editor creará el hueco justo ahí. Verás un recuadro verde: esa es la selección.',
     writeTitle: 'Escribe un traste',
     writeBody:
-      'Con el teclado, escribe un número del 0 al 24, por ejemplo 5. La nota aparece en el pulso y la cuerda seleccionados.',
+      'Con el teclado, escribe un número del 0 al 24, por ejemplo 5. La nota aparece en el punto y la cuerda donde has hecho clic.',
     chordTitle: 'Añade una segunda nota',
     chordBody:
       'Pulsa ↑ o ↓ para cambiar de cuerda y escribe otro traste. Las dos notas suenan juntas: acabas de escribir un acorde.',
@@ -1168,6 +1172,9 @@ export const es: Dict = {
     durationTitle: 'Cambia la duración',
     durationBody:
       'En el menú, elige otra figura, por ejemplo la corchea. La nota cambia de duración y el menú sigue abierto por si quieres añadir una técnica.',
+    moveTitle: 'Mueve la nota',
+    moveBody:
+      'Con el menú abierto, usa las flechas de Posición para mover la nota a izquierda o derecha. Cambia de sitio sin romper el compás.',
     splitTitle: 'Crea un pulso nuevo',
     splitBody:
       'Cierra el menú, selecciona un pulso y abre Opciones. En Ritmo, elige «Dividir pulso»: se parte en dos y el segundo queda seleccionado para escribir.',

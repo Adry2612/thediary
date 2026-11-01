@@ -43,7 +43,8 @@ export type TabOperationError =
   | "invalidTimeSignature"
   | "barLimit"
   | "cannotSplit"
-  | "beatLimit";
+  | "beatLimit"
+  | "cannotMove";
 
 export type TabOperationResult =
   | { score: TabScore; selection: TabSelection }
@@ -301,6 +302,78 @@ export function splitBeat(
       ...selection,
       beat: selection.beat + 1,
     }),
+  };
+}
+
+/**
+ * Coloca el pulso seleccionado en la fracción horizontal pulsada, partiéndolo
+ * en mitades hasta que la nota cae cerca de ese punto. Así se puede escribir
+ * en cualquier sitio sin crear antes la columna a mano.
+ */
+export function splitBeatAt(
+  score: TabScore,
+  selection: TabSelection,
+  fraction: number,
+): TabOperationResult {
+  const clamped = Math.min(0.999, Math.max(0, fraction));
+  if (clamped < 0.18) {
+    return { score, selection: clampSelection(score, selection) };
+  }
+
+  let next = score;
+  let beatIndex = selection.beat;
+  let local = clamped;
+
+  for (let step = 0; step < 4; step++) {
+    const beat = next.bars[selection.bar]?.beats[beatIndex];
+    // Una fusa (32) es suficiente resolución para una tablatura.
+    if (!beat || beat.duration >= 32) break;
+
+    const split = splitBeat(next, { ...selection, beat: beatIndex });
+    if ("error" in split) break;
+    next = split.score;
+
+    if (local < 0.5) {
+      local *= 2;
+    } else {
+      beatIndex += 1;
+      local = (local - 0.5) * 2;
+    }
+    if (local < 0.18) break;
+  }
+
+  return {
+    score: next,
+    selection: clampSelection(next, { ...selection, beat: beatIndex }),
+  };
+}
+
+/** Intercambia el pulso con el de al lado dentro del mismo compás. */
+export function moveBeat(
+  score: TabScore,
+  selection: TabSelection,
+  direction: "left" | "right",
+): TabOperationResult {
+  const bar = score.bars[selection.bar];
+  if (!bar?.beats[selection.beat]) return { error: "noSelection" };
+
+  const target = selection.beat + (direction === "left" ? -1 : 1);
+  if (target < 0 || target >= bar.beats.length) {
+    return { error: "cannotMove" };
+  }
+
+  const beats = bar.beats.slice();
+  const current = beats[selection.beat];
+  beats[selection.beat] = beats[target];
+  beats[target] = current;
+
+  const bars = score.bars.slice();
+  bars[selection.bar] = { ...bar, beats };
+  const next = { ...score, bars };
+
+  return {
+    score: next,
+    selection: clampSelection(next, { ...selection, beat: target }),
   };
 }
 

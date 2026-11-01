@@ -81,8 +81,8 @@ El editor de un lick es una pantalla propia, no un diálogo:
 
 La partitura ocupa todo el ancho de la columna. Dentro del lienzo:
 
-- un clic o un toque seleccionan el pulso y la cuerda más cercanos, aunque el
-  punto caiga en un hueco vacío;
+- un clic o un toque seleccionan la cuerda y el punto horizontal; si el punto
+  cae lejos de una nota, la primera cifra crea el hueco justo ahí;
 - las flechas mueven la selección, Mayús la extiende y los dígitos escriben el
   traste (0–24, con dos cifras);
 - un doble clic, un clic derecho o una pulsación larga abren la paleta de esa
@@ -90,6 +90,26 @@ La partitura ocupa todo el ancho de la columna. Dentro del lienzo:
   el silencio, las ligaduras y las técnicas de la selección;
 - en táctil la paleta es una hoja inferior con los trastes 0–24 y se coloca
   por debajo del pulso, reservando espacio para poder subirlo.
+
+### Escribir en cualquier punto
+
+Al hacer clic en un hueco, el editor guarda la fracción horizontal del clic. La
+primera cifra del traste parte el pulso en mitades hasta una fusa (32) y escribe
+la nota en la mitad más cercana; la suma del compás no cambia. Si el clic cae
+sobre una nota ya dibujada, solo la selecciona (o permite añadir otra cuerda del
+acorde). Si cae en el primer 18 % del pulso, se escribe al inicio sin partir.
+
+En táctil el punto se conserva al abrir el menú con doble toque o pulsación
+larga: al elegir el traste en la hoja, la nota cae donde se tocó, no al inicio
+del pulso.
+
+### Mover una nota
+
+El grupo **Posición** del menú tiene **Mover a la izquierda** y **Mover a la
+derecha**: intercambian el pulso seleccionado con el de al lado dentro del mismo
+compás, con sus notas y su duración. La suma del compás no cambia. En los
+extremos del compás la opción se desactiva y la franja de descripción explica
+por qué.
 
 La paleta se cierra con Escape o al desplazar la partitura (rueda o
 `touchmove`), pero no cuando un cambio de duración recompone la página: ese

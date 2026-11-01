@@ -23,6 +23,7 @@ import {
   deleteNote,
   duplicateBar,
   insertBarAfter,
+  moveBeat,
   setBendFlag,
   setDots,
   setDuration,
@@ -31,6 +32,7 @@ import {
   setTimeSignature,
   setTuplet,
   splitBeat,
+  splitBeatAt,
   toggleTie,
   writeFret,
   type TabOperationError,
@@ -57,11 +59,23 @@ export type TabScoreEditorState = {
   selectionVisible: boolean;
   /** Último error de una operación, para avisar en la interfaz. */
   error?: TabOperationError;
+  /**
+   * Punto horizontal del clic cuando cae en un hueco: la primera cifra parte
+   * el pulso en esa posición. Se pierde con cualquier otra acción.
+   */
+  pending?: {
+    bar: number;
+    beat: number;
+    string: number;
+    fraction: number;
+  };
 };
 
 export type TabScoreEditorAction =
   | { type: "select"; position: TabPosition; extend?: boolean }
+  | { type: "selectAt"; position: TabPosition; fraction: number }
   | { type: "move"; direction: TabMoveDirection; extend?: boolean }
+  | { type: "moveBeat"; direction: "left" | "right" }
   | { type: "digit"; digit: string }
   | { type: "commitBuffer" }
   | { type: "deleteNote" }
@@ -125,6 +139,7 @@ function withResult(
     ),
     buffer: "",
     error: undefined,
+    pending: undefined,
   };
 }
 
@@ -141,11 +156,39 @@ function applyDigit(state: TabScoreEditorState, digit: string): TabScoreEditorSt
   if (Number(candidate) > 24) return state;
   const fret = Number(candidate);
 
-  const result = writeFret(state.score, state.selection, fret);
-  const key = `fret:${state.selection.bar}:${state.selection.beat}:${state.selection.string}`;
-  const next = withResult(state, result, key);
-  if ("error" in result) return next;
-  return { ...next, buffer: candidate, selectionVisible: true };
+  let score = state.score;
+  let selection = state.selection;
+  const pending = state.pending;
+
+  if (
+    pending &&
+    pending.bar === selection.bar &&
+    pending.beat === selection.beat &&
+    pending.string === selection.string
+  ) {
+    const placed = splitBeatAt(score, selection, pending.fraction);
+    if (!("error" in placed)) {
+      score = placed.score;
+      selection = placed.selection;
+    }
+  }
+
+  const result = writeFret(score, selection, fret);
+  if ("error" in result) {
+    return { ...state, error: result.error, buffer: "", pending: undefined };
+  }
+
+  const key = `fret:${result.selection.bar}:${result.selection.beat}:${result.selection.string}`;
+  return {
+    ...state,
+    score: result.score,
+    selection: result.selection,
+    history: pushHistory(state.history, result.score, result.selection, key),
+    buffer: candidate,
+    selectionVisible: true,
+    error: undefined,
+    pending: undefined,
+  };
 }
 
 export function tabScoreEditorReducer(
@@ -173,6 +216,24 @@ export function tabScoreEditorReducer(
         buffer: "",
         selectionVisible: true,
         error: undefined,
+        pending: undefined,
+      };
+    }
+
+    case "selectAt": {
+      const position = clampSelection(state.score, action.position);
+      return {
+        ...state,
+        selection: position,
+        pending: {
+          bar: position.bar,
+          beat: position.beat,
+          string: position.string,
+          fraction: Math.min(0.999, Math.max(0, action.fraction)),
+        },
+        buffer: "",
+        selectionVisible: true,
+        error: undefined,
       };
     }
 
@@ -188,7 +249,11 @@ export function tabScoreEditorReducer(
         buffer: "",
         selectionVisible: true,
         error: undefined,
+        pending: undefined,
       };
+
+    case "moveBeat":
+      return withResult(state, moveBeat(state.score, selection, action.direction));
 
     case "selectBar": {
       const bar = Math.min(
@@ -205,6 +270,7 @@ export function tabScoreEditorReducer(
         buffer: "",
         selectionVisible: true,
         error: undefined,
+        pending: undefined,
       };
     }
 
@@ -305,6 +371,7 @@ export function tabScoreEditorReducer(
         history,
         buffer: "",
         error: undefined,
+        pending: undefined,
       };
     }
 
@@ -317,12 +384,19 @@ export function tabScoreEditorReducer(
         history,
         buffer: "",
         error: undefined,
+        pending: undefined,
       };
     }
 
     case "clearSelection":
       return state.selectionVisible
-        ? { ...state, selectionVisible: false, buffer: "", error: undefined }
+        ? {
+            ...state,
+            selectionVisible: false,
+            buffer: "",
+            error: undefined,
+            pending: undefined,
+          }
         : state;
 
     case "replaceScore": {
@@ -335,6 +409,7 @@ export function tabScoreEditorReducer(
         buffer: "",
         selectionVisible: true,
         error: undefined,
+        pending: undefined,
       };
     }
 

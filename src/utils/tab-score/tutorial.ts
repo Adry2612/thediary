@@ -7,6 +7,7 @@ export const TAB_TUTORIAL_STEPS = [
   "chord",
   "menu",
   "duration",
+  "move",
   "split",
   "done",
 ] as const;
@@ -15,6 +16,8 @@ export type TabTutorialStep = (typeof TAB_TUTORIAL_STEPS)[number];
 
 export type TabTutorialSnapshot = {
   score: TabScore;
+  bar: number;
+  beat: number;
   beatNotes: number;
   duration: string;
   beats: number;
@@ -39,6 +42,8 @@ export function snapshotTutorial(
   const beat = beatAt(score, selection);
   return {
     score,
+    bar: selection.bar,
+    beat: selection.beat,
     beatNotes: beat?.notes.length ?? 0,
     duration: beat ? durationKey(beat) : "",
     beats: score.bars[selection.bar]?.beats.length ?? 0,
@@ -83,6 +88,15 @@ export function checkTutorialStep(
     return {
       snapshot,
       advance: beat !== null && durationKey(beat) !== snapshot.duration,
+    };
+  }
+
+  if (step === "move") {
+    return {
+      snapshot,
+      advance:
+        current.selection.bar !== snapshot.bar ||
+        current.selection.beat !== snapshot.beat,
     };
   }
 

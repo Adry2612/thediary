@@ -27,6 +27,7 @@ function targetSelector(
     case "menu":
       return '[data-testid="tab-score-canvas"]';
     case "duration":
+    case "move":
       return paletteOpen ? "[data-tab-palette]" : "[data-palette-toggle]";
     case "split":
       return paletteOpen
@@ -135,6 +136,8 @@ export function TabScoreTutorial({
             ? { title: text.menuTitle, body: text.menuBody }
             : step === "duration"
               ? { title: text.durationTitle, body: text.durationBody }
+              : step === "move"
+                ? { title: text.moveTitle, body: text.moveBody }
               : step === "split"
                 ? { title: text.splitTitle, body: text.splitBody }
                 : { title: text.doneTitle, body: text.doneBody };

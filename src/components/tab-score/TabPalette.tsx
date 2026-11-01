@@ -37,6 +37,8 @@ function groupTitle(
       return text.durations;
     case "rhythm":
       return text.rhythm;
+    case "position":
+      return text.position;
     case "tie":
       return text.ties;
     case "technique":
@@ -55,6 +57,9 @@ function reasonText(
   if (reason === "requiresNote") return text.requiresNote;
   if (reason === "requiresPreviousNote") return text.requiresPreviousNote;
   if (reason === "barLimit") return text.barLimit;
+  if (reason === "cannotSplit") return text.cannotSplit;
+  if (reason === "beatLimit") return text.beatLimit;
+  if (reason === "noAdjacentBeat") return text.noAdjacentBeat;
   return undefined;
 }
 

@@ -134,6 +134,63 @@ test("splits a beat and undoes it through the reducer", () => {
   assert.equal(undone.selection.beat, 0);
 });
 
+test("the first digit after clicking a gap splits the beat at that point", () => {
+  const state = run([
+    {
+      type: "selectAt",
+      position: { bar: 0, beat: 0, string: 0 },
+      fraction: 0.75,
+    },
+    { type: "digit", digit: "5" },
+  ]);
+
+  assert.equal(state.score.bars[0].beats.length, 3);
+  assert.equal(state.score.bars[0].beats[0].rest, true);
+  assert.equal(state.score.bars[0].beats[1].rest, true);
+  assert.equal(state.score.bars[0].beats[2].rest, false);
+  assert.deepEqual(state.score.bars[0].beats[2].notes, [
+    { string: 0, fret: 5 },
+  ]);
+  assert.deepEqual(state.selection, { bar: 0, beat: 2, string: 0 });
+  assert.equal(state.history.past.length, 1);
+
+  const undone = tabScoreEditorReducer(state, { type: "undo" });
+  assert.equal(undone.score.bars[0].beats.length, 1);
+  assert.equal(undone.score.bars[0].beats[0].rest, true);
+});
+
+test("moving a beat swaps it with its neighbour and keeps the selection", () => {
+  const initial = {
+    version: 2,
+    tuning: "EADGBE",
+    tempo: 90,
+    bars: [
+      {
+        id: "bar-a",
+        beats: [
+          {
+            id: "b1",
+            duration: 4,
+            rest: false,
+            notes: [{ string: 0, fret: 1 }],
+          },
+          {
+            id: "b2",
+            duration: 4,
+            rest: false,
+            notes: [{ string: 0, fret: 2 }],
+          },
+        ],
+      },
+    ],
+  };
+
+  const state = run([{ type: "moveBeat", direction: "right" }], initial);
+  assert.equal(state.score.bars[0].beats[0].notes[0].fret, 2);
+  assert.equal(state.score.bars[0].beats[1].notes[0].fret, 1);
+  assert.equal(state.selection.beat, 1);
+});
+
 test("replaceScore resets the history", () => {
   const state = run([
     { type: "digit", digit: "3" },

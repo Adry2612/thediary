@@ -293,6 +293,34 @@ activado.
 - El foco de la paleta usa `preventScroll` para no devolver la página al
   principio al abrirla.
 
+## Colocación libre y mover notas (19)
+
+- **El clic guarda una fracción, no una columna.** `TabScoreHit` añade la
+  fracción horizontal dentro del pulso y si el clic cae sobre una nota ya
+  dibujada (`nearNote`). El lienzo no parte nada al seleccionar: solo guarda
+  `pending` en el estado del editor.
+- La primera cifra del traste, si hay `pending`, llama a `splitBeatAt`: parte
+  el pulso en mitades hasta una fusa (32), elige la mitad que contiene el punto
+  y escribe la nota allí. La suma del compás no cambia. La división y la nota
+  comparten un solo paso de deshacer.
+  - Alternativa descartada: partir el pulso al hacer clic. Crearía huecos y
+    pasos de historial sin que el usuario llegue a escribir nada.
+  - Alternativa descartada: una rejilla de posiciones fijas. Ya se probó y no
+    encaja: el usuario quiere señalar el punto con el ratón, no elegir columna.
+  - El umbral del 18 % evita partir cuando el clic cae al principio del pulso;
+    sobre una nota (`nearNote`) se selecciona para editar el traste o añadir
+    otra cuerda del acorde, no para crear un hueco.
+- En táctil, abrir el menú sobre un hueco conserva `pending`: elegir el traste
+  en la hoja escribe la nota en el punto tocado, sin teclado físico.
+- **Mover la nota** es `moveBeat`: intercambia el pulso seleccionado con el de
+  al lado dentro del compás, con su contenido y su duración. No cambia la suma
+  del compás y se deshace como cualquier edición. En los extremos la opción se
+  desactiva con `noAdjacentBeat`.
+  - Se mueve el pulso completo, no una sola cuerda, para que un acorde no se
+    rompa al recolocarlo.
+- Los iconos de posición y sus textos siguen el catálogo y la franja de
+  descripción de la paleta (16).
+
 ## Subdividir pulsos, menú por iconos y tutorial (16)
 
 - **Dividir un pulso** es la operación que crea huecos nuevos sin romper la

@@ -1055,7 +1055,7 @@ export const en: Dict = {
     noSelectionLabel: 'No selection',
     undo: 'Undo',
     noteMenuHint:
-      'Double-click, right-click or long-press: note options.',
+      'Click anywhere and type the fret. Double-click, right-click or long press: note options.',
     redo: 'Redo',
   },
   tabPalette: {
@@ -1063,6 +1063,7 @@ export const en: Dict = {
     close: 'Close options',
     durations: 'Duration',
     rhythm: 'Rhythm',
+    position: 'Position',
     ties: 'Ties',
     techniques: 'Techniques',
     bends: 'Bends',
@@ -1079,6 +1080,8 @@ export const en: Dict = {
     triplet: 'Triplet',
     rest: 'Rest',
     splitBeat: 'Split beat',
+    moveLeft: 'Move left',
+    moveRight: 'Move right',
     tie: 'Tie',
     legatoHammer: 'Hammer-on',
     legatoPull: 'Pull-off',
@@ -1124,6 +1127,7 @@ export const en: Dict = {
     barLimit: 'There are already 64 bars.',
     cannotSplit: 'This beat is already a sixty-fourth and cannot be split.',
     beatLimit: 'This bar already holds 64 beats.',
+    noAdjacentBeat: 'There is no beat next to this one.',
     hoverHint: 'Hover or focus an icon to see what it does.',
     barFits: 'The bar adds up.',
     barUnder: 'This bar is missing beats.',
@@ -1143,10 +1147,10 @@ export const en: Dict = {
     close: 'Close',
     selectTitle: 'Select a beat',
     selectBody:
-      'Click (or tap) inside the tab, on the string and beat you want to work on. A green box marks the selection.',
+      'Click (or tap) inside the tab, on the string and point you want to work on. The editor creates the slot right there. A green box marks the selection.',
     writeTitle: 'Type a fret',
     writeBody:
-      'On the keyboard, type a number from 0 to 24, for example 5. The note appears on the selected beat and string.',
+      'On the keyboard, type a number from 0 to 24, for example 5. The note appears at the point and string you clicked.',
     chordTitle: 'Add a second note',
     chordBody:
       'Press ↑ or ↓ to change strings and type another fret. Both notes sound together: you just wrote a chord.',
@@ -1156,6 +1160,9 @@ export const en: Dict = {
     durationTitle: 'Change the duration',
     durationBody:
       'In the menu, pick another figure, for example the eighth note. The note changes length and the menu stays open so you can add a technique.',
+    moveTitle: 'Move the note',
+    moveBody:
+      'With the menu open, use the Position arrows to move the note left or right. It changes place without breaking the bar.',
     splitTitle: 'Create a new beat',
     splitBody:
       'Close the menu, select a beat and open Options. Under Rhythm, choose “Split beat”: it becomes two beats and the second one is selected for writing.',

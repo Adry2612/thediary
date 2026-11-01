@@ -159,6 +159,23 @@ test("explains why a beat cannot be split", () => {
   assert.equal(available["split-beat"].disabled, false);
 });
 
+test("explains why a beat cannot move past the edge of its bar", () => {
+  const value = score([
+    { id: "b1", duration: 4, rest: true, notes: [] },
+    { id: "b2", duration: 4, rest: true, notes: [] },
+  ]);
+
+  const first = stateFor(value, { bar: 0, beat: 0, string: 0 });
+  assert.equal(first["move-left"].disabled, true);
+  assert.equal(first["move-left"].reason, "noAdjacentBeat");
+  assert.equal(first["move-right"].disabled, false);
+
+  const last = stateFor(value, { bar: 0, beat: 1, string: 0 });
+  assert.equal(last["move-right"].disabled, true);
+  assert.equal(last["move-right"].reason, "noAdjacentBeat");
+  assert.equal(last["move-left"].disabled, false);
+});
+
 test("every shortcut is unique and the catalogue has no repeated ids", () => {
   const shortcuts = TAB_PALETTE.filter((option) => option.shortcut);
   assert.equal(getPaletteShortcuts().size, shortcuts.length);

@@ -104,6 +104,13 @@
 - [x] 17.3 Actualizar `tabTutorial` en `es.ts`, `en.ts` y `dictionary.ts` y `docs/tab-score.md` con los pasos y su detección; ejecutar `npm run typecheck`, `npm test` y `npm run build`.
 - [x] 17.4 Recorrer el tutorial completo en el navegador de principio a fin: seleccionar, escribir, acorde, abrir menú, cambiar duración, dividir pulso y cerrar; comprobar que cada paso avanza solo y que la partitura conserva lo escrito.
 
+## 19. Colocación libre y mover notas
+
+- [x] 19.1 Llevar la fracción horizontal del clic hasta el estado del editor (`TabScoreHit.fraction` y `nearNote`, acción `selectAt`) y partir el pulso con `splitBeatAt` en la primera cifra, sin partir al seleccionar. Verificar con tests de 0.75, 0.1, semifusa, nota existente y suma del compás.
+- [x] 19.2 Implementar `moveBeat` y el grupo **Posición** de la paleta (mover izquierda/derecha, desactivado en los extremos con `noAdjacentBeat`), con sus iconos y textos. Verificar con tests del intercambio, los extremos y el compás.
+- [x] 19.3 Conservar el punto del clic al abrir el menú en táctil, actualizar el tutorial (paso de mover) y las cadenas de `tabPalette` y `tabTutorial` en `es.ts`, `en.ts` y `dictionary.ts`.
+- [x] 19.4 Actualizar `docs/tab-score.md` y ejecutar `npm run typecheck`, `npm test` y `npm run build`; recorrer en el navegador clic en hueco + traste, clic en nota + traste, doble clic y mover, táctil y deshacer.
+
 ## Workflow follow-up
 
 - Archivar `add-score-tab-editor` antes que `add-score-tab-notation-extras`, que la amplía.

@@ -8,8 +8,10 @@ import {
   deleteNote,
   duplicateBar,
   insertBarAfter,
+  moveBeat,
   setDots,
   splitBeat,
+  splitBeatAt,
   setDuration,
   setRest,
   setTempo,
@@ -325,6 +327,66 @@ test("refuses to split a sixty-fourth or a bar full of beats", () => {
   assert.deepEqual(splitBeat(many, { bar: 0, beat: 0, string: 0 }), {
     error: "beatLimit",
   });
+});
+
+test("splits a beat at the clicked point and keeps the bar exact", () => {
+  const base = score([
+    beat({ duration: 4, rest: false, notes: [{ string: 0, fret: 5 }] }),
+    beat({ duration: 4 }),
+    beat({ duration: 2 }),
+  ]);
+
+  const result = splitBeatAt(base, { bar: 0, beat: 0, string: 0 }, 0.75);
+  assert.equal(isError(result), false);
+  assert.equal(result.selection.beat, 2);
+  assert.equal(result.score.bars[0].beats[0].duration, 8);
+  assert.equal(result.score.bars[0].beats[0].rest, false);
+  assert.equal(result.score.bars[0].beats[1].duration, 16);
+  assert.equal(result.score.bars[0].beats[2].duration, 16);
+  assert.equal(result.score.bars[0].beats[2].rest, true);
+  assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
+});
+
+test("a click near the start of a beat does not split it", () => {
+  const base = score([beat({ duration: 4, rest: false, notes: [{ string: 0, fret: 5 }] })]);
+  const result = splitBeatAt(base, { bar: 0, beat: 0, string: 0 }, 0.1);
+
+  assert.equal(result.score, base);
+  assert.deepEqual(result.selection, { bar: 0, beat: 0, string: 0 });
+});
+
+test("a sixty-fourth beat is not split further", () => {
+  const base = score([beat({ duration: 64 })]);
+  const result = splitBeatAt(base, { bar: 0, beat: 0, string: 0 }, 0.8);
+
+  assert.equal(result.score, base);
+  assert.deepEqual(result.selection, { bar: 0, beat: 0, string: 0 });
+});
+
+test("moves a beat between its neighbours and stops at the edges", () => {
+  const base = score([
+    beat({ id: "b1", rest: false, notes: [{ string: 0, fret: 1 }] }),
+    beat({ id: "b2", rest: false, notes: [{ string: 0, fret: 2 }] }),
+    beat({ id: "b3", rest: true }),
+  ]);
+
+  const right = moveBeat(base, { bar: 0, beat: 0, string: 0 }, "right");
+  assert.equal(right.score.bars[0].beats[0].notes[0].fret, 2);
+  assert.equal(right.score.bars[0].beats[1].notes[0].fret, 1);
+  assert.equal(right.selection.beat, 1);
+
+  const left = moveBeat(right.score, right.selection, "left");
+  assert.equal(left.score.bars[0].beats[0].notes[0].fret, 1);
+  assert.equal(left.selection.beat, 0);
+
+  assert.deepEqual(
+    moveBeat(base, { bar: 0, beat: 0, string: 0 }, "left"),
+    { error: "cannotMove" },
+  );
+  assert.deepEqual(
+    moveBeat(base, { bar: 0, beat: 2, string: 0 }, "right"),
+    { error: "cannotMove" },
+  );
 });
 
 test("moves the selection across beats, bars and strings", () => {

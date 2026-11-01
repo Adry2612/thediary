@@ -134,6 +134,50 @@ The system SHALL write the typed fret, from 0 to 24, on the selected string of t
 - **WHEN** the user selects another string of a beat that already has a note and types a fret
 - **THEN** the beat holds both notes
 
+### Requirement: A note can be written anywhere on the staff
+
+The system SHALL remember the horizontal point of a click inside a beat, SHALL split that beat into halves up to a thirty-second note when the first fret digit arrives at that point, SHALL write the note in the nearest half, SHALL keep the bar's total length unchanged, and SHALL NOT split when the click is on a note that is already drawn or at the very start of the beat.
+
+#### Scenario: Clicking an empty point
+- **WHEN** the user clicks at three quarters of a quarter-note rest and types 5
+- **THEN** the rest becomes two eighths and the second half is split again, the note lands in the last quarter and the bar still adds up
+
+#### Scenario: Clicking an existing note
+- **WHEN** the user clicks on a drawn note and types 7
+- **THEN** that note changes to fret 7 and no new beat is created
+
+#### Scenario: Clicking at the start of a beat
+- **WHEN** the user clicks in the first part of a beat and types 5
+- **THEN** the note is written at the start of the beat without splitting it
+
+#### Scenario: Adding a chord
+- **WHEN** the user clicks on an existing note and then on another string at the same point and types a fret
+- **THEN** both notes belong to the same beat
+
+#### Scenario: Touch
+- **WHEN** the user double-taps or long-presses an empty point on a touch device
+- **THEN** the note menu opens for that point and choosing a fret writes the note there
+
+#### Scenario: Undo
+- **WHEN** the user undoes a note written at a clicked point
+- **THEN** the beat recovers its previous length and the note disappears in one step
+
+### Requirement: A note can be moved within its bar
+
+The system SHALL offer moving the selected beat one position left or right inside its bar, SHALL swap it with its neighbour keeping its notes and duration, SHALL keep the bar's total length unchanged, and SHALL disable the move at the edges of the bar saying why.
+
+#### Scenario: Moving right
+- **WHEN** the user picks move right on a note that is not the last beat
+- **THEN** the note swaps places with the beat to its right and stays selected
+
+#### Scenario: Edge of the bar
+- **WHEN** the selected beat is the first or the last of its bar
+- **THEN** the move beyond that edge is disabled and the description says there is no beat next to it
+
+#### Scenario: The bar keeps adding up
+- **WHEN** the user moves a beat with a different duration than its neighbour
+- **THEN** the bar keeps its total length and is not flagged
+
 ### Requirement: The duration of a beat can be set from whole to sixty-fourth
 
 The system SHALL let the user set the duration of the selected beats from a whole note to a sixty-fourth note, with an optional dot or as a triplet, and SHALL change only the durations of the selected beats.

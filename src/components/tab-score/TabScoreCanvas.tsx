@@ -60,6 +60,10 @@ export type TabScoreHit = {
   position: { bar: number; beat: number; string: number };
   /** Caja de la nota (o del hueco) en coordenadas de viewport. */
   box: Rect;
+  /** Punto horizontal pulsado dentro del pulso, de 0 (inicio) a 1 (final). */
+  fraction: number;
+  /** Si el clic cae sobre una nota ya dibujada (para acordes, no para mover). */
+  nearNote: boolean;
 };
 
 const INITIAL_PLAYBACK_STATE: TabScorePlaybackState = {
@@ -105,6 +109,7 @@ export function TabScoreCanvas({
   onSelect?: (
     position: { bar: number; beat: number; string: number },
     extend: boolean,
+    hit?: TabScoreHit,
   ) => void;
   /**
    * Se dispara al hacer doble clic, clic derecho o pulsación larga sobre una
@@ -506,6 +511,13 @@ export function TabScoreCanvas({
           w: localBox.w,
           h: localBox.h,
         },
+        fraction: Math.min(
+          0.999,
+          Math.max(0, (x - beat.x) / Math.max(1, beat.w)),
+        ),
+        nearNote: [...beat.notes.values()].some(
+          (note) => x >= note.x - 6 && x <= note.x + note.w + 6,
+        ),
       };
     },
     [layout, stringCount],
@@ -517,7 +529,7 @@ export function TabScoreCanvas({
     if (!hit) return;
 
     if (interactive && onSelect) {
-      onSelect(hit.position, event.shiftKey);
+      onSelect(hit.position, event.shiftKey, hit);
     }
 
     clearLongPress();
@@ -576,7 +588,7 @@ export function TabScoreCanvas({
     if (!onNoteMenu) return;
     const hit = hitTest(event.clientX, event.clientY);
     if (!hit) return;
-    if (interactive && onSelect) onSelect(hit.position, false);
+    if (interactive && onSelect) onSelect(hit.position, false, hit);
     callbacks.current.onNoteMenu?.(hit);
   }
 

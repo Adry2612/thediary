@@ -142,6 +142,10 @@ function content(id: string, group: TabPaletteGroup) {
           <path d="M19 16V7" />
         </>
       );
+    case "move-left":
+      return <path d="M20 12H5M9 8l-4 4 4 4" />;
+    case "move-right":
+      return <path d="M4 12h15M15 8l4 4-4 4" />;
     case "tie":
       return (
         <>
@@ -341,6 +345,8 @@ function groupIcon(group: TabPaletteGroup) {
       return note({});
     case "rhythm":
       return note({ flags: 1 });
+    case "position":
+      return <path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4" />;
     case "tie":
       return <path d="M4 12c4 6 12 6 16 0" />;
     case "bend":

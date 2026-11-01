@@ -13,6 +13,7 @@ import {
 export const TAB_PALETTE_GROUPS = [
   "duration",
   "rhythm",
+  "position",
   "tie",
   "technique",
   "bend",
@@ -22,6 +23,7 @@ export const TAB_PALETTE_GROUPS = [
 export type TabPaletteGroup =
   | "duration"
   | "rhythm"
+  | "position"
   | "tie"
   | "technique"
   | "bend"
@@ -47,7 +49,8 @@ export type TabPaletteReason =
   | "requiresPreviousNote"
   | "barLimit"
   | "cannotSplit"
-  | "beatLimit";
+  | "beatLimit"
+  | "noAdjacentBeat";
 
 export type TabPaletteOptionState = {
   active: boolean;
@@ -133,6 +136,18 @@ export const TAB_PALETTE: readonly TabPaletteOption[] = [
     group: "rhythm",
     labelKey: "splitBeat",
     action: { type: "splitBeat" },
+  },
+  {
+    id: "move-left",
+    group: "position",
+    labelKey: "moveLeft",
+    action: { type: "moveBeat", direction: "left" },
+  },
+  {
+    id: "move-right",
+    group: "position",
+    labelKey: "moveRight",
+    action: { type: "moveBeat", direction: "right" },
   },
   {
     id: "tie",
@@ -540,6 +555,18 @@ export function getPaletteState({
     ) {
       disabled = true;
       reason = "barLimit";
+    }
+
+    if (option.group === "position") {
+      const bar = score.bars[selection.bar];
+      const target = selection.beat + (option.id === "move-left" ? -1 : 1);
+      if (!bar?.beats[selection.beat]) {
+        disabled = true;
+        reason = "requiresNote";
+      } else if (target < 0 || target >= bar.beats.length) {
+        disabled = true;
+        reason = "noAdjacentBeat";
+      }
     }
 
     if (option.id === "split-beat") {

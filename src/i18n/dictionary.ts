@@ -520,6 +520,7 @@ export type Dict = {
     close: string;
     durations: string;
     rhythm: string;
+    position: string;
     ties: string;
     techniques: string;
     bends: string;
@@ -536,6 +537,8 @@ export type Dict = {
     triplet: string;
     rest: string;
     splitBeat: string;
+    moveLeft: string;
+    moveRight: string;
     tie: string;
     legatoHammer: string;
     legatoPull: string;
@@ -581,6 +584,7 @@ export type Dict = {
     barLimit: string;
     cannotSplit: string;
     beatLimit: string;
+    noAdjacentBeat: string;
     hoverHint: string;
     barFits: string;
     barUnder: string;
@@ -606,6 +610,8 @@ export type Dict = {
     menuBody: string;
     durationTitle: string;
     durationBody: string;
+    moveTitle: string;
+    moveBody: string;
     splitTitle: string;
     splitBody: string;
     doneTitle: string;

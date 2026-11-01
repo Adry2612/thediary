@@ -29,6 +29,7 @@ test("describes the action steps in order and ends in done", () => {
     "chord",
     "menu",
     "duration",
+    "move",
     "split",
     "done",
   ]);
@@ -113,6 +114,28 @@ test("the duration step notices only a different duration", () => {
       score: eighth,
       selection,
       paletteOpen: false,
+    }).advance,
+    true,
+  );
+});
+
+test("the move step notices the selection changing beat", () => {
+  const value = score([beat(), beat({ id: "beat-b" })]);
+  const snapshot = snapshotTutorial(value, selection, true);
+
+  assert.equal(
+    checkTutorialStep("move", snapshot, {
+      score: value,
+      selection: { bar: 0, beat: 0, string: 0 },
+      paletteOpen: true,
+    }).advance,
+    false,
+  );
+  assert.equal(
+    checkTutorialStep("move", snapshot, {
+      score: value,
+      selection: { bar: 0, beat: 1, string: 0 },
+      paletteOpen: true,
     }).advance,
     true,
   );
