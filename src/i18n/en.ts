@@ -892,10 +892,11 @@ export const en: Dict = {
     createTitle: 'New idea',
     editTitle: 'Edit lick',
     editorDescription:
-      'Place the notes on the grid and add frets and techniques.',
-    quickTabEyebrow: 'Quick notes',
+      "Write the tablature, set each note's duration and add techniques.",
+    quickTabEyebrow: 'Score',
     quickTabNotice:
-      'This editor is for ideas and notes: frets, strings and techniques. For a more elaborate tab, make it in Guitar Pro or your favourite editor and import it.',
+      'Double-click, right-click or long-press a note to open its options: duration, rest, ties and techniques. Changes apply to the selection.',
+    detailsLabel: 'Lick details',
     titleLabel: 'Title',
     titlePlaceholder: 'A minor phrase',
     tabLabel: 'Tablature',
@@ -1053,6 +1054,8 @@ export const en: Dict = {
     tripletSuffix: 'triplet',
     noSelectionLabel: 'No selection',
     undo: 'Undo',
+    noteMenuHint:
+      'Double-click, right-click or long-press: note options.',
     redo: 'Redo',
   },
   tabPalette: {

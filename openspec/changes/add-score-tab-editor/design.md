@@ -269,3 +269,26 @@ activado.
   ofrecen ningún control.
 - **Pendiente manual:** pasada con VoiceOver y con el iPhone real. El servidor
   HTTPS local y el perfil de confianza ya están preparados.
+
+## Edición a pantalla completa y menú por nota (15)
+
+- El editor de licks deja de ser un diálogo de 46 rem: `LickEditor` vive en
+  `/licks/new` y `/licks/[id]/edit` y ocupa la columna completa (1.182 px de
+  partitura en una ventana de 1.280 px). `LickEditorModal` se elimina.
+- Un doble clic, un clic derecho o una pulsación larga sobre cualquier punto
+  del compás seleccionan el pulso y la cuerda más cercanos y abren la paleta
+  anclada a esa posición. El mapa de impacto es tolerante: si el punto cae
+  fuera de una nota o de un compás, busca el más cercano, de modo que se puede
+  escribir en huecos vacíos sin apuntar a una nota existente.
+- En táctil, la hoja necesita sitio debajo para poder subir la nota por encima
+  de ella; mientras está abierta se reserva un 45 % del alto de la ventana. El
+  clic sintético que sigue al toque se descarta para no activar una opción.
+- Las animaciones de entrada (`dialog.overlay-motion` y `.enter`) usan
+  `animation-fill-mode: backwards`: con `both` conservaban un `transform` que
+  convertía el bloque en el contenedor de los elementos `fixed` (la paleta y
+  la hoja).
+- La paleta se cierra al hacer rueda o `touchmove` fuera de ella, no con
+  cualquier evento `scroll`: cambiar una duración recompone la partitura y el
+  anclaje provoca un desplazamiento de anclaje que no debe cerrar el menú.
+- El foco de la paleta usa `preventScroll` para no devolver la página al
+  principio al abrirla.

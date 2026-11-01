@@ -71,6 +71,32 @@ El mapeo de cuerdas es el punto más fácil de romper:
 `tests/tab-score-alphatex.test.mjs` comprueba el ida y vuelta contra el
 importador real de alphaTab.
 
+## Editor
+
+El editor de un lick es una pantalla propia, no un diálogo:
+
+- `/licks/new` crea un lick;
+- `/licks/[id]/edit` edita uno existente;
+- al guardar se vuelve a `/licks/[id]`.
+
+La partitura ocupa todo el ancho de la columna. Dentro del lienzo:
+
+- un clic o un toque seleccionan el pulso y la cuerda más cercanos, aunque el
+  punto caiga en un hueco vacío;
+- las flechas mueven la selección, Mayús la extiende y los dígitos escriben el
+  traste (0–24, con dos cifras);
+- un doble clic, un clic derecho o una pulsación larga abren la paleta de esa
+  posición sin pasar por el botón «Opciones»; desde ahí se elige la duración,
+  el silencio, las ligaduras y las técnicas de la selección;
+- en táctil la paleta es una hoja inferior con los trastes 0–24 y se coloca
+  por debajo del pulso, reservando espacio para poder subirlo.
+
+La paleta se cierra con Escape o al desplazar la partitura (rueda o
+`touchmove`), pero no cuando un cambio de duración recompone la página: ese
+desplazamiento es del anclaje del navegador, no del usuario. Los bloques con
+animación de entrada usan `animation-fill-mode: backwards` para no conservar un
+`transform` que rompa los elementos `fixed` que contiene la paleta.
+
 ## Añadir una técnica
 
 1. Añade el campo a `TabNote` en `src/types/tab-score.ts`.

@@ -56,6 +56,12 @@ export type TabScorePreviewRequest = {
   token: number;
 };
 
+export type TabScoreHit = {
+  position: { bar: number; beat: number; string: number };
+  /** Caja de la nota (o del hueco) en coordenadas de viewport. */
+  box: Rect;
+};
+
 const INITIAL_PLAYBACK_STATE: TabScorePlaybackState = {
   ready: false,
   playing: false,
@@ -77,6 +83,7 @@ export function TabScoreCanvas({
   selectedBeats = [],
   previewRequest,
   onSelect,
+  onNoteMenu,
   onStatus,
   onRender,
   onLayout,
@@ -99,6 +106,11 @@ export function TabScoreCanvas({
     position: { bar: number; beat: number; string: number },
     extend: boolean,
   ) => void;
+  /**
+   * Se dispara al hacer doble clic, clic derecho o pulsación larga sobre una
+   * nota o un hueco: la app abre el menú de esa nota sin pasar por «Opciones».
+   */
+  onNoteMenu?: (hit: TabScoreHit) => void;
   onStatus?: (status: TabScoreRenderStatus) => void;
   onRender?: () => void;
   onLayout?: (layout: TabScoreLayout) => void;
@@ -126,6 +138,7 @@ export function TabScoreCanvas({
     onStatus,
     onRender,
     onSelect,
+    onNoteMenu,
     onLayout,
     onFocusBox,
     onControls,
@@ -135,6 +148,7 @@ export function TabScoreCanvas({
     onStatus,
     onRender,
     onSelect,
+    onNoteMenu,
     onLayout,
     onFocusBox,
     onControls,
@@ -143,6 +157,39 @@ export function TabScoreCanvas({
   const [layout, setLayout] = useState<TabScoreLayout>([]);
   const [renderCount, setRenderCount] = useState(0);
   const previousSelection = useRef<string>("");
+  const longPress = useRef<{
+    timer: number;
+    pointerId: number;
+    x: number;
+    y: number;
+    opened: boolean;
+  } | null>(null);
+  const lastTap = useRef<{ time: number; x: number; y: number } | null>(null);
+
+  /**
+   * En táctil, el menú aparece bajo el dedo antes de que llegue el `click`
+   * sintético; se descarta ese clic para no activar una opción sin querer.
+   */
+  const swallowNextClick = useCallback(() => {
+    const handler = (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    window.addEventListener("click", handler, true);
+    window.setTimeout(
+      () => window.removeEventListener("click", handler, true),
+      450,
+    );
+  }, []);
+
+  const clearLongPress = useCallback(() => {
+    if (longPress.current) {
+      window.clearTimeout(longPress.current.timer);
+      longPress.current = null;
+    }
+  }, []);
+
+  useEffect(() => clearLongPress, [clearLongPress]);
 
   const emitPlayback = useCallback((patch: Partial<TabScorePlaybackState>) => {
     playbackState.current = { ...playbackState.current, ...patch };
@@ -389,35 +436,160 @@ export function TabScoreCanvas({
     focusRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
   }, [interactive, selection, layout]);
 
+  /**
+   * Traduce un punto de la pantalla a un pulso y una cuerda. Es deliberadamente
+   * tolerante: sirve para colocar notas en cualquier punto del compás, no solo
+   * encima de una nota ya dibujada.
+   */
+  const hitTest = useCallback(
+    (clientX: number, clientY: number): TabScoreHit | null => {
+      const surface = surfaceRef.current;
+      if (!surface || layout.length === 0) return null;
+      const rect = surface.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      let bar = layout[0];
+      let bestDistance = Number.POSITIVE_INFINITY;
+      for (const entry of layout) {
+        const dx =
+          x < entry.x
+            ? entry.x - x
+            : x > entry.x + entry.w
+              ? x - (entry.x + entry.w)
+              : 0;
+        const dy =
+          y < entry.y
+            ? entry.y - y
+            : y > entry.y + entry.h
+              ? y - (entry.y + entry.h)
+              : 0;
+        // La distancia vertical pesa más para no saltar de sistema al pulsar.
+        const distance = dx + dy * 2;
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bar = entry;
+        }
+      }
+      if (!bar || bar.beats.length === 0) return null;
+
+      const rowHeight = bar.h / Math.max(1, stringCount);
+      const row = Math.min(
+        Math.max(0, Math.floor((y - bar.y) / rowHeight)),
+        stringCount - 1,
+      );
+      const string = stringCount - 1 - row;
+
+      const inside = bar.beats.find(
+        (beat) => x >= beat.x && x <= beat.x + beat.w,
+      );
+      const beat =
+        inside ??
+        bar.beats.reduce((best, candidate) => {
+          const bestDistance = Math.abs(best.x + best.w / 2 - x);
+          const distance = Math.abs(candidate.x + candidate.w / 2 - x);
+          return distance < bestDistance ? candidate : best;
+        });
+
+      const localBox = beat.notes.get(string) ?? {
+        x: beat.x + 2,
+        y: bar.y + (stringCount - 1 - string) * rowHeight + 2,
+        w: Math.max(8, beat.w - 4),
+        h: Math.max(8, rowHeight - 4),
+      };
+
+      return {
+        position: { bar: bar.index, beat: beat.index, string },
+        box: {
+          x: rect.left + localBox.x,
+          y: rect.top + localBox.y,
+          w: localBox.w,
+          h: localBox.h,
+        },
+      };
+    },
+    [layout, stringCount],
+  );
+
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!interactive || !onSelect || !surfaceRef.current) return;
-    const rect = surfaceRef.current.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    if (!interactive && !onNoteMenu) return;
+    const hit = hitTest(event.clientX, event.clientY);
+    if (!hit) return;
 
-    const bar = layout.find(
-      (entry) =>
-        x >= entry.x - 4 &&
-        x <= entry.x + entry.w + 4 &&
-        y >= entry.y - 10 &&
-        y <= entry.y + entry.h + 10,
-    );
-    if (!bar || bar.beats.length === 0) return;
+    if (interactive && onSelect) {
+      onSelect(hit.position, event.shiftKey);
+    }
 
-    const rowHeight = bar.h / Math.max(1, stringCount);
-    const row = Math.min(
-      Math.max(0, Math.floor((y - bar.y) / rowHeight)),
-      stringCount - 1,
-    );
-    const string = stringCount - 1 - row;
+    clearLongPress();
+    if (event.pointerType !== "touch" || !onNoteMenu) return;
 
-    const beat = bar.beats.reduce((best, candidate) => {
-      const bestDistance = Math.abs(best.x + best.w / 2 - x);
-      const distance = Math.abs(candidate.x + candidate.w / 2 - x);
-      return distance < bestDistance ? candidate : best;
-    });
+    longPress.current = {
+      timer: window.setTimeout(() => {
+        if (longPress.current) longPress.current.opened = true;
+        swallowNextClick();
+        callbacks.current.onNoteMenu?.(hit);
+      }, 500),
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      opened: false,
+    };
+  }
 
-    onSelect({ bar: bar.index, beat: beat.index, string }, event.shiftKey);
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const pending = longPress.current;
+    if (!pending) return;
+    if (
+      Math.hypot(event.clientX - pending.x, event.clientY - pending.y) > 10
+    ) {
+      clearLongPress();
+    }
+  }
+
+  function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    const openedByLongPress = longPress.current?.opened === true;
+    clearLongPress();
+    if (openedByLongPress) return;
+    if (event.pointerType !== "touch" || !onNoteMenu) return;
+
+    const now = Date.now();
+    const last = lastTap.current;
+    const isDoubleTap =
+      last !== null &&
+      now - last.time < 320 &&
+      Math.hypot(event.clientX - last.x, event.clientY - last.y) < 28;
+
+    if (isDoubleTap) {
+      lastTap.current = null;
+      const hit = hitTest(event.clientX, event.clientY);
+      if (hit) {
+        swallowNextClick();
+        callbacks.current.onNoteMenu?.(hit);
+      }
+      return;
+    }
+
+    lastTap.current = { time: now, x: event.clientX, y: event.clientY };
+  }
+
+  function openMenuAt(event: { clientX: number; clientY: number }) {
+    if (!onNoteMenu) return;
+    const hit = hitTest(event.clientX, event.clientY);
+    if (!hit) return;
+    if (interactive && onSelect) onSelect(hit.position, false);
+    callbacks.current.onNoteMenu?.(hit);
+  }
+
+  function handleContextMenu(event: React.MouseEvent<HTMLDivElement>) {
+    if (!interactive && !onNoteMenu) return;
+    event.preventDefault();
+    openMenuAt(event);
+  }
+
+  function handleDoubleClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (!onNoteMenu) return;
+    event.preventDefault();
+    openMenuAt(event);
   }
 
   const focusBar = selection
@@ -482,6 +654,12 @@ export function TabScoreCanvas({
           <div
             role="presentation"
             onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={clearLongPress}
+            onPointerLeave={clearLongPress}
+            onContextMenu={handleContextMenu}
+            onDoubleClick={handleDoubleClick}
             className="absolute inset-0 z-10 cursor-pointer"
           />
         )}

@@ -900,10 +900,11 @@ export const es: Dict = {
     createTitle: 'Nueva idea',
     editTitle: 'Editar lick',
     editorDescription:
-      'Coloca las notas en la rejilla y añade trastes y técnicas.',
-    quickTabEyebrow: 'Apuntes rápidos',
+      'Escribe la tablatura, ajusta la duración de cada nota y añade técnicas.',
+    quickTabEyebrow: 'Partitura',
     quickTabNotice:
-      'Este editor es para ideas y apuntes: notas, trastes y técnicas. Para una tablatura más elaborada, hazla en Guitar Pro o tu editor favorito y luego impórtala.',
+      'Doble clic, clic derecho o pulsación larga sobre una nota abre sus opciones: duración, silencio, ligaduras y técnicas. Los cambios se aplican a la selección.',
+    detailsLabel: 'Datos del lick',
     titleLabel: 'Título',
     titlePlaceholder: 'Frase en La menor',
     tabLabel: 'Tablatura',
@@ -1065,6 +1066,8 @@ export const es: Dict = {
     tripletSuffix: 'tresillo',
     noSelectionLabel: 'Sin selección',
     undo: 'Deshacer',
+    noteMenuHint:
+      'Doble clic, clic derecho o pulsación larga: opciones de la nota.',
     redo: 'Rehacer',
   },
   tabPalette: {

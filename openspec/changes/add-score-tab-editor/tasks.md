@@ -83,6 +83,13 @@
 - [x] 14.2 Reproducir en una tab real el recorrido del vídeo: seleccionar una nota, teclear traste, abrir la paleta, cambiar duración, ligar, añadir y duplicar compás, deshacer y rehacer, copiar y pegar, reproducir desde un pulso. Verificar cada paso contra los escenarios de `tab-score-editor` y anotar el resultado.
 - [x] 14.3 Medir el redibujado con 64 compases en un móvil medio y anotar el resultado y la decisión tomada en `design.md`.
 
+## 15. Edición a pantalla completa y menú por nota
+
+- [x] 15.1 Mover el editor de licks de `LickEditorModal` a una pantalla propia (`/licks/new` y `/licks/[id]/edit`), con la partitura a todo el ancho de la columna y navegación de vuelta al lick o a la lista. Verificar que ya no se abre ningún diálogo y que la partitura ocupa el ancho completo en escritorio y móvil.
+- [x] 15.2 Abrir la paleta con doble clic, clic derecho o pulsación larga sobre cualquier punto del compás, seleccionando el pulso y la cuerda más cercanos aunque no haya una nota. Verificar los tres gestos, que la duración se elige desde ese menú y que la hoja táctil no tapa la selección.
+- [x] 15.3 Evitar que el foco o el clic sintético del gesto táctil activen una opción sin querer, que el desplazamiento de la página cierre la paleta solo cuando lo hace el usuario y que el `transform` de las animaciones de entrada no rompa los elementos `fixed`. Verificar con la hoja abierta y cerrada y con la partitura a 375, 768 y 1280 px.
+- [x] 15.4 Repasar el recorrido completo en el diálogo real convertido en página: crear un lick desde `/licks/new`, editarlo, guardar, volver a abrirlo, cambiar duración y técnica desde el menú de la nota y comprobar que el `score` persistido coincide.
+
 ## Workflow follow-up
 
 - Archivar `add-score-tab-editor` antes que `add-score-tab-notation-extras`, que la amplía.

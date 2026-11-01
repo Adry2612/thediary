@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import {
   TabScoreCanvas,
+  type TabScoreHit,
   type TabScoreLayout,
   type TabScorePlaybackState,
   type TabScorePlayerControls,
@@ -86,6 +87,7 @@ export function TabScoreEditor({
   const [previewToken, setPreviewToken] = useState(0);
   const [anchorVersion, setAnchorVersion] = useState(0);
   const playerRef = useRef<TabScorePlayerControls | null>(null);
+  const savedPadding = useRef<string | null>(null);
   const [numerator, setNumerator] = useState("4");
   const [denominator, setDenominator] = useState<"2" | "4" | "8" | "16">("4");
   const [tempoDraft, setTempoDraft] = useState("90");
@@ -126,6 +128,31 @@ export function TabScoreEditor({
     setNotePreview(readNotePreview());
   }, []);
 
+  // La hoja táctil necesita sitio debajo para poder subir la nota seleccionada
+  // sin que el final de la página lo impida.
+  useEffect(() => {
+    if (paletteOpen || savedPadding.current === null) return;
+    document.body.style.paddingBottom = savedPadding.current;
+    savedPadding.current = null;
+  }, [paletteOpen]);
+
+  useEffect(
+    () => () => {
+      if (savedPadding.current !== null) {
+        document.body.style.paddingBottom = savedPadding.current;
+        savedPadding.current = null;
+      }
+    },
+    [],
+  );
+
+  function ensureBottomSpace() {
+    if (savedPadding.current !== null) return;
+    if (containerRef.current?.closest("dialog")) return;
+    savedPadding.current = document.body.style.paddingBottom;
+    document.body.style.paddingBottom = "45dvh";
+  }
+
   useEffect(() => {
     playerRef.current?.setSpeed(speed);
   }, [speed]);
@@ -135,6 +162,7 @@ export function TabScoreEditor({
    * diálogo está desplazado y la selección queda abajo, se sube primero.
    */
   function liftSelectionAboveSheet() {
+    ensureBottomSpace();
     window.requestAnimationFrame(() => {
       const marker = containerRef.current?.querySelector<HTMLElement>(
         '[data-testid="tab-score-canvas"] .z-30',
@@ -145,9 +173,9 @@ export function TabScoreEditor({
       if (rect.top <= target) return;
       const scroller = marker.closest("dialog");
       if (scroller) {
-        scroller.scrollBy({ top: rect.top - target, behavior: "instant" });
+        scroller.scrollBy({ top: rect.top - target, behavior: "auto" });
       } else {
-        window.scrollBy({ top: rect.top - target, behavior: "instant" });
+        window.scrollBy({ top: rect.top - target, behavior: "auto" });
       }
       window.requestAnimationFrame(() => {
         setAnchorVersion((version) => version + 1);
@@ -168,6 +196,16 @@ export function TabScoreEditor({
 
   function maybePreview() {
     if (readNotePreview()) setPreviewToken((token) => token + 1);
+  }
+
+  /** Abre el menú de una nota allí donde se ha pulsado, sin ir a «Opciones». */
+  function openNoteMenu(hit: TabScoreHit) {
+    editor.dispatch({ type: "select", position: hit.position });
+    setAnchor(hit.box);
+    setAnchorVersion((version) => version + 1);
+    setPaletteOpen(true);
+    containerRef.current?.focus({ preventScroll: true });
+    if (coarsePointer) liftSelectionAboveSheet();
   }
 
   useEffect(() => {
@@ -357,6 +395,7 @@ export function TabScoreEditor({
           variant="ghost"
           data-palette-toggle
           aria-expanded={paletteOpen}
+          disabled={!editor.selectionVisible}
           onClick={togglePalette}
           className="ml-auto border-zinc-300 text-zinc-700 hover:bg-zinc-100"
         >
@@ -414,6 +453,9 @@ export function TabScoreEditor({
 
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-zinc-200 px-3 py-2 text-xs text-zinc-600">
         <span data-testid="tab-score-selection">{announcement}</span>
+        <span className="text-[11px] text-zinc-400">
+          {text.noteMenuHint}
+        </span>
         {status.error && (
           <span role="alert" className="text-red-700">
             {text.error}
@@ -503,6 +545,7 @@ export function TabScoreEditor({
         selection={editor.selectionVisible ? editor.selection : undefined}
         selectedBeats={editor.selectionVisible ? editor.selectedBeats : []}
         onSelect={select}
+        onNoteMenu={openNoteMenu}
         onStatus={setStatus}
         onLayout={onLayout}
         onFocusBox={setAnchor}

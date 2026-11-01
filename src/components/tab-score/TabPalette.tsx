@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -79,7 +80,6 @@ export function TabPalette({
   const panelRef = useRef<HTMLDivElement>(null);
   const callbacks = useRef({ onClose, returnFocus });
   callbacks.current = { onClose, returnFocus };
-  const ignoreScrollUntil = useRef(0);
   const [position, setPosition] = useState<{ left: number; top: number } | null>(
     null,
   );
@@ -87,7 +87,7 @@ export function TabPalette({
   const focusFirst = useCallback(() => {
     panelRef.current
       ?.querySelector<HTMLButtonElement>("button[data-palette-option]")
-      ?.focus();
+      ?.focus({ preventScroll: true });
   }, []);
 
   useLayoutEffect(() => {
@@ -127,7 +127,6 @@ export function TabPalette({
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
-    ignoreScrollUntil.current = performance.now() + 800;
     focusFirst();
 
     function handlePointerDown(event: PointerEvent) {
@@ -141,20 +140,29 @@ export function TabPalette({
         callbacks.current.onClose();
       }
     }
-    function handleScroll() {
-      // La hoja táctil puede provocar un desplazamiento al abrirse; ese no
-      // debe cerrarla.
-      if (performance.now() < ignoreScrollUntil.current) return;
+    function handleWheel(event: WheelEvent) {
+      // Desplazar la propia paleta no la cierra; desplazar la partitura sí,
+      // porque el ancla dejaría de estar donde se abrió.
+      if (panelRef.current?.contains(event.target as Node)) return;
+      callbacks.current.onClose();
+    }
+    function handleTouchMove(event: TouchEvent) {
+      if (panelRef.current?.contains(event.target as Node)) return;
       callbacks.current.onClose();
     }
 
     document.addEventListener("pointerdown", handlePointerDown, true);
-    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown, true);
-      window.removeEventListener("scroll", handleScroll, true);
-      if (previous && previous.isConnected) previous.focus();
-      else callbacks.current.returnFocus?.();
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchmove", handleTouchMove);
+      if (previous && previous.isConnected) {
+        previous.focus({ preventScroll: true });
+      } else {
+        callbacks.current.returnFocus?.();
+      }
     };
   }, [open, focusFirst]);
 
@@ -189,6 +197,27 @@ export function TabPalette({
     }
   }
 
+  const frets = (
+    <div className="mb-3 last:mb-0">
+      <p className="mb-1 text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+        {text.frets}
+      </p>
+      <div className="flex flex-wrap gap-1">
+        {Array.from({ length: TAB_MAX_FRET + 1 }, (_, fret) => (
+          <button
+            key={fret}
+            type="button"
+            data-palette-option
+            onClick={() => onFret(fret)}
+            className="size-9 rounded-md border border-zinc-300 font-mono text-xs text-zinc-700 active:bg-zinc-200"
+          >
+            {fret}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   const style =
     mode === "popover" && position
       ? {
@@ -204,7 +233,10 @@ export function TabPalette({
             bottom: 0,
             // La hoja empieza por debajo de la selección para no taparla.
             top: anchor
-              ? Math.max(window.innerHeight * 0.28, anchor.y + anchor.h + 12)
+              ? Math.min(
+                  Math.max(window.innerHeight * 0.28, anchor.y + anchor.h + 12),
+                  window.innerHeight - 160,
+                )
               : window.innerHeight * 0.3,
           }
         : undefined;
@@ -244,36 +276,16 @@ export function TabPalette({
         </button>
       </div>
 
-      {mode === "sheet" && (
-        <div className="mb-3">
-          <p className="mb-1 text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-            {text.frets}
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {Array.from({ length: TAB_MAX_FRET + 1 }, (_, fret) => (
-              <button
-                key={fret}
-                type="button"
-                data-palette-option
-                onClick={() => onFret(fret)}
-                className="size-9 rounded-md border border-zinc-300 font-mono text-xs text-zinc-700 active:bg-zinc-200"
-              >
-                {fret}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {TAB_PALETTE_GROUPS.map((group) => {
         const options = TAB_PALETTE.filter((option) => option.group === group);
         if (options.length === 0) return null;
         return (
-          <div key={group} className="mb-3 last:mb-0">
-            <p className="mb-1 text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-              {groupTitle(group, text)}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
+          <Fragment key={group}>
+            <div className="mb-3 last:mb-0">
+              <p className="mb-1 text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+                {groupTitle(group, text)}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
               {options.map((option) => {
                 const optionState = state[option.id] ?? {
                   active: false,
@@ -314,10 +326,13 @@ export function TabPalette({
                   </button>
                 );
               })}
+              </div>
             </div>
-          </div>
+            {group === "duration" ? frets : null}
+          </Fragment>
         );
       })}
+
     </div>
   );
 }

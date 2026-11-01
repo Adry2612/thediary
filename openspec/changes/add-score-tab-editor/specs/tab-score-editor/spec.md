@@ -408,6 +408,26 @@ The system SHALL keep the editor inside the app's horizontal rhythm on small scr
 - **WHEN** the user taps a note on a touch device
 - **THEN** the palette opens as a bottom sheet that does not hide the selected beat, with a row of frets from 0 to 24
 
-#### Scenario: The editor inside a dialog
-- **WHEN** the user opens the editor in the lick dialog on a phone
-- **THEN** the dialog keeps the app's side margin and the editor keeps its inner padding
+#### Scenario: The editor on its own screen
+- **WHEN** the user opens the editor on a phone
+- **THEN** the page keeps the app's side margin and the editor uses the full width of the content column
+
+### Requirement: A note menu opens where the note is
+
+The system SHALL select a beat and a string from a double-click, a right-click or a long press anywhere inside the tab, SHALL open the palette anchored to that position, and SHALL let the user choose the duration and techniques from that menu without using the Options button.
+
+#### Scenario: Double-clicking a note
+- **WHEN** the user double-clicks a note
+- **THEN** that note is selected and its palette opens next to it
+
+#### Scenario: Right-clicking an empty position
+- **WHEN** the user right-clicks an empty beat or string
+- **THEN** that position is selected and the palette opens, ready to set its duration or write a fret
+
+#### Scenario: Long-pressing on touch
+- **WHEN** the user presses and holds a note on a touch device
+- **THEN** the bottom sheet opens for that note without activating any option when the finger lifts
+
+#### Scenario: Choosing the duration from the note
+- **WHEN** the user picks a duration from the note menu
+- **THEN** that duration is applied to the selected note and the menu stays open for more changes

@@ -512,6 +512,7 @@ export type Dict = {
     tripletSuffix: string;
     noSelectionLabel: string;
     undo: string;
+    noteMenuHint: string;
     redo: string;
   },
   tabPalette: {

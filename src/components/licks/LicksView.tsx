@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ForgottenLickWidget } from "@/components/licks/ForgottenLickWidget";
 import { LickBpmChart } from "@/components/licks/LickBpmChart";
 import { LickCard } from "@/components/licks/LickCard";
-import { LickEditorModal } from "@/components/licks/LickEditorModal";
 import { TechniquesHeatmap } from "@/components/licks/TechniquesHeatmap";
-import { Button } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { SearchField } from "@/components/ui/SearchField";
 import { PlusIcon } from "@/components/ui/icons";
 import { SelectField } from "@/components/ui/SelectField";
@@ -17,7 +16,6 @@ import { useLicksLibrary } from "@/hooks/useLicksLibrary";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { findLinkedSong, getLickTitle } from "@/utils/licks/presentation";
 import { usePracticeStore } from "@/stores/usePracticeStore";
-import type { GuitarLick } from "@/types/lick";
 
 export function LicksView({ todayKey }: { todayKey: string }) {
   const text = useI18nSection("licks");
@@ -36,13 +34,8 @@ export function LicksView({ todayKey }: { todayKey: string }) {
     persistenceError,
     today,
   } = useLicksLibrary(todayKey);
-  const saveLick = usePracticeStore((state) => state.saveLick);
   const deleteLick = usePracticeStore((state) => state.deleteLick);
   const markLickPracticed = usePracticeStore((state) => state.markLickPracticed);
-  const [editor, setEditor] = useState<{ lick: GuitarLick | null } | null>(
-    null,
-  );
-
   const chartOptions = useMemo(
     () =>
       sorted.map((lick) => ({
@@ -67,14 +60,10 @@ export function LicksView({ todayKey }: { todayKey: string }) {
         title={text.title}
         description={text.description}
         actions={
-          <Button
-            type="button"
-            variant="primary"
-            onClick={() => setEditor({ lick: null })}
-          >
+          <ButtonLink href="/licks/new" variant="primary">
             <PlusIcon className="size-4" />
             {text.newLick}
-          </Button>
+          </ButtonLink>
         }
       />
 
@@ -92,15 +81,10 @@ export function LicksView({ todayKey }: { todayKey: string }) {
           <p className="mx-auto mt-2 max-w-lg text-sm text-muted">
             {text.emptyDescription}
           </p>
-          <Button
-            type="button"
-            variant="primary"
-            className="mt-6"
-            onClick={() => setEditor({ lick: null })}
-          >
+          <ButtonLink href="/licks/new" variant="primary" className="mt-6">
             <PlusIcon className="size-4" />
             {text.newLick}
-          </Button>
+          </ButtonLink>
         </section>
       ) : (
         <>
@@ -181,7 +165,6 @@ export function LicksView({ todayKey }: { todayKey: string }) {
                     lick={lick}
                     song={findLinkedSong(songs, lick.associatedSongId)}
                     today={today}
-                    onEdit={(candidate) => setEditor({ lick: candidate })}
                     onDelete={deleteLick}
                   />
                 ))}
@@ -191,15 +174,6 @@ export function LicksView({ todayKey }: { todayKey: string }) {
         </>
       )}
 
-      {editor ? (
-        <LickEditorModal
-          key={editor.lick?.id ?? "new"}
-          lick={editor.lick}
-          songs={songs}
-          onSave={saveLick}
-          onClose={() => setEditor(null)}
-        />
-      ) : null}
     </PageShell>
   );
 }

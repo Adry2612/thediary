@@ -26,3 +26,21 @@ The system SHALL store the tablature of a lick as a score, SHALL show a lick tha
 #### Scenario: Long lines do not reflow
 - **WHEN** a plain-text tablature line is wider than the available space
 - **THEN** the app keeps the line on one row and lets the user scroll it
+
+## ADDED Requirements
+
+### Requirement: A lick is edited on its own screen
+
+The system SHALL open the lick editor as a full page at `/licks/new` when creating a lick and at `/licks/[id]/edit` when editing one, SHALL NOT open it inside a dialog, and SHALL return to the lick after saving.
+
+#### Scenario: Editing an existing lick
+- **WHEN** the user chooses to edit a lick
+- **THEN** the app navigates to that lick's edit page and the tablature uses the full width of the content column
+
+#### Scenario: Creating a lick
+- **WHEN** the user chooses to create a lick
+- **THEN** the app navigates to `/licks/new` and saves the new lick before returning to it
+
+#### Scenario: Leaving without saving
+- **WHEN** the user cancels the editor
+- **THEN** the app returns to the lick or to the licks list without saving
