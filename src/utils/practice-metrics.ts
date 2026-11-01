@@ -7,7 +7,7 @@ import {
   getPracticeChartRanges,
   type PracticeChartPeriod,
 } from "./practice-analytics.ts";
-import { getLocalDateKey } from "./local-date.ts";
+import { getComparisonSpans } from "./period-comparison.ts";
 
 /** Escala única de las métricas de bienestar: de 1 a 5. */
 export const PRACTICE_METRIC_VALUES: readonly PracticeMetricValue[] = [
@@ -161,41 +161,6 @@ export interface PracticeWellbeingBucket {
   focus: PracticeMetricAverage | null;
 }
 
-function addDays(date: Date, days: number) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function getPreviousWellbeingRange(
-  period: PracticeChartPeriod,
-  today: Date,
-): PracticeMetricRange {
-  if (period === "week") {
-    const ranges = getPracticeChartRanges("week", addDays(today, -7));
-    return {
-      startDate: ranges[0].startDate,
-      endDate: ranges[ranges.length - 1].endDate,
-    };
-  }
-
-  if (period === "month") {
-    return {
-      startDate: getLocalDateKey(
-        new Date(today.getFullYear(), today.getMonth() - 1, 1),
-      ),
-      endDate: getLocalDateKey(
-        new Date(today.getFullYear(), today.getMonth(), 0),
-      ),
-    };
-  }
-
-  return {
-    startDate: `${today.getFullYear() - 1}-01-01`,
-    endDate: `${today.getFullYear() - 1}-12-31`,
-  };
-}
-
 /** Valores de ánimo y foco por intervalo del periodo elegido. */
 export function getPracticeWellbeingSeries(
   sessions: readonly SessionRecord[],
@@ -221,18 +186,15 @@ export interface PracticeWellbeingSummary {
   focus: PracticeMetricSummary | null;
 }
 
-/** Medias del periodo y comparación con el periodo equivalente anterior. */
+/** Medias del periodo y comparación con el mismo tramo del periodo anterior. */
 export function getPracticeWellbeingSummary(
   sessions: readonly SessionRecord[],
   period: PracticeChartPeriod,
   today = new Date(),
 ): PracticeWellbeingSummary {
-  const ranges = getPracticeChartRanges(period, today);
-  const currentRange: PracticeMetricRange = {
-    startDate: ranges[0].startDate,
-    endDate: ranges[ranges.length - 1].endDate,
-  };
-  const previousRange = getPreviousWellbeingRange(period, today);
+  const spans = getComparisonSpans(period, today);
+  const currentRange: PracticeMetricRange = spans.current;
+  const previousRange: PracticeMetricRange = spans.previous;
 
   return {
     mood: getPracticeMetricSummary(

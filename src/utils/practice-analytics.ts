@@ -7,6 +7,7 @@ import {
   type SessionRecord,
   type SkillDistribution,
 } from "../types/practice.ts";
+import { getComparisonSpans, sumSecondsInSpan } from "./period-comparison.ts";
 
 export type PracticeChartPeriod = "week" | "month" | "year";
 export type PracticeTimeRange = {
@@ -235,27 +236,38 @@ function getWeekRanges(today: Date): PracticeChartRange[] {
   });
 }
 
+function formatShortDate(date: Date) {
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "numeric",
+    month: "short",
+  })
+    .format(date)
+    .replace(/\.$/, "");
+}
+
+/** Los 30 días que terminan hoy, agrupados en semanas de lunes a domingo. */
 function getMonthRanges(today: Date): PracticeChartRange[] {
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  const firstWeek = startOfWeek(monthStart);
+  const windowEnd = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  const windowStart = addDays(windowEnd, -29);
   const ranges: PracticeChartRange[] = [];
 
   for (
-    let weekStart = firstWeek;
-    weekStart <= monthEnd;
+    let weekStart = startOfWeek(windowStart);
+    weekStart <= windowEnd;
     weekStart = addDays(weekStart, 7)
   ) {
     const weekEnd = addDays(weekStart, 6);
-    const rangeStart = weekStart < monthStart ? monthStart : weekStart;
-    const rangeEnd = weekEnd > monthEnd ? monthEnd : weekEnd;
-    ranges.push(
-      createRange(
-        `${rangeStart.getDate()}–${rangeEnd.getDate()}`,
-        rangeStart,
-        rangeEnd,
-      ),
-    );
+    const rangeStart = weekStart < windowStart ? windowStart : weekStart;
+    const rangeEnd = weekEnd > windowEnd ? windowEnd : weekEnd;
+    const label =
+      rangeStart.getMonth() === rangeEnd.getMonth() ?
+        `${rangeStart.getDate()}–${rangeEnd.getDate()}`
+      : `${formatShortDate(rangeStart)}–${formatShortDate(rangeEnd)}`;
+    ranges.push(createRange(label, rangeStart, rangeEnd));
   }
 
   return ranges;
@@ -338,60 +350,12 @@ function rangesToBuckets(
   return ranges.map((range) => createBucket(range, dailySeconds));
 }
 
-function getWeekBuckets(
-  today: Date,
-  dailySeconds: Map<string, number>,
-): PracticeTimeBucket[] {
-  return rangesToBuckets(getWeekRanges(today), dailySeconds);
-}
-
-function getMonthBuckets(
-  today: Date,
-  dailySeconds: Map<string, number>,
-): PracticeTimeBucket[] {
-  return rangesToBuckets(getMonthRanges(today), dailySeconds);
-}
-
-function getYearBuckets(
-  today: Date,
-  dailySeconds: Map<string, number>,
-): PracticeTimeBucket[] {
-  return rangesToBuckets(getYearRanges(today), dailySeconds);
-}
-
 function buildPracticeTimeBuckets(
   period: PracticeChartPeriod,
   today: Date,
   dailySeconds: Map<string, number>,
 ): PracticeTimeBucket[] {
   return rangesToBuckets(getPracticeChartRanges(period, today), dailySeconds);
-}
-
-function getPreviousPeriodBuckets(
-  period: PracticeChartPeriod,
-  today: Date,
-  history: SessionRecord[],
-  dailySeconds: Map<string, number>,
-): PracticeTimeBucket[] {
-  if (period === "week") {
-    return addSessionCounts(
-      getWeekBuckets(addDays(today, -7), dailySeconds),
-      history,
-    );
-  }
-  if (period === "month") {
-    return addSessionCounts(
-      getMonthBuckets(
-        new Date(today.getFullYear(), today.getMonth() - 1, 1),
-        dailySeconds,
-      ),
-      history,
-    );
-  }
-  return addSessionCounts(
-    getYearBuckets(new Date(today.getFullYear() - 1, 0, 1), dailySeconds),
-    history,
-  );
 }
 
 export function getPracticeTimeBuckets(
@@ -421,8 +385,9 @@ export type PracticeTimeSummary = {
 
 /**
  * Resumen del periodo que muestra el gráfico de ritmo: total, sesiones, media
- * por sesión, mejor unidad y comparación con el periodo calendario anterior.
- * Reutiliza los mismos buckets que el gráfico para no discrepar en los límites.
+ * por sesión, mejor unidad y comparación con el mismo tramo transcurrido del
+ * periodo calendario anterior. El gráfico dibuja el periodo completo, pero la
+ * variación solo mide días comparables.
  */
 export function getPracticeTimeSummary(
   history: SessionRecord[],
@@ -434,12 +399,7 @@ export function getPracticeTimeSummary(
     buildPracticeTimeBuckets(period, today, dailySeconds),
     history,
   );
-  const previousBuckets = getPreviousPeriodBuckets(
-    period,
-    today,
-    history,
-    dailySeconds,
-  );
+  const spans = getComparisonSpans(period, today);
   const totalSeconds = buckets.reduce(
     (total, bucket) => total + bucket.totalSeconds,
     0,
@@ -453,10 +413,8 @@ export function getPracticeTimeSummary(
       bucket.totalSeconds > (best?.totalSeconds ?? 0) ? bucket : best,
     null,
   );
-  const previousTotalSeconds = previousBuckets.reduce(
-    (total, bucket) => total + bucket.totalSeconds,
-    0,
-  );
+  const previousTotalSeconds = sumSecondsInSpan(dailySeconds, spans.previous);
+  const comparableSeconds = sumSecondsInSpan(dailySeconds, spans.current);
 
   return {
     totalSeconds,
@@ -469,7 +427,7 @@ export function getPracticeTimeSummary(
     previousTotalSeconds,
     changeRatio:
       previousTotalSeconds > 0
-        ? (totalSeconds - previousTotalSeconds) / previousTotalSeconds
+        ? (comparableSeconds - previousTotalSeconds) / previousTotalSeconds
         : null,
   };
 }

@@ -279,6 +279,9 @@ export type Dict = {
     wellbeingTrendDown: string;
     wellbeingTrendFlat: string;
     wellbeingChange: string;
+    wellbeingChangeWeek: string;
+    wellbeingChangeMonth: string;
+    wellbeingChangeYear: string;
     wellbeingPrevious: string;
     wellbeingPeriodAria: string;
     wellbeingChartHint: string;
@@ -293,6 +296,7 @@ export type Dict = {
     periodMonth?: string;
     periodYear?: string;
     periodAria: string;
+    balancePeriodAria: string;
     inPeriod: string;
     chartAria: string;
     emptyChart: string;
@@ -339,6 +343,9 @@ export type Dict = {
     summaryBestWeek: string;
     summaryBestMonth: string;
     summaryComparison: string;
+    summaryComparisonWeek: string;
+    summaryComparisonMonth: string;
+    summaryComparisonYear: string;
     summarySame: string;
     summaryNoPrevious: string;
     tooltipSession: string;

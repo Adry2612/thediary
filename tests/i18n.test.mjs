@@ -45,6 +45,24 @@ test("names the dashboard insights in both languages", () => {
   );
 });
 
+test("names the comparison span for every period in both languages", () => {
+  const keys = [
+    "summaryComparisonWeek",
+    "summaryComparisonMonth",
+    "summaryComparisonYear",
+    "wellbeingChangeWeek",
+    "wellbeingChangeMonth",
+    "wellbeingChangeYear",
+  ];
+
+  for (const key of keys) {
+    assert.equal(typeof translations.es.dashboard[key], "string", key);
+    assert.equal(typeof translations.en.dashboard[key], "string", key);
+    assert.ok(translations.es.dashboard[key].length > 0, key);
+    assert.ok(translations.en.dashboard[key].length > 0, key);
+  }
+});
+
 test("names the session guitar type in both languages", () => {
   assert.equal(translations.es.practice.guitarType, "Tipo de guitarra");
   assert.equal(translations.en.practice.guitarType, "Guitar type");

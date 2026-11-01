@@ -255,7 +255,7 @@ export function AccountSkeleton() {
       aria-label='Cargando cuenta'
     >
       <SkeletonHeader compact />
-      <div className='max-w-3xl'>
+      <div className='mx-auto max-w-xl'>
         <SkeletonCard className='h-40' />
         <SkeletonCard className='mt-6 h-72' />
       </div>

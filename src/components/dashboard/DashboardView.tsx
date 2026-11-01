@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { GuitarBalance } from '@/components/dashboard/GuitarBalance';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ManualPracticeEntry } from '@/components/dashboard/ManualPracticeEntry';
@@ -16,18 +16,19 @@ import { WeeklyPracticeSummary } from '@/components/dashboard/WeeklyPracticeSumm
 import { YearPracticeCalendar } from '@/components/dashboard/YearPracticeCalendar';
 import {
   formatPracticeDuration,
-  makeDateKey,
   PRACTICE_SKILL_LABELS,
 } from '@/utils/dashboard-data';
 import {
   getGuitarBalance,
-  getMonthlyHeatmapData,
   getPracticeContentRankings,
   getPracticeStatistics,
   getSkillDistribution,
   getStreakCount,
   isStreakOnFire,
+  type PracticeChartPeriod,
 } from '@/utils/practice-analytics';
+import { getComparisonSpans } from '@/utils/period-comparison';
+import { getLocalDateKey } from '@/utils/local-date';
 import { hasPracticeWellbeingData } from '@/utils/practice-metrics';
 import {
   getPracticeWeekDays,
@@ -55,10 +56,15 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
   const today = useMemo(() => parseDateKey(todayKey), [todayKey]);
   const todayYear = today.getFullYear();
 
-  const currentMonthDays = useMemo(
-    () =>
-      getMonthlyHeatmapData(today.getFullYear(), today.getMonth() + 1, history),
-    [history, today],
+  const [balancePeriod, setBalancePeriod] =
+    useState<PracticeChartPeriod>('month');
+  const monthRange = useMemo(
+    () => getComparisonSpans('month', today).current,
+    [today],
+  );
+  const balanceRange = useMemo(
+    () => getComparisonSpans(balancePeriod, today).current,
+    [balancePeriod, today],
   );
   const yearlyDays = useMemo(
     () => getYearlyHeatmapData(todayYear, history),
@@ -72,33 +78,27 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     () => getPracticeWeekDays(history, today),
     [history, today],
   );
-  const currentMonthRange = useMemo(
-    () => ({
-      startDate: makeDateKey(today.getFullYear(), today.getMonth(), 1),
-      endDate: todayKey,
-    }),
-    [today, todayKey],
-  );
-  const skillDistribution = useMemo(
-    () => getSkillDistribution(history, currentMonthRange),
-    [currentMonthRange, history],
-  );
-  const currentMonthSessions = useMemo(
+  const monthSessions = useMemo(
     () =>
       history.filter((session) => {
-        const sessionDate = new Date(session.startedAt);
+        const dateKey = getLocalDateKey(new Date(session.startedAt));
         return (
-          sessionDate.getFullYear() === today.getFullYear() &&
-          sessionDate.getMonth() === today.getMonth()
+          dateKey >= monthRange.startDate && dateKey <= monthRange.endDate
         );
       }),
-    [history, today],
+    [history, monthRange],
   );
-  const totalMinutes = currentMonthDays.reduce(
-    (total, day) => total + day.totalMinutes,
-    0,
+  const skillDistribution = useMemo(
+    () => getSkillDistribution(history, balanceRange),
+    [balanceRange, history],
   );
-  const sessionsWithBpm = currentMonthSessions.filter(
+  const totalMinutes = Math.round(
+    monthSessions.reduce(
+      (total, session) => total + session.durationSeconds,
+      0,
+    ) / 60,
+  );
+  const sessionsWithBpm = monthSessions.filter(
     (session) => session.averageBpm > 0,
   );
   const averageBpm =
@@ -111,8 +111,8 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
       )
     : 0;
   const guitarBalance = useMemo(
-    () => getGuitarBalance(history, currentMonthRange),
-    [currentMonthRange, history],
+    () => getGuitarBalance(history, balanceRange),
+    [balanceRange, history],
   );
   const contentRankings = useMemo(
     () => getPracticeContentRankings(history, repertoireItems),
@@ -208,11 +208,19 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
           history={history}
           today={today}
         />
-        <SkillBalance distribution={skillDistribution} />
+        <SkillBalance
+          distribution={skillDistribution}
+          period={balancePeriod}
+          onPeriodChange={setBalancePeriod}
+        />
       </div>
 
       <div className='mt-5 grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2'>
-        <GuitarBalance balance={guitarBalance} />
+        <GuitarBalance
+          balance={guitarBalance}
+          period={balancePeriod}
+          onPeriodChange={setBalancePeriod}
+        />
         <div className='min-w-0'>
           <TempoProgress
             history={history}
