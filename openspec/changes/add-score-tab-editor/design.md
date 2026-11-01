@@ -264,5 +264,8 @@ activado.
   unidad y por el estado deshabilitado de la paleta cuando no hay nota anterior.
 - **Bandera apagada:** con `NEXT_PUBLIC_TAB_EDITOR=0` la ficha de canción no
   monta ni el editor ni el lienzo.
+- **Vista de solo lectura:** la ficha del lick ofrece reproducir y detener, sin
+  pedir el SoundFont hasta el primer clic; las tarjetas y la práctica no
+  ofrecen ningún control.
 - **Pendiente manual:** pasada con VoiceOver y con el iPhone real. El servidor
   HTTPS local y el perfil de confianza ya están preparados.

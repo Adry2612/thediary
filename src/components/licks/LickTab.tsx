@@ -15,6 +15,7 @@ export function LickTab({
   maxLines,
   maxBars,
   variant,
+  playback = false,
   className = "",
 }: {
   score?: TabScore;
@@ -25,6 +26,7 @@ export function LickTab({
   maxLines?: number;
   maxBars?: number;
   variant?: "compact" | "full";
+  playback?: boolean;
   className?: string;
 }) {
   const hasNotes = tab !== undefined && tab.notes.length > 0;
@@ -36,6 +38,7 @@ export function LickTab({
         label={ariaLabel}
         maxBars={maxBars}
         variant={variant}
+        playback={playback}
         className={className}
       />
     );

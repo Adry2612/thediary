@@ -130,6 +130,7 @@ export default function LickDetailPage({ params }: Props) {
           content={lick.tabContent}
           emptyLabel={text.tabEmpty}
           ariaLabel={`${text.tabTitle}: ${title}`}
+          playback
           className="mt-3"
         />
       </section>

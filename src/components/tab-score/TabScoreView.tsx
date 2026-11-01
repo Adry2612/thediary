@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useI18nSection } from "@/i18n/I18nProvider";
-import { TabScoreCanvas, type TabScoreRenderStatus } from "@/components/tab-score/TabScoreCanvas";
+import {
+  TabScoreCanvas,
+  type TabScorePlaybackState,
+  type TabScorePlayerControls,
+  type TabScoreRenderStatus,
+} from "@/components/tab-score/TabScoreCanvas";
 import {
   readShowStandardNotation,
   saveShowStandardNotation,
@@ -19,6 +24,7 @@ export function TabScoreView({
   maxBars,
   variant = "full",
   showNotationToggle = false,
+  playback = false,
   className = "",
 }: {
   score: TabScore;
@@ -27,9 +33,17 @@ export function TabScoreView({
   maxBars?: number;
   variant?: "full" | "compact";
   showNotationToggle?: boolean;
+  playback?: boolean;
   className?: string;
 }) {
   const text = useI18nSection("tabScore");
+  const playbackText = useI18nSection("tabPlayback");
+  const playerRef = useRef<TabScorePlayerControls | null>(null);
+  const [playbackState, setPlaybackState] = useState<TabScorePlaybackState>({
+    ready: false,
+    playing: false,
+    error: null,
+  });
   const [showStandardNotation, setShowStandardNotation] = useState(false);
   const [status, setStatus] = useState<TabScoreRenderStatus>({
     loading: true,
@@ -95,10 +109,52 @@ export function TabScoreView({
         </div>
       )}
 
+      {playback && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="field"
+            variant={playbackState.playing ? "primary" : "ghost"}
+            onClick={() => {
+              if (playbackState.playing) playerRef.current?.pause();
+              else playerRef.current?.play();
+            }}
+            className={
+              playbackState.playing
+                ? ""
+                : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+            }
+          >
+            {playbackState.playing
+              ? "■ " + playbackText.pause
+              : "▶ " + playbackText.play}
+          </Button>
+          <Button
+            type="button"
+            size="field"
+            variant="ghost"
+            onClick={() => playerRef.current?.stop()}
+            className="border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+          >
+            {playbackText.stop}
+          </Button>
+          {playbackState.error && (
+            <span role="alert" className="text-xs text-red-700">
+              {playbackText.soundUnavailable}
+            </span>
+          )}
+        </div>
+      )}
+
       <TabScoreCanvas
         alphaTex={alphaTex}
         stringCount={stringCount}
         compact={compact}
+        playback={playback}
+        onControls={(controls) => {
+          playerRef.current = controls;
+        }}
+        onPlaybackState={setPlaybackState}
         onStatus={setStatus}
         className={status.loading || status.error ? "invisible" : ""}
       />
