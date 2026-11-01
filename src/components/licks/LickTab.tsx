@@ -1,38 +1,41 @@
 "use client";
 
-import { TabView } from "@/components/repertoire/TabView";
+import { TabScoreView } from "@/components/tab-score/TabScoreView";
 import { tokenizeTabLine } from "@/utils/licks/tab-highlight";
+import { resolveTabScore } from "@/utils/tab-score/resolve";
 import type { RepertoireTab } from "@/types/practice";
+import type { TabScore } from "@/types/tab-score";
 
 export function LickTab({
+  score,
   tab,
   content,
   emptyLabel,
   ariaLabel,
   maxLines,
-  maxMeasures,
+  maxBars,
   variant,
-  playheadColumn,
   className = "",
 }: {
+  score?: TabScore;
   tab?: RepertoireTab;
   content?: string;
   emptyLabel: string;
   ariaLabel: string;
   maxLines?: number;
-  maxMeasures?: number;
+  maxBars?: number;
   variant?: "compact" | "full";
-  playheadColumn?: number | null;
   className?: string;
 }) {
-  if (tab && tab.notes.length > 0) {
+  const hasNotes = tab !== undefined && tab.notes.length > 0;
+
+  if (score || hasNotes) {
     return (
-      <TabView
-        tab={tab}
-        ariaLabel={ariaLabel}
-        maxMeasures={maxMeasures}
+      <TabScoreView
+        score={resolveTabScore({ score, tab })}
+        label={ariaLabel}
+        maxBars={maxBars}
         variant={variant}
-        playheadColumn={playheadColumn}
         className={className}
       />
     );

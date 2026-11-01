@@ -39,7 +39,7 @@
 ## 7. Vista de solo lectura
 
 - [x] 7.1 Crear `TabScoreView` (alphaTab con importación dinámica, `fontDirectory`, pauta de tablatura con ritmo, notación estándar opcional guardada por dispositivo, compases en sistemas sin scroll horizontal, esqueleto de carga y alternativa textual si falla, `playback` apagado por defecto). Verificar a 375, 768 y 1280 px que no hay scroll horizontal y que, con la red cortada, aparece el texto.
-- [ ] 7.2 Sustituir `LickTab`/`TabView` por `TabScoreView` en `LickCard`, `licks/[id]/page.tsx` y `PracticeSession`, manteniendo el texto antiguo cuando solo hay `tabContent`. Verificar con un lick con rejilla, uno con partitura, uno con texto y uno vacío, y comprobando que el bloque de lick de la práctica no ofrece ningún control de reproducción.
+- [x] 7.2 Sustituir `LickTab`/`TabView` por `TabScoreView` en `LickCard`, `licks/[id]/page.tsx` y `PracticeSession`, manteniendo el texto antiguo cuando solo hay `tabContent`. Verificar con un lick con rejilla, uno con partitura, uno con texto y uno vacío, y comprobando que el bloque de lick de la práctica no ofrece ningún control de reproducción.
 
 ## 8. Editor: selección y entrada
 

@@ -380,6 +380,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         </p>
       )}
       <LickTab
+        score={currentLick.score}
         tab={currentLick.tab}
         content={currentLick.tabContent}
         emptyLabel={text.lickTabEmpty}

@@ -20,10 +20,17 @@ type AlphaTabApi = import("@coderline/alphatab").AlphaTabApi;
 
 export function TabScoreView({
   score,
+  label,
+  maxBars,
+  variant = "full",
   showNotationToggle = false,
   className = "",
 }: {
   score: TabScore;
+  label?: string;
+  /** Recorta la partitura para una vista previa. */
+  maxBars?: number;
+  variant?: "full" | "compact";
   showNotationToggle?: boolean;
   className?: string;
 }) {
@@ -32,15 +39,27 @@ export function TabScoreView({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hostRef = useRef<HTMLDivElement>(null);
+  const compact = variant === "compact";
 
   useEffect(() => {
     setShowStandardNotation(readShowStandardNotation());
   }, []);
 
-  const textAlternative = useMemo(() => scoreToText(score), [score]);
+  const visibleScore = useMemo(
+    () =>
+      maxBars === undefined
+        ? score
+        : { ...score, bars: score.bars.slice(0, Math.max(1, maxBars)) },
+    [score, maxBars],
+  );
+
+  const textAlternative = useMemo(
+    () => scoreToText(visibleScore),
+    [visibleScore],
+  );
   const alphaTex = useMemo(
-    () => buildAlphaTex(score, { standardNotation: showStandardNotation }),
-    [score, showStandardNotation],
+    () => buildAlphaTex(visibleScore, { standardNotation: showStandardNotation }),
+    [visibleScore, showStandardNotation],
   );
 
   useEffect(() => {
@@ -75,6 +94,17 @@ export function TabScoreView({
           setError(renderError.message);
           setIsLoading(false);
         });
+        if (compact) {
+          // En una tarjeta el nombre de la afinación ocupa más que la propia
+          // tablatura; se omite y se deja solo la pauta.
+          api.scoreLoaded.on((loadedScore) => {
+            for (const track of loadedScore.tracks) {
+              for (const staff of track.staves) {
+                staff.stringTuning.name = "";
+              }
+            }
+          });
+        }
         api.renderFinished.on(() => {
           if (!disposed) setIsLoading(false);
         });
@@ -95,7 +125,7 @@ export function TabScoreView({
       api?.destroy();
       host.replaceChildren();
     };
-  }, [alphaTex]);
+  }, [alphaTex, compact]);
 
   function toggleStandardNotation() {
     setShowStandardNotation((current) => {
@@ -107,6 +137,8 @@ export function TabScoreView({
 
   return (
     <div
+      role="group"
+      aria-label={label}
       className={`overflow-hidden rounded-xl border border-line bg-white p-3 text-zinc-900 sm:p-4 ${className}`}
     >
       {showNotationToggle && (
@@ -133,11 +165,17 @@ export function TabScoreView({
         aria-hidden={isLoading || error !== null}
       />
 
-      {isLoading && (
-        <pre className="whitespace-pre-wrap font-mono text-xs leading-5 text-zinc-700">
-          {textAlternative}
-        </pre>
-      )}
+      {isLoading &&
+        (compact ? (
+          <div
+            aria-hidden="true"
+            className="h-24 animate-pulse rounded-md bg-zinc-100"
+          />
+        ) : (
+          <pre className="whitespace-pre-wrap font-mono text-xs leading-5 text-zinc-700">
+            {textAlternative}
+          </pre>
+        ))}
 
       {error && (
         <div className="mt-2">
@@ -150,7 +188,9 @@ export function TabScoreView({
         </div>
       )}
 
-      {!isLoading && !error && <pre className="sr-only">{textAlternative}</pre>}
+      {!isLoading && !error && (
+        <pre className="sr-only">{textAlternative}</pre>
+      )}
     </div>
   );
 }
