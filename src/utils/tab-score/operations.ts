@@ -568,14 +568,18 @@ function groupBeats(
   tuplet: TabTuplet,
   selection: TabSelection,
 ): TabOperationResult {
-  const barIndex = positions[0].bar;
-  if (positions.some((position) => position.bar !== barIndex)) {
+  // Con más notas de las que pide la subdivisión se agrupan las primeras N y
+  // el resto se queda como está: así el tresillo sigue disponible aunque el
+  // arrastre se pase de largo.
+  if (positions.length < tuplet) return { error: "tupletNeedsBeats" };
+
+  const group = positions.slice(0, tuplet);
+  const barIndex = group[0].bar;
+  if (group.some((position) => position.bar !== barIndex)) {
     return { error: "tupletAcrossBars" };
   }
 
-  if (positions.length !== tuplet) return { error: "tupletNeedsBeats" };
-
-  const beats = positions.map((position) =>
+  const beats = group.map((position) =>
     getBeatAt(score, position.bar, position.beat),
   );
   if (beats.some((beat) => beat === null)) return { error: "noSelection" };
@@ -598,7 +602,7 @@ function groupBeats(
   }
 
   let next = score;
-  for (const position of positions) {
+  for (const position of group) {
     next = replaceBeat(next, position.bar, position.beat, (beat) => ({
       ...beat,
       tuplet,
@@ -612,8 +616,8 @@ function groupBeats(
   return {
     score: next,
     selection: clampSelection(next, {
-      bar: positions[0].bar,
-      beat: positions[0].beat,
+      bar: group[0].bar,
+      beat: group[0].beat,
       string: selection.string,
     }),
   };

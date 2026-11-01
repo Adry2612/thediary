@@ -545,6 +545,7 @@ export type Dict = {
     subdivision: string;
     subdivisionTitle: string;
     subdivisionHint: string;
+    subdivisionGroupHint: string;
     tuplet3: string;
     tuplet5: string;
     tuplet6: string;

@@ -32,7 +32,7 @@
 ## 6. Agrupar notas existentes
 
 - [x] 6.1 Al seleccionar exactamente N pulsos, agruparlos en una sola subdivisión (una nota por hueco) y añadir el tiempo liberado como silencios al final del compás. Verificar con tests de tres corcheas, tres negras y cinco corcheas.
-- [x] 6.2 Rechazar con motivo las selecciones de tamaño distinto, las figuras distintas y las que cruzan compás; verificar en el selector.
+- [x] 6.2 Rechazar con motivo las selecciones con menos pulsos que la subdivisión, las figuras distintas y las que cruzan compás; con más pulsos, agrupar los primeros N. Verificar en el selector.
 - [x] 6.3 Actualizar la spec, el diseño, la documentación y el recorrido del navegador: tres notas seleccionadas + tresillo forman un solo grupo con su silencio, no nueve huecos.
 
 ## Workflow follow-up

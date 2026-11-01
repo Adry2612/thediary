@@ -1089,6 +1089,8 @@ export const en: Dict = {
     subdivisionTitle: 'Subdivide the beat',
     subdivisionHint:
       'Pick how many equal slots the beat is split into. The bar length does not change and the cursor stays on the first slot.',
+    subdivisionGroupHint:
+      'With several notes selected, the first N are grouped into one; the rest stay as they are and the freed time is added as a rest at the end.',
     tuplet3: 'Triplet (3:2)',
     tuplet5: 'Quintuplet (5:4)',
     tuplet6: 'Sextuplet (6:4)',
@@ -1149,7 +1151,7 @@ export const en: Dict = {
     cannotSubdivide: 'This beat is too short for that subdivision.',
     alreadySubdivided: 'This beat is already subdivided. Undo to change it.',
     tupletNeedsBeats:
-      'Select one beat or as many beats as the subdivision.',
+      'Select one beat or at least as many beats as the subdivision.',
     tupletDifferentValues:
       'The notes of a subdivision must have the same value.',
     tupletAcrossBars: 'The subdivision must fit in one bar.',

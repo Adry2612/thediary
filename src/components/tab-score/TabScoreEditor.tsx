@@ -715,7 +715,9 @@ export function TabScoreEditor({
               {paletteText.subdivisionTitle}
             </h3>
             <p className="mt-1 text-xs leading-5 text-zinc-600">
-              {paletteText.subdivisionHint}
+              {editor.selectedBeats.length > 1
+                ? paletteText.subdivisionGroupHint
+                : paletteText.subdivisionHint}
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {TAB_TUPLETS.map((tuplet) => {

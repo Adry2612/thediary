@@ -45,10 +45,11 @@ La acción nueva `divideBeat` recibe la selección y el número `n`.
 
 **Con exactamente `n` pulsos seleccionados (después de escribir las notas):**
 
-1. Exige que estén en el mismo compás (`tupletAcrossBars`), que todos tengan la misma figura (`tupletDifferentValues`) y que ninguno esté subdividido ni tenga puntillo (`alreadySubdivided` / `cannotSubdivide`).
-2. A cada pulso le pone `tuplet: n` conservando su figura: los N notas pasan a ser un solo grupo de N en el tiempo de M, no N grupos independientes.
-3. El tiempo liberado, `figura × (n − m)`, se añade como silencios **al final del compás**. El resto de notas no cambia de figura y el compás sigue sumando lo mismo.
-4. Comprueba el tope de 64 pulsos y deja seleccionado el primer pulso del grupo.
+1. Si hay más de `n`, se toman los `n` primeros y el resto se queda como está.
+2. Exige que estén en el mismo compás (`tupletAcrossBars`), que todos tengan la misma figura (`tupletDifferentValues`) y que ninguno esté subdividido ni tenga puntillo (`alreadySubdivided` / `cannotSubdivide`).
+3. A cada pulso le pone `tuplet: n` conservando su figura: los N notas pasan a ser un solo grupo de N en el tiempo de M, no N grupos independientes.
+4. El tiempo liberado, `figura × (n − m)`, se añade como silencios **al final del compás**. El resto de notas no cambia de figura y el compás sigue sumando lo mismo.
+5. Comprueba el tope de 64 pulsos y deja seleccionado el primer pulso del grupo.
 
 Ejemplo: tres corcheas seleccionadas y tresillo → las tres corcheas se convierten en un tresillo de corcheas (960 ticks) y se añade una corchea de silencio al final; el compás mide lo mismo. Lo mismo con tres negras y un silencio de negra.
 
@@ -89,7 +90,7 @@ La división se calcula entera y se apila una vez en el historial; deshacer recu
 - [Arrastrar en táctil puede chocar con el desplazamiento o con la pulsación larga] → `touch-action: pan-y`, umbral de 8 px y cancelación de la pulsación larga al mover.
 - [Un pulso ya subdividido no se puede volver a dividir ni convertir] → La opción se desactiva con el motivo; deshacer lo revierte. Se documenta como límite.
 - [Al agrupar, el tiempo liberado se convierte en silencio al final del compás] → Es predecible y no mueve las notas que el usuario no ha seleccionado; el compás sigue sumando lo mismo.
-- [Una selección de 2, 4 o más notas no forma un grupo de 3] → El diálogo desactiva esa subdivisión y pide un pulso o exactamente N; no adivina qué notas agrupar.
+- [Una selección con menos notas que la subdivisión no puede formar el grupo] → El diálogo pide un pulso o al menos N; con más de N agrupa los N primeros y deja el resto como estaba.
 
 ## Migration Plan
 

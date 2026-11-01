@@ -1101,6 +1101,8 @@ export const es: Dict = {
     subdivisionTitle: 'Subdividir el pulso',
     subdivisionHint:
       'Elige en cuántos huecos iguales se parte el pulso. El compás no cambia y el cursor queda en el primero.',
+    subdivisionGroupHint:
+      'Con varias notas seleccionadas se agrupan las primeras N en un solo grupo; el resto se queda igual y el tiempo liberado se añade como silencio al final.',
     tuplet3: 'Tresillo (3:2)',
     tuplet5: 'Quintillo (5:4)',
     tuplet6: 'Seisillo (6:4)',
@@ -1161,7 +1163,7 @@ export const es: Dict = {
     cannotSubdivide: 'Este pulso es demasiado corto para esa subdivisión.',
     alreadySubdivided: 'Este pulso ya está subdividido. Deshaz para cambiarlo.',
     tupletNeedsBeats:
-      'Selecciona un pulso o tantos pulsos como la subdivisión.',
+      'Selecciona un pulso o al menos tantos pulsos como la subdivisión.',
     tupletDifferentValues:
       'Las notas de una subdivisión deben durar lo mismo.',
     tupletAcrossBars: 'La subdivisión debe caber en un solo compás.',

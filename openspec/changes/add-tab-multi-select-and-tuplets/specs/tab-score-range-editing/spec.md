@@ -36,7 +36,7 @@ The system SHALL mark a range of consecutive beats when the user presses over th
 
 ### Requirement: A beat or a group of notes can be made into an irregular subdivision
 
-The system SHALL offer subdivisions of 3, 5, 6, 7, 9, 10 and 12. A single selected beat SHALL be divided into that many slots of the same total, with the content in the first slot. Exactly that many selected beats SHALL be grouped into one subdivision, one note per slot, adding the freed time as rests at the end of the bar. The bar SHALL keep its total, the first slot SHALL be selected, and a selection that does not fit SHALL be rejected with a reason.
+The system SHALL offer subdivisions of 3, 5, 6, 7, 9, 10 and 12. A single selected beat SHALL be divided into that many slots of the same total, with the content in the first slot. When at least that many beats are selected, the first N SHALL be grouped into one subdivision, one note per slot, adding the freed time as rests at the end of the bar. The bar SHALL keep its total, the first slot SHALL be selected, and a selection with fewer than N beats SHALL be rejected with a reason.
 
 #### Scenario: Dividing a quarter into a triplet
 - **WHEN** the user selects a quarter rest and chooses the subdivision of 3
@@ -66,9 +66,13 @@ The system SHALL offer subdivisions of 3, 5, 6, 7, 9, 10 and 12. A single select
 - **WHEN** the user selects three quarter notes and chooses the subdivision of 3
 - **THEN** the three notes form one triplet group and a quarter rest fills the freed time
 
-#### Scenario: The group size does not match
+#### Scenario: More notes than the subdivision
+- **WHEN** the user selects four notes and chooses the subdivision of 3
+- **THEN** the first three notes form one triplet group, the fourth note stays as it was, and the freed time becomes an eighth rest at the end of the bar
+
+#### Scenario: Fewer notes than the subdivision
 - **WHEN** the user selects two beats and chooses the subdivision of 3
-- **THEN** the action is disabled and the description asks for one beat or exactly three
+- **THEN** the action is disabled and the description asks for one beat or at least three
 
 #### Scenario: Notes with different values
 - **WHEN** the selected notes do not all have the same figure

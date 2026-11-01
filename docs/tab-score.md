@@ -179,15 +179,16 @@ que esté seleccionado.
 - el cursor queda en el primer hueco, así que se escriben las N notas seguidas
   con el avance automático.
 
-**Exactamente N pulsos (notas ya escritas):** se agrupan en una sola
-subdivisión, una nota por hueco.
+**N pulsos o más (notas ya escritas):** se agrupan los N primeros en una sola
+subdivisión, una nota por hueco; el resto de la selección se queda como está.
 
 - las N notas pasan a ser un solo grupo (un tresillo, no N tresillos);
 - el tiempo que se libera, `figura × (N − M)`, se añade como silencio al final
   del compás, así que la suma no cambia y las demás notas conservan su figura;
 - por ejemplo, tres corcheas seleccionadas y tresillo forman un tresillo de
   corcheas (960 ticks) más una corchea de silencio;
-- la selección debe caber en un compás, tener exactamente N pulsos y todos la
+- si hay más pulsos de los que pide la subdivisión, se agrupan los primeros;
+- la selección debe caber en un compás y tener al menos N pulsos, todos la
   misma figura; si no, el selector desactiva la opción y explica el motivo
   (`tupletNeedsBeats`, `tupletDifferentValues`, `tupletAcrossBars`).
 

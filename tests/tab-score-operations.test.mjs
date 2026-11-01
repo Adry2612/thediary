@@ -706,3 +706,29 @@ test("refuses a group whose size or values do not match the subdivision", () => 
     { error: "tupletAcrossBars" },
   );
 });
+
+test("groups the first notes when the selection has more than the subdivision", () => {
+  const base = score([
+    beat({ id: "q1", duration: 4 }),
+    beat({ id: "q2", duration: 4 }),
+    beat({ id: "q3", duration: 4 }),
+    beat({ id: "q4", duration: 4 }),
+  ]);
+  const result = divideBeat(
+    base,
+    { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 3, string: 0 } },
+    3,
+  );
+
+  assert.equal(isError(result), false);
+  const beats = result.score.bars[0].beats;
+  assert.deepEqual(
+    beats.slice(0, 3).map((entry) => entry.tuplet),
+    [3, 3, 3],
+  );
+  // La cuarta negra no entra en el grupo y sigue igual.
+  assert.equal(beats[3].tuplet, undefined);
+  assert.equal(beats[3].duration, 4);
+  assert.equal(beats.at(-1).rest, true);
+  assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
+});
