@@ -29,6 +29,7 @@ import {
   getStringCount,
 } from "./model.ts";
 import {
+  getBarTicks,
   getBeatTicks,
   getTimeSignatureTicks,
   resolveTimeSignature,
@@ -586,14 +587,14 @@ function groupBeats(
   if (beats.some((beat) => beat!.tuplet)) return { error: "alreadySubdivided" };
   if (beats.some((beat) => beat!.dots === 1)) return { error: "cannotSubdivide" };
 
-  const first = beats[0]!;
-  if (beats.some((beat) => beat!.duration !== first.duration)) {
-    return { error: "tupletDifferentValues" };
-  }
-
-  const base = getBeatTicks(first);
-  const freed = base * (tuplet - TAB_TUPLET_IN_TIME[tuplet]);
+  const base = beats.reduce((total, beat) => total + getBeatTicks(beat!), 0);
+  const freed = Math.round(
+    (base * (tuplet - TAB_TUPLET_IN_TIME[tuplet])) / tuplet,
+  );
   const rests = createRestBeats(freed);
+  if (getBarTicks({ beats: rests }) !== freed) {
+    return { error: "cannotSubdivide" };
+  }
 
   const bar = score.bars[barIndex];
   if (!bar) return { error: "noSelection" };

@@ -176,6 +176,7 @@ export function TabScoreCanvas({
     pointerId: number;
     x: number;
     y: number;
+    string: number;
     dragging: boolean;
   } | null>(null);
 
@@ -496,7 +497,7 @@ export function TabScoreCanvas({
         Math.max(0, Math.floor((y - bar.y) / rowHeight)),
         stringCount - 1,
       );
-      const string = stringCount - 1 - row;
+      const rowString = stringCount - 1 - row;
 
       const inside = bar.beats.find(
         (beat) => x >= beat.x && x <= beat.x + beat.w,
@@ -509,12 +510,32 @@ export function TabScoreCanvas({
           return distance < bestDistance ? candidate : best;
         });
 
-      const localBox = beat.notes.get(string) ?? {
-        x: beat.x + 2,
-        y: bar.y + (stringCount - 1 - string) * rowHeight + 2,
-        w: Math.max(8, beat.w - 4),
-        h: Math.max(8, rowHeight - 4),
-      };
+      // Cerca de una nota, la pulsación se pega a la nota: así se puede marcar
+      // sin acertar con la fila exacta de la cuerda.
+      let snappedString: number | null = null;
+      let snappedBox: Rect | null = null;
+      let bestNoteDistance = 12;
+      for (const [noteString, box] of beat.notes) {
+        const dx =
+          x < box.x ? box.x - x : x > box.x + box.w ? x - (box.x + box.w) : 0;
+        const dy =
+          y < box.y ? box.y - y : y > box.y + box.h ? y - (box.y + box.h) : 0;
+        const distance = Math.hypot(dx, dy);
+        if (distance <= bestNoteDistance) {
+          bestNoteDistance = distance;
+          snappedString = noteString;
+          snappedBox = box;
+        }
+      }
+
+      const string = snappedString ?? rowString;
+      const localBox = snappedBox ??
+        beat.notes.get(string) ?? {
+          x: beat.x + 2,
+          y: bar.y + (stringCount - 1 - string) * rowHeight + 2,
+          w: Math.max(8, beat.w - 4),
+          h: Math.max(8, rowHeight - 4),
+        };
 
       return {
         position: { bar: bar.index, beat: beat.index, string },
@@ -528,9 +549,11 @@ export function TabScoreCanvas({
           0.999,
           Math.max(0, (x - beat.x) / Math.max(1, beat.w)),
         ),
-        nearNote: [...beat.notes.values()].some(
-          (note) => x >= note.x - 6 && x <= note.x + note.w + 6,
-        ),
+        nearNote:
+          snappedString !== null ||
+          [...beat.notes.values()].some(
+            (note) => x >= note.x - 6 && x <= note.x + note.w + 6,
+          ),
       };
     },
     [layout, stringCount],
@@ -545,6 +568,7 @@ export function TabScoreCanvas({
       pointerId: event.pointerId,
       x: event.clientX,
       y: event.clientY,
+      string: hit.position.string,
       dragging: false,
     };
 
@@ -592,7 +616,15 @@ export function TabScoreCanvas({
     }
 
     const hit = hitTest(event.clientX, event.clientY);
-    if (hit) callbacks.current.onSelect?.(hit.position, true, hit);
+    if (hit) {
+      // Un arrastre horizontal mantiene la cuerda de origen: así la frase
+      // completa se marca aunque alguna nota salte de cuerda.
+      const position =
+        Math.abs(event.clientY - current.y) <= 12
+          ? { ...hit.position, string: current.string }
+          : hit.position;
+      callbacks.current.onSelect?.(position, true, hit);
+    }
   }
 
   function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {

@@ -95,12 +95,14 @@ La partitura ocupa todo el ancho de la columna. Dentro del lienzo:
 
 ### Seleccionar notas
 
-Arrastrar sobre la pauta marca **las notas** que quedan dentro del rectángulo
-entre el punto de inicio y el final: los pulsos intermedios y las cuerdas entre
-el ancla y el foco. Se resalta cada nota seleccionada, no el pulso entero; si el
-tramo no tiene notas (solo silencios), se resalta el pulso para no perder la
-selección. La paleta aplica los cambios de ritmo a los pulsos de esas notas y
-las técnicas a la cuerda enfocada.
+Arrastrar sobre la pauta marca **las notas** de los pulsos entre el punto de
+inicio y el final. Si arrastras en horizontal (misma cuerda), entran todas las
+notas de esos pulsos aunque salten de cuerda, que es lo normal en una frase; si
+arrastras en diagonal, se limita a las cuerdas entre el ancla y el foco. Se
+resalta cada nota seleccionada, no el pulso entero; si el tramo no tiene notas
+(solo silencios), se resalta el pulso para no perder la selección. La paleta
+aplica los cambios de ritmo a los pulsos de esas notas y las técnicas a la
+cuerda enfocada.
 
 Con teclado, Mayús + clic y Mayús + flechas hacen lo mismo. En táctil el
 arrastre vertical sigue desplazando la página (`touch-action: pan-y`), el doble
@@ -193,9 +195,11 @@ subdivisión, una nota por hueco; el resto de la selección se queda como está.
 - por ejemplo, tres corcheas seleccionadas y tresillo forman un tresillo de
   corcheas (960 ticks) más una corchea de silencio;
 - si hay más pulsos de los que pide la subdivisión, se agrupan los primeros;
-- la selección debe caber en un compás y tener al menos N pulsos, todos la
-  misma figura; si no, el selector desactiva la opción y explica el motivo
-  (`tupletNeedsBeats`, `tupletDifferentValues`, `tupletAcrossBars`).
+- las figuras de las notas pueden ser distintas, siempre que el tiempo liberado
+  se pueda escribir con silencios;
+- la selección debe caber en un compás y tener al menos N pulsos; si no, el
+  selector desactiva la opción y explica el motivo (`tupletNeedsBeats`,
+  `cannotSubdivide`, `tupletAcrossBars`).
 
 En ambos modos, un pulso con puntillo o ya subdividido no se puede dividir otra
 vez (`cannotSubdivide`, `alreadySubdivided`), un compás lleno de pulsos se

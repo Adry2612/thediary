@@ -8,11 +8,19 @@ Lets the user mark a group of notes by dragging over the staff and turn those no
 
 ### Requirement: A group of notes can be marked by dragging
 
-The system SHALL mark the notes inside the rectangle dragged over the staff —the beats between the start and the end and the strings between them—, SHALL highlight each selected note instead of the whole beat, SHALL keep Shift + click and Shift + arrows as alternatives, SHALL keep vertical scrolling on touch, and SHALL NOT write a note or open the note menu after a drag.
+The system SHALL mark the notes in the beats covered by a drag, SHALL include every string for a horizontal drag and only the strings between anchor and focus for a diagonal one, SHALL highlight each note instead of the beat, SHALL snap a press within 12 px to the nearest note, SHALL keep Shift and vertical touch scrolling, and SHALL NOT write a note or open the note menu after a drag.
 
 #### Scenario: Dragging over three notes
 - **WHEN** the user presses on the first note and drags to the third note on the same string
 - **THEN** those three notes are highlighted and no other note is marked
+
+#### Scenario: A horizontal drag over a phrase that changes strings
+- **WHEN** the user drags from the first note to the third and the third note is on another string
+- **THEN** the three notes are highlighted, including the one on the other string
+
+#### Scenario: Pressing near a note
+- **WHEN** the user presses slightly above or below a note, within the snap distance
+- **THEN** that note is selected instead of the empty string row
 
 #### Scenario: Dragging across strings
 - **WHEN** the drag covers more than one string
@@ -82,9 +90,9 @@ The system SHALL offer subdivisions of 3, 5, 6, 7, 9, 10 and 12. A single select
 - **WHEN** the user selects two beats and chooses the subdivision of 3
 - **THEN** the action is disabled and the description asks for one beat or at least three
 
-#### Scenario: Notes with different values
-- **WHEN** the selected notes do not all have the same figure
-- **THEN** the action is disabled and the description says they must last the same
+#### Scenario: The freed time cannot be written
+- **WHEN** the time freed by the group cannot be written as rests with the available figures
+- **THEN** the subdivision is disabled and the description explains it
 
 #### Scenario: The group crosses a bar line
 - **WHEN** the selection spans more than one bar

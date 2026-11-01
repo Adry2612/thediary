@@ -26,7 +26,7 @@ function score() {
   };
 }
 
-test("selects the notes on the dragged string, not the whole beats", () => {
+test("a horizontal drag marks every note in the beats, even across strings", () => {
   const notes = getSelectedNotes(score(), {
     bar: 0,
     beat: 0,
@@ -37,6 +37,7 @@ test("selects the notes on the dragged string, not the whole beats", () => {
   assert.deepEqual(notes, [
     { bar: 0, beat: 0, string: 0 },
     { bar: 0, beat: 1, string: 0 },
+    { bar: 0, beat: 1, string: 1 },
     { bar: 0, beat: 2, string: 0 },
   ]);
 });

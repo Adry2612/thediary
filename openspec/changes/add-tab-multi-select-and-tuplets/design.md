@@ -46,9 +46,9 @@ La acción nueva `divideBeat` recibe la selección y el número `n`.
 **Con exactamente `n` pulsos seleccionados (después de escribir las notas):**
 
 1. Si hay más de `n`, se toman los `n` primeros y el resto se queda como está.
-2. Exige que estén en el mismo compás (`tupletAcrossBars`), que todos tengan la misma figura (`tupletDifferentValues`) y que ninguno esté subdividido ni tenga puntillo (`alreadySubdivided` / `cannotSubdivide`).
-3. A cada pulso le pone `tuplet: n` conservando su figura: los N notas pasan a ser un solo grupo de N en el tiempo de M, no N grupos independientes.
-4. El tiempo liberado, `figura × (n − m)`, se añade como silencios **al final del compás**. El resto de notas no cambia de figura y el compás sigue sumando lo mismo.
+2. Exige que estén en el mismo compás (`tupletAcrossBars`), que ninguno esté subdividido y que ninguno tenga puntillo (`alreadySubdivided` / `cannotSubdivide`).
+3. A cada pulso le pone `tuplet: n` conservando su figura: los N notas pasan a ser un solo grupo de N en el tiempo de M, no N grupos independientes. Las figuras pueden ser distintas.
+4. El tiempo liberado, `suma de figuras × (n − m) / n`, se añade como silencios **al final del compás**. Si ese tiempo no se puede escribir con las figuras disponibles, la opción se desactiva con `cannotSubdivide`.
 5. Comprueba el tope de 64 pulsos y deja seleccionado el primer pulso del grupo.
 
 Ejemplo: tres corcheas seleccionadas y tresillo → las tres corcheas se convierten en un tresillo de corcheas (960 ticks) y se añade una corchea de silencio al final; el compás mide lo mismo. Lo mismo con tres negras y un silencio de negra.
@@ -68,7 +68,9 @@ Con 960 ticks por negra, un pulso de negra dividido en 7 o 9 no da ticks enteros
 
 En el lienzo, `pointerdown` sigue seleccionando el pulso de origen. Si el puntero se mueve más de 8 px en horizontal, se marca `dragging` y cada movimiento despacha `select` con `extend` hacia el pulso y la cuerda actuales; `pointerup` termina y limpia el estado.
 
-El tramo sigue siendo un rectángulo de pulsos por cuerdas, pero **lo que se resalta son las notas**: `getSelectedNotes` cruza los pulsos del tramo con el rango de cuerdas entre el ancla y el foco y devuelve solo las notas que existen. El lienzo dibuja una caja por nota; si el tramo no tiene notas (solo silencios), cae al resaltado por pulso para no perder la selección. Así el arrastre no marca bloques de pulso.
+El tramo sigue siendo un rectángulo de pulsos por cuerdas, pero **lo que se resalta son las notas**: `getSelectedNotes` recorre los pulsos del tramo y devuelve las notas que existen. Si el arrastre es horizontal (ancla y foco en la misma cuerda), entran todas las notas de esos pulsos, aunque salten de cuerda; si es diagonal, solo las cuerdas del rectángulo. El lienzo dibuja una caja por nota; si el tramo no tiene notas (solo silencios), cae al resaltado por pulso. Así el arrastre no marca bloques.
+
+Además, `hitTest` pega la pulsación a la nota más cercana dentro de 12 px, para no depender de acertar con la fila exacta de la cuerda.
 
 - El tuplet y las operaciones de ritmo siguen usando los pulsos de las notas seleccionadas; las técnicas pueden ampliarse a todas las cuerdas del rectángulo en otro cambio.
 - `touch-action: pan-y` en la capa interactiva: el arrastre vertical lo sigue gestionando el navegador (desplaza la página) y el horizontal es nuestro.

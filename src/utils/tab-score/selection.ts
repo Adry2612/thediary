@@ -108,6 +108,9 @@ export function getSelectedNotes(
     string: selection.string,
   };
   const other = selection.anchor ?? focus;
+  // Un arrastre horizontal (misma cuerda) marca la frase completa, aunque las
+  // notas salten de cuerda; uno diagonal marca solo el rectángulo.
+  const horizontal = selection.anchor !== undefined && other.string === focus.string;
   const firstString = Math.min(other.string, focus.string);
   const lastString = Math.max(other.string, focus.string);
   const notes: { bar: number; beat: number; string: number }[] = [];
@@ -116,7 +119,10 @@ export function getSelectedNotes(
     const beat = getBeatAt(score, position.bar, position.beat);
     if (!beat) continue;
     for (const note of beat.notes) {
-      if (note.string >= firstString && note.string <= lastString) {
+      if (
+        horizontal ||
+        (note.string >= firstString && note.string <= lastString)
+      ) {
         notes.push({ ...position, string: note.string });
       }
     }

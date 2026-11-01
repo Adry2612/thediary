@@ -685,8 +685,25 @@ test("refuses a group whose size or values do not match the subdivision", () => 
       { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 2, string: 0 } },
       3,
     ),
-    { error: "tupletDifferentValues" },
+    { error: "cannotSubdivide" },
   );
+
+  const mixedFits = score([
+    beat({ id: "a", duration: 4 }),
+    beat({ id: "b", duration: 4 }),
+    beat({ id: "c", duration: 16 }),
+  ]);
+  const grouped = divideBeat(
+    mixedFits,
+    { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 2, string: 0 } },
+    3,
+  );
+  assert.equal(isError(grouped), false);
+  assert.deepEqual(
+    grouped.score.bars[0].beats.slice(0, 3).map((entry) => entry.tuplet),
+    [3, 3, 3],
+  );
+  assert.equal(getBarTicks(grouped.score.bars[0]), getBarTicks(mixedFits.bars[0]));
 
   const across = {
     version: 2,

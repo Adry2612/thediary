@@ -32,13 +32,14 @@
 ## 6. Agrupar notas existentes
 
 - [x] 6.1 Al seleccionar exactamente N pulsos, agruparlos en una sola subdivisión (una nota por hueco) y añadir el tiempo liberado como silencios al final del compás. Verificar con tests de tres corcheas, tres negras y cinco corcheas.
-- [x] 6.2 Rechazar con motivo las selecciones con menos pulsos que la subdivisión, las figuras distintas y las que cruzan compás; con más pulsos, agrupar los primeros N. Verificar en el selector.
+- [x] 6.2 Rechazar con motivo las selecciones con menos pulsos que la subdivisión y cuando el tiempo liberado no se pueda escribir con las figuras disponibles; con más pulsos, agrupar los primeros N. Verificar en el selector.
 - [x] 6.3 Actualizar la spec, el diseño, la documentación y el recorrido del navegador: tres notas seleccionadas + tresillo forman un solo grupo con su silencio, no nueve huecos.
 
 ## 7. Selección por notas
 
-- [x] 7.1 Añadir `getSelectedNotes`: cruza los pulsos del tramo con las cuerdas entre el ancla y el foco y devuelve solo las notas que existen. Verificar con tests de una cuerda, un rectángulo de cuerdas, pulsos vacíos y sin ancla.
+- [x] 7.1 Añadir `getSelectedNotes`: recorre los pulsos del tramo y devuelve las notas; con un arrastre horizontal incluye todas las cuerdas y con uno diagonal solo las del rectángulo. Verificar con tests de una frase que cambia de cuerda, un rectángulo, pulsos vacíos y sin ancla.
 - [x] 7.2 Dibujar una caja por nota seleccionada en vez del bloque de pulso, manteniendo el resaltado por pulso solo cuando no hay notas. Verificar en el navegador arrastrando sobre tres notas y comprobando que se resaltan las tres, no los pulsos.
+- [x] 7.3 Pegar la pulsación a la nota más cercana dentro de 12 px para no depender de acertar la fila exacta de la cuerda. Verificar en el navegador pulsando justo encima y debajo de una nota.
 
 ## Workflow follow-up
 
