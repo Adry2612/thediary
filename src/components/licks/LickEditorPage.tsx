@@ -52,6 +52,7 @@ export function LickEditorPage({ id }: { id?: string }) {
         saveLick(next);
         router.push(`/licks/${next.id}`);
       }}
+      onSaveDraft={(next) => saveLick(next)}
       onCancel={() => router.push(lick ? `/licks/${lick.id}` : "/licks")}
     />
   );

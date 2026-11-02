@@ -97,34 +97,18 @@ export function getRangeBeats(
   return positions;
 }
 
-/** Notas cubiertas por la selección: pulsos del tramo y cuerdas entre ancla y foco. */
+/** Notas cubiertas por la selección: todas las de los pulsos del tramo. */
 export function getSelectedNotes(
   score: Pick<TabScore, "bars">,
   selection: TabSelection,
 ): { bar: number; beat: number; string: number }[] {
-  const focus = {
-    bar: selection.bar,
-    beat: selection.beat,
-    string: selection.string,
-  };
-  const other = selection.anchor ?? focus;
-  // Un arrastre horizontal (misma cuerda) marca la frase completa, aunque las
-  // notas salten de cuerda; uno diagonal marca solo el rectángulo.
-  const horizontal = selection.anchor !== undefined && other.string === focus.string;
-  const firstString = Math.min(other.string, focus.string);
-  const lastString = Math.max(other.string, focus.string);
   const notes: { bar: number; beat: number; string: number }[] = [];
 
   for (const position of getRangeBeats(score, selection)) {
     const beat = getBeatAt(score, position.bar, position.beat);
     if (!beat) continue;
     for (const note of beat.notes) {
-      if (
-        horizontal ||
-        (note.string >= firstString && note.string <= lastString)
-      ) {
-        notes.push({ ...position, string: note.string });
-      }
+      notes.push({ ...position, string: note.string });
     }
   }
 
@@ -153,7 +137,9 @@ export function moveSelection(
 
   if (direction === "up" || direction === "down") {
     const stringCount = getStringCount(score.tuning);
-    const delta = direction === "up" ? -1 : 1;
+    // La cuerda 0 (la más grave) se dibuja abajo: subir en la pauta es sumar
+    // índice y bajar es restarlo.
+    const delta = direction === "up" ? 1 : -1;
     next.string = Math.min(Math.max(0, current.string + delta), stringCount - 1);
   } else if (direction === "right") {
     const bar = score.bars[current.bar];

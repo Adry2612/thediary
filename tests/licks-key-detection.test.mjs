@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { detectTabKey } from "../src/utils/licks/key-detection.ts";
+import { detectScoreKey, detectTabKey } from "../src/utils/licks/key-detection.ts";
 
 function tab(notes, tuning = "EADGBE") {
   return { tuning, measures: 2, subdivision: 8, notes };
@@ -85,4 +85,53 @@ test("no adivina con muy pocas notas y descarta las notas muertas", () => {
     ),
     null,
   );
+});
+
+function score(frets, tuning = "EADGBE") {
+  return {
+    tuning,
+    bars: [
+      {
+        id: "bar-a",
+        beats: frets.map((fret, index) => ({
+          id: `b${index}`,
+          duration: 4,
+          rest: false,
+          notes: [{ string: 0, fret }],
+        })),
+      },
+    ],
+  };
+}
+
+test("detecta tonalidad desde la partitura visual", () => {
+  assert.equal(detectScoreKey(score([5, 7, 8, 10, 12, 13, 15])), "Am");
+  assert.equal(detectScoreKey(score([8, 10, 12, 13, 15, 17, 19])), "C");
+});
+
+test("la detección de partitura respeta la afinación y las notas muertas", () => {
+  assert.equal(detectScoreKey(score([0, 3, 5, 7, 8, 10], "DADGBE")), "Dm");
+
+  assert.equal(
+    detectScoreKey({
+      tuning: "EADGBE",
+      bars: [
+        {
+          id: "bar-a",
+          beats: [
+            { id: "b0", duration: 4, rest: false, notes: [{ string: 0, fret: 0, dead: true }] },
+            { id: "b1", duration: 4, rest: false, notes: [{ string: 0, fret: 3, dead: true }] },
+            { id: "b2", duration: 4, rest: false, notes: [{ string: 0, fret: 5, dead: true }] },
+          ],
+        },
+      ],
+    }),
+    null,
+  );
+});
+
+test("no adivina desde la partitura con pocas notas o clases", () => {
+  assert.equal(detectScoreKey(score([5, 7])), null);
+  assert.equal(detectScoreKey(score([5, 5, 5])), null);
+  assert.equal(detectScoreKey(score([5, 7, 8], "XYZ")), null);
 });

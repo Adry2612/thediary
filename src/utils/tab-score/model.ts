@@ -142,7 +142,12 @@ function normalizeBeat(value: unknown, stringCount: number): TabBeat {
         .map((note) => normalizeNote(note, stringCount))
         .filter((note): note is TabNote => note !== null)
     : [];
-  const rest = value.rest === true || notes.length === 0;
+  // Un pulso sin notas solo es silencio si lo dice `rest`. Los datos anteriores
+  // que no traían ninguna marca se siguen leyendo como silencio, pero un pulso
+  // vacío nuevo lleva `empty: true` y no se confunde con un silencio.
+  const rest = value.rest === true;
+  const empty =
+    !rest && notes.length === 0 && value.empty === true;
 
   const beat: TabBeat = {
     id:
@@ -150,9 +155,10 @@ function normalizeBeat(value: unknown, stringCount: number): TabBeat {
         ? value.id
         : createTabId("beat"),
     duration: normalizeDuration(value.duration),
-    rest,
-    notes: rest ? [] : notes,
+    rest: rest || (!empty && notes.length === 0),
+    notes: rest || notes.length === 0 ? [] : notes,
   };
+  if (empty) beat.empty = true;
 
   if (value.dots === 1) beat.dots = 1;
   if (
@@ -224,6 +230,16 @@ export function createRestBeat(duration: TabBeatDuration = 1): TabBeat {
   };
 }
 
+export function createEmptyBeat(duration: TabBeatDuration = 1): TabBeat {
+  return {
+    id: createTabId("beat"),
+    duration,
+    rest: false,
+    empty: true,
+    notes: [],
+  };
+}
+
 const REST_CANDIDATES: {
   duration: TabBeatDuration;
   ticks: number;
@@ -246,6 +262,18 @@ const REST_CANDIDATES: {
 
 /** Reparte un total de ticks en silencios, de la mayor duración posible. */
 export function createRestBeats(totalTicks: number): TabBeat[] {
+  return createBeats(totalTicks, createRestBeat);
+}
+
+/** Reparte un total de ticks en pulsos vacíos, de la mayor duración posible. */
+export function createEmptyBeats(totalTicks: number): TabBeat[] {
+  return createBeats(totalTicks, createEmptyBeat);
+}
+
+function createBeats(
+  totalTicks: number,
+  create: (duration: TabBeatDuration) => TabBeat,
+): TabBeat[] {
   const beats: TabBeat[] = [];
   let remaining = totalTicks;
 
@@ -253,7 +281,7 @@ export function createRestBeats(totalTicks: number): TabBeat[] {
     const candidate =
       REST_CANDIDATES.find((entry) => entry.ticks <= remaining) ??
       REST_CANDIDATES[REST_CANDIDATES.length - 1];
-    const beat = createRestBeat(candidate.duration);
+    const beat = create(candidate.duration);
     if (candidate.dots === 1) beat.dots = 1;
     beats.push(beat);
     remaining -= candidate.ticks;

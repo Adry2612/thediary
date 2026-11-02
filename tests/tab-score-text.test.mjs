@@ -9,6 +9,21 @@ test("describes an empty score", () => {
   assert.equal(text, "Compás 1 (4/4)\n  Pulso 1: 1/1, silencio");
 });
 
+test("describes an empty beat differently from a rest", () => {
+  const text = scoreToText({
+    bars: [
+      {
+        id: "bar-a",
+        beats: [
+          { id: "b1", duration: 4, rest: false, empty: true, notes: [] },
+        ],
+      },
+    ],
+  });
+
+  assert.equal(text, "Compás 1 (4/4)\n  Pulso 1: 1/4, vacío");
+});
+
 test("describes chords, durations, rests, tempo changes and techniques", () => {
   const score = {
     version: 2,

@@ -12,6 +12,7 @@ const labels = {
   stringLabel: "cuerda",
   fretLabel: "traste",
   restLabel: "silencio",
+  emptyLabel: "vacío",
   noNoteLabel: "sin nota",
   noSelectionLabel: "Sin selección",
   durationWhole: "redonda",
@@ -93,6 +94,22 @@ test("announces a rest and an empty string", () => {
       labels,
     }),
     "Compás 1, pulso 1, cuerda 2, sin nota, negra.",
+  );
+});
+
+test("announces an empty beat differently from a rest", () => {
+  const state = score([
+    { id: "b1", duration: 4, rest: false, empty: true, notes: [] },
+  ]);
+
+  assert.equal(
+    announceSelection({
+      score: state,
+      selection: { bar: 0, beat: 0, string: 2 },
+      stringCount: 6,
+      labels,
+    }),
+    "Compás 1, pulso 1, cuerda 4, vacío, negra.",
   );
 });
 

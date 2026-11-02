@@ -57,6 +57,15 @@ export interface BpmLogEntry {
   notes?: string;
 }
 
+/** Fragmento de un vídeo de YouTube que sirve de referencia al lick. */
+export interface LickReferenceVideo {
+  url: string;
+  /** Segundo de inicio, entero y mayor o igual que 0. */
+  startSeconds: number;
+  /** Segundo de fin, entero y mayor que el inicio. */
+  endSeconds: number;
+}
+
 export interface GuitarLick {
   id: string;
   title: string;
@@ -64,6 +73,8 @@ export interface GuitarLick {
   tab?: RepertoireTab;
   /** Tablatura como partitura; manda sobre `tab` cuando existe. */
   score?: TabScore;
+  /** Vídeo de YouTube con el fragmento que se repite en la ficha. */
+  referenceVideo?: LickReferenceVideo;
   /**
    * Tablatura antigua en texto plano. Solo se conserva como respaldo de los
    * licks migrados o creados antes del editor estructurado.

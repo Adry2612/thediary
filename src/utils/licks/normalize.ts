@@ -1,6 +1,7 @@
 import type { BpmLogEntry, GuitarLick } from "../../types/lick.ts";
 import type { RepertoireTab } from "../../types/practice.ts";
 import { normalizeMusicalKey } from "./keys.ts";
+import { normalizeReferenceVideo } from "./reference-video.ts";
 import { normalizeTechniques } from "./techniques.ts";
 import { normalizeTab } from "../repertoire-tab.ts";
 import { isTabScoreLike } from "../tab-score/model.ts";
@@ -86,6 +87,7 @@ export function normalizeLick(value: unknown): GuitarLick | null {
   const targetBpm = normalizeLickBpm(value.targetBpm);
   const tab = normalizeStoredTab(value.tab);
   const score = isTabScoreLike(value.score) ? value.score : undefined;
+  const referenceVideo = normalizeReferenceVideo(value.referenceVideo);
   const tabContent =
     typeof value.tabContent === "string" ? value.tabContent : undefined;
 
@@ -94,6 +96,7 @@ export function normalizeLick(value: unknown): GuitarLick | null {
     title: typeof value.title === "string" ? value.title : "",
     ...(tab ? { tab } : {}),
     ...(score ? { score } : {}),
+    ...(referenceVideo ? { referenceVideo } : {}),
     ...(tabContent !== undefined ? { tabContent } : {}),
     ...(key ? { key } : {}),
     techniques,

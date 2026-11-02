@@ -916,6 +916,20 @@ export const es: Dict = {
     tabConvert: 'Crear tablatura visual',
     tabConvertHint:
       'Al guardar, la tablatura visual sustituirá al texto antiguo.',
+    referenceVideoTitle: 'Vídeo de referencia',
+    referenceVideoUrl: 'Enlace de YouTube',
+    referenceVideoStart: 'Desde',
+    referenceVideoEnd: 'Hasta',
+    referenceVideoHint:
+      'Opcional. Acepta segundos (83) o minutos (1:23). En la ficha, el vídeo repite el fragmento marcado.',
+    referenceVideoRange: 'Del {start} al {end}',
+    referenceVideoOpen: 'Abrir en YouTube',
+    referenceVideoUnavailable:
+      'No se pudo cargar el reproductor. Abre el fragmento en YouTube.',
+    errorReferenceUrl: 'El enlace debe ser un vídeo de YouTube.',
+    errorReferenceStart: 'El inicio no es un tiempo válido.',
+    errorReferenceEnd:
+      'El final debe ser un tiempo válido y posterior al inicio.',
     keyLabel: 'Tonalidad',
     keyNone: 'Sin tonalidad',
     keyDetected: 'Detectada',
@@ -929,6 +943,8 @@ export const es: Dict = {
     targetBpmHint: 'Entre 40 y 240. Opcional.',
     cancel: 'Cancelar',
     save: 'Guardar lick',
+    saveTab: 'Guardar tablatura',
+    tabSaved: 'Tablatura guardada',
     saving: 'Guardando…',
     close: 'Cerrar',
     errorTitle: 'Escribe un título para guardar el lick.',
@@ -1054,6 +1070,7 @@ export const es: Dict = {
     stringLabel: 'cuerda',
     fretLabel: 'traste',
     restLabel: 'silencio',
+    emptyLabel: 'vacío',
     noNoteLabel: 'sin nota',
     durationWhole: 'redonda',
     durationHalf: 'blanca',
@@ -1102,7 +1119,7 @@ export const es: Dict = {
     subdivisionHint:
       'Elige en cuántos huecos iguales se parte el pulso. El compás no cambia y el cursor queda en el primero.',
     subdivisionGroupHint:
-      'Con varias notas seleccionadas se agrupan las primeras N en un solo grupo; el resto se queda igual y el tiempo liberado se añade como silencio al final.',
+      'Con varias notas seleccionadas se agrupan exactamente las N en un solo grupo; el tiempo liberado queda como huecos vacíos al final.',
     tuplet3: 'Tresillo (3:2)',
     tuplet5: 'Quintillo (5:4)',
     tuplet6: 'Seisillo (6:4)',
@@ -1163,7 +1180,9 @@ export const es: Dict = {
     cannotSubdivide: 'Este pulso es demasiado corto para esa subdivisión.',
     alreadySubdivided: 'Este pulso ya está subdividido. Deshaz para cambiarlo.',
     tupletNeedsBeats:
-      'Selecciona un pulso o al menos tantos pulsos como la subdivisión.',
+      'Selecciona un pulso o exactamente tantos pulsos como la subdivisión.',
+    tupletExactCount:
+      'Selecciona exactamente tantos pulsos como la subdivisión, ni más ni menos.',
     tupletDifferentValues:
       'Las notas de una subdivisión deben durar lo mismo.',
     tupletAcrossBars: 'La subdivisión debe caber en un solo compás.',
@@ -1186,7 +1205,7 @@ export const es: Dict = {
     close: 'Cerrar',
     selectTitle: 'Selecciona un pulso',
     selectBody:
-      'Haz clic (o toca) dentro de la pauta, en la cuerda y el punto donde quieras trabajar. El editor creará el hueco justo ahí. También puedes arrastrar en horizontal para marcar varios pulsos. Verás un recuadro verde: esa es la selección.',
+      'Haz clic (o toca) dentro de la pauta, en la cuerda y el punto donde quieras trabajar. El editor creará el hueco justo ahí. También puedes arrastrar para marcar varios pulsos: verás un bloque verde a toda altura. Una nota suelta solo se coge si pulsas dentro de ella.',
     writeTitle: 'Escribe un traste',
     writeBody:
       'Con el teclado, escribe un número del 0 al 24, por ejemplo 5. La nota aparece en el punto y la cuerda donde has hecho clic.',
@@ -1198,7 +1217,7 @@ export const es: Dict = {
       'Haz doble clic, clic derecho o pulsación larga sobre la nota. También vale el botón de opciones de arriba. El menú se abre junto a la nota.',
     durationTitle: 'Cambia la duración',
     durationBody:
-      'En el menú, elige otra figura, por ejemplo la corchea. La nota cambia de duración y el menú sigue abierto. Para tresillos y otras subdivisiones, usa Subdivisión.',
+      'En el menú, elige otra figura, por ejemplo la corchea. La nota cambia de duración y el menú sigue abierto. Para tresillos y otras subdivisiones, usa Subdivisión. Silencio es un interruptor: al volver a pulsarlo, el pulso queda vacío.',
     moveTitle: 'Mueve la nota',
     moveBody:
       'Con el menú abierto, usa las flechas de Posición para mover la nota a izquierda o derecha. Cambia de sitio sin romper el compás.',

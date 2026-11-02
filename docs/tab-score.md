@@ -54,6 +54,7 @@ alphaTab. Reglas que no son obvias:
 | Puntillo | `{d}` tras el contenido del pulso |
 | Tresillo | `{tu 3}` antes del contenido |
 | Silencio | `r` |
+| Pulso vacío | `()` (el importador lo lee como silencio; el editor oculta su figura) |
 | Acorde | `(0.6 2.5)` |
 | Cuerda | `fret.string`, con la cuerda 6 como la más grave |
 | Técnica | `{pm}`, `{lr}`, `{v}`, `{vw}`, `{hac}`, `{nh}`, `{ph 5}`, … |
@@ -81,11 +82,14 @@ El editor de un lick es una pantalla propia, no un diálogo:
 
 La partitura ocupa todo el ancho de la columna. Dentro del lienzo:
 
-- un clic o un toque seleccionan la cuerda y el punto horizontal; si el punto
-  cae lejos de una nota, la primera cifra crea el hueco justo ahí;
-- arrastrar en horizontal marca un tramo de pulsos; Mayús + clic y Mayús +
-  flechas hacen lo mismo con el teclado;
-- las flechas mueven la selección, Mayús la extiende y los dígitos escriben el
+- un clic o un toque seleccionan la cuerda y el punto horizontal; una nota
+  suelta solo se selecciona si el puntero cae dentro de su caja dibujada, sin
+  imán; si cae fuera, la primera cifra crea el hueco justo ahí;
+- arrastrar marca un tramo de pulsos y todas sus notas; un bloque verde cubre
+  el tramo a toda la altura de la pauta, y Mayús + clic y Mayús + flechas hacen
+  lo mismo con el teclado;
+- las flechas mueven la selección —arriba va a la cuerda dibujada encima y abajo
+  a la de debajo—, Mayús la extiende y los dígitos escriben el
   traste (0–24, con dos cifras) y avanzan al hueco siguiente;
 - un doble clic, un clic derecho o una pulsación larga abren la paleta de esa
   posición sin pasar por el botón «Opciones»; desde ahí se elige la duración,
@@ -95,14 +99,15 @@ La partitura ocupa todo el ancho de la columna. Dentro del lienzo:
 
 ### Seleccionar notas
 
-Arrastrar sobre la pauta marca **las notas** de los pulsos entre el punto de
-inicio y el final. Si arrastras en horizontal (misma cuerda), entran todas las
-notas de esos pulsos aunque salten de cuerda, que es lo normal en una frase; si
-arrastras en diagonal, se limita a las cuerdas entre el ancla y el foco. Se
-resalta cada nota seleccionada, no el pulso entero; si el tramo no tiene notas
-(solo silencios), se resalta el pulso para no perder la selección. La paleta
-aplica los cambios de ritmo a los pulsos de esas notas y las técnicas a la
-cuerda enfocada.
+Arrastrar sobre la pauta marca **el tramo de pulsos** entre el punto de inicio y
+el final, con todas sus notas, usen la cuerda que usen. El tramo se dibuja como
+un bloque verde continuo a toda la altura de la pauta. Una nota suelta solo se
+selecciona si el clic cae dentro de su caja dibujada; pulsar cerca pero fuera no
+la coge, deja el cursor en ese punto para escribir. Abrir el menú de una nota que
+ya está dentro del tramo (doble clic, clic derecho o pulsación larga) no colapsa
+la selección: el tramo sigue marcado y la subdivisión se aplica a todas sus
+notas. La paleta aplica los cambios de ritmo a los pulsos del tramo y las
+técnicas a la cuerda enfocada.
 
 Con teclado, Mayús + clic y Mayús + flechas hacen lo mismo. En táctil el
 arrastre vertical sigue desplazando la página (`touch-action: pan-y`), el doble
@@ -141,6 +146,19 @@ siguiente, del mismo tamaño, y se puede escribir la frase con números seguidos
   deshacer, también cuando el paso crea un compás.
 - La duración se cambia después desde el menú de la nota; la vista previa suena
   la nota recién escrita, no el hueco siguiente.
+
+### Borrar, silencio y hueco vacío
+
+`Supr` o `Retroceso` borra la nota seleccionada. Si era la última de su pulso, el
+pulso **no** se convierte en silencio: se queda con su duración pero sin figura,
+como un **hueco vacío**. El hueco sigue ocupando su tiempo (el compás no se
+marca como incompleto), no suena y se anuncia como «vacío». Al escribir un
+traste encima vuelve a ser una nota.
+
+El silencio es una acción explícita: **Silencio** en el grupo Ritmo del menú. Es
+un interruptor; si todos los pulsos seleccionados ya son silencios, al volver a
+pulsarlo quedan vacíos. Un pulso borrado del todo con **Eliminar pulso** sí
+desaparece y el compás se marca si deja de sumar.
 
 ### Mover una nota
 
@@ -182,24 +200,30 @@ que esté seleccionado.
 - la figura base se calcula para que N notas ocupen el tiempo que ya ocupaba el
   pulso (3:2, 5:4, 6:4, 7:4, 9:8, 10:8 y 12:8); la suma del compás no cambia;
 - el contenido del pulso se queda en el primer hueco y los demás nacen como
-  silencios;
+  huecos vacíos;
 - el cursor queda en el primer hueco, así que se escriben las N notas seguidas
   con el avance automático.
 
-**N pulsos o más (notas ya escritas):** se agrupan los N primeros en una sola
-subdivisión, una nota por hueco; el resto de la selección se queda como está.
+**Exactamente N pulsos (notas ya escritas):** se agrupan esos N en una sola
+subdivisión, una nota por hueco; no se coge ni se deja ningún pulso fuera.
 
 - las N notas pasan a ser un solo grupo (un tresillo, no N tresillos);
-- el tiempo que se libera, `figura × (N − M)`, se añade como silencio al final
-  del compás, así que la suma no cambia y las demás notas conservan su figura;
+- el tiempo que se libera, `figura × (N − M)`, queda como **huecos vacíos** al
+  final del compás, así que la suma no cambia y las demás notas conservan su
+  figura;
+- al terminar, el cursor queda en el pulso **siguiente al grupo** (o en el
+  primer hueco liberado si el grupo llegaba al final del compás), nunca dentro:
+  lo que escribas después no se añade al tresillo;
 - por ejemplo, tres corcheas seleccionadas y tresillo forman un tresillo de
-  corcheas (960 ticks) más una corchea de silencio;
-- si hay más pulsos de los que pide la subdivisión, se agrupan los primeros;
-- las figuras de las notas pueden ser distintas, siempre que el tiempo liberado
-  se pueda escribir con silencios;
-- la selección debe caber en un compás y tener al menos N pulsos; si no, el
-  selector desactiva la opción y explica el motivo (`tupletNeedsBeats`,
-  `cannotSubdivide`, `tupletAcrossBars`).
+  corcheas (960 ticks) más un hueco vacío de corchea;
+- las figuras de las notas pueden ser distintas; si el tiempo liberado no se
+  puede escribir con las figuras disponibles, las N notas pasan a la figura más
+  corta del grupo y el hueco liberado se escribe con esa misma base, así que el
+  compás nunca queda descuadrado;
+- la selección debe caber en un compás y tener exactamente N pulsos; si tiene
+  más o menos, el selector desactiva la opción y explica el motivo
+  (`tupletExactCount`).
+- si cruza un compás, se rechaza con `tupletAcrossBars`.
 
 En ambos modos, un pulso con puntillo o ya subdividido no se puede dividir otra
 vez (`cannotSubdivide`, `alreadySubdivided`), un compás lleno de pulsos se

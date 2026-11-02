@@ -11,6 +11,7 @@ export type TabScoreAnnouncementLabels = {
   stringLabel: string;
   fretLabel: string;
   restLabel: string;
+  emptyLabel: string;
   noNoteLabel: string;
   noSelectionLabel: string;
   durationWhole: string;
@@ -76,7 +77,9 @@ export function announceSelection({
       ? `${labels.fretLabel} ${note.dead ? "x" : note.fret}`
       : beat.rest
         ? labels.restLabel
-        : labels.noNoteLabel,
+        : beat.empty
+          ? labels.emptyLabel
+          : labels.noNoteLabel,
     describeBeatDuration(beat, labels),
   ];
 

@@ -34,6 +34,24 @@ test("writes a fret, advances and undoes it", () => {
   assert.equal(redone.score.bars[0].beats[0].notes[0].fret, 5);
 });
 
+test("the rest option toggles and undoes in one step", () => {
+  const emptied = run([
+    { type: "select", position: { bar: 0, beat: 0, string: 0 } },
+    { type: "setRest" },
+  ]);
+
+  assert.equal(emptied.score.bars[0].beats[0].rest, false);
+  assert.equal(emptied.score.bars[0].beats[0].empty, true);
+  assert.deepEqual(emptied.score.bars[0].beats[0].notes, []);
+
+  const rested = tabScoreEditorReducer(emptied, { type: "setRest" });
+  assert.equal(rested.score.bars[0].beats[0].rest, true);
+
+  const undone = tabScoreEditorReducer(rested, { type: "undo" });
+  assert.equal(undone.score.bars[0].beats[0].rest, false);
+  assert.equal(undone.score.bars[0].beats[0].empty, true);
+});
+
 test("writes a riff with the numbers in a row and fills the bar", () => {
   const state = run([
     { type: "selectAt", position: { bar: 0, beat: 0, string: 2 }, fraction: 0 },
@@ -109,7 +127,7 @@ test("a fret above 24 closes the first note and starts the next", () => {
 test("moving clears the fret buffer", () => {
   const moved = run([
     { type: "digit", digit: "3" },
-    { type: "move", direction: "down" },
+    { type: "move", direction: "up" },
   ]);
 
   assert.equal(moved.buffer, "");
@@ -336,6 +354,7 @@ test("groups three notes into one triplet in a single undo step", () => {
   );
   assert.equal(beats[3].tuplet, undefined);
   assert.equal(beats.length, 9);
+  assert.equal(state.selection.beat, 3);
   assert.equal(state.history.past.length, 1);
 
   const undone = tabScoreEditorReducer(state, { type: "undo" });

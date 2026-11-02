@@ -78,6 +78,33 @@ function closestOctave(pitchClass: number, referenceMidi: number): number {
 }
 
 /**
+ * Convierte la afinación del modelo ("EADGBE") en MIDI por cuerda, de grave a
+ * aguda. Devuelve `null` si no encaja con ninguna afinación estándar.
+ */
+export function tuningToMidi(
+  tuning: string,
+  stringCount: number,
+): number[] | null {
+  const letters = tuning
+    .replace(/[\s-]/g, "")
+    .match(/[A-Ga-g][#b]?/g);
+  const standard = STANDARD_TUNINGS[stringCount];
+  if (!letters || !standard || letters.length !== stringCount) return null;
+
+  const midi: number[] = [];
+  for (let index = 0; index < stringCount; index += 1) {
+    const parsed = parseNoteName(letters[index]);
+    const reference = parseNoteName(standard[index]);
+    if (!parsed || !reference) return null;
+    const referenceMidi = toMidi(reference.pitchClass, reference.octave);
+    midi.push(
+      toMidi(parsed.pitchClass, closestOctave(parsed.pitchClass, referenceMidi)),
+    );
+  }
+  return midi;
+}
+
+/**
  * Convierte la afinación del modelo ("EADGBE") en notas con octava para
  * AlphaTex, de aguda a grave. Devuelve `null` si es la estándar de 6 cuerdas.
  */
@@ -169,8 +196,12 @@ function renderToken(token: NoteToken): string {
     : token.base;
 }
 
-function renderContent(tokens: NoteToken[], rest: boolean): string {
-  if (rest || tokens.length === 0) return "r";
+function renderContent(
+  tokens: NoteToken[],
+  beat: Pick<TabBeat, "rest" | "empty">,
+): string {
+  if (beat.rest) return "r";
+  if (beat.empty || tokens.length === 0) return "()";
   if (tokens.length === 1) return renderToken(tokens[0]);
   return `(${tokens.map(renderToken).join(" ")})`;
 }
@@ -178,7 +209,7 @@ function renderContent(tokens: NoteToken[], rest: boolean): string {
 function renderBeat(beat: TabBeat, tokens: NoteToken[]): string {
   const parts = [`:${beat.duration}`];
   if (beat.tuplet) parts.push(`{tu ${beat.tuplet}}`);
-  parts.push(renderContent(tokens, beat.rest === true));
+  parts.push(renderContent(tokens, beat));
   if (beat.dots === 1) parts.push("{d}");
   return parts.join(" ");
 }

@@ -31,12 +31,12 @@ import {
   setBendFlag,
   setDots,
   setDuration,
-  setRest,
   setTempo,
   setTimeSignature,
   setTuplet,
   splitBeat,
   splitBeatAt,
+  toggleRest,
   toggleTie,
   writeFret,
   type TabOperationError,
@@ -390,7 +390,7 @@ export function tabScoreEditorReducer(
       return withResult(state, deleteBeat(state.score, selection));
 
     case "setRest":
-      return withResult(state, setRest(state.score, selection));
+      return withResult(state, toggleRest(state.score, selection));
 
     case "splitBeat":
       return withResult(state, splitBeat(state.score, selection));

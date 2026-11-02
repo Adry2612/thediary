@@ -908,6 +908,20 @@ export const en: Dict = {
     tabConvert: 'Create visual tab',
     tabConvertHint:
       'When you save, the visual tab will replace the old text.',
+    referenceVideoTitle: 'Reference video',
+    referenceVideoUrl: 'YouTube link',
+    referenceVideoStart: 'From',
+    referenceVideoEnd: 'To',
+    referenceVideoHint:
+      'Optional. Accepts seconds (83) or minutes (1:23). On the lick page the video loops the marked clip.',
+    referenceVideoRange: 'From {start} to {end}',
+    referenceVideoOpen: 'Open on YouTube',
+    referenceVideoUnavailable:
+      'The player could not load. Open the clip on YouTube.',
+    errorReferenceUrl: 'The link must be a YouTube video.',
+    errorReferenceStart: 'The start is not a valid time.',
+    errorReferenceEnd:
+      'The end must be a valid time after the start.',
     keyLabel: 'Key',
     keyNone: 'No key',
     keyDetected: 'Detected',
@@ -921,6 +935,8 @@ export const en: Dict = {
     targetBpmHint: 'Between 40 and 240. Optional.',
     cancel: 'Cancel',
     save: 'Save lick',
+    saveTab: 'Save tab',
+    tabSaved: 'Tab saved',
     saving: 'Saving…',
     close: 'Close',
     errorTitle: 'Write a title before saving the lick.',
@@ -1042,6 +1058,7 @@ export const en: Dict = {
     stringLabel: 'string',
     fretLabel: 'fret',
     restLabel: 'rest',
+    emptyLabel: 'empty',
     noNoteLabel: 'no note',
     durationWhole: 'whole',
     durationHalf: 'half',
@@ -1090,7 +1107,7 @@ export const en: Dict = {
     subdivisionHint:
       'Pick how many equal slots the beat is split into. The bar length does not change and the cursor stays on the first slot.',
     subdivisionGroupHint:
-      'With several notes selected, the first N are grouped into one; the rest stay as they are and the freed time is added as a rest at the end.',
+      'With several notes selected, exactly those N are grouped into one; the freed time stays as empty beats at the end.',
     tuplet3: 'Triplet (3:2)',
     tuplet5: 'Quintuplet (5:4)',
     tuplet6: 'Sextuplet (6:4)',
@@ -1151,7 +1168,9 @@ export const en: Dict = {
     cannotSubdivide: 'This beat is too short for that subdivision.',
     alreadySubdivided: 'This beat is already subdivided. Undo to change it.',
     tupletNeedsBeats:
-      'Select one beat or at least as many beats as the subdivision.',
+      'Select one beat or exactly as many beats as the subdivision.',
+    tupletExactCount:
+      'Select exactly as many beats as the subdivision, no more and no fewer.',
     tupletDifferentValues:
       'The notes of a subdivision must have the same value.',
     tupletAcrossBars: 'The subdivision must fit in one bar.',
@@ -1174,7 +1193,7 @@ export const en: Dict = {
     close: 'Close',
     selectTitle: 'Select a beat',
     selectBody:
-      'Click (or tap) inside the tab, on the string and point you want to work on. The editor creates the slot right there. You can also drag horizontally to mark several beats. A green box marks the selection.',
+      'Click (or tap) inside the tab, on the string and point you want to work on. The editor creates the slot right there. You can also drag to mark several beats: a green block covers the selected span at full height. A single note is only picked when you press inside its drawn box.',
     writeTitle: 'Type a fret',
     writeBody:
       'On the keyboard, type a number from 0 to 24, for example 5. The note appears at the point and string you clicked.',
@@ -1186,7 +1205,7 @@ export const en: Dict = {
       'Double-click, right-click or long press the note. The options button above works too. The menu opens next to the note.',
     durationTitle: 'Change the duration',
     durationBody:
-      'In the menu, pick another figure, for example the eighth note. The note changes length and the menu stays open. For triplets and other subdivisions, use Subdivision.',
+      'In the menu, pick another figure, for example the eighth note. The note changes length and the menu stays open. For triplets and other subdivisions, use Subdivision. Rest is a toggle: press it again and the beat is left empty.',
     moveTitle: 'Move the note',
     moveBody:
       'With the menu open, use the Position arrows to move the note left or right. It changes place without breaking the bar.',

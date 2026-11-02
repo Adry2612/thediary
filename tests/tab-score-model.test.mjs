@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  createEmptyBeats,
   createEmptyScore,
   createRestBar,
   normalizeTabScore,
 } from "../src/utils/tab-score/model.ts";
+import { getBeatTicks } from "../src/utils/tab-score/ticks.ts";
 
 function beat(overrides = {}) {
   return {
@@ -156,7 +158,7 @@ test("truncates to 64 bars and keeps at least one", () => {
   assert.equal(normalizeTabScore(score({ bars: [] })).bars.length, 1);
 });
 
-test("a rest removes its notes and an empty beat becomes a rest", () => {
+test("a rest removes its notes and a legacy beat without notes is a rest", () => {
   const normalized = normalizeTabScore(
     score({
       bars: [
@@ -173,7 +175,69 @@ test("a rest removes its notes and an empty beat becomes a rest", () => {
 
   assert.deepEqual(normalized.bars[0].beats[0].notes, []);
   assert.equal(normalized.bars[0].beats[0].rest, true);
+  assert.equal(normalized.bars[0].beats[0].empty, undefined);
   assert.equal(normalized.bars[0].beats[1].rest, true);
+  assert.equal(normalized.bars[0].beats[1].empty, undefined);
+});
+
+test("keeps an explicit empty beat distinct from a rest", () => {
+  const normalized = normalizeTabScore(
+    score({
+      bars: [
+        {
+          id: "bar-a",
+          beats: [
+            beat({ empty: true, notes: [] }),
+            beat({ rest: true, empty: true, notes: [] }),
+          ],
+        },
+      ],
+    }),
+  );
+
+  const empty = normalized.bars[0].beats[0];
+  assert.equal(empty.rest, false);
+  assert.equal(empty.empty, true);
+  assert.deepEqual(empty.notes, []);
+
+  const rest = normalized.bars[0].beats[1];
+  assert.equal(rest.rest, true);
+  assert.equal(rest.empty, undefined);
+});
+
+test("a beat with notes never stays empty", () => {
+  const normalized = normalizeTabScore(
+    score({
+      bars: [
+        {
+          id: "bar-a",
+          beats: [beat({ empty: true, notes: [{ string: 1, fret: 5 }] })],
+        },
+      ],
+    }),
+  );
+
+  const beatWithNote = normalized.bars[0].beats[0];
+  assert.equal(beatWithNote.empty, undefined);
+  assert.equal(beatWithNote.rest, false);
+  assert.deepEqual(beatWithNote.notes, [{ string: 1, fret: 5 }]);
+});
+
+test("createEmptyBeats fills a total with empty beats", () => {
+  const beats = createEmptyBeats(2400);
+
+  assert.equal(beats.length, 2);
+  assert.deepEqual(
+    beats.map((entry) => [entry.duration, entry.rest, entry.empty]),
+    [
+      [2, false, true],
+      [8, false, true],
+    ],
+  );
+  assert.equal(
+    beats.reduce((total, entry) => total + getBeatTicks(entry), 0),
+    2400,
+  );
 });
 
 test("clamps the initial tempo and discards an invalid bar tempo change", () => {

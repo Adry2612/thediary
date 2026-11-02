@@ -500,6 +500,7 @@ export type Dict = {
     stringLabel: string;
     fretLabel: string;
     restLabel: string;
+    emptyLabel: string;
     noNoteLabel: string;
     durationWhole: string;
     durationHalf: string;
@@ -606,6 +607,7 @@ export type Dict = {
     cannotSubdivide: string;
     alreadySubdivided: string;
     tupletNeedsBeats: string;
+    tupletExactCount: string;
     tupletDifferentValues: string;
     tupletAcrossBars: string;
     hoverHint: string;

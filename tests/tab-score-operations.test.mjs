@@ -21,6 +21,7 @@ import {
   setTimeSignature,
   setTuplet,
   toggleTie,
+  toggleRest,
   tupletBaseDuration,
   writeFret,
 } from "../src/utils/tab-score/operations.ts";
@@ -62,6 +63,21 @@ test("writing a fret turns a rest into a note and adds strings", () => {
   ]);
 });
 
+test("writing on an empty beat turns it back into a note", () => {
+  const base = score([
+    beat({ duration: 4, rest: false, empty: true, notes: [] }),
+    beat(),
+    beat(),
+    beat(),
+  ]);
+  const result = writeFret(base, { bar: 0, beat: 0, string: 2 }, 9);
+  const updated = result.score.bars[0].beats[0];
+
+  assert.equal(updated.rest, false);
+  assert.equal(updated.empty, undefined);
+  assert.deepEqual(updated.notes, [{ string: 2, fret: 9 }]);
+});
+
 test("changing the fret keeps the techniques", () => {
   const base = score([beat({ notes: [{ string: 0, fret: 5, palmMute: true }] })]);
   const result = writeFret(base, { bar: 0, beat: 0, string: 0 }, 9);
@@ -76,16 +92,39 @@ test("rejects a fret above 24", () => {
   });
 });
 
-test("deleting the only note leaves a rest with the same duration", () => {
+test("deleting the only note leaves an empty beat with the same duration", () => {
   const base = score([
-    beat({ duration: 8, rest: false, notes: [{ string: 0, fret: 5 }] }),
+    beat({ duration: 4, rest: false, notes: [{ string: 0, fret: 5 }] }),
+    beat(),
+    beat(),
+    beat(),
   ]);
   const result = deleteNote(base, { bar: 0, beat: 0, string: 0 });
   const updated = result.score.bars[0].beats[0];
 
-  assert.equal(updated.rest, true);
+  assert.equal(updated.rest, false);
+  assert.equal(updated.empty, true);
   assert.deepEqual(updated.notes, []);
-  assert.equal(updated.duration, 8);
+  assert.equal(updated.duration, 4);
+  assert.equal(getScoreBarFill(result.score, 0), "exact");
+});
+
+test("deleting one note of a chord keeps the others", () => {
+  const base = score([
+    beat({
+      rest: false,
+      notes: [
+        { string: 0, fret: 5 },
+        { string: 2, fret: 7 },
+      ],
+    }),
+  ]);
+  const result = deleteNote(base, { bar: 0, beat: 0, string: 0 });
+  const updated = result.score.bars[0].beats[0];
+
+  assert.equal(updated.rest, false);
+  assert.equal(updated.empty, undefined);
+  assert.deepEqual(updated.notes, [{ string: 2, fret: 7 }]);
 });
 
 test("deleting a note removes the tie that it started", () => {
@@ -96,6 +135,33 @@ test("deleting a note removes the tie that it started", () => {
   const result = deleteNote(base, { bar: 0, beat: 0, string: 0 });
 
   assert.equal(result.score.bars[0].beats[1].notes[0].tie, undefined);
+});
+
+test("the rest option toggles between rest and empty", () => {
+  const base = score([
+    beat({ duration: 4, rest: false, notes: [{ string: 0, fret: 5 }] }),
+    beat(),
+    beat(),
+    beat(),
+  ]);
+  const selection = { bar: 0, beat: 0, string: 0 };
+
+  const rested = toggleRest(base, selection).score.bars[0].beats[0];
+  assert.equal(rested.rest, true);
+  assert.equal(rested.empty, undefined);
+  assert.deepEqual(rested.notes, []);
+
+  const emptied = toggleRest(
+    toggleRest(base, selection).score,
+    selection,
+  ).score.bars[0].beats[0];
+  assert.equal(emptied.rest, false);
+  assert.equal(emptied.empty, true);
+  assert.deepEqual(emptied.notes, []);
+  assert.equal(
+    getScoreBarFill(toggleRest(base, selection).score, 0),
+    "exact",
+  );
 });
 
 test("deleting a beat leaves the bar short", () => {
@@ -478,10 +544,10 @@ test("moves the selection across beats, bars and strings", () => {
   assert.deepEqual(left, { bar: 0, beat: 1, string: 0 });
 
   const up = moveSelection(base, { bar: 0, beat: 0, string: 0 }, "up", false);
-  assert.equal(up.string, 0);
+  assert.equal(up.string, 1);
 
   const down = moveSelection(base, { bar: 0, beat: 0, string: 4 }, "down", false);
-  assert.equal(down.string, 5);
+  assert.equal(down.string, 3);
 
   const extended = moveSelection(
     base,
@@ -519,7 +585,8 @@ test("divides a quarter into a triplet without changing the bar", () => {
   assert.equal(result.score.bars[0].beats[0].duration, 8);
   assert.equal(result.score.bars[0].beats[0].tuplet, 3);
   assert.deepEqual(result.score.bars[0].beats[0].notes, [{ string: 0, fret: 5 }]);
-  assert.equal(result.score.bars[0].beats[1].rest, true);
+  assert.equal(result.score.bars[0].beats[1].rest, false);
+  assert.equal(result.score.bars[0].beats[1].empty, true);
   assert.equal(result.score.bars[0].beats[1].tuplet, 3);
   assert.equal(result.score.bars[0].beats[2].tuplet, 3);
   assert.deepEqual(result.selection, { bar: 0, beat: 0, string: 0 });
@@ -606,18 +673,42 @@ test("groups the selected notes into one triplet instead of splitting each", () 
       [8, 3],
     ],
   );
-  // Los cinco octavos restantes y un silencio de corchea por el tiempo liberado.
+  // Los cinco octavos restantes y un hueco vacío de corchea por el tiempo liberado.
   assert.deepEqual(
     beats.slice(3, 8).map((entry) => entry.duration),
     [8, 8, 8, 8, 8],
   );
-  assert.equal(beats[8].rest, true);
+  assert.equal(beats[8].rest, false);
+  assert.equal(beats[8].empty, true);
   assert.equal(beats[8].duration, 8);
-  assert.deepEqual(result.selection, { bar: 0, beat: 0, string: 0 });
+  assert.deepEqual(result.selection, { bar: 0, beat: 3, string: 0 });
   assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
 });
 
-test("groups three quarters and leaves the freed quarter as a rest", () => {
+test("after grouping, writing continues after the group and does not join it", () => {
+  const eighths = Array.from({ length: 8 }, (_, index) =>
+    beat({ id: `e${index}`, duration: 8 }),
+  );
+  const grouped = divideBeat(
+    score(eighths),
+    { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 2, string: 0 } },
+    3,
+  );
+  assert.equal(isError(grouped), false);
+  assert.equal(grouped.selection.beat, 3);
+
+  const written = writeFret(grouped.score, grouped.selection, 9);
+  const writtenBeat = written.score.bars[0].beats[3];
+
+  assert.equal(writtenBeat.tuplet, undefined);
+  assert.equal(writtenBeat.notes[0].fret, 9);
+  assert.deepEqual(
+    written.score.bars[0].beats.slice(0, 3).map((entry) => entry.tuplet),
+    [3, 3, 3],
+  );
+});
+
+test("groups three quarters and leaves the freed quarter empty", () => {
   const base = score([
     beat({ id: "q1", duration: 4 }),
     beat({ id: "q2", duration: 4 }),
@@ -636,7 +727,8 @@ test("groups three quarters and leaves the freed quarter as a rest", () => {
     beats.slice(0, 3).map((entry) => entry.tuplet),
     [3, 3, 3],
   );
-  assert.equal(beats.at(-1).rest, true);
+  assert.equal(beats.at(-1).rest, false);
+  assert.equal(beats.at(-1).empty, true);
   assert.equal(beats.at(-1).duration, 4);
   assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
 });
@@ -654,7 +746,8 @@ test("groups a quintuplet of five eighths", () => {
   assert.equal(isError(result), false);
   const beats = result.score.bars[0].beats;
   assert.equal(beats.slice(0, 5).every((entry) => entry.tuplet === 5), true);
-  assert.equal(beats.at(-1).rest, true);
+  assert.equal(beats.at(-1).rest, false);
+  assert.equal(beats.at(-1).empty, true);
   assert.equal(beats.at(-1).duration, 8);
   assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
 });
@@ -671,21 +764,7 @@ test("refuses a group whose size or values do not match the subdivision", () => 
       { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 2, string: 0 } },
       5,
     ),
-    { error: "tupletNeedsBeats" },
-  );
-
-  const mixed = score([
-    beat({ id: "a", duration: 8 }),
-    beat({ id: "b", duration: 4 }),
-    beat({ id: "c", duration: 8 }),
-  ]);
-  assert.deepEqual(
-    divideBeat(
-      mixed,
-      { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 2, string: 0 } },
-      3,
-    ),
-    { error: "cannotSubdivide" },
+    { error: "tupletExactCount" },
   );
 
   const mixedFits = score([
@@ -724,7 +803,39 @@ test("refuses a group whose size or values do not match the subdivision", () => 
   );
 });
 
-test("groups the first notes when the selection has more than the subdivision", () => {
+test("uniforms mixed figures when the freed time is not writable", () => {
+  const base = score([
+    beat({ id: "q1", duration: 4 }),
+    beat({ id: "q2", duration: 4 }),
+    beat({ id: "e3", duration: 8 }),
+    beat({ id: "r4", duration: 4, dots: 1 }),
+  ]);
+  const result = divideBeat(
+    base,
+    { bar: 0, beat: 0, string: 0, anchor: { bar: 0, beat: 2, string: 0 } },
+    3,
+  );
+
+  assert.equal(isError(result), false);
+  const beats = result.score.bars[0].beats;
+  assert.deepEqual(
+    beats.slice(0, 3).map((entry) => [entry.duration, entry.dots, entry.tuplet]),
+    [
+      [8, undefined, 3],
+      [8, undefined, 3],
+      [8, undefined, 3],
+    ],
+  );
+  const freed = beats.at(-1);
+  assert.equal(freed.rest, false);
+  assert.equal(freed.empty, true);
+  assert.equal(freed.duration, 4);
+  assert.equal(freed.dots, 1);
+  assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
+  assert.equal(result.selection.beat, 3);
+});
+
+test("rejects a selection with more beats than the subdivision", () => {
   const base = score([
     beat({ id: "q1", duration: 4 }),
     beat({ id: "q2", duration: 4 }),
@@ -737,15 +848,5 @@ test("groups the first notes when the selection has more than the subdivision", 
     3,
   );
 
-  assert.equal(isError(result), false);
-  const beats = result.score.bars[0].beats;
-  assert.deepEqual(
-    beats.slice(0, 3).map((entry) => entry.tuplet),
-    [3, 3, 3],
-  );
-  // La cuarta negra no entra en el grupo y sigue igual.
-  assert.equal(beats[3].tuplet, undefined);
-  assert.equal(beats[3].duration, 4);
-  assert.equal(beats.at(-1).rest, true);
-  assert.equal(getBarTicks(result.score.bars[0]), getBarTicks(base.bars[0]));
+  assert.deepEqual(result, { error: "tupletExactCount" });
 });

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LickBpmChart } from "@/components/licks/LickBpmChart";
 import { LickBpmPanel } from "@/components/licks/LickBpmPanel";
+import { LickReferenceVideo } from "@/components/licks/LickReferenceVideo";
 import { LickTab } from "@/components/licks/LickTab";
 import { TechniqueBadges } from "@/components/licks/TechniqueBadges";
 import { BackLink } from "@/components/ui/BackLink";
@@ -114,6 +115,12 @@ export default function LickDetailPage({ params }: Props) {
           </div>
         }
       />
+
+      {lick.referenceVideo ? (
+        <section className="mt-8">
+          <LickReferenceVideo video={lick.referenceVideo} />
+        </section>
+      ) : null}
 
       <section className="mt-8">
         <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">

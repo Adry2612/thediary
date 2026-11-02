@@ -14,8 +14,10 @@ import {
   configureAlphaTabEnvironment,
 } from "@/services/alpha-tab-environment";
 import type { TabSelection } from "@/utils/tab-score/selection";
+import { markEmptyBeats, type TabEmptyBeat } from "@/utils/tab-score/render";
 
 type AlphaTabApi = import("@coderline/alphatab").AlphaTabApi;
+type AlphaTabModule = typeof import("@coderline/alphatab");
 
 type Rect = { x: number; y: number; w: number; h: number };
 
@@ -76,6 +78,19 @@ function toRect(bounds: Rect): Rect {
   return { x: bounds.x, y: bounds.y, w: bounds.w, h: bounds.h };
 }
 
+function loadAlphaTex(
+  alphaTab: AlphaTabModule,
+  api: AlphaTabApi,
+  tex: string,
+  emptyBeats: TabEmptyBeat[],
+) {
+  const importer = new alphaTab.importer.AlphaTexImporter();
+  importer.initFromString(tex, api.settings);
+  const score = importer.readScore();
+  markEmptyBeats(alphaTab, score, emptyBeats);
+  api.renderScore(score);
+}
+
 export function TabScoreCanvas({
   alphaTex,
   stringCount,
@@ -85,7 +100,7 @@ export function TabScoreCanvas({
   playback = false,
   selection,
   selectedBeats = [],
-  selectedNotes = [],
+  emptyBeats = [],
   previewRequest,
   onSelect,
   onNoteMenu,
@@ -106,7 +121,8 @@ export function TabScoreCanvas({
   playback?: boolean;
   selection?: TabSelection;
   selectedBeats?: { bar: number; beat: number }[];
-  selectedNotes?: { bar: number; beat: number; string: number }[];
+  /** Pulsos que ocupan su tiempo pero no deben dibujarse como silencio. */
+  emptyBeats?: TabEmptyBeat[];
   previewRequest?: TabScorePreviewRequest | null;
   onSelect?: (
     position: { bar: number; beat: number; string: number },
@@ -133,9 +149,12 @@ export function TabScoreCanvas({
   const surfaceRef = useRef<HTMLDivElement>(null);
   const focusRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<AlphaTabApi | null>(null);
+  const alphaTabRef = useRef<AlphaTabModule | null>(null);
   const createdTexRef = useRef<string | null>(null);
   const alphaTexRef = useRef(alphaTex);
   alphaTexRef.current = alphaTex;
+  const emptyBeatsRef = useRef(emptyBeats);
+  emptyBeatsRef.current = emptyBeats;
   const soundFontRequested = useRef(false);
   const lastPreviewToken = useRef(0);
   const previewRef = useRef(previewRequest);
@@ -335,6 +354,7 @@ export function TabScoreCanvas({
             : { enablePlayer: false },
         });
         apiRef.current = api;
+        alphaTabRef.current = alphaTab;
 
         api.error.on((renderError) => {
           if (disposed) return;
@@ -410,7 +430,7 @@ export function TabScoreCanvas({
         }
 
         createdTexRef.current = alphaTexRef.current;
-        api.tex(alphaTexRef.current);
+        loadAlphaTex(alphaTab, api, alphaTexRef.current, emptyBeatsRef.current);
       } catch (renderError) {
         if (disposed) return;
         callbacks.current.onStatus?.({
@@ -436,9 +456,10 @@ export function TabScoreCanvas({
   // edición perdería el reproductor y el SoundFont ya cargado.
   useEffect(() => {
     const api = apiRef.current;
-    if (!api || createdTexRef.current === alphaTex) return;
+    const alphaTab = alphaTabRef.current;
+    if (!api || !alphaTab || createdTexRef.current === alphaTex) return;
     createdTexRef.current = alphaTex;
-    api.tex(alphaTex);
+    loadAlphaTex(alphaTab, api, alphaTex, emptyBeatsRef.current);
   }, [alphaTex]);
 
   // Acerca la selección a la vista cuando el usuario se mueve con el teclado o
@@ -510,27 +531,19 @@ export function TabScoreCanvas({
           return distance < bestDistance ? candidate : best;
         });
 
-      // Cerca de una nota, la pulsación se pega a la nota: así se puede marcar
-      // sin acertar con la fila exacta de la cuerda.
-      let snappedString: number | null = null;
-      let snappedBox: Rect | null = null;
-      let bestNoteDistance = 12;
-      for (const [noteString, box] of beat.notes) {
-        const dx =
-          x < box.x ? box.x - x : x > box.x + box.w ? x - (box.x + box.w) : 0;
-        const dy =
-          y < box.y ? box.y - y : y > box.y + box.h ? y - (box.y + box.h) : 0;
-        const distance = Math.hypot(dx, dy);
-        if (distance <= bestNoteDistance) {
-          bestNoteDistance = distance;
-          snappedString = noteString;
-          snappedBox = box;
-        }
-      }
+      const noteBox = beat.notes.get(rowString);
+      // Una nota solo se coge si el puntero cae dentro de su caja dibujada.
+      const onNote =
+        noteBox !== undefined &&
+        x >= noteBox.x &&
+        x <= noteBox.x + noteBox.w &&
+        y >= noteBox.y &&
+        y <= noteBox.y + noteBox.h;
 
-      const string = snappedString ?? rowString;
-      const localBox = snappedBox ??
-        beat.notes.get(string) ?? {
+      const string = rowString;
+      const localBox =
+        (onNote ? noteBox : undefined) ??
+        {
           x: beat.x + 2,
           y: bar.y + (stringCount - 1 - string) * rowHeight + 2,
           w: Math.max(8, beat.w - 4),
@@ -549,14 +562,18 @@ export function TabScoreCanvas({
           0.999,
           Math.max(0, (x - beat.x) / Math.max(1, beat.w)),
         ),
-        nearNote:
-          snappedString !== null ||
-          [...beat.notes.values()].some(
-            (note) => x >= note.x - 6 && x <= note.x + note.w + 6,
-          ),
+        nearNote: onNote,
       };
     },
     [layout, stringCount],
+  );
+
+  const isInSelection = useCallback(
+    (position: { bar: number; beat: number }) =>
+      selectedBeats.some(
+        (beat) => beat.bar === position.bar && beat.beat === position.beat,
+      ),
+    [selectedBeats],
   );
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
@@ -573,7 +590,11 @@ export function TabScoreCanvas({
     };
 
     if (interactive && onSelect) {
-      onSelect(hit.position, event.shiftKey, hit);
+      // Pulsar dentro del tramo ya marcado no lo colapsa: así el menú de la
+      // nota y la subdivisión siguen trabajando sobre las N notas elegidas.
+      if (event.shiftKey || !isInSelection(hit.position)) {
+        onSelect(hit.position, event.shiftKey, hit);
+      }
     }
 
     clearLongPress();
@@ -660,7 +681,9 @@ export function TabScoreCanvas({
     if (!onNoteMenu) return;
     const hit = hitTest(event.clientX, event.clientY);
     if (!hit) return;
-    if (interactive && onSelect) onSelect(hit.position, false, hit);
+    if (interactive && onSelect && !isInSelection(hit.position)) {
+      onSelect(hit.position, false, hit);
+    }
     callbacks.current.onNoteMenu?.(hit);
   }
 
@@ -748,60 +771,39 @@ export function TabScoreCanvas({
           />
         )}
 
-        {interactive &&
-          selection &&
-          (selectedNotes.length > 0
-            ? selectedNotes.map(({ bar, beat, string }) => {
-                if (
-                  bar === selection.bar &&
-                  beat === selection.beat &&
-                  string === selection.string
-                ) {
-                  return null;
-                }
-                const barLayout = layout.find((entry) => entry.index === bar);
-                const beatLayout = barLayout?.beats.find(
-                  (entry) => entry.index === beat,
-                );
-                const box = beatLayout?.notes.get(string);
-                if (!box) return null;
-                return (
-                  <div
-                    key={`${bar}:${beat}:${string}`}
-                    aria-hidden="true"
-                    className="pointer-events-none absolute z-20 rounded-sm bg-emerald-500/25"
-                    style={{
-                      left: box.x,
-                      top: box.y,
-                      width: box.w,
-                      height: box.h,
-                    }}
-                  />
-                );
-              })
-            : selectedBeats.map(({ bar, beat }) => {
-                const barLayout = layout.find((entry) => entry.index === bar);
-                const beatLayout = barLayout?.beats.find(
-                  (entry) => entry.index === beat,
-                );
-                if (!barLayout || !beatLayout) return null;
-                const isFocus =
-                  bar === selection.bar && beat === selection.beat;
-                if (isFocus) return null;
-                return (
-                  <div
-                    key={`${bar}:${beat}`}
-                    aria-hidden="true"
-                    className="pointer-events-none absolute z-20 rounded-sm bg-emerald-500/20"
-                    style={{
-                      left: beatLayout.x,
-                      top: beatLayout.y,
-                      width: beatLayout.w,
-                      height: beatLayout.h,
-                    }}
-                  />
-                );
-              }))}
+        {interactive && selection && selectedBeats.length > 0 &&
+          Array.from(
+            selectedBeats.reduce((byBar, { bar, beat }) => {
+              const beats = byBar.get(bar) ?? [];
+              beats.push(beat);
+              byBar.set(bar, beats);
+              return byBar;
+            }, new Map<number, number[]>()),
+          ).map(([barIndex, beats]) => {
+            const barLayout = layout.find((entry) => entry.index === barIndex);
+            if (!barLayout) return null;
+            const first = barLayout.beats.find(
+              (entry) => entry.index === Math.min(...beats),
+            );
+            const last = barLayout.beats.find(
+              (entry) => entry.index === Math.max(...beats),
+            );
+            if (!first || !last) return null;
+
+            return (
+              <div
+                key={`selection-${barIndex}`}
+                aria-hidden="true"
+                className="pointer-events-none absolute z-20 rounded-sm border border-emerald-600 bg-emerald-500/25"
+                style={{
+                  left: first.x,
+                  top: barLayout.y,
+                  width: last.x + last.w - first.x,
+                  height: barLayout.h,
+                }}
+              />
+            );
+          })}
 
         {interactive && focusBox && (
           <div

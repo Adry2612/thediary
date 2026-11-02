@@ -23,6 +23,8 @@ import {
 import {
   cloneTabBar,
   createRestBar,
+  createEmptyBeat,
+  createEmptyBeats,
   createRestBeat,
   createRestBeats,
   createTabId,
@@ -57,6 +59,7 @@ export type TabOperationError =
   | "cannotSubdivide"
   | "alreadySubdivided"
   | "tupletNeedsBeats"
+  | "tupletExactCount"
   | "tupletDifferentValues"
   | "tupletAcrossBars";
 
@@ -222,6 +225,7 @@ export function writeFret(
   const next = replaceBeat(score, selection.bar, selection.beat, (current) => ({
     ...current,
     rest: false,
+    empty: undefined,
     notes,
   }));
 
@@ -237,9 +241,11 @@ export function deleteNote(
   if (!getNoteAt(beat, selection.string)) return { error: "noSelection" };
 
   const notes = beat.notes.filter((note) => note.string !== selection.string);
+  const emptied = notes.length === 0;
   let next = replaceBeat(score, selection.bar, selection.beat, (current) => ({
     ...current,
-    rest: notes.length === 0,
+    rest: false,
+    empty: emptied ? true : undefined,
     notes,
   }));
   next = clearTieAfter(next, selection.bar, selection.beat, selection.string);
@@ -273,10 +279,44 @@ export function setRest(
   const next = applyToRange(score, selection, (beat) => ({
     ...beat,
     rest: true,
+    empty: undefined,
     notes: [],
   }));
 
   return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Quita la marca de silencio: el pulso queda vacío, sin figura y sin notas. */
+export function clearRest(
+  score: TabScore,
+  selection: TabSelection,
+): TabOperationResult {
+  const next = applyToRange(score, selection, (beat) => ({
+    ...beat,
+    rest: false,
+    empty: true,
+    notes: [],
+  }));
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Silencio como interruptor: si todo el tramo ya son silencios, los vacía. */
+export function toggleRest(
+  score: TabScore,
+  selection: TabSelection,
+): TabOperationResult {
+  const positions = getRangeBeats(score, selection);
+  const allRest =
+    positions.length > 0 &&
+    positions.every(
+      (position) =>
+        getBeatAt(score, position.bar, position.beat)?.rest === true,
+    );
+
+  return allRest
+    ? clearRest(score, selection)
+    : setRest(score, selection);
 }
 
 export function setDuration(
@@ -546,9 +586,9 @@ function divideOneBeat(
   const slots: TabBeat[] = [
     { ...beat, duration, tuplet },
     ...Array.from({ length: tuplet - 1 }, () => {
-      const rest = createRestBeat(duration);
-      rest.tuplet = tuplet;
-      return rest;
+      const empty = createEmptyBeat(duration);
+      empty.tuplet = tuplet;
+      return empty;
     }),
   ];
   const next = replaceBeatsAt(score, position.bar, position.beat, slots);
@@ -569,56 +609,79 @@ function groupBeats(
   tuplet: TabTuplet,
   selection: TabSelection,
 ): TabOperationResult {
-  // Con más notas de las que pide la subdivisión se agrupan las primeras N y
-  // el resto se queda como está: así el tresillo sigue disponible aunque el
-  // arrastre se pase de largo.
-  if (positions.length < tuplet) return { error: "tupletNeedsBeats" };
+  // La subdivisión es exactamente para el tramo marcado: ni se recorta a los
+  // primeros N ni se deja fuera ningún pulso seleccionado.
+  if (positions.length !== tuplet) {
+    return { error: "tupletExactCount" };
+  }
 
-  const group = positions.slice(0, tuplet);
-  const barIndex = group[0].bar;
-  if (group.some((position) => position.bar !== barIndex)) {
+  const barIndex = positions[0].bar;
+  if (positions.some((position) => position.bar !== barIndex)) {
     return { error: "tupletAcrossBars" };
   }
 
-  const beats = group.map((position) =>
+  const beats = positions.map((position) =>
     getBeatAt(score, position.bar, position.beat),
   );
   if (beats.some((beat) => beat === null)) return { error: "noSelection" };
   if (beats.some((beat) => beat!.tuplet)) return { error: "alreadySubdivided" };
-  if (beats.some((beat) => beat!.dots === 1)) return { error: "cannotSubdivide" };
 
   const base = beats.reduce((total, beat) => total + getBeatTicks(beat!), 0);
-  const freed = Math.round(
-    (base * (tuplet - TAB_TUPLET_IN_TIME[tuplet])) / tuplet,
-  );
-  const rests = createRestBeats(freed);
-  if (getBarTicks({ beats: rests }) !== freed) {
-    return { error: "cannotSubdivide" };
+  const ratio = TAB_TUPLET_IN_TIME[tuplet];
+  let freed = Math.round((base * (tuplet - ratio)) / tuplet);
+  let uniformDuration: TabBeatDuration | null = null;
+  let empties = createEmptyBeats(freed);
+
+  if (getBarTicks({ beats: empties }) !== freed) {
+    // Con figuras distintas el tiempo liberado puede caer entre dos figuras.
+    // Se igualan las N notas a la figura más corta: el hueco liberado pasa a
+    // ser un múltiplo exacto de esa figura y el compás conserva su total.
+    const shortest = beats.reduce<TabBeatDuration>(
+      (best, beat) =>
+        getBeatTicks({ duration: beat!.duration }) <
+        getBeatTicks({ duration: best })
+          ? beat!.duration
+          : best,
+      beats[0]!.duration,
+    );
+    uniformDuration = shortest;
+    freed = base - ratio * getBeatTicks({ duration: shortest });
+    empties = createEmptyBeats(freed);
+    if (getBarTicks({ beats: empties }) !== freed) {
+      return { error: "cannotSubdivide" };
+    }
   }
 
   const bar = score.bars[barIndex];
   if (!bar) return { error: "noSelection" };
-  if (bar.beats.length + rests.length > TAB_MAX_BEATS_PER_BAR) {
+  if (bar.beats.length + empties.length > TAB_MAX_BEATS_PER_BAR) {
     return { error: "beatLimit" };
   }
 
   let next = score;
-  for (const position of group) {
-    next = replaceBeat(next, position.bar, position.beat, (beat) => ({
-      ...beat,
-      tuplet,
-    }));
+  for (const position of positions) {
+    next = replaceBeat(next, position.bar, position.beat, (beat) => {
+      const copy: TabBeat = {
+        ...beat,
+        ...(uniformDuration !== null ? { duration: uniformDuration } : {}),
+        tuplet,
+      };
+      if (uniformDuration !== null) delete copy.dots;
+      return copy;
+    });
   }
   next = replaceBar(next, barIndex, (current) => ({
     ...current,
-    beats: [...current.beats, ...rests],
+    beats: [...current.beats, ...empties],
   }));
 
   return {
     score: next,
     selection: clampSelection(next, {
-      bar: group[0].bar,
-      beat: group[0].beat,
+      bar: barIndex,
+      // El cursor sale del grupo: lo que se escriba después no se añade al
+      // tresillo, sino al pulso siguiente (o al primer hueco liberado).
+      beat: positions[positions.length - 1].beat + 1,
       string: selection.string,
     }),
   };

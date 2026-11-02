@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildAlphaTex, tuningToAlphaTexNotes } from "../src/utils/tab-score/alphatex.ts";
+import { buildAlphaTex, tuningToAlphaTexNotes, tuningToMidi } from "../src/utils/tab-score/alphatex.ts";
 import { createEmptyScore } from "../src/utils/tab-score/model.ts";
 import { getBeatTicks } from "../src/utils/tab-score/ticks.ts";
 
@@ -170,6 +170,37 @@ test("writes the tuning when it is not standard", () => {
   assert.ok(tex.includes("\\tuning (D4 A3 G3 D3 A2 D2)"));
 });
 
+test("converts standard and alternative tunings to MIDI", () => {
+  assert.deepEqual(tuningToMidi("EADGBE", 6), [40, 45, 50, 55, 59, 64]);
+  assert.deepEqual(tuningToMidi("DADGAD", 6), [38, 45, 50, 55, 57, 62]);
+  assert.deepEqual(tuningToMidi("BEADGBE", 7), [35, 40, 45, 50, 55, 59, 64]);
+  assert.equal(tuningToMidi("XYZ", 6), null);
+  assert.equal(tuningToMidi("ZZZZZZ", 6), null);
+});
+
+test("writes an empty beat as an empty beat, not a rest", () => {
+  const tex = buildAlphaTex(
+    score([
+      {
+        id: "bar-a",
+        beats: [
+          beat({
+            id: "b1",
+            duration: 4,
+            rest: false,
+            notes: [{ string: 0, fret: 3 }],
+          }),
+          beat({ id: "b2", duration: 4, rest: true }),
+          beat({ id: "b3", duration: 4, rest: false, empty: true }),
+        ],
+      },
+    ]),
+  );
+
+  assert.match(tex, /:4 r :4 \(\) \|$/);
+  assert.doesNotMatch(tex, /:4 r :4 r/);
+});
+
 test("the generated AlphaTex round-trips through the alphaTab importer", async () => {
   const alphaTab = await import("@coderline/alphatab");
   const model = score(
@@ -195,6 +226,7 @@ test("the generated AlphaTex round-trips through the alphaTab importer", async (
             ],
           }),
           beat({ id: "b3", duration: 8, tuplet: 3, rest: true }),
+          beat({ id: "b3b", duration: 4, rest: false, empty: true }),
         ],
       },
       {
@@ -230,6 +262,10 @@ test("the generated AlphaTex round-trips through the alphaTab importer", async (
   assert.equal(firstBar[1].playbackDuration, getBeatTicks(model.bars[0].beats[1]));
   assert.equal(firstBar[2].playbackDuration, getBeatTicks(model.bars[0].beats[2]));
   assert.equal(firstBar[2].isRest, true);
+
+  assert.equal(firstBar[3].playbackDuration, getBeatTicks(model.bars[0].beats[3]));
+  assert.equal(firstBar[3].isRest, true);
+  assert.equal(firstBar[3].notes.length, 0);
 
   assert.equal(firstBar[0].notes[0].string, 1);
   assert.equal(firstBar[0].notes[0].fret, 3);

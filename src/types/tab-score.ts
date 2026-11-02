@@ -62,6 +62,8 @@ export type TabBeat = {
   dots?: 1;
   tuplet?: TabTuplet;
   rest?: boolean;
+  /** Pulso que ocupa su tiempo pero no tiene notas ni figura de silencio. */
+  empty?: true;
   notes: TabNote[];
 };
 

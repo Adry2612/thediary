@@ -1,5 +1,8 @@
 import { getTabTuningMidi } from "../tab-playback.ts";
+import { tuningToMidi } from "../tab-score/alphatex.ts";
+import { getStringCount } from "../tab-score/model.ts";
 import type { MusicalKey } from "../../types/lick.ts";
+import type { TabScore } from "../../types/tab-score.ts";
 import type { RepertoireTab } from "../../types/practice.ts";
 
 const ROOT_NAMES = [
@@ -48,26 +51,18 @@ function keyFor(tonic: number, minor: boolean): MusicalKey {
 }
 
 /**
- * Estima la tonalidad de una tablatura a partir de sus alturas y del peso que
- * tienen en la frase. Funciona mejor con varias notas y clases distintas; con
- * una idea de una o dos notas devuelve `null` para no adivinar.
+ * Estima la tonalidad de una secuencia de alturas MIDI. La primera y la última
+ * nota pesan más porque suelen apoyar la tónica; con pocas notas o pocas
+ * clases distintas devuelve `null` para no adivinar.
  */
-export function detectTabKey(tab: RepertoireTab): MusicalKey | null {
-  const tuning = getTabTuningMidi(tab.tuning);
-  const histogram = new Array<number>(12).fill(0);
-  const sounding = tab.notes.filter((note) => !note.dead);
-  const soundingNotes = sounding.length;
+export function estimateKey(pitches: number[]): MusicalKey | null {
+  if (pitches.length < 3) return null;
 
-  for (let index = 0; index < sounding.length; index += 1) {
-    const note = sounding[index];
-    const midi = tuning[note.string] + note.fret;
-    const pitchClass = ((midi % 12) + 12) % 12;
-    // La primera y la última nota suelen apoyar la tónica; sin esta pista,
-    // una escala menor natural se confunde fácilmente con su relativa mayor.
+  const histogram = new Array<number>(12).fill(0);
+  for (let index = 0; index < pitches.length; index += 1) {
+    const pitchClass = ((pitches[index] % 12) + 12) % 12;
     const weight =
-      index === 0 ? 3
-      : index === sounding.length - 1 ? 1.5
-      : 1;
+      index === 0 ? 3 : index === pitches.length - 1 ? 1.5 : 1;
     histogram[pitchClass] += weight;
   }
 
@@ -75,7 +70,7 @@ export function detectTabKey(tab: RepertoireTab): MusicalKey | null {
     (total, value) => total + (value > 0 ? 1 : 0),
     0,
   );
-  if (soundingNotes < 3 || distinctPitchClasses < 3) return null;
+  if (distinctPitchClasses < 3) return null;
 
   let bestKey = keyFor(0, false);
   let bestScore = -Infinity;
@@ -98,3 +93,44 @@ export function detectTabKey(tab: RepertoireTab): MusicalKey | null {
   return bestScore > 0.1 ? bestKey : null;
 }
 
+/**
+ * Estima la tonalidad de una tablatura de rejilla a partir de sus alturas y del
+ * peso que tienen en la frase.
+ */
+export function detectTabKey(tab: RepertoireTab): MusicalKey | null {
+  const tuning = getTabTuningMidi(tab.tuning);
+  const pitches: number[] = [];
+
+  for (const note of tab.notes) {
+    if (note.dead) continue;
+    pitches.push(tuning[note.string] + note.fret);
+  }
+
+  return estimateKey(pitches);
+}
+
+/**
+ * Estima la tonalidad de la partitura visual tal como se está editando, usando
+ * su afinación y saltando las notas muertas.
+ */
+export function detectScoreKey(
+  score: Pick<TabScore, "tuning" | "bars">,
+): MusicalKey | null {
+  const stringCount = getStringCount(score.tuning);
+  const tuning = tuningToMidi(score.tuning, stringCount);
+  if (!tuning) return null;
+
+  const pitches: number[] = [];
+  for (const bar of score.bars) {
+    for (const beat of bar.beats) {
+      for (const note of beat.notes) {
+        if (note.dead) continue;
+        const open = tuning[note.string];
+        if (open === undefined) continue;
+        pitches.push(open + note.fret);
+      }
+    }
+  }
+
+  return estimateKey(pitches);
+}

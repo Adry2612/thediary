@@ -16,6 +16,7 @@ import {
 import type { TabScore } from "@/types/tab-score";
 import { buildAlphaTex } from "@/utils/tab-score/alphatex";
 import { getStringCount } from "@/utils/tab-score/model";
+import { getEmptyBeats } from "@/utils/tab-score/render";
 import { scoreToText } from "@/utils/tab-score/text";
 
 export function TabScoreView({
@@ -76,6 +77,7 @@ export function TabScoreView({
     () => getStringCount(visibleScore.tuning),
     [visibleScore.tuning],
   );
+  const emptyBeats = useMemo(() => getEmptyBeats(visibleScore), [visibleScore]);
 
   function toggleStandardNotation() {
     setShowStandardNotation((current) => {
@@ -149,6 +151,7 @@ export function TabScoreView({
       <TabScoreCanvas
         alphaTex={alphaTex}
         stringCount={stringCount}
+        emptyBeats={emptyBeats}
         compact={compact}
         playback={playback}
         onControls={(controls) => {

@@ -77,8 +77,11 @@ function noteLabel(note: TabNote): string {
 
 function beatLabel(beat: TabBeat): string {
   const duration = durationLabel(beat);
-  if (beat.rest || beat.notes.length === 0) {
+  if (beat.rest) {
     return `${duration}, silencio`;
+  }
+  if (beat.notes.length === 0) {
+    return `${duration}, vacío`;
   }
   return `${duration}, ${beat.notes.map(noteLabel).join(", ")}`;
 }

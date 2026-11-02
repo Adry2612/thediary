@@ -37,6 +37,7 @@ import {
 import { announceSelection } from "@/utils/tab-score/announce";
 import { buildAlphaTex } from "@/utils/tab-score/alphatex";
 import { getStringCount } from "@/utils/tab-score/model";
+import { getEmptyBeats } from "@/utils/tab-score/render";
 import { divideBeat } from "@/utils/tab-score/operations";
 import {
   getPaletteState,
@@ -119,6 +120,10 @@ export function TabScoreEditor({
   );
   const alphaTex = useMemo(
     () => buildAlphaTex(editor.score, { standardNotation: false }),
+    [editor.score],
+  );
+  const emptyBeats = useMemo(
+    () => getEmptyBeats(editor.score),
     [editor.score],
   );
   const announcement = useMemo(
@@ -230,16 +235,23 @@ export function TabScoreEditor({
 
   /** Abre el menú de una nota allí donde se ha pulsado, sin ir a «Opciones». */
   function openNoteMenu(hit: TabScoreHit) {
-    if (hit.nearNote) {
-      editor.dispatch({ type: "select", position: hit.position });
-    } else {
-      // En táctil el traste se elige desde el propio menú: hay que conservar
-      // el punto pulsado para que la nota caiga ahí y no al inicio del pulso.
-      editor.dispatch({
-        type: "selectAt",
-        position: hit.position,
-        fraction: hit.fraction,
-      });
+    // Abrir el menú de una nota que ya forma parte del tramo no lo colapsa:
+    // la subdivisión y las demás acciones siguen viendo todas las notas.
+    const inSelection = editor.selectedBeats.some(
+      (beat) => beat.bar === hit.position.bar && beat.beat === hit.position.beat,
+    );
+    if (!inSelection) {
+      if (hit.nearNote) {
+        editor.dispatch({ type: "select", position: hit.position });
+      } else {
+        // En táctil el traste se elige desde el propio menú: hay que conservar
+        // el punto pulsado para que la nota caiga ahí y no al inicio del pulso.
+        editor.dispatch({
+          type: "selectAt",
+          position: hit.position,
+          fraction: hit.fraction,
+        });
+      }
     }
     setAnchor(hit.box);
     setAnchorVersion((version) => version + 1);
@@ -652,11 +664,11 @@ export function TabScoreEditor({
       <TabScoreCanvas
         alphaTex={alphaTex}
         stringCount={stringCount}
+        emptyBeats={emptyBeats}
         label={label}
         interactive
         selection={editor.selectionVisible ? editor.selection : undefined}
         selectedBeats={editor.selectionVisible ? editor.selectedBeats : []}
-        selectedNotes={editor.selectionVisible ? editor.selectedNotes : []}
         onSelect={select}
         onNoteMenu={openNoteMenu}
         onStatus={setStatus}
@@ -741,11 +753,13 @@ export function TabScoreEditor({
                         ? paletteText.beatLimit
                         : error === "tupletNeedsBeats"
                           ? paletteText.tupletNeedsBeats
-                          : error === "tupletDifferentValues"
-                            ? paletteText.tupletDifferentValues
-                            : error === "tupletAcrossBars"
-                              ? paletteText.tupletAcrossBars
-                              : null;
+                          : error === "tupletExactCount"
+                            ? paletteText.tupletExactCount
+                            : error === "tupletDifferentValues"
+                              ? paletteText.tupletDifferentValues
+                              : error === "tupletAcrossBars"
+                                ? paletteText.tupletAcrossBars
+                                : null;
 
                 return (
                   <button

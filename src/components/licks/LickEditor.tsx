@@ -14,13 +14,16 @@ import { EditIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { createId } from "@/utils/create-id";
 import { normalizeMusicalKey, MUSICAL_KEYS } from "@/utils/licks/keys";
-import { detectTabKey } from "@/utils/licks/key-detection";
+import { detectScoreKey } from "@/utils/licks/key-detection";
+import {
+  formatClipTime,
+  validateReferenceDraft,
+} from "@/utils/licks/reference-video";
 import {
   LICK_TECHNIQUES,
   normalizeTechniques,
 } from "@/utils/licks/techniques";
 import { MAX_BPM, MIN_BPM } from "@/utils/metronome-tempo";
-import { normalizeTab } from "@/utils/repertoire-tab";
 import { resolveTabScore } from "@/utils/tab-score/resolve";
 import type { GuitarLick, TechniqueId } from "@/types/lick";
 import type { RepertoireItem } from "@/types/practice";
@@ -34,11 +37,14 @@ export function LickEditor({
   lick,
   songs,
   onSave,
+  onSaveDraft,
   onCancel,
 }: {
   lick: GuitarLick | null;
   songs: RepertoireItem[];
   onSave: (lick: GuitarLick) => void;
+  /** Guarda sin salir del editor; el borrador sigue siendo un lick normal. */
+  onSaveDraft: (lick: GuitarLick) => void;
   onCancel: () => void;
 }) {
   const text = useI18nSection("licks");
@@ -50,10 +56,7 @@ export function LickEditor({
     resolveTabScore({ score: lick?.score, tab: lick?.tab }),
   );
   const [useVisualTab, setUseVisualTab] = useState(!hasLegacyTab);
-  const detectedKey = useMemo(
-    () => detectTabKey(normalizeTab(lick?.tab)),
-    [lick?.tab],
-  );
+  const detectedKey = useMemo(() => detectScoreKey(score), [score]);
   const [key, setKey] = useState(lick?.key ?? "");
   const [keyIsAuto, setKeyIsAuto] = useState(!lick?.key);
   const [techniques, setTechniques] = useState<TechniqueId[]>(
@@ -65,12 +68,39 @@ export function LickEditor({
   const [targetBpm, setTargetBpm] = useState(
     lick?.targetBpm !== undefined ? String(lick.targetBpm) : "",
   );
+  const [videoUrl, setVideoUrl] = useState(lick?.referenceVideo?.url ?? "");
+  const [videoStart, setVideoStart] = useState(
+    lick?.referenceVideo
+      ? formatClipTime(lick.referenceVideo.startSeconds)
+      : "",
+  );
+  const [videoEnd, setVideoEnd] = useState(
+    lick?.referenceVideo
+      ? formatClipTime(lick.referenceVideo.endSeconds)
+      : "",
+  );
   const [error, setError] = useState<string | null>(null);
+  const [draft, setDraft] = useState<GuitarLick | null>(lick);
+  const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
 
   useEffect(() => {
     if (!keyIsAuto) return;
     setKey(detectedKey ?? "");
   }, [detectedKey, keyIsAuto]);
+
+  useEffect(() => {
+    setSaveState("idle");
+  }, [
+    title,
+    score,
+    key,
+    techniques,
+    associatedSongId,
+    targetBpm,
+    videoUrl,
+    videoStart,
+    videoEnd,
+  ]);
 
   function toggleTechnique(id: TechniqueId) {
     setTechniques((current) =>
@@ -80,48 +110,85 @@ export function LickEditor({
     );
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function buildLick({ strict }: { strict: boolean }): GuitarLick | null {
     const trimmedTitle = title.trim();
-    if (!trimmedTitle) {
+    if (!trimmedTitle && strict) {
       setError(text.errorTitle);
-      return;
+      return null;
     }
 
     let parsedTarget: number | undefined;
     if (targetBpm.trim()) {
       const value = Number(targetBpm);
-      if (!Number.isInteger(value) || value < MIN_BPM || value > MAX_BPM) {
+      if (Number.isInteger(value) && value >= MIN_BPM && value <= MAX_BPM) {
+        parsedTarget = value;
+      } else if (strict) {
         setError(text.errorBpm);
-        return;
+        return null;
       }
-      parsedTarget = value;
+    }
+    if (!strict && parsedTarget === undefined) {
+      parsedTarget = draft?.targetBpm;
+    }
+
+    const reference = validateReferenceDraft({
+      url: videoUrl,
+      start: videoStart,
+      end: videoEnd,
+    });
+    if ("error" in reference) {
+      setError(
+        reference.error === "invalidUrl"
+          ? text.errorReferenceUrl
+          : reference.error === "invalidStart"
+            ? text.errorReferenceStart
+            : text.errorReferenceEnd,
+      );
+      return null;
     }
 
     const now = new Date().toISOString();
     const normalizedKey = normalizeMusicalKey(key);
-    onSave({
-      id: lick?.id ?? createId(),
-      title: trimmedTitle,
+    return {
+      id: draft?.id ?? createId(),
+      title: trimmedTitle || text.untitled,
       ...(useVisualTab ? { score } : {}),
-      ...(lick?.tab ? { tab: lick.tab } : {}),
-      ...(!useVisualTab && lick?.tabContent
-        ? { tabContent: lick.tabContent }
+      ...(draft?.tab ? { tab: draft.tab } : {}),
+      ...(!useVisualTab && draft?.tabContent
+        ? { tabContent: draft.tabContent }
         : {}),
       ...(normalizedKey ? { key: normalizedKey } : {}),
+      ...(reference.value ? { referenceVideo: reference.value } : {}),
       techniques: normalizeTechniques(techniques),
       ...(associatedSongId ? { associatedSongId } : {}),
       ...(parsedTarget !== undefined ? { targetBpm: parsedTarget } : {}),
-      ...(lick?.currentBpm !== undefined
-        ? { currentBpm: lick.currentBpm }
+      ...(draft?.currentBpm !== undefined
+        ? { currentBpm: draft.currentBpm }
         : {}),
-      bpmHistory: lick?.bpmHistory ?? [],
-      createdAt: lick?.createdAt ?? now,
-      ...(lick?.lastPracticedAt
-        ? { lastPracticedAt: lick.lastPracticedAt }
+      bpmHistory: draft?.bpmHistory ?? [],
+      createdAt: draft?.createdAt ?? now,
+      ...(draft?.lastPracticedAt
+        ? { lastPracticedAt: draft.lastPracticedAt }
         : {}),
-      practiceCount: lick?.practiceCount ?? 0,
-    });
+      practiceCount: draft?.practiceCount ?? 0,
+    };
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const next = buildLick({ strict: true });
+    if (!next) return;
+    setError(null);
+    onSave(next);
+  }
+
+  function saveTab() {
+    const next = buildLick({ strict: false });
+    if (!next) return;
+    setError(null);
+    setDraft(next);
+    onSaveDraft(next);
+    setSaveState("saved");
   }
 
   return (
@@ -159,9 +226,32 @@ export function LickEditor({
         </section>
 
         <section className="min-w-0">
-          <h2 className="mb-3 font-sans text-xl font-semibold tracking-tight text-ink">
-            {text.tabLabel}
-          </h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-ink">
+              {text.tabLabel}
+            </h2>
+            {useVisualTab ? (
+              <div className="flex items-center gap-2">
+                {saveState === "saved" ? (
+                  <span
+                    role="status"
+                    aria-live="polite"
+                    className="text-xs text-accent-green-fg"
+                  >
+                    {text.tabSaved}
+                  </span>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="field"
+                  onClick={saveTab}
+                >
+                  {text.saveTab}
+                </Button>
+              </div>
+            ) : null}
+          </div>
 
           {useVisualTab ? (
             <>
@@ -214,6 +304,47 @@ export function LickEditor({
               </Button>
             </div>
           )}
+        </section>
+
+        <section className="rounded-xl border border-line bg-surface p-5 sm:p-6">
+          <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">
+            {text.referenceVideoTitle}
+          </h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="block text-xs text-muted sm:col-span-2">
+              {text.referenceVideoUrl}
+              <TextField
+                value={videoUrl}
+                onChange={(event) => setVideoUrl(event.target.value)}
+                placeholder="https://www.youtube.com/watch?v=…"
+                inputMode="url"
+                className="mt-1"
+              />
+            </label>
+            <label className="block text-xs text-muted">
+              {text.referenceVideoStart}
+              <TextField
+                value={videoStart}
+                onChange={(event) => setVideoStart(event.target.value)}
+                placeholder="0:00"
+                inputMode="numeric"
+                className="mt-1"
+              />
+            </label>
+            <label className="block text-xs text-muted">
+              {text.referenceVideoEnd}
+              <TextField
+                value={videoEnd}
+                onChange={(event) => setVideoEnd(event.target.value)}
+                placeholder="0:15"
+                inputMode="numeric"
+                className="mt-1"
+              />
+            </label>
+          </div>
+          <p className="mt-2 text-[11px] text-muted">
+            {text.referenceVideoHint}
+          </p>
         </section>
 
         <section className="rounded-xl border border-line bg-surface p-5 sm:p-6">
