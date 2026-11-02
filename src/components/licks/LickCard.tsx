@@ -17,13 +17,11 @@ export function LickCard({
   lick,
   song,
   today,
-  onEdit,
   onDelete,
 }: {
   lick: GuitarLick;
   song?: RepertoireItem;
   today: Date;
-  onEdit: (lick: GuitarLick) => void;
   onDelete: (lickId: string) => void;
 }) {
   const text = useI18nSection("licks");
@@ -88,14 +86,15 @@ export function LickCard({
 
       <div className="mt-4 min-h-0 min-w-0 flex-1">
         <LickTab
+          score={lick.score}
           tab={lick.tab}
           content={lick.tabContent}
           emptyLabel={text.tabEmpty}
           ariaLabel={`${text.tabTitle}: ${title}`}
           maxLines={6}
-          maxMeasures={1}
+          maxBars={1}
           variant="compact"
-          className="max-h-40"
+          className="max-h-52"
         />
       </div>
 
@@ -111,14 +110,13 @@ export function LickCard({
           >
             {text.open}
           </Link>
-          <button
-            type="button"
+          <Link
+            href={`/licks/${lick.id}/edit`}
             aria-label={`${text.edit}: ${title}`}
-            onClick={() => onEdit(lick)}
             className="inline-flex size-9 items-center justify-center rounded-md border border-line text-muted transition hover:bg-white/5 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
           >
             <EditIcon className="size-4" />
-          </button>
+          </Link>
           <button
             type="button"
             aria-label={`${text.delete}: ${title}`}

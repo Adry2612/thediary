@@ -9,6 +9,22 @@ test("uses the same translation structure in Spanish and English", () => {
   assert.deepEqual(Object.keys(translations.es.licks), Object.keys(translations.en.licks));
   assert.deepEqual(Object.keys(translations.es.settings), Object.keys(translations.en.settings));
   assert.deepEqual(Object.keys(translations.es.account), Object.keys(translations.en.account));
+  assert.deepEqual(
+    Object.keys(translations.es.tabScore).sort(),
+    Object.keys(translations.en.tabScore).sort(),
+  );
+  assert.deepEqual(
+    Object.keys(translations.es.tabPalette).sort(),
+    Object.keys(translations.en.tabPalette).sort(),
+  );
+  assert.deepEqual(
+    Object.keys(translations.es.tabPlayback).sort(),
+    Object.keys(translations.en.tabPlayback).sort(),
+  );
+  assert.deepEqual(
+    Object.keys(translations.es.tabTutorial).sort(),
+    Object.keys(translations.en.tabTutorial).sort(),
+  );
 });
 
 test("returns the translated text for nested keys", () => {
@@ -43,6 +59,24 @@ test("names the dashboard insights in both languages", () => {
     Object.keys(translations.es.dashboard).sort(),
     Object.keys(translations.en.dashboard).sort(),
   );
+});
+
+test("names the comparison span for every period in both languages", () => {
+  const keys = [
+    "summaryComparisonWeek",
+    "summaryComparisonMonth",
+    "summaryComparisonYear",
+    "wellbeingChangeWeek",
+    "wellbeingChangeMonth",
+    "wellbeingChangeYear",
+  ];
+
+  for (const key of keys) {
+    assert.equal(typeof translations.es.dashboard[key], "string", key);
+    assert.equal(typeof translations.en.dashboard[key], "string", key);
+    assert.ok(translations.es.dashboard[key].length > 0, key);
+    assert.ok(translations.en.dashboard[key].length > 0, key);
+  }
 });
 
 test("names the session guitar type in both languages", () => {

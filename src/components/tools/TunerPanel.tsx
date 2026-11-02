@@ -201,6 +201,16 @@ export function TunerPanel({ active }: { active: boolean }) {
         </p>
       )}
 
+      {tuner.needsGesture && (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => void tuner.resumeAudio()}
+        >
+          {text.resumeAudio}
+        </Button>
+      )}
+
       <section aria-label={text.tunerTargetsAria}>
         <h3 className="text-xs uppercase tracking-[0.08em] text-muted">
           {text.tunerStrings}

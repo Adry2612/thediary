@@ -8,6 +8,7 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal } from "react-dom";
+import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { SkillSummaryCard } from "@/components/dashboard/SkillSummaryCard";
 import {
   formatPracticeDuration,
@@ -20,12 +21,17 @@ import {
   type SkillSummaryPosition,
 } from "@/utils/skill-summary-tooltip";
 import type { PracticeSkill, SkillDistribution } from "@/types/practice";
+import type { PracticeChartPeriod } from "@/utils/practice-analytics";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 export function SkillBalance({
   distribution,
+  period,
+  onPeriodChange,
 }: {
   distribution: SkillDistribution;
+  period: PracticeChartPeriod;
+  onPeriodChange: (period: PracticeChartPeriod) => void;
 }) {
   const dashboard = useI18nSection("dashboard");
   const [activeSkill, setActiveSkill] = useState<PracticeSkill | null>(null);
@@ -80,12 +86,21 @@ export function SkillBalance({
       style={{ "--index": 1 } as CSSProperties}
       onPointerLeave={hideSummary}
     >
-      <p className="text-xs uppercase tracking-[0.12em] text-muted">
-         {dashboard.skillDistribution}
-      </p>
-      <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-         {dashboard.skillBalance}
-      </h2>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.12em] text-muted">
+            {dashboard.skillDistribution}
+          </p>
+          <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
+            {dashboard.skillBalance}
+          </h2>
+        </div>
+        <PeriodSelector
+          period={period}
+          onChange={onPeriodChange}
+          ariaLabel={dashboard.balancePeriodAria}
+        />
+      </div>
 
       <div className="mt-8 flex flex-1 items-center justify-center">
         <svg
@@ -131,9 +146,6 @@ export function SkillBalance({
         <div className="pointer-events-none -ml-44 flex size-44 flex-col items-center justify-center text-center">
           <span className="font-mono text-xs leading-6 tracking-normal text-zinc-100 sm:text-sm sm:leading-7">
             {formatPracticeDuration(distribution.totalMinutes)}
-          </span>
-          <span className="mt-1 text-xs text-muted">
-            {dashboard.thisMonth}
           </span>
         </div>
       </div>

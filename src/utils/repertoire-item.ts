@@ -1,5 +1,6 @@
 import type { RepertoireItem, RepertoireItemKind, GuitarType, RepertoireDifficulty } from "../types/practice.ts";
 import type { CatalogSource } from "../types/catalog.ts";
+import type { TabScore } from "../types/tab-score.ts";
 import { normalizeCatalogMetadata } from "./repertoire-catalog.ts";
 
 /**
@@ -66,6 +67,7 @@ interface CreateRepertoireItemInput {
   isFutureLearn?: boolean;
   chordChart?: RepertoireItem["chordChart"];
   tab?: RepertoireItem["tab"];
+  score?: TabScore;
   updatedAt: string;
 }
 
@@ -91,6 +93,7 @@ export function createRepertoireItem({
   isFutureLearn,
   chordChart,
   tab,
+  score,
   updatedAt,
 }: CreateRepertoireItemInput): RepertoireItem {
   const catalogMetadata = normalizeCatalogMetadata({
@@ -130,5 +133,6 @@ export function createRepertoireItem({
     ...(isFutureLearn ? { isFutureLearn: true } : {}),
     ...(chordChart ? { chordChart } : {}),
     ...(tab ? { tab } : {}),
+    ...(score ? { score } : {}),
   };
 }

@@ -51,6 +51,40 @@ test("drops a malformed structured tab without losing the legacy text", () => {
   assert.equal(lick.tabContent, "e|---|");
 });
 
+test("keeps a valid reference video and drops a broken one", () => {
+  const valid = normalizeLick({
+    ...base,
+    referenceVideo: {
+      url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      startSeconds: 83,
+      endSeconds: 95,
+    },
+  });
+  assert.deepEqual(valid?.referenceVideo, {
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    startSeconds: 83,
+    endSeconds: 95,
+  });
+
+  const broken = normalizeLick({
+    ...base,
+    referenceVideo: {
+      url: "https://vimeo.com/1",
+      startSeconds: 10,
+      endSeconds: 5,
+    },
+  });
+  assert.ok(broken);
+  assert.equal(broken.referenceVideo, undefined);
+  assert.equal(broken.title, "Frase");
+});
+
+test("loads an old lick without a reference video", () => {
+  const lick = normalizeLick(base);
+  assert.ok(lick);
+  assert.equal(lick.referenceVideo, undefined);
+});
+
 test("drops only invalid values, not the lick", () => {
   const lick = normalizeLick({
     ...base,

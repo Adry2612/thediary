@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAudioResume } from "@/hooks/useAudioResume";
 import {
   detectPitch,
   getNoteFromFrequency,
@@ -32,6 +33,10 @@ export function useTuner(active: boolean, a4: number) {
   const gainRef = useRef<GainNode | null>(null);
   const frameRef = useRef<number | null>(null);
   const stopRequestedRef = useRef(false);
+  const { needsGesture, resume: resumeAudio } = useAudioResume({
+    contextRef,
+    active: isListening,
+  });
 
   const stop = useCallback(() => {
     stopRequestedRef.current = true;
@@ -171,5 +176,7 @@ export function useTuner(active: boolean, a4: number) {
     error,
     start,
     stop,
+    needsGesture,
+    resumeAudio,
   };
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getScheduledMetronomeBeats } from "../src/utils/metronome-scheduler.ts";
+import { getScheduledMetronomeBeats, reanchorSchedule } from "../src/utils/metronome-scheduler.ts";
 import { createDefaultBeatPattern } from "../src/utils/metronome-beat-pattern.ts";
 
 const noTempoRamp = {
@@ -263,4 +263,10 @@ test("increases tempo by elapsed time without exceeding its maximum", () => {
 
   assert.equal(result.bpm, 65);
   assert.equal(result.state.nextTempoIncreaseAt, null);
+});
+
+test("reanchors the schedule ahead of the current time, never in the past", () => {
+  assert.equal(reanchorSchedule(12.5), 12.6);
+  assert.equal(reanchorSchedule(0, 0.25), 0.25);
+  assert.ok(reanchorSchedule(3.2) > 3.2);
 });

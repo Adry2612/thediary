@@ -1,4 +1,5 @@
 import type { CatalogSource } from "./catalog.ts";
+import type { TabScore } from "./tab-score.ts";
 
 export const PRACTICE_SKILLS = [
   "technique",
@@ -190,6 +191,8 @@ export interface RepertoireItem {
   chordChart?: RepertoireChordChart;
   /** Tablatura creada con el editor visual. */
   tab?: RepertoireTab;
+  /** Tablatura como partitura; manda sobre `tab` cuando existe. */
+  score?: TabScore;
 }
 
 export interface PracticePhase {

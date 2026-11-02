@@ -9,6 +9,8 @@ interface PageHeaderProps {
   actions?: ReactNode;
   /** `none` cuando el contenedor ya separa sus hijos con `gap`. */
   bottomSpacing?: "default" | "none";
+  /** `center` para pantallas de un solo formulario, centradas en la columna. */
+  align?: "start" | "center";
   className?: string;
 }
 
@@ -23,15 +25,18 @@ export function PageHeader({
   description,
   actions,
   bottomSpacing = "default",
+  align = "start",
   className = "",
 }: PageHeaderProps) {
+  const centered = align === "center";
+
   return (
     <header
-      className={`enter flex flex-wrap items-end justify-between gap-6 ${
-        bottomSpacing === "default" ? "mb-8" : ""
-      } ${className}`}
+      className={`enter flex flex-wrap items-end gap-6 ${
+        centered ? "justify-center text-center" : "justify-between"
+      } ${bottomSpacing === "default" ? "mb-8" : ""} ${className}`}
     >
-      <div className='min-w-0'>
+      <div className={`min-w-0 ${centered ? "mx-auto" : ""}`}>
         <h1
           id={titleId}
           className='font-sans text-3xl leading-tight font-semibold tracking-tight text-ink sm:text-4xl'
@@ -39,13 +44,23 @@ export function PageHeader({
           {title}
         </h1>
         {description ? (
-          <div className='mt-4 max-w-2xl text-base font-medium text-muted sm:text-lg'>
+          <div
+            className={`mt-4 max-w-2xl text-base font-medium text-muted sm:text-lg ${
+              centered ? "mx-auto" : ""
+            }`}
+          >
             {description}
           </div>
         ) : null}
       </div>
       {actions ? (
-        <div className='flex flex-wrap items-center gap-3'>{actions}</div>
+        <div
+          className={`flex flex-wrap items-center gap-3 ${
+            centered ? "justify-center" : ""
+          }`}
+        >
+          {actions}
+        </div>
       ) : null}
     </header>
   );

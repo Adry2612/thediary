@@ -23,6 +23,7 @@ import { useElementVisibility } from "@/hooks/useElementVisibility";
 import { useGuitarPreference } from "@/hooks/useGuitarPreference";
 import { useMetronome } from "@/hooks/useMetronome";
 import { usePracticeTimer } from "@/hooks/usePracticeTimer";
+import { useScreenWakeLock } from "@/hooks/useScreenWakeLock";
 import { useSplitViewAvailability } from "@/hooks/useSplitViewAvailability";
 import { getLocalDateKey } from "@/utils/local-date";
 import { formatClock } from "@/utils/format";
@@ -141,7 +142,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     practiceStartSound,
     practiceEndSound,
     targetMinutesToSeconds(session.targetMinutes),
+    sessionId,
   );
+  useScreenWakeLock(timer.isRunning);
   const timerElapsedSecondsRef = useRef(timer.elapsedSeconds);
   timerElapsedSecondsRef.current = timer.elapsedSeconds;
   const previousTimerStartedAtRef = useRef(timer.startedAt);
@@ -264,6 +267,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   }
 
   function discardSession() {
+    timer.reset();
     clearActiveSession();
     router.push('/practice');
   }
@@ -376,6 +380,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         </p>
       )}
       <LickTab
+        score={currentLick.score}
         tab={currentLick.tab}
         content={currentLick.tabContent}
         emptyLabel={text.lickTabEmpty}

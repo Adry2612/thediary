@@ -106,17 +106,23 @@ function MetricSummary({
   label,
   locale,
   dashboard,
+  period,
 }: {
   data: PracticeMetricSummary | null;
   label: string;
   locale: string;
   dashboard: Dict["dashboard"];
+  period: PracticeChartPeriod;
 }) {
   const trendLabel =
     data?.trend === "up" ? dashboard.wellbeingTrendUp
     : data?.trend === "down" ? dashboard.wellbeingTrendDown
     : data?.trend === "flat" ? dashboard.wellbeingTrendFlat
     : null;
+  const changeHint =
+    period === "week" ? dashboard.wellbeingChangeWeek
+    : period === "month" ? dashboard.wellbeingChangeMonth
+    : dashboard.wellbeingChangeYear;
 
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4">
@@ -141,7 +147,7 @@ function MetricSummary({
                 {data.change > 0 ? "+" : ""}
                 {formatAverage(data.change, locale)}
               </span>{" "}
-              {dashboard.wellbeingChange}
+              {changeHint}
             </p>
           ) : (
             data.previousAverage === null && (
@@ -262,6 +268,7 @@ export function PracticeWellbeing({
             label={metric.label}
             locale={locale}
             dashboard={dashboard}
+            period={period}
           />
         ))}
       </div>

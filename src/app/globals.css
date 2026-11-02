@@ -119,7 +119,10 @@ textarea,
 }
 
 .enter {
-  animation: enter 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* `backwards` y no `both`: al acabar, el bloque no conserva el `transform`
+     de la entrada, que lo convertiría en el bloque contenedor de cualquier
+     `position: fixed` de su interior (la paleta de la tablatura). */
+  animation: enter 600ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   animation-delay: calc(var(--index, 0) * 80ms);
 }
 
@@ -151,7 +154,10 @@ textarea,
 
 /* Entrada de cualquier `<dialog>` con la clase compartida. */
 dialog.overlay-motion[open] {
-  animation: overlay-panel-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* `backwards` y no `both`: al terminar, el diálogo no conserva el
+     `transform` de la entrada, que lo convertiría en el bloque contenedor de
+     los elementos `fixed` (paleta y hojas del editor de tablatura). */
+  animation: overlay-panel-in 180ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 dialog.overlay-motion[open]::backdrop {
@@ -197,6 +203,21 @@ dialog.overlay-motion[data-closing="true"]::backdrop {
   transform-origin: 50% 100%;
 }
 
+/* Zona que pide usar el paso actual del tutorial interactivo del editor. */
+.tour-highlight {
+  outline: 3px solid #f59e0b;
+  outline-offset: 4px;
+  border-radius: 8px;
+  animation: tour-highlight 1.4s ease-in-out infinite;
+}
+
+@keyframes tour-highlight {
+  50% {
+    outline-color: #fbbf24;
+    outline-offset: 7px;
+  }
+}
+
 ::view-transition-old(root) {
   animation: 150ms ease-in both tutorial-view-exit;
 }
@@ -224,6 +245,10 @@ dialog.overlay-motion[data-closing="true"]::backdrop {
   }
 
   .streak-flame {
+    animation: none;
+  }
+
+  .tour-highlight {
     animation: none;
   }
 

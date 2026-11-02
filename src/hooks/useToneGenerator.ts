@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAudioResume } from "@/hooks/useAudioResume";
 
 export type ToneGeneratorError = "unsupported" | "failed";
 
@@ -20,6 +21,10 @@ export function useToneGenerator({
   const contextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const gainRef = useRef<GainNode | null>(null);
+  const { needsGesture, resume: resumeAudio } = useAudioResume({
+    contextRef,
+    active: isPlaying,
+  });
 
   const stop = useCallback(() => {
     try {
@@ -93,5 +98,5 @@ export function useToneGenerator({
     );
   }, [isPlaying, level]);
 
-  return { isPlaying, error, start, stop };
+  return { isPlaying, error, start, stop, needsGesture, resumeAudio };
 }

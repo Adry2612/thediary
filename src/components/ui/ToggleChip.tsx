@@ -13,7 +13,8 @@ interface ToggleChipProps
   children: ReactNode;
 }
 
-const baseStyles = "inline-flex items-center border transition";
+const baseStyles =
+  "inline-flex items-center border transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60";
 
 const selectedStyles: Record<Tone, string> = {
   accent: "border-accent-green-fg bg-accent-green-bg/40 text-ink",

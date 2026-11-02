@@ -12,8 +12,8 @@ function isEnabled(value: string | undefined): boolean {
 }
 
 /**
- * Editor propio de tablatura. Sigue en diseño, así que la sección se oculta
- * salvo que se abra con `NEXT_PUBLIC_TAB_EDITOR=1`.
+ * Editor de tablatura por partitura. Se abre con `NEXT_PUBLIC_TAB_EDITOR=1`
+ * mientras termina la migración de los datos antiguos.
  */
 export const isTabEditorEnabled = isEnabled(
   process.env.NEXT_PUBLIC_TAB_EDITOR,

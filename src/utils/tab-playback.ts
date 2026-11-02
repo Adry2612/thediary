@@ -1,5 +1,4 @@
 import { parseTuningNotes, STRING_COUNT } from "./chords.ts";
-import type { RepertoireTab } from "../types/practice.ts";
 
 /**
  * Altura MIDI de cada cuerda al aire en afinación estándar, de la 6ª a la 1ª.
@@ -49,10 +48,4 @@ export function getTabTuningMidi(tuning: string): number[] {
     if (pitchClass === undefined) return STANDARD_OPEN_MIDI[index];
     return pitchClassToMidi(pitchClass, STANDARD_OPEN_MIDI[index]);
   });
-}
-
-/** Segundos que ocupa una columna de la rejilla para un tempo y resolución. */
-export function getTabColumnSeconds(tab: RepertoireTab, bpm: number): number {
-  const safeBpm = Number.isFinite(bpm) && bpm > 0 ? bpm : 90;
-  return (60 / safeBpm) * (4 / tab.subdivision);
 }

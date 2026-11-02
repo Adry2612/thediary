@@ -58,11 +58,11 @@ test("groups week practice by each day from Monday through Sunday", () => {
   assert.equal(buckets.reduce((sum, bucket) => sum + bucket.totalSeconds, 0), 2700);
 });
 
-test("groups the selected month into Monday-to-Sunday week buckets", () => {
+test("groups the last 30 days into Monday-to-Sunday week buckets", () => {
   const history = [
     createSession("september", "2026-09-30T12:00:00.000Z"),
-    createSession("first-partial-week", "2026-10-02T12:00:00.000Z"),
-    createSession("second-week", "2026-10-08T12:00:00.000Z", {
+    createSession("first-crossing-week", "2026-10-02T12:00:00.000Z"),
+    createSession("future", "2026-10-08T12:00:00.000Z", {
       durationSeconds: 3600,
     }),
   ];
@@ -74,12 +74,12 @@ test("groups the selected month into Monday-to-Sunday week buckets", () => {
   );
 
   assert.equal(buckets.length, 5);
-  assert.equal(buckets[0].label, "1–4");
-  assert.equal(buckets[1].label, "5–11");
-  assert.equal(buckets[0].totalSeconds, 1800);
-  assert.equal(buckets[0].sessionCount, 1);
-  assert.equal(buckets[1].totalSeconds, 3600);
-  assert.equal(buckets[1].sessionCount, 1);
+  assert.equal(buckets[0].label, "8–13");
+  assert.equal(buckets[3].label, "28 sept–4 oct");
+  assert.equal(buckets[3].totalSeconds, 3600);
+  assert.equal(buckets[3].sessionCount, 2);
+  assert.equal(buckets[4].label, "5–7");
+  assert.equal(buckets[4].totalSeconds, 0);
 });
 
 test("groups year practice by month and summarizes total time and strongest skill", () => {
@@ -286,6 +286,87 @@ test("splits monthly time between electric, acoustic and unclassified guitar", (
   });
 });
 
+test("distributes skill time for a week and for a year window", () => {
+  const history = [
+    createSession("this-week", "2026-10-06T12:00:00.000Z", {
+      skillSeconds: { ...emptySkills, technique: 1800 },
+    }),
+    createSession("last-week", "2026-09-29T12:00:00.000Z", {
+      skillSeconds: { ...emptySkills, theory: 600 },
+    }),
+    createSession("january", "2026-01-15T12:00:00.000Z", {
+      skillSeconds: { ...emptySkills, lick: 300 },
+    }),
+    createSession("last-year", "2025-12-20T12:00:00.000Z", {
+      skillSeconds: { ...emptySkills, repertoire: 900 },
+    }),
+  ];
+
+  const week = getSkillDistribution(history, {
+    startDate: "2026-10-05",
+    endDate: "2026-10-11",
+  });
+  assert.equal(week.totalMinutes, 30);
+  assert.deepEqual(week.categories.technique, {
+    minutes: 30,
+    percentage: 100,
+    sessionCount: 1,
+  });
+  assert.equal(week.categories.theory.minutes, 0);
+
+  const year = getSkillDistribution(history, {
+    startDate: "2026-01-01",
+    endDate: "2026-12-31",
+  });
+  assert.equal(year.totalMinutes, 45);
+  assert.equal(year.categories.technique.minutes, 30);
+  assert.equal(year.categories.theory.minutes, 10);
+  assert.equal(year.categories.lick.minutes, 5);
+  assert.equal(year.categories.repertoire.minutes, 0);
+});
+
+test("splits guitar time for a week and for a year window", () => {
+  const history = [
+    createSession("this-week", "2026-10-06T12:00:00.000Z", {
+      guitarType: "electric",
+    }),
+    createSession("last-week", "2026-09-29T12:00:00.000Z", {
+      guitarType: "acoustic",
+    }),
+    createSession("march", "2026-03-03T12:00:00.000Z", {
+      durationSeconds: 600,
+      guitarType: "acoustic",
+    }),
+    createSession("last-year", "2025-12-20T12:00:00.000Z", {
+      guitarType: "electric",
+    }),
+  ];
+
+  assert.deepEqual(
+    getGuitarBalance(history, {
+      startDate: "2026-10-05",
+      endDate: "2026-10-11",
+    }),
+    {
+      electricSeconds: 1800,
+      acousticSeconds: 0,
+      unclassifiedSeconds: 0,
+    },
+  );
+
+  assert.deepEqual(
+    getGuitarBalance(history, {
+      startDate: "2026-01-01",
+      endDate: "2026-12-31",
+    }),
+    {
+      electricSeconds: 1800,
+      acousticSeconds: 2400,
+      unclassifiedSeconds: 0,
+    },
+  );
+});
+
 test("ranks songs, techniques and theory over the full history", () => {
   const repertoire = [
     {
@@ -374,7 +455,7 @@ test("returns empty rankings when there is no phase data", () => {
   assert.deepEqual(rankings, { songs: [], techniques: [], theory: [] });
 });
 
-test("summarizes a week with sessions, average, best day and previous week", () => {
+test("summarizes a week and compares the same days of the previous week", () => {
   const today = new Date(2026, 9, 7, 12);
   const history = [
     createSession("monday", new Date(2026, 9, 5, 12).toISOString(), {
@@ -386,6 +467,9 @@ test("summarizes a week with sessions, average, best day and previous week", () 
     createSession("tuesday-b", new Date(2026, 9, 6, 17).toISOString(), {
       durationSeconds: 900,
     }),
+    createSession("previous-monday", new Date(2026, 8, 28, 12).toISOString(), {
+      durationSeconds: 1800,
+    }),
     createSession("previous-sunday", new Date(2026, 9, 4, 12).toISOString(), {
       durationSeconds: 3600,
     }),
@@ -396,12 +480,12 @@ test("summarizes a week with sessions, average, best day and previous week", () 
     sessionCount: 3,
     averageSessionSeconds: 1500,
     bestBucket: { label: "mar 6", totalSeconds: 2700 },
-    previousTotalSeconds: 3600,
-    changeRatio: 0.25,
+    previousTotalSeconds: 1800,
+    changeRatio: 1.5,
   });
 });
 
-test("summarizes a month against the previous calendar month", () => {
+test("summarizes the last 30 days and ignores older and future practice", () => {
   const today = new Date(2026, 9, 7, 12);
   const history = [
     createSession("september", new Date(2026, 8, 30, 12).toISOString(), {
@@ -417,18 +501,98 @@ test("summarizes a month against the previous calendar month", () => {
 
   const summary = getPracticeTimeSummary(history, "month", today);
 
-  assert.equal(summary.totalSeconds, 5400);
+  assert.equal(summary.totalSeconds, 3000);
   assert.equal(summary.sessionCount, 2);
-  assert.equal(summary.averageSessionSeconds, 2700);
+  assert.equal(summary.averageSessionSeconds, 1500);
   assert.deepEqual(summary.bestBucket, {
-    label: "5–11",
-    totalSeconds: 3600,
+    label: "28 sept–4 oct",
+    totalSeconds: 3000,
   });
-  assert.equal(summary.previousTotalSeconds, 1200);
-  assert.equal(summary.changeRatio, 3.5);
+  assert.equal(summary.previousTotalSeconds, 0);
+  assert.equal(summary.changeRatio, null);
 });
 
-test("summarizes a year against the previous year", () => {
+test("mid month compares the 30 days with the previous 30", () => {
+  const today = new Date(2026, 10, 15, 12);
+  const history = [
+    createSession("october-outside", new Date(2026, 9, 5, 12).toISOString(), {
+      durationSeconds: 900,
+    }),
+    createSession("october-inside", new Date(2026, 9, 20, 12).toISOString(), {
+      durationSeconds: 3000,
+    }),
+    createSession("november-first", new Date(2026, 10, 3, 12).toISOString(), {
+      durationSeconds: 600,
+    }),
+    createSession("november-tenth", new Date(2026, 10, 10, 12).toISOString(), {
+      durationSeconds: 1200,
+    }),
+  ];
+
+  const summary = getPracticeTimeSummary(history, "month", today);
+
+  assert.equal(summary.totalSeconds, 4800);
+  assert.equal(summary.previousTotalSeconds, 900);
+  assert.equal(summary.changeRatio, (4800 - 900) / 900);
+});
+
+test("the first day of a month keeps the end of the previous month", () => {
+  const today = new Date(2026, 10, 1, 12);
+  const history = [
+    createSession("october-first", new Date(2026, 9, 1, 12).toISOString(), {
+      durationSeconds: 1200,
+    }),
+    createSession("october-late", new Date(2026, 9, 20, 12).toISOString(), {
+      durationSeconds: 600,
+    }),
+  ];
+
+  const summary = getPracticeTimeSummary(history, "month", today);
+
+  assert.equal(summary.totalSeconds, 600);
+  assert.equal(summary.previousTotalSeconds, 1200);
+  assert.equal(summary.changeRatio, -0.5);
+});
+
+test("reports no comparison when the previous 30 days have no practice", () => {
+  const today = new Date(2026, 10, 1, 12);
+  const history = [
+    createSession("too-old", new Date(2026, 8, 1, 12).toISOString(), {
+      durationSeconds: 900,
+    }),
+    createSession("october-late", new Date(2026, 9, 20, 12).toISOString(), {
+      durationSeconds: 1800,
+    }),
+  ];
+
+  const summary = getPracticeTimeSummary(history, "month", today);
+
+  assert.equal(summary.previousTotalSeconds, 0);
+  assert.equal(summary.changeRatio, null);
+});
+
+test("a practice dated after today counts in the week total but not in the comparison", () => {
+  const today = new Date(2026, 9, 7, 12);
+  const history = [
+    createSession("previous", new Date(2026, 8, 29, 12).toISOString(), {
+      durationSeconds: 300,
+    }),
+    createSession("current", new Date(2026, 9, 6, 12).toISOString(), {
+      durationSeconds: 600,
+    }),
+    createSession("future", new Date(2026, 9, 9, 12).toISOString(), {
+      durationSeconds: 1200,
+    }),
+  ];
+
+  const summary = getPracticeTimeSummary(history, "week", today);
+
+  assert.equal(summary.totalSeconds, 1800);
+  assert.equal(summary.previousTotalSeconds, 300);
+  assert.equal(summary.changeRatio, 1);
+});
+
+test("summarizes a year against the same stretch of the previous year", () => {
   const today = new Date(2026, 9, 7, 12);
   const history = [
     createSession("january", new Date(2026, 0, 12, 12).toISOString(), {
@@ -437,9 +601,14 @@ test("summarizes a year against the previous year", () => {
     createSession("october", new Date(2026, 9, 7, 12).toISOString(), {
       durationSeconds: 3600,
     }),
-    createSession("last-year", new Date(2025, 11, 20, 12).toISOString(), {
+    createSession("last-year", new Date(2025, 8, 30, 12).toISOString(), {
       durationSeconds: 1800,
     }),
+    createSession(
+      "last-year-late",
+      new Date(2025, 11, 20, 12).toISOString(),
+      { durationSeconds: 900 },
+    ),
   ];
 
   const summary = getPracticeTimeSummary(history, "year", today);

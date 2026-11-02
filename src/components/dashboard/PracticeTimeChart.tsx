@@ -5,7 +5,7 @@ import { formatPracticeDuration, formatTotal } from "@/utils/format";
 import { getPracticeTimeBuckets, getPracticeTimeSummary } from "@/utils/practice-analytics";
 import { getContainedTooltipPosition } from "@/utils/practice-chart-tooltip";
 import type { PracticeChartPeriod, PracticeTimeBucket } from "@/utils/practice-analytics";
-import { SelectField } from "@/components/ui/SelectField";
+import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import type { SessionRecord } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import type { ChartTooltip } from "@/types/dashboard";
@@ -25,11 +25,6 @@ export function PracticeTimeChart({
 }) {
   const [period, setPeriod] = useState<PracticeChartPeriod>("week");
   const dashboard = useI18nSection("dashboard");
-  const periodOptions = [
-    { value: "week" as const, label: dashboard.periodWeek ?? dashboard.period },
-    { value: "month" as const, label: dashboard.periodMonth ?? dashboard.period },
-    { value: "year" as const, label: dashboard.periodYear ?? dashboard.period },
-  ];
   const [tooltip, setTooltip] = useState<ChartTooltip | null>(null);
   const chartContainerRef = useRef<HTMLElement>(null);
   const buckets = useMemo(
@@ -63,6 +58,12 @@ export function PracticeTimeChart({
       : period === "month"
         ? dashboard.tooltipOfBestWeek
         : dashboard.tooltipOfBestMonth;
+  const comparisonLabel =
+    period === "week"
+      ? dashboard.summaryComparisonWeek
+      : period === "month"
+        ? dashboard.summaryComparisonMonth
+        : dashboard.summaryComparisonYear;
 
   function showTooltip(
     element: HTMLElement,
@@ -106,7 +107,7 @@ export function PracticeTimeChart({
       ref={chartContainerRef}
       className="enter relative isolate flex h-full min-h-[27rem] flex-col rounded-xl border border-zinc-800 bg-zinc-900 p-5 sm:min-h-[32rem] sm:p-8"
     >
-      <div className="flex flex-wrap items-end justify-between gap-5">
+      <div className="flex flex-wrap items-start justify-between gap-5">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-muted">
              {dashboard.recordedTimeTitle}
@@ -120,18 +121,11 @@ export function PracticeTimeChart({
               : period === "month" ? dashboard.monthTimeChart : dashboard.yearTime}
           </p>
         </div>
-        <div className="min-w-32 text-xs text-muted">
-           {dashboard.period}
-          <SelectField
-            className="mt-1"
-            value={period}
-             ariaLabel={dashboard.periodAria}
-            onChange={(selectedPeriod) =>
-              setPeriod(selectedPeriod as PracticeChartPeriod)
-            }
-             options={periodOptions}
-          />
-        </div>
+        <PeriodSelector
+          period={period}
+          onChange={setPeriod}
+          ariaLabel={dashboard.periodAria}
+        />
       </div>
 
       <div className="mt-6 flex items-baseline gap-2">
@@ -171,8 +165,8 @@ export function PracticeTimeChart({
           </dd>
         </div>
         <div className="min-w-0">
-          <dt className="text-[10px] uppercase tracking-[0.12em] text-muted">
-            {dashboard.summaryComparison}
+          <dt className="min-h-12 text-[10px] uppercase tracking-[0.12em] text-muted sm:min-h-8">
+            {comparisonLabel}
           </dt>
           <dd className="mt-1 truncate font-mono text-sm tabular-nums text-zinc-100">
             {changeLabel}
@@ -180,7 +174,7 @@ export function PracticeTimeChart({
         </div>
       </dl>
 
-      <div className="mt-5 min-h-0 flex-1 overflow-x-auto">
+      <div className="relative mt-5 min-h-0 flex-1 overflow-x-auto">
         <ul
            aria-label={dashboard.chartAria}
           className="grid h-full min-h-56 min-w-full items-end gap-2 border-b border-zinc-800 pb-2 sm:gap-3"
@@ -264,8 +258,8 @@ export function PracticeTimeChart({
         </div>
       )}
       {maximumSeconds === 0 && (
-        <p className="mt-4 text-center text-sm text-muted">
-           {dashboard.emptyChart}
+        <p className="pointer-events-none absolute inset-x-0 bottom-16 text-center text-sm text-muted">
+          {dashboard.emptyChart}
         </p>
       )}
     </section>

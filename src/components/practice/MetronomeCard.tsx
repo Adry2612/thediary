@@ -30,6 +30,8 @@ export function MetronomeCard({
   const text = useI18nSection("metronome");
   const {
     audioError,
+    needsGesture,
+    resumeAudio,
     activeBeat,
     activeSubdivision,
     bpm,
@@ -285,6 +287,15 @@ export function MetronomeCard({
         <p className="mt-2 text-sm text-red-300" role="alert">
           {audioError}
         </p>
+      )}
+      {needsGesture && (
+        <Button
+          variant="ghost"
+          onClick={() => void resumeAudio()}
+          className="mt-2 w-full"
+        >
+          {text.resumeAudio}
+        </Button>
       )}
 
       <Button onClick={tapTempo} className="mt-5 w-full">

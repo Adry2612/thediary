@@ -176,7 +176,7 @@ test("the weekly series has one bucket per day and leaves gaps as null", () => {
   assert.equal(wednesday?.focus, null);
 });
 
-test("the month series uses calendar weeks clipped to the month", () => {
+test("the month series uses the 30-day window in weeks", () => {
   const sessions = [
     session("a", at(2026, 10, 2), 3),
     session("b", at(2026, 10, 20), 5),
@@ -188,8 +188,8 @@ test("the month series uses calendar weeks clipped to the month", () => {
   );
 
   assert.ok(series.length >= 4);
-  assert.equal(series[0].startDate, "2026-10-01");
-  assert.equal(series[series.length - 1].endDate, "2026-10-31");
+  assert.equal(series[0].startDate, "2026-09-30");
+  assert.equal(series[series.length - 1].endDate, "2026-10-29");
   assert.equal(
     series.reduce((total, bucket) => total + (bucket.mood?.count ?? 0), 0),
     2,
@@ -248,6 +248,40 @@ test("the summary has no comparison when the previous period is empty", () => {
   assert.equal(summary.mood?.previousAverage, null);
   assert.equal(summary.mood?.change, null);
   assert.equal(summary.mood?.trend, null);
+});
+
+test("answers older than the 30-day comparison window do not count", () => {
+  const sessions = [
+    session("too-old", at(2026, 8, 1), 3),
+    session("september-inside", at(2026, 9, 12), 2),
+    session("october", at(2026, 10, 10), 4),
+  ];
+
+  const summary = getPracticeWellbeingSummary(
+    sessions,
+    "month",
+    new Date(2026, 9, 15),
+  );
+
+  assert.equal(summary.mood?.average, 4);
+  assert.equal(summary.mood?.previousAverage, 2);
+  assert.equal(summary.mood?.change, 2);
+});
+
+test("a mid-month comparison ignores answers dated after today", () => {
+  const sessions = [
+    session("october-inside", at(2026, 10, 5), 3),
+    session("october-future", at(2026, 10, 20), 5),
+  ];
+
+  const summary = getPracticeWellbeingSummary(
+    sessions,
+    "month",
+    new Date(2026, 9, 15),
+  );
+
+  assert.equal(summary.mood?.average, 3);
+  assert.equal(summary.mood?.count, 1);
 });
 
 test("the history has wellbeing data when any session answered", () => {

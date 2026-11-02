@@ -1,18 +1,17 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LickBpmChart } from "@/components/licks/LickBpmChart";
 import { LickBpmPanel } from "@/components/licks/LickBpmPanel";
-import { LickEditorModal } from "@/components/licks/LickEditorModal";
+import { LickReferenceVideo } from "@/components/licks/LickReferenceVideo";
 import { LickTab } from "@/components/licks/LickTab";
 import { TechniqueBadges } from "@/components/licks/TechniqueBadges";
-import { TabPlaybackBar } from "@/components/repertoire/TabPlaybackBar";
 import { BackLink } from "@/components/ui/BackLink";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PageShell } from "@/components/ui/PageShell";
-import { Button } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EditIcon, TrashIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import {
@@ -33,10 +32,7 @@ export default function LickDetailPage({ params }: Props) {
   const licks = usePracticeStore((state) => state.licks);
   const items = usePracticeStore((state) => state.repertoireItems);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
-  const saveLick = usePracticeStore((state) => state.saveLick);
   const deleteLick = usePracticeStore((state) => state.deleteLick);
-  const [editing, setEditing] = useState(false);
-  const [playheadColumn, setPlayheadColumn] = useState<number | null>(null);
   const today = useMemo(() => new Date(), []);
   const lick = licks.find((candidate) => candidate.id === id);
 
@@ -97,15 +93,13 @@ export default function LickDetailPage({ params }: Props) {
         }
         actions={
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
+            <ButtonLink
+              href={`/licks/${lick.id}/edit`}
               variant="ghost"
-              size="field"
-              onClick={() => setEditing(true)}
             >
               <EditIcon className="size-4" />
               {text.edit}
-            </Button>
+            </ButtonLink>
             <button
               type="button"
               aria-label={`${text.delete}: ${title}`}
@@ -122,24 +116,23 @@ export default function LickDetailPage({ params }: Props) {
         }
       />
 
+      {lick.referenceVideo ? (
+        <section className="mt-8">
+          <LickReferenceVideo video={lick.referenceVideo} />
+        </section>
+      ) : null}
+
       <section className="mt-8">
         <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">
           {text.tabTitle}
         </h2>
-        {lick.tab && lick.tab.notes.length > 0 ? (
-          <TabPlaybackBar
-            tab={lick.tab}
-            initialBpm={lick.currentBpm ?? lick.targetBpm ?? 90}
-            onPlayheadChange={setPlayheadColumn}
-            className="mt-4"
-          />
-        ) : null}
         <LickTab
+          score={lick.score}
           tab={lick.tab}
           content={lick.tabContent}
           emptyLabel={text.tabEmpty}
           ariaLabel={`${text.tabTitle}: ${title}`}
-          playheadColumn={playheadColumn}
+          playback
           className="mt-3"
         />
       </section>
@@ -152,14 +145,6 @@ export default function LickDetailPage({ params }: Props) {
         <LickBpmPanel lick={lick} />
       </div>
 
-      {editing ? (
-        <LickEditorModal
-          lick={lick}
-          songs={items.filter((item) => item.kind === "song")}
-          onSave={saveLick}
-          onClose={() => setEditing(false)}
-        />
-      ) : null}
     </PageShell>
   );
 }

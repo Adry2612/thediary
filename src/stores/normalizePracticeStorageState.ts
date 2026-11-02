@@ -6,6 +6,7 @@ import type { PersistedPracticeState } from "@/types/practice-storage";
 import { migrateRepertoireLicks } from "../utils/licks/migration.ts";
 import { normalizeLicks } from "../utils/licks/normalize.ts";
 import { normalizeSessionRecord } from "../utils/practice-session-record.ts";
+import { isTabScoreLike } from "../utils/tab-score/model.ts";
 import {
   migrateLegacyEquipmentEntries,
   normalizeGuitarEntries,
@@ -32,9 +33,23 @@ type LegacyEquipmentKeys = {
 function normalizeStoredRepertoireItem(item: RepertoireItem): RepertoireItem {
   if (!item || typeof item !== "object") return item;
   const difficulty = normalizeRepertoireDifficulty(item.difficulty);
-  if (difficulty === item.difficulty) return item;
-  const { difficulty: _discarded, ...rest } = item;
-  return difficulty ? { ...rest, difficulty } : rest;
+  const hasValidScore = isTabScoreLike(item.score);
+  if (
+    difficulty === item.difficulty &&
+    (item.score === undefined || hasValidScore)
+  ) {
+    return item;
+  }
+  const {
+    difficulty: _discarded,
+    score: _discardedScore,
+    ...rest
+  } = item;
+  return {
+    ...rest,
+    ...(difficulty ? { difficulty } : {}),
+    ...(hasValidScore ? { score: item.score } : {}),
+  };
 }
 
 /**

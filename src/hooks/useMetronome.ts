@@ -22,7 +22,7 @@ import {
   getMetronomeMeter,
   type MetronomeMeterSignature,
 } from "@/utils/metronome-meter";
-import { getScheduledMetronomeBeats } from "@/utils/metronome-scheduler";
+import { getScheduledMetronomeBeats, reanchorSchedule } from "@/utils/metronome-scheduler";
 import {
   DEFAULT_TEMPO_RAMP_SETTINGS,
   getTempoRampIntervalSeconds,
@@ -67,6 +67,7 @@ import {
   resumeMetronomeAudioContext,
   suspendMetronomeAudioContext,
 } from "@/services/metronome-audio-context";
+import { useAudioResume } from "@/hooks/useAudioResume";
 
 export { MAX_BPM, MIN_BPM };
 
@@ -250,6 +251,36 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     activeSourcesRef.current.clear();
   }, []);
 
+  const resetVisualPulse = useCallback(() => {
+    setIsPulsing(false);
+    setActiveBeat(null);
+    setActiveSubdivision(null);
+  }, []);
+
+  const reanchor = useCallback(() => {
+    const context = audioContextRef.current;
+    if (!context || !runningRef.current) return;
+
+    // Al limpiar los temporizadores también hay que apagar el pulso: si no,
+    // el último tiempo tocado se queda iluminado para siempre.
+    clearPulseTimeouts();
+    resetVisualPulse();
+    stopActiveSources();
+    nextBeatTimeRef.current = reanchorSchedule(context.currentTime);
+    resetTempoRampSchedule(tempoRampRef.current, completedBarsRef.current);
+  }, [
+    clearPulseTimeouts,
+    resetTempoRampSchedule,
+    resetVisualPulse,
+    stopActiveSources,
+  ]);
+
+  const { needsGesture, resume: resumeAudio } = useAudioResume({
+    contextRef: audioContextRef,
+    active: isRunning,
+    onResume: reanchor,
+  });
+
   const scheduleVisualPulse = useCallback(
     (
       context: AudioContext,
@@ -285,6 +316,13 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
   const scheduleNextBeats = useCallback(() => {
     const context = audioContextRef.current;
     if (!context || !runningRef.current) return;
+
+    // Si la planificación se quedó atrás (app suspendida), se reancla antes
+    // de programar para no disparar de golpe los pulsos perdidos.
+    if (context.currentTime - nextBeatTimeRef.current > 0.25) {
+      stopActiveSources();
+      nextBeatTimeRef.current = reanchorSchedule(context.currentTime);
+    }
 
     const schedule = getScheduledMetronomeBeats({
       state: {
@@ -330,7 +368,7 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     nextTempoIncreaseBarRef.current = schedule.state.nextTempoIncreaseBar;
     bpmRef.current = schedule.bpm;
     setBpmState(schedule.bpm);
-  }, [scheduleVisualPulse]);
+  }, [scheduleVisualPulse, stopActiveSources]);
 
   useEffect(() => {
     const meter = meterRef.current;
@@ -524,6 +562,8 @@ function useMetronomeController(initialBpm = 80, initialVolume = 0.3) {
     beatPattern,
     cycleBeat,
     toggleBeatMute,
+    needsGesture,
+    resumeAudio,
   };
 }
 

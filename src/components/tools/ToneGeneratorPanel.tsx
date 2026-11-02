@@ -75,6 +75,15 @@ export function ToneGeneratorPanel() {
           >
             {tone.isPlaying ? text.toneStop : text.toneStart}
           </Button>
+          {tone.needsGesture && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => void tone.resumeAudio()}
+            >
+              {text.resumeAudio}
+            </Button>
+          )}
         </div>
       </div>
 
