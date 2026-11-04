@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ChangePasswordDialog } from '@/components/account/ChangePasswordDialog';
 import { DeletePracticeDataDialog } from '@/components/account/DeletePracticeDataDialog';
+import { ReminderSettings } from '@/components/account/ReminderSettings';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { SelectField } from '@/components/ui/SelectField';
@@ -208,6 +209,8 @@ export function SettingsView() {
             ))}
           </div>
         </section>
+
+        <ReminderSettings />
 
         <section
           aria-labelledby='settings-cloud-sync-title'

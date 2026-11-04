@@ -4,6 +4,7 @@ import { GuestModeNotice } from '@/components/account/GuestModeNotice';
 import { SiteNavigation } from '@/components/layout/SiteNavigation';
 import { ActivePracticeSessionHost } from '@/components/practice/ActivePracticeSessionHost';
 import { CloudAutoSyncHost } from '@/components/practice/CloudAutoSyncHost';
+import { ReminderRuntime } from '@/components/providers/ReminderRuntime';
 import { MetronomeProvider } from '@/hooks/useMetronome';
 import { TutorialProvider } from '@/components/tutorial/TutorialProvider';
 import { I18nProvider } from '@/i18n/I18nProvider';
@@ -63,6 +64,7 @@ export default function RootLayout({
                 <SiteNavigation />
                 <GuestModeNotice />
                 <CloudAutoSyncHost />
+                <ReminderRuntime />
                 {children}
                 <ActivePracticeSessionHost />
               </TutorialProvider>
