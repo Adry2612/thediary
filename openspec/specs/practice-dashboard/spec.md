@@ -405,29 +405,33 @@ On a coarse pointer, the system SHALL open a day's summary on the first tap with
 - **WHEN** the pointer hovers a day and then clicks it
 - **THEN** the summary opens on hover and the click opens the day detail, as before
 
-### Requirement: The annual calendar previews a day in a non-blocking card
+### Requirement: The annual calendar previews a day with its full content
 
-The system SHALL show the annual calendar's day summary in a floating card next to the day under the pointer or keyboard focus, SHALL let pointer events pass through the card so the day underneath it stays hoverable and clickable, and SHALL keep the preview compact: date, session count, total time, the name, time and BPM of up to two sessions, the blocks of each session and its notes, with a count of the sessions that do not fit.
+The system SHALL show the annual calendar's day summary in a floating card next to the day under the pointer or keyboard focus, SHALL let the pointer enter the card and scroll its session list, and SHALL show the full content of the day: date, session count, total time and every session with its name, time, BPM, practised blocks and notes.
 
 #### Scenario: Opening a day
 - **WHEN** the pointer enters a day of the annual calendar
 - **THEN** its summary card opens next to that day without waiting for a dwell
 
-#### Scenario: Moving across the card
-- **WHEN** the pointer leaves the day and crosses the area occupied by the card
-- **THEN** the day underneath the pointer receives the hover and the card updates to that day instead of keeping the previous one
+#### Scenario: Entering the card
+- **WHEN** the pointer leaves the day and enters the open card
+- **THEN** the card stays open and its session list can be scrolled
 
-#### Scenario: Choosing a day under the card
-- **WHEN** the pointer clicks a day whose cell is covered by the open card
-- **THEN** that day's detail opens normally
+#### Scenario: Scrolling the card
+- **WHEN** the day has more content than fits in the card and the user scrolls inside it
+- **THEN** the card stays open and shows the rest of the sessions, blocks and notes
 
 #### Scenario: Keyboard focus
 - **WHEN** a day receives keyboard focus
 - **THEN** the card opens next to it and describes that day until the focus moves
 
 #### Scenario: Many sessions in a day
-- **WHEN** the day has more than two sessions
-- **THEN** the card lists the first two with their blocks and shows how many more sessions that day has
+- **WHEN** the day has several sessions
+- **THEN** the card lists every session with its practised blocks and notes, without a "more sessions" summary
+
+#### Scenario: A block that was not practised
+- **WHEN** a session includes a block with zero practised time
+- **THEN** the card omits that block and its notes from the day summary
 
 #### Scenario: A day without practice
 - **WHEN** the pointer or focus reaches a day without saved practice
@@ -711,7 +715,11 @@ The system SHALL replace the period dropdown of the practice rhythm chart with t
 
 ### Requirement: The evolution charts animate on appearance and change
 
-The system SHALL animate the practice rhythm bars, the skill-balance bars and ring, the guitar balance arc, the monthly heatmap and the annual calendar when they first appear or when their period, month or year changes, using only opacity, transform or SVG stroke drawing so no layout shifts, and SHALL finish within 500 ms with a stagger delay capped so the last element starts within 250 ms.
+The system SHALL animate the practice rhythm bars, the skill-balance bars and ring, the guitar balance arc, the monthly heatmap and the annual calendar on first appearance or a period, month or year change, using only opacity, transform or SVG stroke drawing so no layout shifts, and SHALL finish within 500 ms. Bar and cell staggers SHALL start within 250 ms. The ring and the arc SHALL draw as one continuous sweep without background gaps between sections.
+
+#### Scenario: The ring draws without gaps
+- **WHEN** the skill ring or the guitar arc animates
+- **THEN** it draws as one continuous sweep and no background gap appears between its sections
 
 #### Scenario: The chart appears
 - **WHEN** the evolution screen shows a chart with data

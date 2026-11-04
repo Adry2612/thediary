@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCloudRecordingSync } from "@/hooks/useCloudRecordingSync";
 import {
+  readRecordingFilterPreferences,
+  saveRecordingFilterPreferences,
+} from "@/services/recording-filter-preferences";
+import {
   deletePracticeRecording,
   listPracticeRecordings,
 } from "@/services/practice-library";
@@ -26,6 +30,7 @@ export function useRecordingsLibrary(blockLabel: string) {
   const [filters, setFilters] = useState<PracticeRecordingFilters>(
     INITIAL_PRACTICE_RECORDING_FILTERS,
   );
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCatalogLoaded, setIsCatalogLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -44,6 +49,16 @@ export function useRecordingsLibrary(blockLabel: string) {
     setLoadError(null);
     return savedRecordings;
   }, []);
+
+  useEffect(() => {
+    setFilters(readRecordingFilterPreferences());
+    setFiltersHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!filtersHydrated) return;
+    saveRecordingFilterPreferences(filters);
+  }, [filters, filtersHydrated]);
 
   useEffect(() => {
     let isActive = true;

@@ -17,17 +17,11 @@ type PracticeDaySummaryProps = {
   titleId?: string;
   className?: string;
   /**
-   * Vista previa del calendario anual: no se puede desplazar, así que muestra
-   * el contenido de las sesiones (bloques y notas) con límites de altura.
+   * Vista previa del calendario anual: la ficha se puede recorrer con el
+   * puntero, así que muestra el contenido completo de las sesiones.
    */
   compact?: boolean;
 };
-
-/** Sesiones que caben en la vista previa no interactiva del calendario anual. */
-export const COMPACT_SUMMARY_SESSION_LIMIT = 2;
-
-/** Bloques por sesión en la vista previa del calendario anual. */
-export const COMPACT_SUMMARY_PHASE_LIMIT = 3;
 
 /**
  * Contenido compartido del resumen de un día: lo usan la ficha flotante del
@@ -41,10 +35,7 @@ export function PracticeDaySummary({
 }: PracticeDaySummaryProps) {
   const { locale } = useI18n();
   const tooltip = useI18nSection("tooltip");
-  const visibleSessions = compact
-    ? day.sessions.slice(0, COMPACT_SUMMARY_SESSION_LIMIT)
-    : day.sessions;
-  const hiddenSessionCount = day.sessions.length - visibleSessions.length;
+  const visibleSessions = day.sessions;
 
   return (
     <div className={`flex min-h-0 flex-1 flex-col ${className}`}>
@@ -72,17 +63,12 @@ export function PracticeDaySummary({
             </span>
           </div>
           <ul
-            className={
-              compact
-                ? "mt-3 space-y-2"
-                : "mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto"
-            }
+            className={`mt-3 min-h-0 flex-1 overflow-y-auto ${
+              compact ? "space-y-2" : "space-y-3"
+            }`}
           >
             {visibleSessions.map((session) => {
-              const phaseLines = getSessionPhaseLines(session).slice(
-                0,
-                compact ? COMPACT_SUMMARY_PHASE_LIMIT : undefined,
-              );
+              const phaseLines = getSessionPhaseLines(session);
               return (
                 <li
                   key={session.id}
@@ -113,7 +99,7 @@ export function PracticeDaySummary({
                               phase.elapsedSeconds / 60,
                             )}
                           </span>
-                          {phase.notes && !compact && (
+                          {phase.notes && (
                             <p className="mt-0.5 whitespace-pre-wrap text-muted">
                               {phase.notes}
                             </p>
@@ -123,9 +109,7 @@ export function PracticeDaySummary({
                     </ul>
                   )}
                   {session.notes && (
-                    <p
-                      className={`mt-2 whitespace-pre-wrap border-t border-zinc-800 pt-2 text-xs leading-relaxed text-zinc-400 ${compact ? "line-clamp-2" : ""}`}
-                    >
+                    <p className="mt-2 whitespace-pre-wrap border-t border-zinc-800 pt-2 text-xs leading-relaxed text-zinc-400">
                       {session.notes}
                     </p>
                   )}
@@ -133,12 +117,6 @@ export function PracticeDaySummary({
               );
             })}
           </ul>
-          {compact && hiddenSessionCount > 0 && (
-            <p className="mt-2 shrink-0 font-mono text-xs text-muted">
-              +{hiddenSessionCount}{" "}
-              {hiddenSessionCount === 1 ? tooltip.session : tooltip.sessions}
-            </p>
-          )}
         </>
       ) : (
         <p className="mt-4 border-t border-zinc-800 pt-3 text-sm text-muted">

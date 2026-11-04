@@ -29,6 +29,10 @@ export function PracticeSessionPhases({
   licks,
 }: PracticeSessionPhasesProps) {
   const { techniqueNameLanguage } = useDisplayPreferences();
+  // Los bloques previstos que no llegaron a practicarse no son parte del
+  // resumen de la sesión.
+  const visiblePhases =
+    phases?.filter((phase) => phase.elapsedSeconds > 0) ?? [];
 
   return (
     <section
@@ -41,7 +45,7 @@ export function PracticeSessionPhases({
       >
         Bloques de práctica
       </h3>
-      {phases?.length ? (
+      {visiblePhases.length ? (
         <div className="mt-3 overflow-x-auto border-y border-line">
           <table className="w-full min-w-[38rem] table-fixed text-left">
             <colgroup>
@@ -66,7 +70,7 @@ export function PracticeSessionPhases({
               </tr>
             </thead>
             <tbody>
-              {phases.map((phase, index) => {
+              {visiblePhases.map((phase, index) => {
                 const title = getPracticeBlockDisplayTitle(
                   phase,
                   repertoireItems,
@@ -153,7 +157,7 @@ export function PracticeSessionPhases({
           Esta sesión no contiene el detalle de sus bloques.
         </p>
       )}
-      {phases?.length ? (
+      {visiblePhases.length ? (
         <Link
           href={`/practice?repeatSessionId=${encodeURIComponent(sessionId)}`}
           className="mt-4 inline-flex h-11 items-center justify-center border border-line px-4 text-sm font-medium text-ink transition hover:bg-white/5 focus-visible:outline-offset-2 focus-visible:outline-accent-green-fg"

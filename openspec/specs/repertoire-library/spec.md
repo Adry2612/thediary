@@ -342,13 +342,25 @@ The library SHALL offer a grouping choice of none, artist or album, SHALL render
 - **WHEN** the user chooses not to group
 - **THEN** the library renders the flat list again, without section headings
 
-#### Scenario: Grouping is only a view
+#### Scenario: The view is remembered
 - **WHEN** the user groups the library and reloads the page
-- **THEN** no song has been modified and the grouping is not persisted
+- **THEN** no song has been modified and the grouping remains applied
 
 #### Scenario: Clearing the filters
 - **WHEN** the user activates "Limpiar filtros"
 - **THEN** the grouping returns to none along with the other filters and the sort
+
+### Requirement: The library view is remembered on the device
+
+The system SHALL remember the search, the filters, the sort and the grouping on the device and SHALL restore them when the user returns to the library, and SHALL clear all of them when the user activates "Limpiar filtros".
+
+#### Scenario: Returning to the library
+- **WHEN** the user searches or filters the library, leaves the page and comes back
+- **THEN** the same search, filters, sort and grouping are applied
+
+#### Scenario: A stored view from an older version
+- **WHEN** the stored view contains an unknown filter or sort value
+- **THEN** that value falls back to its default without discarding the valid ones
 
 ### Requirement: Catalog results lead with the best match
 

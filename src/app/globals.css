@@ -180,8 +180,11 @@ textarea,
 }
 
 .chart-ring-draw {
-  animation: chart-ring-draw 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: min(calc(var(--chart-index, 0) * 30ms), 120ms);
+  animation-name: chart-ring-draw;
+  animation-duration: var(--ring-duration, 360ms);
+  animation-delay: var(--ring-delay, 0ms);
+  animation-timing-function: linear;
+  animation-fill-mode: both;
 }
 
 .chart-cell-in {

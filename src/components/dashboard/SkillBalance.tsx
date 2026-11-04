@@ -41,6 +41,8 @@ export function SkillBalance({
     ? distribution.categories[activeSkill]
     : null;
   const circumference = 2 * Math.PI * 45;
+  /** Duración total del barrido del anillo; cada tramo ocupa su parte. */
+  const ringDrawMs = 400;
   let accumulatedLength = 0;
 
   const hideSummary = useCallback(() => {
@@ -119,7 +121,7 @@ export function SkillBalance({
             stroke="#27272a"
             strokeWidth="13"
           />
-          {PRACTICE_SKILLS.map((skill, index) => {
+          {PRACTICE_SKILLS.map((skill) => {
             const category = distribution.categories[skill];
             const fraction = distribution.totalMinutes
               ? category.minutes / distribution.totalMinutes
@@ -127,6 +129,16 @@ export function SkillBalance({
             const length = circumference * fraction;
             const offset = accumulatedLength;
             accumulatedLength += length;
+            // Barrido continuo: cada tramo empieza donde acaba el anterior para
+            // que no queden huecos entre secciones mientras se dibuja.
+            const delay = Math.round((offset / circumference) * ringDrawMs);
+            const duration =
+              length > 0
+                ? Math.max(
+                    1,
+                    Math.round((length / circumference) * ringDrawMs),
+                  )
+                : 0;
 
             return (
               <circle
@@ -144,7 +156,8 @@ export function SkillBalance({
                   {
                     "--ring-dasharray": `${length} ${circumference - length}`,
                     "--ring-circumference": circumference,
-                    "--chart-index": index,
+                    "--ring-delay": `${delay}ms`,
+                    "--ring-duration": `${duration}ms`,
                   } as CSSProperties
                 }
                 onPointerEnter={() => showSummary(chartRef.current, skill)}

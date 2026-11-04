@@ -43,11 +43,13 @@ export function RepertoireSongEditor({
           title={text.tabTitle}
           description={text.tabDescription}
         >
-          <TabScoreEditor
-            initialScore={score}
-            label={item.title}
-            onChange={(next) => update({ score: next })}
-          />
+          <div className='mt-4'>
+            <TabScoreEditor
+              initialScore={score}
+              label={item.title}
+              onChange={(next) => update({ score: next })}
+            />
+          </div>
         </CollapsibleSection>
       ) : null}
     </>

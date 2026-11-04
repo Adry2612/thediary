@@ -125,6 +125,18 @@ The system SHALL keep showing a loading state on the recordings library until th
 - **WHEN** the remote catalog cannot be loaded
 - **THEN** the app stops the loading state and shows the locally available recordings
 
+### Requirement: The recordings view is remembered on the device
+
+The system SHALL remember the recordings library's block filter, name filter and sort order on the device and SHALL restore them when the user returns, and SHALL clear all of them when the user activates "Limpiar filtros".
+
+#### Scenario: Returning to the recordings library
+- **WHEN** the user filters or sorts the recordings, leaves the page and comes back
+- **THEN** the same block, name and sort are applied
+
+#### Scenario: A stored view from an older version
+- **WHEN** the stored view contains an unknown sort value
+- **THEN** it falls back to the default order without discarding the valid filters
+
 ### Requirement: A running practice shows the artist of the block's song
 
 While a practice is running, the system SHALL show, under the name of the block being practiced, the artist of the repertoire item that block is linked to, and SHALL show nothing there when the block is not linked to an item or when that item has no artist.
@@ -453,6 +465,18 @@ The system SHALL offer an option to keep the timer running after a block's plann
 #### Scenario: The overtime display clears on advance
 - **WHEN** the user advances to the next block
 - **THEN** the green overtime and the toast disappear and the new block starts at its full time
+
+### Requirement: A saved practice summary lists only practised blocks
+
+The system SHALL omit blocks with zero practised time from the day summary, the saved practice detail and the completion summary, and SHALL keep them only in the editor where they can be planned or edited.
+
+#### Scenario: A block that was not reached
+- **WHEN** a session ends before a planned block starts and that block has zero elapsed time
+- **THEN** the day summary, the session detail and the completion summary leave it out
+
+#### Scenario: A practised block with a short time
+- **WHEN** a block has elapsed time greater than zero
+- **THEN** it remains in the summary with its real time
 
 ### Requirement: A saved practice shows its block details and resolved links
 

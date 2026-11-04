@@ -24,6 +24,12 @@ export function GuitarBalance({
   const classifiedSeconds = balance.electricSeconds + balance.acousticSeconds;
   const shares = getGuitarBalanceShares(balance);
   const hasClassified = classifiedSeconds > 0;
+  /** Duración total del barrido; cada tramo ocupa su parte del arco. */
+  const ringDrawMs = 400;
+  const electricDuration =
+    shares.electric > 0
+      ? Math.max(1, Math.round((shares.electric / 100) * ringDrawMs))
+      : 0;
   const rows = [
     {
       key: "electric" as const,
@@ -92,7 +98,8 @@ export function GuitarBalance({
                     {
                       "--ring-dasharray": `${shares.electric} 100`,
                       "--ring-circumference": 100,
-                      "--chart-index": 0,
+                      "--ring-delay": "0ms",
+                      "--ring-duration": `${electricDuration}ms`,
                     } as CSSProperties
                   }
                 />
@@ -109,7 +116,15 @@ export function GuitarBalance({
                     {
                       "--ring-dasharray": `${shares.acoustic} 100`,
                       "--ring-circumference": 100,
-                      "--chart-index": 1,
+                      "--ring-delay": `${electricDuration}ms`,
+                      "--ring-duration": `${
+                        shares.acoustic > 0
+                          ? Math.max(
+                              1,
+                              ringDrawMs - electricDuration,
+                            )
+                          : 0
+                      }ms`,
                     } as CSSProperties
                   }
                 />

@@ -51,7 +51,7 @@ export function YearPracticeCalendar({
     scheduleHide,
     handleCardPointerEnter,
     handleCardPointerLeave,
-  } = usePracticeDayTooltip({ preview: true });
+  } = usePracticeDayTooltip();
   const calendarScrollRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   /**
@@ -289,7 +289,6 @@ export function YearPracticeCalendar({
             cardRef={cardRef}
             onPointerEnter={handleCardPointerEnter}
             onPointerLeave={handleCardPointerLeave}
-            interactive={false}
             compact
           />,
           document.body,
