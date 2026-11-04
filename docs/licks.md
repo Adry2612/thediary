@@ -24,6 +24,15 @@ La tonalidad es opcional. Se detecta con el estimador de Krumhansl-Schmuckler a 
 
 Mientras el campo está en automático, la tonalidad detectada se copia al campo según se escribe. Elegir una tonalidad a mano (incluida «Sin tonalidad») desactiva el automático; **Usar esta tonalidad** lo vuelve a activar. La detección no se guarda hasta que se guarda el lick.
 
+## Técnicas
+
+Las técnicas de un lick salen de un catálogo único compartido con los bloques de práctica (`src/utils/catalogs/techniques.ts`). Cada entrada tiene un id estable, un nombre en español, su nombre original y una marca corta para las tarjetas.
+
+- Un lick guarda el id de la técnica, no el texto visible, así que cambiar el idioma de presentación no altera sus datos.
+- En Configuración se elige si las técnicas se muestran en español o con su nombre original. La preferencia se aplica a las tarjetas, la ficha, el editor, los bloques de práctica y la distribución de técnicas.
+- Sin una elección guardada, se sigue el idioma de la interfaz.
+- Los nombres personalizados de bloques de rutinas antiguas no forman parte del catálogo y se muestran tal como se guardaron.
+
 ## Vídeo de referencia
 
 Un lick puede llevar **un** fragmento de YouTube opcional:
@@ -37,7 +46,7 @@ referenceVideo?: {
 ```
 
 - Se guarda la URL tal como se escribe y los segundos ya normalizados, no el `videoId` derivado.
-- El editor pide enlace, desde y hasta. Acepta segundos (`83`) y `m:ss`/`h:mm:ss` (`1:23`, `1:02:03`), rechaza negativos, decimales, más de 24 horas y un final igual o anterior al inicio.
+- El editor pide enlace, desde y hasta. Acepta segundos (`83`) y `m:ss`/`h:mm:ss` (`1:23`, `1:02:03`), rechaza negativos, decimales, más de 24 horas y un final igual o anterior al inicio. El clip y la edición de prácticas comparten este parser (`src/utils/clock-time.ts`), así que los formatos y el límite son los mismos en toda la app.
 - El enlace tiene que ser de YouTube (`extractYoutubeVideoId`); cualquier otro se rechaza.
 - `normalizeLick` descarta solo el clip inválido: un lick antiguo o sincronizado con un vídeo roto se sigue abriendo sin la tarjeta.
 
