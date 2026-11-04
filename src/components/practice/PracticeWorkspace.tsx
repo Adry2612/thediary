@@ -174,6 +174,7 @@ export function PracticeWorkspace({
     const plan = {
       name,
       phases,
+      allowsTarget: false,
       ...(guitarType ? { guitarType } : {}),
       ...(guitarId ? { guitarId } : {}),
     };

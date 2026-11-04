@@ -22,6 +22,7 @@ function readStoredSession(): ActivePracticeSession | null {
       guitarType: storedGuitarType,
       guitarId: storedGuitarId,
       targetMinutes: storedTargetMinutes,
+      allowsTarget: storedAllowsTarget,
       ...rest
     } = session;
     const guitarType = normalizeGuitarType(storedGuitarType);
@@ -29,12 +30,19 @@ function readStoredSession(): ActivePracticeSession | null {
       typeof storedGuitarId === "string" && storedGuitarId.trim() !== ""
         ? storedGuitarId
         : undefined;
-    const targetMinutes = normalizeTargetMinutes(storedTargetMinutes);
+    const allowsTarget =
+      typeof storedAllowsTarget === "boolean"
+        ? storedAllowsTarget
+        : !session.templateId;
+    const targetMinutes = allowsTarget
+      ? normalizeTargetMinutes(storedTargetMinutes)
+      : undefined;
     return {
       ...rest,
       ...(guitarType ? { guitarType } : {}),
       ...(guitarId ? { guitarId } : {}),
       ...(targetMinutes ? { targetMinutes } : {}),
+      allowsTarget,
       phases: session.phases.map(normalizePracticePhaseLinks),
     };
   } catch {
@@ -63,6 +71,8 @@ export interface ActivePracticeSession {
   guitarId?: string;
   /** Tiempo objetivo opcional de la sesión, en minutos enteros. */
   targetMinutes?: number;
+  /** Si la sesión puede fijar un objetivo desde el temporizador. */
+  allowsTarget?: boolean;
   /** Rutina guardada de la que salió la sesión, si la hubo. */
   templateId?: string;
 }
@@ -132,8 +142,12 @@ export const useActivePracticeSessionStore =
   setTargetMinutes: (targetMinutes) =>
     set(({ activeSession }) => {
       if (!activeSession) return {};
-      const normalized = normalizeTargetMinutes(targetMinutes);
       const { targetMinutes: _current, ...rest } = activeSession;
+      if (activeSession.allowsTarget === false) {
+        persistSession(rest);
+        return { activeSession: rest };
+      }
+      const normalized = normalizeTargetMinutes(targetMinutes);
       const nextSession = normalized
         ? { ...rest, targetMinutes: normalized }
         : rest;

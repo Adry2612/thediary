@@ -7,7 +7,6 @@ import { CheckboxField } from "@/components/ui/CheckboxField";
 import { DialogHeader } from "@/components/ui/DialogHeader";
 import { Field, TextField } from "@/components/ui/Field";
 import { ModalDialog } from "@/components/ui/ModalDialog";
-import { Toast } from "@/components/ui/Toast";
 import { ToggleChip } from "@/components/ui/ToggleChip";
 import { ToggleGroup } from "@/components/ui/ToggleGroup";
 import { SearchIcon, SettingsIcon } from "@/components/ui/icons";
@@ -22,12 +21,8 @@ import { playPracticeSound } from "@/services/practice-sound";
 import { normalizeTargetMinutes } from "@/utils/practice-target";
 import type { PracticeTimerController } from "@/hooks/usePracticeTimer";
 import type { RepertoireItem } from "@/types/practice";
-import {
-  formatClock,
-  formatOvertime,
-  getTimerAction,
-  getTimerDisplaySeconds,
-} from "@/utils/format";
+import { formatClockInput, formatOvertimeInput } from "@/utils/clock-time";
+import { getTimerAction } from "@/utils/format";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 type TimerCardProps = {
@@ -43,6 +38,8 @@ type TimerCardProps = {
   /** Objetivo de la sesión en minutos; sin valor si no hay. */
   targetMinutes?: number;
   onChangeTargetMinutes: (value: number | null) => void;
+  /** Si esta sesión puede fijar un objetivo desde los ajustes. */
+  canSetTarget?: boolean;
   /** Artista del bloque de repertorio que se está practicando, si lo tiene. */
   artist?: string;
   /** Título resuelto del bloque; en repertorio es siempre el de la canción. */
@@ -63,6 +60,7 @@ export function TimerCard({
   setPracticeEndSound,
   targetMinutes,
   onChangeTargetMinutes,
+  canSetTarget = true,
   artist,
   title,
   repertoireSongs,
@@ -72,7 +70,7 @@ export function TimerCard({
   const [isSongPickerOpen, setIsSongPickerOpen] = useState(false);
   const [targetEnabled, setTargetEnabled] = useState(Boolean(targetMinutes));
   const [targetValue, setTargetValue] = useState(String(targetMinutes ?? 30));
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const optionsTitleId = useId();
   const targetInputId = useId();
   const {
@@ -116,10 +114,18 @@ export function TimerCard({
    * aviso aparece también en ese modo.
    */
   const blockFinished = timer.awaitingPhaseAdvance && !isCompleted;
+  const blockTitle = title ?? currentPhase?.name;
+  const overtimeVisible = blockFinished && overtimeSeconds > 0;
+  const largeTimer = overtimeVisible
+    ? formatOvertimeInput(overtimeSeconds)
+    : formatClockInput(
+        isCountUp ? elapsedSeconds : remainingSeconds,
+      );
+  const timerIsGreen = blockFinished || isTargetReached;
 
   useEffect(() => {
     if (!isTargetReached) return;
-    setToastMessage(
+    setNotice(
       targetMinutes
         ? `${timerText.targetReachedToast} · ${targetMinutes} min`
         : timerText.targetReachedToast,
@@ -128,23 +134,42 @@ export function TimerCard({
 
   useEffect(() => {
     if (!blockFinished || isTargetReached) return;
-    setToastMessage(timerText.blockFinishedToast);
-  }, [blockFinished, isTargetReached, timerText.blockFinishedToast]);
+    setNotice(
+      blockTitle
+        ? `${timerText.blockFinishedToast} · ${blockTitle}`
+        : timerText.blockFinishedToast,
+    );
+  }, [
+    blockFinished,
+    blockTitle,
+    isTargetReached,
+    timerText.blockFinishedToast,
+  ]);
 
   useEffect(() => {
-    if (!isTargetReached && !blockFinished) setToastMessage(null);
+    if (!isTargetReached && !blockFinished) setNotice(null);
   }, [blockFinished, isTargetReached]);
 
+  useEffect(() => {
+    if (!notice) return;
+    const timeout = window.setTimeout(() => setNotice(null), 8_000);
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
+
   /**
-   * Si el bloque termina con la pestaña en segundo plano, el aviso de cinco
-   * segundos pasa desapercibido. Al volver a la pestaña se recuerda mientras
-   * siga pendiente avanzar.
+   * Si el bloque termina con la pestaña en segundo plano, el aviso pasa
+   * desapercibido. Al volver a la pestaña se recuerda mientras siga pendiente
+   * avanzar.
    */
   useEffect(() => {
     if (!blockFinished || isTargetReached) return;
     function reshownOnReturn() {
       if (document.visibilityState === "visible") {
-        setToastMessage(timerText.blockFinishedToast);
+        setNotice(
+          blockTitle
+            ? `${timerText.blockFinishedToast} · ${blockTitle}`
+            : timerText.blockFinishedToast,
+        );
       }
     }
     document.addEventListener("visibilitychange", reshownOnReturn);
@@ -153,7 +178,12 @@ export function TimerCard({
       document.removeEventListener("visibilitychange", reshownOnReturn);
       window.removeEventListener("focus", reshownOnReturn);
     };
-  }, [blockFinished, isTargetReached, timerText.blockFinishedToast]);
+  }, [
+    blockFinished,
+    blockTitle,
+    isTargetReached,
+    timerText.blockFinishedToast,
+  ]);
 
   function handleTargetEnabled(enabled: boolean) {
     setTargetEnabled(enabled);
@@ -206,6 +236,16 @@ export function TimerCard({
           )}
         </div>
 
+        {notice ? (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mt-4 w-full rounded-lg border border-accent-green-fg/40 bg-accent-green-bg/30 px-3 py-2 text-sm text-accent-green-fg"
+          >
+            {notice}
+          </div>
+        ) : null}
+
         <div className="mt-6 grid w-full place-items-center">
           <div className="grid w-full grid-cols-[minmax(3rem,1fr)_minmax(0,auto)_minmax(3rem,1fr)] items-center">
             <span aria-hidden="true" />
@@ -248,25 +288,19 @@ export function TimerCard({
         <p
           role="timer"
           aria-live="off"
-          className={`${compact ? "my-8 text-4xl sm:text-6xl" : "my-14 text-5xl sm:text-7xl"} font-mono leading-[1.5] tabular-nums tracking-normal`}
+          className={`${compact ? "mt-8 mb-4 text-4xl sm:text-6xl" : "mt-12 mb-4 text-5xl sm:text-7xl"} font-mono leading-[1.5] tabular-nums tracking-normal ${timerIsGreen ? "text-accent-green-fg" : ""}`}
         >
-          {formatClock(
-            getTimerDisplaySeconds(
-              isCountUp,
-              elapsedSeconds,
-              remainingSeconds,
-            ),
-          )}
+          {largeTimer}
         </p>
         {!isCountUp && (
-          <p className="-mt-10 mb-10 font-mono text-xs uppercase tracking-[0.05em] text-muted">
-            {timerText.totalTime} {formatClock(elapsedSeconds)}
-          </p>
-        )}
-        {!isCountUp && overtimeSeconds > 0 && (
-          <p className="-mt-8 mb-8 font-mono text-xs uppercase tracking-[0.05em] text-accent-green-fg">
-            {timerText.overtime} {formatOvertime(overtimeSeconds)}
-          </p>
+          <div className="mb-8 flex items-center justify-center gap-2 rounded-full border border-line px-3 py-1.5 font-mono text-xs">
+            <span className="uppercase tracking-[0.05em] text-muted">
+              {timerText.totalTime}
+            </span>
+            <span className="tabular-nums text-ink">
+              {formatClockInput(elapsedSeconds)}
+            </span>
+          </div>
         )}
 
 
@@ -287,40 +321,46 @@ export function TimerCard({
               closeLabel={timerText.closeSettings}
             />
 
-            <section className="mt-6 border-t border-line pt-5">
-              <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-                {timerText.targetSection}
-              </h3>
-              <p className="mt-1.5 text-xs leading-5 text-muted">
-                {timerText.targetSectionDescription}
-              </p>
-              <div className="mt-3 rounded-lg border border-line p-3.5">
-                <CheckboxField
-                  checked={targetEnabled}
-                  onChange={(event) => handleTargetEnabled(event.target.checked)}
-                  label={timerText.targetEnable}
-                  className="text-sm text-ink"
-                />
-                {targetEnabled && (
-                  <Field
-                    label={timerText.targetMinutes}
-                    htmlFor={targetInputId}
-                    error={targetInvalid ? timerText.targetInvalid : null}
-                    className="mt-3 max-w-40"
-                  >
-                    <TextField
-                      id={targetInputId}
-                      type="number"
-                      min={1}
-                      step={1}
-                      inputMode="numeric"
-                      value={targetValue}
-                      onChange={(event) => handleTargetValue(event.target.value)}
-                    />
-                  </Field>
-                )}
-              </div>
-            </section>
+            {canSetTarget && (
+              <section className="mt-6 border-t border-line pt-5">
+                <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+                  {timerText.targetSection}
+                </h3>
+                <p className="mt-1.5 text-xs leading-5 text-muted">
+                  {timerText.targetSectionDescription}
+                </p>
+                <div className="mt-3 rounded-lg border border-line p-3.5">
+                  <CheckboxField
+                    checked={targetEnabled}
+                    onChange={(event) =>
+                      handleTargetEnabled(event.target.checked)
+                    }
+                    label={timerText.targetEnable}
+                    className="text-sm text-ink"
+                  />
+                  {targetEnabled && (
+                    <Field
+                      label={timerText.targetMinutes}
+                      htmlFor={targetInputId}
+                      error={targetInvalid ? timerText.targetInvalid : null}
+                      className="mt-3 max-w-40"
+                    >
+                      <TextField
+                        id={targetInputId}
+                        type="number"
+                        min={1}
+                        step={1}
+                        inputMode="numeric"
+                        value={targetValue}
+                        onChange={(event) =>
+                          handleTargetValue(event.target.value)
+                        }
+                      />
+                    </Field>
+                  )}
+                </div>
+              </section>
+            )}
 
             {!isCountUp && (
             <section className="mt-6 border-t border-line pt-5">
@@ -473,12 +513,6 @@ export function TimerCard({
         selectedSongId={currentPhase?.repertoireItemId}
         onSelect={(song) => onChangeRepertoireSong?.(song.id)}
         onClose={() => setIsSongPickerOpen(false)}
-      />
-      <Toast
-        message={toastMessage ?? ""}
-        open={Boolean(toastMessage)}
-        durationMs={8000}
-        onDismiss={() => setToastMessage(null)}
       />
     </>
   );

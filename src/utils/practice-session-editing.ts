@@ -10,7 +10,7 @@ export interface EditableSessionBlock {
   name: string;
   skill: PracticeSkill;
   plannedMinutes: number | null;
-  actualMinutes: number;
+  actualSeconds: number;
   notes: string;
   exercises?: string[];
   resources?: SessionPhaseRecord["resources"];
@@ -26,7 +26,7 @@ export interface EditableSession {
   notes: string;
   completed: boolean;
   /** Solo se usa cuando la sesión no tiene bloques. */
-  durationMinutes: number;
+  durationSeconds: number;
   /** `null` cuando la práctica no tiene tipo de guitarra registrado. */
   guitarType: GuitarType | null;
   /** Guitarra concreta de Mi equipo; `null` si no se eligió. */
@@ -34,21 +34,12 @@ export interface EditableSession {
   blocks: EditableSessionBlock[];
 }
 
-function secondsToMinutes(seconds: number): number {
-  return Math.round((seconds / 60) * 100) / 100;
-}
-
-function minutesToSeconds(minutes: number): number {
-  if (!Number.isFinite(minutes) || minutes < 0) return 0;
-  return Math.round(minutes * 60);
-}
-
 export function toEditableSession(session: SessionRecord): EditableSession {
   return {
     title: session.title ?? "",
     notes: session.notes ?? "",
     completed: session.completed ?? false,
-    durationMinutes: secondsToMinutes(session.durationSeconds),
+    durationSeconds: session.durationSeconds,
     guitarType: session.guitarType ?? null,
     guitarId: session.guitarId ?? null,
     blocks: (session.phases ?? []).map((phase) => ({
@@ -56,7 +47,7 @@ export function toEditableSession(session: SessionRecord): EditableSession {
       name: phase.name,
       skill: phase.skill,
       plannedMinutes: phase.durationMinutes ?? null,
-      actualMinutes: secondsToMinutes(phase.elapsedSeconds),
+      actualSeconds: phase.elapsedSeconds,
       notes: phase.notes ?? "",
       exercises: [...(phase.exercises ?? [])],
       resources: phase.resources?.map((resource) => ({ ...resource })),
@@ -85,7 +76,7 @@ export function applySessionEdit(
       id: block.id,
       name: block.name.trim(),
       skill: block.skill,
-      elapsedSeconds: minutesToSeconds(block.actualMinutes),
+      elapsedSeconds: Math.max(0, Math.round(block.actualSeconds)),
       ...(block.notes.trim() ? { notes: block.notes.trim() } : {}),
       ...(block.exercises?.length ? { exercises: [...block.exercises] } : {}),
       ...(block.resources?.length
@@ -128,7 +119,7 @@ export function applySessionEdit(
     return {
       ...base,
       phases: hadBlocks ? undefined : session.phases,
-      durationSeconds: minutesToSeconds(draft.durationMinutes),
+      durationSeconds: Math.max(0, Math.round(draft.durationSeconds)),
     };
   }
 

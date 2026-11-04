@@ -18,6 +18,8 @@ export interface PracticeLaunchPlan {
   templateId?: string;
   /** Tiempo objetivo opcional de la sesión, en minutos. */
   targetMinutes?: number;
+  /** Si la sesión puede fijar un tiempo objetivo desde el temporizador. */
+  allowsTarget?: boolean;
   /** Guitarra concreta de Mi equipo, si se eligió. */
   guitarId?: string;
 }
@@ -45,6 +47,7 @@ export function createQuickPracticePlan(
       },
     ],
     isCountUp: true,
+    allowsTarget: true,
   };
 }
 
@@ -82,6 +85,7 @@ export function createQuickRepertoirePlan(
     ],
     attachedResources: item.resources,
     isCountUp: true,
+    allowsTarget: true,
   };
 }
 
@@ -94,6 +98,7 @@ export function createTemplatePlan(
     phases: template.phases.map(normalizePracticePhaseLinks),
     ...(template.guitarType ? { guitarType: template.guitarType } : {}),
     templateId: template.id,
+    allowsTarget: false,
   };
 }
 
@@ -121,5 +126,6 @@ export function createPracticePlanFromSession(
     ),
     ...(session.guitarType ? { guitarType: session.guitarType } : {}),
     ...(session.guitarId ? { guitarId: session.guitarId } : {}),
+    allowsTarget: false,
   };
 }

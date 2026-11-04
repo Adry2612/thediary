@@ -39,6 +39,7 @@ import { targetMinutesToSeconds } from "@/utils/practice-target";
 import { getPhaseMaterials } from "@/utils/practice-materials";
 import { normalizeRepertoirePhaseNames } from "@/utils/practice-plan";
 import {
+  getPracticeBlockDisplayTitle,
   getPracticeBlockTitle,
 } from "@/utils/practice-session-details";
 import { getRepertoireSongChanges } from "@/utils/practice-block-editor";
@@ -48,6 +49,7 @@ import {
 } from "@/utils/practice-routine-update";
 import { getPracticedLickIds } from "@/utils/practice-lick-progress";
 import { getTechniqueLabels } from "@/utils/licks/presentation";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import {
   useActivePracticeSessionStore,
   type ActivePracticeSession,
@@ -62,7 +64,7 @@ import { useI18nSection } from "@/i18n/I18nProvider";
 export function PracticeSession({ session }: { session: ActivePracticeSession }) {
   const text = useI18nSection("practice");
   const timerText = useI18nSection("timer");
-  const licksText = useI18nSection("licks");
+  const { techniqueNameLanguage } = useDisplayPreferences();
   const pathname = usePathname();
   const isPracticeRoute = pathname === "/practice";
   const { id: sessionId, name, phases } = session;
@@ -318,7 +320,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     ? licks.find((lick) => lick.id === currentPhase.lickId)
     : undefined;
   const currentLickTechniques = currentLick
-    ? getTechniqueLabels(licksText, currentLick.techniques)
+    ? getTechniqueLabels(currentLick.techniques, techniqueNameLanguage)
     : [];
   const repertoireSongs = repertoireItems.filter(
     (item) => item.kind === "song",
@@ -345,8 +347,15 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         setPracticeEndSound={setPracticeEndSound}
         targetMinutes={session.targetMinutes}
         onChangeTargetMinutes={setTargetMinutes}
+        canSetTarget={session.allowsTarget ?? !session.templateId}
         artist={currentRepertoireItem?.artist}
-        title={currentRepertoireItem?.title ?? currentPhase?.name}
+        title={currentRepertoireItem?.title ?? (currentPhase
+          ? getPracticeBlockDisplayTitle(
+              currentPhase,
+              repertoireItems,
+              techniqueNameLanguage,
+            )
+          : undefined)}
         repertoireSongs={repertoireSongs}
         onChangeRepertoireSong={changeCurrentSong}
       />
@@ -398,7 +407,11 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
             ? [
                 {
                   ...currentPhase,
-                  name: getPracticeBlockTitle(currentPhase, repertoireItems),
+                  name: getPracticeBlockDisplayTitle(
+                    currentPhase,
+                    repertoireItems,
+                    techniqueNameLanguage,
+                  ),
                   resources: getPhaseMaterials(currentPhase, repertoireItems),
                 },
               ]
