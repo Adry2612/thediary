@@ -25,6 +25,8 @@ import {
 } from "@/utils/licks/techniques";
 import { MAX_BPM, MIN_BPM } from "@/utils/metronome-tempo";
 import { resolveTabScore } from "@/utils/tab-score/resolve";
+import { getTechniqueName } from "@/utils/catalogs/techniques";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import type { GuitarLick, TechniqueId } from "@/types/lick";
 import type { RepertoireItem } from "@/types/practice";
 
@@ -48,6 +50,7 @@ export function LickEditor({
   onCancel: () => void;
 }) {
   const text = useI18nSection("licks");
+  const { techniqueNameLanguage } = useDisplayPreferences();
   const [title, setTitle] = useState(lick?.title ?? "");
   const hasLegacyTab = Boolean(
     lick && !lick.score && !lick.tab && lick.tabContent?.trim(),
@@ -455,7 +458,7 @@ export function LickEditor({
                       <span aria-hidden="true" className="font-mono text-[10px]">
                         {technique.glyph}
                       </span>
-                      {text[technique.labelKey] ?? technique.id}
+                      {getTechniqueName(technique.id, techniqueNameLanguage)}
                     </button>
                   );
                 })}

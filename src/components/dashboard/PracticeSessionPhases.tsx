@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import {
   formatPracticeDuration,
   PRACTICE_SKILL_LABELS,
@@ -7,7 +10,7 @@ import { formatClock } from "@/utils/format";
 import {
   getLinkedLickLabel,
   getLinkedRepertoirePartName,
-  getPracticeBlockTitle,
+  getPracticeBlockDisplayTitle,
 } from "@/utils/practice-session-details";
 import type { GuitarLick } from "@/types/lick";
 import type { RepertoireItem, SessionPhaseRecord } from "@/types/practice";
@@ -25,6 +28,8 @@ export function PracticeSessionPhases({
   repertoireItems,
   licks,
 }: PracticeSessionPhasesProps) {
+  const { techniqueNameLanguage } = useDisplayPreferences();
+
   return (
     <section
       aria-labelledby={`session-phases-${sessionId}`}
@@ -62,7 +67,11 @@ export function PracticeSessionPhases({
             </thead>
             <tbody>
               {phases.map((phase, index) => {
-                const title = getPracticeBlockTitle(phase, repertoireItems);
+                const title = getPracticeBlockDisplayTitle(
+                  phase,
+                  repertoireItems,
+                  techniqueNameLanguage,
+                );
                 const linkedPart = getLinkedRepertoirePartName(
                   phase,
                   repertoireItems,

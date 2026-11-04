@@ -22,7 +22,6 @@ test("a single technique takes the whole share", () => {
   assert.deepEqual(distribution.groups, [
     {
       id: "LEGATO",
-      labelKey: "techniqueLegato",
       count: 1,
       percentage: 100,
     },

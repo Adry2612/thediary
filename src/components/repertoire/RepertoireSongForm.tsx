@@ -13,7 +13,6 @@ import { createRepertoireItem, REPERTOIRE_DIFFICULTIES } from '@/utils/repertoir
 import { getDifficultyLabel } from '@/utils/difficulty-labels';
 import { normalizeChordChart } from '@/utils/repertoire-chord-chart';
 import { buildCatalogQuery } from '@/utils/repertoire-catalog';
-import { parseTuningNotes } from '@/utils/chords';
 import {
   isAllowedResourceUrl,
   SPOTIFY_LINK_HOSTS,
@@ -27,7 +26,9 @@ import type {
   RepertoireDifficulty,
 } from '@/types/practice';
 import { PracticeResourceEditor } from '@/components/practice/PracticeResourceEditor';
-import { useI18nSection } from '@/i18n/I18nProvider';
+import { useI18n, useI18nSection } from '@/i18n/I18nProvider';
+import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
+import { formatTuning } from '@/utils/catalogs/tunings';
 import { createId as createIdentifier } from '@/utils/create-id';
 import { COMMON_TUNINGS } from '@/utils/repertoire-item';
 
@@ -41,6 +42,8 @@ export function RepertoireSongForm({
   onCreated?: (itemId: string) => void;
 }) {
   const text = useI18nSection('repertoire');
+  const { locale } = useI18n();
+  const { tuningDisplay } = useDisplayPreferences();
   const saveRepertoireItem = usePracticeStore(
     (state) => state.saveRepertoireItem,
   );
@@ -244,7 +247,10 @@ export function RepertoireSongForm({
               ariaLabel={text.tuning}
               options={COMMON_TUNINGS.map((option) => ({
                 value: option,
-                label: option,
+                label:
+                  option === 'Otra...'
+                    ? option
+                    : formatTuning(option, { display: tuningDisplay, locale }),
               }))}
             />
           </label>
@@ -349,7 +355,11 @@ export function RepertoireSongForm({
       </details>
 
       <p className='mt-6 text-xs uppercase tracking-[0.12em] text-muted'>
-        {text.tuningLabel}: {parseTuningNotes(finalTuning || undefined).join(' ')}
+        {text.tuningLabel}:{' '}
+        {formatTuning(finalTuning || 'E Standard (EADGBE)', {
+          display: tuningDisplay,
+          locale,
+        })}
       </p>
 
       <ChordChartEditor value={chordChart} onChange={setChordChart} />

@@ -4,6 +4,7 @@ import {
   getLinkedLickLabel,
   getLinkedRepertoirePartName,
   getLinkedRepertoireLabel,
+  getPracticeBlockDisplayTitle,
   getPracticeBlockTitle,
 } from "../src/utils/practice-session-details.ts";
 
@@ -132,4 +133,19 @@ test("only resolves a part when both the song and the part exist", () => {
     ),
     null,
   );
+});
+
+test("resolves catalogue technique and theory names to the chosen language", () => {
+  const technique = { name: "Alternate picking", skill: "technique" };
+  const legacy = { name: "Púa alterna", skill: "technique" };
+  const custom = { name: "Barrido propio", skill: "technique" };
+  const theory = { name: "Major scale", skill: "theory" };
+
+  assert.equal(getPracticeBlockDisplayTitle(technique, [], "es"), "Púa alterna");
+  assert.equal(
+    getPracticeBlockDisplayTitle(legacy, [], "original"),
+    "Alternate picking",
+  );
+  assert.equal(getPracticeBlockDisplayTitle(custom, [], "es"), "Barrido propio");
+  assert.equal(getPracticeBlockDisplayTitle(theory, [], "es"), "Escala mayor");
 });

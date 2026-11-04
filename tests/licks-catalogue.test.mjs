@@ -11,6 +11,10 @@ import {
   isTechniqueId,
   normalizeTechniques,
 } from "../src/utils/licks/techniques.ts";
+import {
+  getTechniqueName,
+  resolveTechniqueEntry,
+} from "../src/utils/catalogs/techniques.ts";
 import { TECHNIQUE_IDS } from "../src/types/lick.ts";
 
 test("the key catalogue has the twelve roots in major and minor", () => {
@@ -23,14 +27,28 @@ test("the key catalogue has the twelve roots in major and minor", () => {
   assert.equal(normalizeMusicalKey("H"), undefined);
 });
 
-test("every technique has a descriptor with a label key and a glyph", () => {
+test("every technique has Spanish and original names and a glyph", () => {
   assert.equal(LICK_TECHNIQUES.length, TECHNIQUE_IDS.length);
   for (const id of TECHNIQUE_IDS) {
     const descriptor = getLickTechnique(id);
     assert.ok(descriptor, `${id} lacks a descriptor`);
-    assert.notEqual(descriptor.labelKey, "");
+    assert.notEqual(descriptor.es, "");
+    assert.notEqual(descriptor.en, "");
     assert.notEqual(descriptor.glyph, "");
   }
+});
+
+test("resolves a technique by either of its names", () => {
+  assert.equal(resolveTechniqueEntry("Púa alterna")?.id, "ALTERNATE_PICKING");
+  assert.equal(resolveTechniqueEntry("alternate picking")?.id, "ALTERNATE_PICKING");
+  assert.equal(resolveTechniqueEntry("LEGATO")?.id, "LEGATO");
+  assert.equal(resolveTechniqueEntry("inventada"), null);
+  assert.equal(getTechniqueName("LEGATO", "es"), "Legato");
+  assert.equal(
+    getTechniqueName("Púa alterna", "original"),
+    "Alternate picking",
+  );
+  assert.equal(getTechniqueName("propia", "es"), "propia");
 });
 
 test("unknown techniques are rejected and valid ones keep catalogue order", () => {

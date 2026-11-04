@@ -1,4 +1,5 @@
-import { getPracticeBlockTitle } from "@/utils/practice-session-details";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
+import { getPracticeBlockDisplayTitle } from "@/utils/practice-session-details";
 import type { PracticePhase, RepertoireItem } from "@/types/practice";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
@@ -19,6 +20,7 @@ export function UpcomingBlocks({
 }: UpcomingBlocksProps) {
   const text = useI18nSection("practice");
   const skills = useI18nSection("skills");
+  const { techniqueNameLanguage } = useDisplayPreferences();
   const upcoming = phases.slice(currentPhaseIndex + 1);
 
   return (
@@ -71,7 +73,11 @@ export function UpcomingBlocks({
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="min-w-0 hyphens-auto break-words font-medium text-ink">
-                      {getPracticeBlockTitle(phase, repertoireItems) ||
+                      {getPracticeBlockDisplayTitle(
+                        phase,
+                        repertoireItems,
+                        techniqueNameLanguage,
+                      ) ||
                         `${text.currentBlock} ${currentPhaseIndex + index + 2}`}
                     </p>
                     {isNext && (

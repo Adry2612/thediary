@@ -8,6 +8,7 @@ import { PageShell } from '@/components/ui/PageShell';
 import { SelectField } from '@/components/ui/SelectField';
 import { CloudSyncProviderIcon } from '@/components/ui/icons';
 import { useSettingsView } from '@/hooks/useSettingsView';
+import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
 import { usePracticeFeedbackPreference } from '@/hooks/usePracticeFeedbackPreference';
 import { useI18n, useI18nSection } from '@/i18n/I18nProvider';
 import { type Locale } from '@/i18n/translations';
@@ -19,6 +20,7 @@ export function SettingsView() {
   const { openTutorial } = useTutorial();
   const view = useSettingsView(settings);
   const feedback = usePracticeFeedbackPreference();
+  const display = useDisplayPreferences();
   const feedbackMetrics = [
     {
       metric: 'mood' as const,
@@ -99,6 +101,62 @@ export function SettingsView() {
               ]}
             />
           </div>
+        </section>
+
+        <section
+          aria-labelledby='settings-display-title'
+          className='rounded-xl border border-line bg-surface p-5 sm:p-6'
+        >
+          <p className='text-xs uppercase tracking-[0.08em] text-muted'>
+            {settings.preferences}
+          </p>
+          <h2
+            id='settings-display-title'
+            className='mt-2 text-lg font-medium text-ink'
+          >
+            {settings.displayTitle}
+          </h2>
+          <p className='mt-2 max-w-xl text-sm leading-6 text-muted'>
+            {settings.displayDescription}
+          </p>
+          <div className='mt-4 grid gap-4 sm:grid-cols-2'>
+            <div className='text-xs text-muted'>
+              {settings.techniqueNames}
+              <SelectField
+                className='mt-1'
+                ariaLabel={settings.techniqueNames}
+                value={display.techniqueNameLanguage}
+                options={[
+                  { value: 'es', label: settings.techniqueNamesSpanish },
+                  {
+                    value: 'original',
+                    label: settings.techniqueNamesOriginal,
+                  },
+                ]}
+                onChange={(value) =>
+                  display.setTechniqueNameLanguage(
+                    value === 'original' ? 'original' : 'es',
+                  )
+                }
+              />
+            </div>
+            <div className='text-xs text-muted'>
+              {settings.tuningDisplay}
+              <SelectField
+                className='mt-1'
+                ariaLabel={settings.tuningDisplay}
+                value={display.tuningDisplay}
+                options={[
+                  { value: 'name', label: settings.tuningDisplayName },
+                  { value: 'notes', label: settings.tuningDisplayNotes },
+                ]}
+                onChange={(value) =>
+                  display.setTuningDisplay(value === 'notes' ? 'notes' : 'name')
+                }
+              />
+            </div>
+          </div>
+          <p className='mt-3 text-xs text-muted'>{settings.displayScope}</p>
         </section>
 
         <section

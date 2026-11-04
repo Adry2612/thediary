@@ -1,7 +1,9 @@
 import type { GuitarLick, TechniqueId } from "../../types/lick.ts";
 import type { RepertoireItem } from "../../types/practice.ts";
+import type { CatalogNameLanguage } from "../../types/display.ts";
+import { getTechniqueName } from "../catalogs/techniques.ts";
 import { getDaysSince } from "./dates.ts";
-import { getLickTechnique, isTechniqueId } from "./techniques.ts";
+import { isTechniqueId } from "./techniques.ts";
 
 /** Paleta compartida por las barras y el donut de la librería. */
 export const LICK_CHART_COLORS = [
@@ -32,18 +34,19 @@ export function getLastPracticedLabel(
 }
 
 export function getTechniqueLabel(
-  text: Record<string, string>,
   id: TechniqueId,
+  language: CatalogNameLanguage,
 ): string {
-  const descriptor = getLickTechnique(id);
-  return descriptor ? (text[descriptor.labelKey] ?? id) : id;
+  return getTechniqueName(id, language);
 }
 
 export function getTechniqueLabels(
-  text: Record<string, string>,
   techniques: TechniqueId[],
+  language: CatalogNameLanguage,
 ): string[] {
-  return techniques.filter(isTechniqueId).map((id) => getTechniqueLabel(text, id));
+  return techniques
+    .filter(isTechniqueId)
+    .map((id) => getTechniqueLabel(id, language));
 }
 
 export function findLinkedSong(

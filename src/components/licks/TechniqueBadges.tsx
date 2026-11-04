@@ -1,5 +1,7 @@
 import { useI18nSection } from "@/i18n/I18nProvider";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { getLickTechnique } from "@/utils/licks/techniques";
+import { getTechniqueName } from "@/utils/catalogs/techniques";
 import type { TechniqueId } from "@/types/lick";
 
 export function TechniqueBadges({
@@ -12,6 +14,7 @@ export function TechniqueBadges({
   className?: string;
 }) {
   const text = useI18nSection("licks");
+  const { techniqueNameLanguage } = useDisplayPreferences();
 
   if (techniques.length === 0) {
     return showEmpty ? (
@@ -26,7 +29,7 @@ export function TechniqueBadges({
       {techniques.map((id) => {
         const descriptor = getLickTechnique(id);
         if (!descriptor) return null;
-        const label = text[descriptor.labelKey] ?? id;
+        const label = getTechniqueName(id, techniqueNameLanguage);
         return (
           <li
             key={id}

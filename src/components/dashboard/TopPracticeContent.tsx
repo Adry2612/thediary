@@ -7,16 +7,21 @@ import type {
   PracticeContentRank,
   PracticeContentRankings,
 } from "@/utils/practice-analytics";
+import { getTechniqueName } from "@/utils/catalogs/techniques";
+import { getTheoryName } from "@/utils/catalogs/theory";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 function ContentColumn({
   title,
   emptyLabel,
   ranking,
+  resolveLabel,
 }: {
   title: string;
   emptyLabel: string;
   ranking: PracticeContentRank[];
+  resolveLabel?: (label: string) => string;
 }) {
   const dashboard = useI18nSection("dashboard");
   const maxSeconds = ranking[0]?.seconds ?? 0;
@@ -37,7 +42,7 @@ function ContentColumn({
                   {index + 1}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-sm text-zinc-200">
-                  {item.label}
+                  {resolveLabel ? resolveLabel(item.label) : item.label}
                 </span>
               </div>
               <div className="mt-1 flex items-baseline justify-between gap-2 pl-5 text-xs text-muted">
@@ -73,6 +78,7 @@ export function TopPracticeContent({
   rankings: PracticeContentRankings;
 }) {
   const dashboard = useI18nSection("dashboard");
+  const { techniqueNameLanguage } = useDisplayPreferences();
 
   return (
     <section
@@ -99,11 +105,15 @@ export function TopPracticeContent({
           title={dashboard.topTechnique}
           emptyLabel={dashboard.topEmpty}
           ranking={rankings.techniques}
+          resolveLabel={(label) =>
+            getTechniqueName(label, techniqueNameLanguage)
+          }
         />
         <ContentColumn
           title={dashboard.topTheory}
           emptyLabel={dashboard.topEmpty}
           ranking={rankings.theory}
+          resolveLabel={(label) => getTheoryName(label, techniqueNameLanguage)}
         />
       </div>
     </section>

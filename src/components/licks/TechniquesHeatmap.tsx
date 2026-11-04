@@ -1,22 +1,27 @@
 import { useI18nSection } from "@/i18n/I18nProvider";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import {
   getKeyDistribution,
   getTechniqueDistribution,
 } from "@/utils/licks/distribution";
+import { getTechniqueName } from "@/utils/catalogs/techniques";
 import { LICK_CHART_COLORS } from "@/utils/licks/presentation";
 import type { GuitarLick } from "@/types/lick";
+import type { CatalogNameLanguage } from "@/types/display";
 
 function groupLabel(
   group: ReturnType<typeof getTechniqueDistribution>["groups"][number],
   text: Record<string, string>,
+  language: CatalogNameLanguage,
 ): string {
   if (group.unclassified) return text.unclassified;
-  if (group.labelKey) return text[group.labelKey] ?? group.id;
-  return group.name ?? group.id;
+  if (group.name) return group.name;
+  return getTechniqueName(group.id, language);
 }
 
 export function TechniquesHeatmap({ licks }: { licks: GuitarLick[] }) {
   const text = useI18nSection("licks");
+  const { techniqueNameLanguage } = useDisplayPreferences();
   const techniques = getTechniqueDistribution(licks);
   const keys = getKeyDistribution(licks);
   const circumference = 2 * Math.PI * 42;
@@ -42,7 +47,7 @@ export function TechniquesHeatmap({ licks }: { licks: GuitarLick[] }) {
               <li key={group.id}>
                 <div className="flex items-baseline justify-between gap-3 text-xs">
                   <span className="min-w-0 truncate text-ink">
-                    {groupLabel(group, text)}
+                    {groupLabel(group, text, techniqueNameLanguage)}
                   </span>
                   <span className="shrink-0 font-mono tabular-nums text-muted">
                     {group.percentage}% · {group.count} {text.licksCount}
@@ -142,7 +147,7 @@ export function TechniquesHeatmap({ licks }: { licks: GuitarLick[] }) {
                         }}
                       />
                       <span className="truncate">
-                        {groupLabel(group, text)}
+                        {groupLabel(group, text, techniqueNameLanguage)}
                       </span>
                     </span>
                     <span className="shrink-0 font-mono tabular-nums text-muted">

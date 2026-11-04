@@ -238,6 +238,18 @@ Object.assign(es.repertoire, {
   catalogYear: 'Año de lanzamiento',
   catalogCover: 'URL de la carátula',
   catalogCoverPlaceholder: 'https://…',
+  catalogPreviewTitle: 'Revisar datos del catálogo',
+  catalogPreviewDescription:
+    'Revisa los cambios antes de aplicarlos. La afinación, el capo, las partes, el cifrado y la tablatura no se tocan.',
+  catalogPreviewCurrent: 'Actual',
+  catalogPreviewNew: 'Nuevo',
+  catalogPreviewTitleField: 'Título',
+  catalogPreviewArtist: 'Artista',
+  catalogPreviewCover: 'Carátula',
+  catalogPreviewApply: 'Aplicar cambios',
+  catalogPreviewCancel: 'Cancelar',
+  catalogPreviewNoChanges: 'No hay cambios que aplicar.',
+  catalogPreviewEmpty: '—',
 });
 
 Object.assign(en.repertoire, {
@@ -258,6 +270,18 @@ Object.assign(en.repertoire, {
   catalogYear: 'Release year',
   catalogCover: 'Artwork URL',
   catalogCoverPlaceholder: 'https://…',
+  catalogPreviewTitle: 'Review catalog data',
+  catalogPreviewDescription:
+    'Review the changes before applying them. Tuning, capo, parts, chord chart and tab are not touched.',
+  catalogPreviewCurrent: 'Current',
+  catalogPreviewNew: 'New',
+  catalogPreviewTitleField: 'Title',
+  catalogPreviewArtist: 'Artist',
+  catalogPreviewCover: 'Artwork',
+  catalogPreviewApply: 'Apply changes',
+  catalogPreviewCancel: 'Cancel',
+  catalogPreviewNoChanges: 'There are no changes to apply.',
+  catalogPreviewEmpty: '—',
 });
 
 Object.assign(es.repertoire, {

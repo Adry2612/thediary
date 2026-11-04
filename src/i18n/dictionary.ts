@@ -22,6 +22,15 @@ export type Dict = {
     preferences: string;
     language: string;
     languageDescription: string;
+    displayTitle: string;
+    displayDescription: string;
+    techniqueNames: string;
+    techniqueNamesSpanish: string;
+    techniqueNamesOriginal: string;
+    tuningDisplay: string;
+    tuningDisplayName: string;
+    tuningDisplayNotes: string;
+    displayScope: string;
     spanish: string;
     english: string;
     cloudSyncTitle: string;

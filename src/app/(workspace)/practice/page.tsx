@@ -1,9 +1,10 @@
 import { PracticeWorkspace } from "@/components/practice/PracticeWorkspace";
 import type { PracticePhase } from "@/types/practice";
 import { getDictionary } from "@/i18n/translations";
+import { TECHNIQUE_CATALOG } from "@/utils/catalogs/techniques";
 
 const practiceText = getDictionary().practicePage;
-const techniqueName = getDictionary().licks.techniqueAlternatePicking;
+const techniqueName = TECHNIQUE_CATALOG[0].es;
 
 const phases: PracticePhase[] = [
   { id: 1, name: techniqueName, durationMinutes: 10, skill: "technique" },
