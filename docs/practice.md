@@ -15,13 +15,18 @@ El editor de una práctica guardada vive en `/dashboard/practice/[date]`, en el 
 
 `src/utils/clock-time.ts` es la fuente única para interpretar y formatear tiempos. Lo usan la edición de prácticas y el vídeo de referencia de un lick, así que ambos aceptan los mismos formatos y rechazan negativos, decimales, partes de 60 o más y valores de 24 horas o más.
 
+## Guardar una rutina
+
+Guardar o actualizar una rutina confirma el resultado con un toast («Rutina guardada» o «Rutina actualizada», con su nombre) que se anuncia como estado y desaparece solo. Un fallo de guardado se muestra como error junto a las acciones y el editor conserva su contenido.
+
 ## Temporizador: tiempo extra, total y avisos
 
 - Con **Seguir contando al terminar el bloque** activo, al llegar a cero el reloj grande deja de mostrar `0:00` y pasa a mostrar el tiempo extra con signo (`+0:12`) en verde. El bloque sigue corriendo hasta que se avanza.
-- Con la opción desactivada, el reloj se queda en `0:00` y aparece el mismo aviso integrado.
-- **Bloque terminado** y **Tiempo cumplido** se muestran como un aviso dentro de la tarjeta, debajo del distintivo de la categoría, en lugar de un toast flotante. El aviso se anuncia como estado y se cierra solo; no tapa el reloj ni los botones.
-- El **tiempo total** de la sesión tiene su propia fila bajo el reloj, con el mismo formato `mm:ss` o `h:mm:ss`. En las prácticas de tiempo acumulado el reloj grande ya es el total, así que la fila no se repite.
-- Al avanzar al siguiente bloque, el tiempo extra y el aviso desaparecen y el nuevo bloque empieza con su tiempo completo.
+- Con la opción desactivada, el reloj se queda en `0:00`.
+- **Bloque terminado** y **Tiempo cumplido** se muestran como un toast breve que se anuncia como estado y desaparece solo; no tapa el reloj ni los botones.
+- El **tiempo total** de la sesión tiene su propia fila **encima** del reloj grande, con el mismo formato `mm:ss` o `h:mm:ss`. En las prácticas de tiempo acumulado el reloj grande ya es el total, así que la fila no se repite.
+- Si el bloque sigue en tiempo extra con la tarjeta fuera de pantalla, la barra flotante mantiene `0:00` y añade el tiempo sumado en verde (`+0:12`).
+- Al avanzar al siguiente bloque, el tiempo extra y el toast desaparecen y el nuevo bloque empieza con su tiempo completo.
 
 ## Catálogos de técnica y teoría
 

@@ -402,9 +402,12 @@ export type Dict = {
     tooltipSession: string;
     tooltipSessions: string;
     tooltipAverage: string;
-    tooltipOfBestDay: string;
-    tooltipOfBestWeek: string;
-    tooltipOfBestMonth: string;
+    tooltipBestDay: string;
+    tooltipBestWeek: string;
+    tooltipBestMonth: string;
+    tooltipShortOfDay: string;
+    tooltipShortOfWeek: string;
+    tooltipShortOfMonth: string;
     tempoProgress: string;
     tempoDescription: string;
     tempoWeek: string;

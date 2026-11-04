@@ -395,7 +395,7 @@ The system SHALL detect when the links of a practice started from a saved routin
 
 ### Requirement: The timer can continue past a block's planned time
 
-The system SHALL offer an option to keep the timer running after a block's planned time until the user advances to the next block, SHALL show the block's overtime in the large timer in green with an inline notice at the top of the timer card, SHALL keep the next-block action available while the timer waits or runs overtime, SHALL include the overtime in the session total, SHALL show the session total in a dedicated row, and SHALL leave the option off by default.
+The system SHALL offer an option to keep the timer running after a block's planned time until the user advances to the next block, SHALL show the block's overtime in the large timer in green with a brief toast for the finished block, SHALL keep the next-block action available while the timer waits or runs overtime, SHALL include the overtime in the session total, SHALL show the session total in a dedicated row above the large timer, and SHALL leave the option off by default.
 
 #### Scenario: The option is off
 - **WHEN** a block reaches its planned time with the option off
@@ -405,9 +405,9 @@ The system SHALL offer an option to keep the timer running after a block's plann
 - **WHEN** a non-final block reaches its planned time with the option on
 - **THEN** the timer keeps running in that block and the total keeps increasing
 
-#### Scenario: The notice stays visible
+#### Scenario: The toast appears and disappears
 - **WHEN** a block reaches its planned time and the timer is waiting or running overtime
-- **THEN** an inline notice appears at the top of the card and dismisses itself, while the next-block action stays visible until the user advances
+- **THEN** a brief toast announces the finished block and dismisses itself, while the next-block action stays visible until the user advances
 
 #### Scenario: The block-complete signal sounds once
 - **WHEN** a block reaches its planned time and the timer keeps running overtime
@@ -437,13 +437,17 @@ The system SHALL offer an option to keep the timer running after a block's plann
 - **WHEN** a non-final block runs overtime with the option on
 - **THEN** the large timer shows `+mm:ss` in green instead of staying at zero
 
-#### Scenario: The total keeps its own row
-- **WHEN** the timer runs
-- **THEN** the session total is shown in a dedicated row without overlapping the large timer or the notice
+#### Scenario: The total sits above the large timer
+- **WHEN** the timer runs a countdown session
+- **THEN** the session total is shown in a dedicated row above the large timer and below the block title
+
+#### Scenario: The floating bar counts the overtime
+- **WHEN** a block runs overtime with the option on and the timer card is out of view
+- **THEN** the floating bar keeps the block at `0:00` and adds the overtime as `+mm:ss` in green
 
 #### Scenario: The overtime display clears on advance
 - **WHEN** the user advances to the next block
-- **THEN** the green overtime and the notice disappear and the new block starts at its full time
+- **THEN** the green overtime and the toast disappear and the new block starts at its full time
 
 ### Requirement: A saved practice shows its block details and resolved links
 
@@ -895,19 +899,19 @@ The recorder SHALL sit inside a framed display with the waveform drawn inside it
 
 ### Requirement: Saving a routine confirms the result
 
-The system SHALL confirm in place when a routine is saved or updated, SHALL announce the confirmation to assistive technology, SHALL clear it after a short time and SHALL report a failure with an error instead of silence.
+The system SHALL confirm with a toast when a routine is saved or updated, SHALL announce the confirmation to assistive technology, SHALL clear it after a short time and SHALL report a failure as an inline error instead of silence.
 
 #### Scenario: Saving a new routine
 - **WHEN** the user saves a routine for the first time
-- **THEN** a confirmation naming the saved routine appears next to the actions and is announced
+- **THEN** a toast names the saved routine and is announced
 
 #### Scenario: Updating a routine
 - **WHEN** the user saves changes to an existing routine
-- **THEN** the confirmation says the routine was updated
+- **THEN** the toast says the routine was updated
 
 #### Scenario: The confirmation clears
 - **WHEN** a few seconds pass after saving
-- **THEN** the confirmation disappears without moving the surrounding controls
+- **THEN** the toast disappears without moving the surrounding controls
 
 #### Scenario: Saving fails
 - **WHEN** the routine cannot be saved
@@ -1035,11 +1039,11 @@ The system SHALL let the user set an optional whole-minute target for the curren
 
 ### Requirement: The time target pauses the practice when reached
 
-The system SHALL play the end sound once, pause the timer and show an inline “Tiempo cumplido” notice at the top of the timer card when the elapsed time reaches the target, SHALL let the user resume past the target or finish the practice, and SHALL NOT alert again for the same target after the user resumes.
+The system SHALL play the end sound once, pause the timer and show a brief “Tiempo cumplido” toast when the elapsed time reaches the target, SHALL let the user resume past the target or finish the practice, and SHALL NOT alert again for the same target after the user resumes.
 
 #### Scenario: Reaching the target
 - **WHEN** the elapsed time reaches the session target
-- **THEN** the end sound plays once, the timer pauses and an inline notice at the top of the card states that the target was reached
+- **THEN** the end sound plays once, the timer pauses and a toast states that the target was reached
 
 #### Scenario: The target notice dismisses itself
 - **WHEN** the target notice has been visible for a few seconds
@@ -1065,9 +1069,9 @@ The system SHALL play the end sound once, pause the timer and show an inline “
 - **WHEN** the user sets a new target after the previous one was reached
 - **THEN** the session uses the new target and the alert for it can fire once
 
-#### Scenario: The notice is inline
+#### Scenario: The notice is a toast
 - **WHEN** the target is reached
-- **THEN** the notice appears inside the timer card at the top instead of in a floating toast
+- **THEN** the notice appears as a brief toast and dismisses itself without blocking the timer
 
 ### Requirement: The end-of-practice summary is neutral
 

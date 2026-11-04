@@ -338,6 +338,10 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     isCompleted ||
     (timer.awaitingPhaseAdvance && !timer.isRunning && !timer.continueAfterBlockTime);
   const isStopDisabled = !currentPhase || isCompleted;
+  // Tiempo sumado al bloque una vez agotado, visible en la barra flotante.
+  const barOvertimeSeconds = timer.isCountUp
+    ? 0
+    : Math.max(0, timer.phaseElapsedSeconds - timer.phasePlannedSeconds);
   const isFinishDialogVisible = isFinishDialogOpen && !isCompleted;
   const sessionStatus = getSessionStatus(isCompleted, timer.isRunning);
   const sessionStatusLabel =
@@ -590,6 +594,11 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
             {timer.currentPhase && !isCompleted && (
               <span className="pointer-events-none relative z-10 shrink-0 font-mono text-sm tabular-nums text-ink sm:text-base">
                 {formatClock(timer.remainingSeconds)}
+                {barOvertimeSeconds > 0 ? (
+                  <span className="ml-2 text-accent-green-fg">
+                    +{formatClock(barOvertimeSeconds)}
+                  </span>
+                ) : null}
               </span>
             )}
             <div className="relative z-10 flex shrink-0 items-center gap-2">

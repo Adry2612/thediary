@@ -327,11 +327,11 @@ The system SHALL place the practice rhythm card and the skill balance in the sam
 
 ### Requirement: The rhythm chart tooltip details each bucket
 
-The system SHALL show, for each practised bucket of the practice rhythm chart, a card with its label, total time, number of sessions, average time per session and the percentage it represents of the best day, week or month in the selected period.
+The system SHALL show, for each practised bucket of the practice rhythm chart, a card with its label, total time, number of sessions, average time per session and, when it is not the best bucket, how far short it falls of the best day, week or month in the selected period.
 
 #### Scenario: Hovering a practised bucket
 - **WHEN** the user points at a bucket that has practice
-- **THEN** the card shows the bucket label, its total time, its session count, the average time per session and its percentage of the best bucket in the period
+- **THEN** the card shows the bucket label, its total time, its session count, the average time per session and how far short it falls of the best bucket, or that it is the best bucket
 
 #### Scenario: Keyboard focus
 - **WHEN** the user focuses a practised bucket with the keyboard
@@ -339,7 +339,11 @@ The system SHALL show, for each practised bucket of the practice rhythm chart, a
 
 #### Scenario: Best bucket of the period
 - **WHEN** the bucket is the one with the most practice in the selected period
-- **THEN** the comparison reads as 100 % of the best day, week or month according to the selected period
+- **THEN** the comparison names it as the best day, week or month instead of showing a percentage
+
+#### Scenario: A bucket below the best
+- **WHEN** the bucket has less practice than the best one
+- **THEN** the comparison says how far short it fell, as a percentage when the gap is under an hour and as a duration when it is an hour or more
 
 #### Scenario: Bucket without practice
 - **WHEN** the user points at a bucket without practice

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { TrashIcon } from "@/components/ui/icons";
 import { TextField } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
+import { Toast } from "@/components/ui/Toast";
 import { PracticePhaseEditor } from "@/components/practice/PracticePhaseEditor";
 import {
   clonePracticePhases,
@@ -118,12 +119,6 @@ export function PracticePlanBuilder({
       normalizeRepertoirePhaseNames(current, repertoireItems),
     );
   }, [repertoireItems]);
-
-  useEffect(() => {
-    if (saveFeedback?.type !== "success") return;
-    const timeout = setTimeout(() => setSaveFeedback(null), 3000);
-    return () => clearTimeout(timeout);
-  }, [saveFeedback]);
 
   const updatePhase = useCallback(
     (phaseId: PracticePhase["id"], changes: Partial<PracticePhase>) => {
@@ -367,18 +362,16 @@ export function PracticePlanBuilder({
       <p className="mt-3 text-right font-mono text-xs text-muted">
          {getPracticePlanDuration(phases)} {text.total}
       </p>
-      <div className="mt-2 min-h-5 text-right text-sm" aria-live="polite">
-        {saveFeedback && (
-          <p
-            role={saveFeedback.type === "error" ? "alert" : "status"}
-            className={
-              saveFeedback.type === "error" ? "text-red-300" : "text-accent-green-fg"
-            }
-          >
-            {saveFeedback.message}
-          </p>
-        )}
-      </div>
+      {saveFeedback?.type === "error" && (
+        <p className="mt-3 text-right text-sm text-red-300" role="alert">
+          {saveFeedback.message}
+        </p>
+      )}
+      <Toast
+        message={saveFeedback?.type === "success" ? saveFeedback.message : ""}
+        open={saveFeedback?.type === "success"}
+        onDismiss={() => setSaveFeedback(null)}
+      />
       {error && (
         <p className="mt-3 text-sm text-red-300" role="alert">
           {error}

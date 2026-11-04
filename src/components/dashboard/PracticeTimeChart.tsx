@@ -3,7 +3,11 @@
 import { useMemo, useRef, useState } from "react";
 import { formatPracticeDuration, formatTotal } from "@/utils/format";
 import { getPracticeTimeBuckets, getPracticeTimeSummary } from "@/utils/practice-analytics";
-import { getContainedTooltipPosition } from "@/utils/practice-chart-tooltip";
+import {
+  getBucketComparison,
+  getContainedTooltipPosition,
+} from "@/utils/practice-chart-tooltip";
+import { interpolate } from "@/utils/interpolate";
 import type { PracticeChartPeriod, PracticeTimeBucket } from "@/utils/practice-analytics";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import type { SessionRecord } from "@/types/practice";
@@ -14,6 +18,11 @@ const changeFormatter = new Intl.NumberFormat("es-ES", {
   style: "percent",
   maximumFractionDigits: 0,
   signDisplay: "always",
+});
+
+const gapFormatter = new Intl.NumberFormat("es-ES", {
+  style: "percent",
+  maximumFractionDigits: 0,
 });
 
 export function PracticeTimeChart({
@@ -52,12 +61,18 @@ export function PracticeTimeChart({
       : summary.changeRatio === 0
         ? dashboard.summarySame
         : changeFormatter.format(summary.changeRatio);
-  const bestSuffix =
+  const bestBucketLabel =
     period === "week"
-      ? dashboard.tooltipOfBestDay
+      ? dashboard.tooltipBestDay
       : period === "month"
-        ? dashboard.tooltipOfBestWeek
-        : dashboard.tooltipOfBestMonth;
+        ? dashboard.tooltipBestWeek
+        : dashboard.tooltipBestMonth;
+  const shortOfLabel =
+    period === "week"
+      ? dashboard.tooltipShortOfDay
+      : period === "month"
+        ? dashboard.tooltipShortOfWeek
+        : dashboard.tooltipShortOfMonth;
   const comparisonLabel =
     period === "week"
       ? dashboard.summaryComparisonWeek
@@ -82,10 +97,16 @@ export function PracticeTimeChart({
       containerBounds.width,
       containerBounds.height,
     );
-    const shareOfBest =
-      maximumSeconds > 0
-        ? Math.round((bucket.totalSeconds / maximumSeconds) * 100)
-        : 0;
+    const comparison = getBucketComparison(
+      bucket.totalSeconds,
+      maximumSeconds,
+    );
+    const gap = comparison.useDuration
+      ? formatTotal(comparison.gapSeconds)
+      : gapFormatter.format(comparison.gapRatio);
+    const ofBest = comparison.isBest
+      ? bestBucketLabel
+      : interpolate(shortOfLabel, { gap });
 
     setTooltip({
       label: bucket.label,
@@ -97,7 +118,7 @@ export function PracticeTimeChart({
               bucket.totalSeconds / 60 / bucket.sessionCount,
             )
           : "—",
-      ofBest: `${shareOfBest} % ${bestSuffix}`,
+      ofBest,
       ...position,
     });
   }

@@ -9,6 +9,7 @@ import { Field, TextField } from "@/components/ui/Field";
 import { ModalDialog } from "@/components/ui/ModalDialog";
 import { ToggleChip } from "@/components/ui/ToggleChip";
 import { ToggleGroup } from "@/components/ui/ToggleGroup";
+import { Toast } from "@/components/ui/Toast";
 import { SearchIcon, SettingsIcon } from "@/components/ui/icons";
 import { SongPickerDialog } from "@/components/practice/SongPickerDialog";
 import { useDialogModal } from "@/hooks/useDialogModal";
@@ -150,12 +151,6 @@ export function TimerCard({
     if (!isTargetReached && !blockFinished) setNotice(null);
   }, [blockFinished, isTargetReached]);
 
-  useEffect(() => {
-    if (!notice) return;
-    const timeout = window.setTimeout(() => setNotice(null), 8_000);
-    return () => window.clearTimeout(timeout);
-  }, [notice]);
-
   /**
    * Si el bloque termina con la pestaña en segundo plano, el aviso pasa
    * desapercibido. Al volver a la pestaña se recuerda mientras siga pendiente
@@ -236,16 +231,6 @@ export function TimerCard({
           )}
         </div>
 
-        {notice ? (
-          <div
-            role="status"
-            aria-live="polite"
-            className="mt-4 w-full rounded-lg border border-accent-green-fg/40 bg-accent-green-bg/30 px-3 py-2 text-sm text-accent-green-fg"
-          >
-            {notice}
-          </div>
-        ) : null}
-
         <div className="mt-6 grid w-full place-items-center">
           <div className="grid w-full grid-cols-[minmax(3rem,1fr)_minmax(0,auto)_minmax(3rem,1fr)] items-center">
             <span aria-hidden="true" />
@@ -285,15 +270,8 @@ export function TimerCard({
           </ul>
         )}
 
-        <p
-          role="timer"
-          aria-live="off"
-          className={`${compact ? "mt-8 mb-4 text-4xl sm:text-6xl" : "mt-12 mb-4 text-5xl sm:text-7xl"} font-mono leading-[1.5] tabular-nums tracking-normal ${timerIsGreen ? "text-accent-green-fg" : ""}`}
-        >
-          {largeTimer}
-        </p>
         {!isCountUp && (
-          <div className="mb-8 flex items-center justify-center gap-2 rounded-full border border-line px-3 py-1.5 font-mono text-xs">
+          <div className="mt-6 flex items-center justify-center gap-2 rounded-full border border-line px-3 py-1.5 font-mono text-xs">
             <span className="uppercase tracking-[0.05em] text-muted">
               {timerText.totalTime}
             </span>
@@ -302,6 +280,13 @@ export function TimerCard({
             </span>
           </div>
         )}
+        <p
+          role="timer"
+          aria-live="off"
+          className={`${isCountUp ? (compact ? "mt-8" : "mt-12") : "mt-4"} mb-4 ${compact ? "text-4xl sm:text-6xl" : "text-5xl sm:text-7xl"} font-mono leading-[1.5] tabular-nums tracking-normal ${timerIsGreen ? "text-accent-green-fg" : ""}`}
+        >
+          {largeTimer}
+        </p>
 
 
         <ModalDialog
@@ -506,6 +491,12 @@ export function TimerCard({
           </Button>
         )}
       </Card>
+
+      <Toast
+        message={notice ?? ""}
+        open={Boolean(notice)}
+        onDismiss={() => setNotice(null)}
+      />
 
       <SongPickerDialog
         open={isSongPickerOpen}
