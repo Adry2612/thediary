@@ -112,6 +112,57 @@ export const es: Dict = {
     deleteDataFailed: 'No se pudieron borrar todos los datos.',
     deleting: 'Borrando…',
   },
+  reminders: {
+    title: 'Recordatorios',
+    description:
+      'Recibe un aviso diario de práctica, de cambio de cuerdas o de inactividad, también con la app cerrada.',
+    enabled: 'Recordatorios',
+    enabledDescription:
+      'Activa los avisos en este dispositivo. Requiere una cuenta y conceder permiso al navegador.',
+    practice: 'Práctica de hoy',
+    practiceDescription:
+      'Avisa si el día tiene una rutina asignada y aún no has practicado.',
+    strings: 'Cambio de cuerdas',
+    stringsDescription: 'Avisa cuando una guitarra llega a su intervalo de cambio.',
+    inactivity: 'Días sin practicar',
+    inactivityDescription:
+      'Avisa cuando pasan los días configurados sin ninguna práctica.',
+    time: 'Hora del aviso',
+    timeDescription: 'Se usa la zona horaria de este dispositivo.',
+    inactivityDays: 'Umbral de inactividad',
+    days3: '3 días',
+    days7: '7 días',
+    days14: '14 días',
+    days30: '30 días',
+    deviceScope:
+      'Estos ajustes y la suscripción se guardan en este dispositivo; no se sincronizan con otros.',
+    guestNotice:
+      'Los avisos del sistema requieren una cuenta. Como invitado, el recordatorio aparecerá dentro de la app.',
+    permissionUnsupported: 'Este navegador no admite notificaciones push.',
+    permissionDefault: 'Aún no has concedido permiso para las notificaciones.',
+    permissionGranted: 'Notificaciones permitidas.',
+    permissionDenied:
+      'El navegador ha bloqueado las notificaciones. Reactívalas en los ajustes del sitio.',
+    permissionNotConfigured:
+      'Los recordatorios no están configurados en este entorno.',
+    enable: 'Activar recordatorios',
+    disable: 'Desactivar recordatorios',
+    test: 'Enviar notificación de prueba',
+    testSent: 'Notificación de prueba enviada.',
+    testFailed: 'No se pudo enviar la notificación de prueba.',
+    blockedHelp:
+      'Para volver a activarlas, abre los ajustes del sitio en tu navegador y permite las notificaciones.',
+    enabledOn: 'Activados',
+    enabledOff: 'Desactivados',
+    inAppTitle: 'Recordatorio de hoy',
+    inAppDismiss: 'Descartar',
+    inAppSettings: 'Configurar avisos',
+    notificationTitle: 'thediary.',
+    notificationPractice: 'Hoy toca «{routine}»',
+    notificationStrings: 'Cambia las cuerdas de {guitar}',
+    notificationInactivity: 'Llevas {days} días sin practicar',
+    errorGeneric: 'No se pudieron actualizar los recordatorios.',
+  },
   account: {
     title: 'Tus datos y sincronización',
     notConfiguredTitle: 'Supabase aún no está conectado',

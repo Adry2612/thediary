@@ -112,6 +112,56 @@ export const en: Dict = {
     deleteDataFailed: 'Could not delete all data.',
     deleting: 'Deleting…',
   },
+  reminders: {
+    title: 'Reminders',
+    description:
+      'Get a daily reminder about practice, string changes or inactivity, even with the app closed.',
+    enabled: 'Reminders',
+    enabledDescription:
+      'Turn on reminders on this device. It needs an account and the browser permission.',
+    practice: 'Practice today',
+    practiceDescription:
+      'Reminds you when the day has an assigned routine and you have not practised yet.',
+    strings: 'String change',
+    stringsDescription: 'Reminds you when a guitar reaches its change interval.',
+    inactivity: 'Days without practice',
+    inactivityDescription:
+      'Reminds you when the configured days pass without any practice.',
+    time: 'Reminder time',
+    timeDescription: 'This device time zone is used.',
+    inactivityDays: 'Inactivity threshold',
+    days3: '3 days',
+    days7: '7 days',
+    days14: '14 days',
+    days30: '30 days',
+    deviceScope:
+      'These settings and the subscription stay on this device; they are not synchronized with others.',
+    guestNotice:
+      'System notifications need an account. As a guest, the reminder will appear inside the app.',
+    permissionUnsupported: 'This browser does not support push notifications.',
+    permissionDefault: 'You have not granted notification permission yet.',
+    permissionGranted: 'Notifications are allowed.',
+    permissionDenied:
+      'The browser has blocked notifications. Re-enable them in the site settings.',
+    permissionNotConfigured: 'Reminders are not configured in this environment.',
+    enable: 'Enable reminders',
+    disable: 'Disable reminders',
+    test: 'Send a test notification',
+    testSent: 'Test notification sent.',
+    testFailed: 'Could not send the test notification.',
+    blockedHelp:
+      'To turn them back on, open the site settings in your browser and allow notifications.',
+    enabledOn: 'On',
+    enabledOff: 'Off',
+    inAppTitle: "Today's reminder",
+    inAppDismiss: 'Dismiss',
+    inAppSettings: 'Set up reminders',
+    notificationTitle: 'thediary.',
+    notificationPractice: 'Today is “{routine}” day',
+    notificationStrings: 'Time to change the strings on {guitar}',
+    notificationInactivity: 'You have not practised for {days} days',
+    errorGeneric: 'Could not update the reminders.',
+  },
   account: {
     title: 'Your data and synchronization',
     notConfiguredTitle: 'Supabase is not connected yet',

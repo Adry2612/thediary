@@ -2,16 +2,16 @@
 
 ## 1. Preferencias de recordatorios
 
-- [ ] 1.1 Define el tipo `ReminderPreferences` (interruptor general, tres motivos, hora y umbral), sus valores por defecto y la normalización de valores guardados; verifica con pruebas que un valor inválido cae al defecto sin perder el resto.
-- [ ] 1.2 Implementa el almacenamiento por dispositivo con clave versionada, lectura tolerante a errores y suscripción a cambios para que Ajustes e Inicio compartan el estado; verifica con pruebas de lectura, escritura, valor corrupto y cambio desde otra pestaña.
-- [ ] 1.3 Añade los textos en español e inglés de la sección, los tres motivos, la hora, el umbral, los estados del permiso y los errores; verifica que `tests/i18n.test.mjs` sigue pasando y que ambas locales exponen las mismas claves nuevas.
+- [x] 1.1 Define el tipo `ReminderPreferences` (interruptor general, tres motivos, hora y umbral), sus valores por defecto y la normalización de valores guardados; verifica con pruebas que un valor inválido cae al defecto sin perder el resto.
+- [x] 1.2 Implementa el almacenamiento por dispositivo con clave versionada, lectura tolerante a errores y suscripción a cambios para que Ajustes e Inicio compartan el estado; verifica con pruebas de lectura, escritura, valor corrupto y cambio desde otra pestaña.
+- [x] 1.3 Añade los textos en español e inglés de la sección, los tres motivos, la hora, el umbral, los estados del permiso y los errores; verifica que `tests/i18n.test.mjs` sigue pasando y que ambas locales exponen las mismas claves nuevas.
 
 ## 2. Evaluación y plan diario
 
-- [ ] 2.1 Implementa las utilidades de fecha y hora por zona: clave de fecha en una zona IANA, hora local a instante UTC, fin del día local y suma de días; verifica con pruebas de cambio de hora en Europa/Madrid y de una zona al oeste de Greenwich.
-- [ ] 2.2 Implementa la evaluación de motivos para un día: rutina pendiente sin sesión, guitarra vencida (solo vencida, no «próxima», nombrando la más urgente) e inactividad desde la última sesión; verifica cada motivo y sus ausencias con pruebas.
-- [ ] 2.3 Implementa la generación del plan a 90 días: una entrada por fecha local, motivos combinados, repetición semanal de cuerdas e inactividad, omisión del día si la hora ya pasó y textos localizados inyectados; verifica con pruebas de plan vacío, un solo motivo, varios motivos y límite del horizonte.
-- [ ] 2.4 Implementa el filtro de vigencia que usará el emisor: descarta práctica si hay sesión ese día, inactividad si hay una sesión posterior y cuerdas si el último cambio es posterior al guardado; verifica con pruebas de cada descarte y de una entrada que se queda sin motivos.
+- [x] 2.1 Implementa las utilidades de fecha y hora por zona: clave de fecha en una zona IANA, hora local a instante UTC, fin del día local y suma de días; verifica con pruebas de cambio de hora en Europa/Madrid y de una zona al oeste de Greenwich.
+- [x] 2.2 Implementa la evaluación de motivos para un día: rutina pendiente sin sesión, guitarra vencida (solo vencida, no «próxima», nombrando la más urgente) e inactividad desde la última sesión; verifica cada motivo y sus ausencias con pruebas.
+- [x] 2.3 Implementa la generación del plan a 90 días: una entrada por fecha local, motivos combinados, repetición semanal de cuerdas e inactividad, omisión del día si la hora ya pasó y textos localizados inyectados; verifica con pruebas de plan vacío, un solo motivo, varios motivos y límite del horizonte.
+- [x] 2.4 Implementa el filtro de vigencia que usará el emisor: descarta práctica si hay sesión ese día, inactividad si hay una sesión posterior y cuerdas si el último cambio es posterior al guardado; verifica con pruebas de cada descarte y de una entrada que se queda sin motivos.
 - [ ] 2.5 Implementa el servicio que reemplaza el plan de la suscripción actual mediante RPC, con retardo para agrupar cambios y nueva ejecución al guardar una sesión, cambiar preferencias, cambiar idioma o abrir la app; verifica que no llama a Supabase siendo invitado, con recordatorios apagados o sin suscripción, y que el plan se recalcula tras guardar una sesión.
 
 ## 3. Cliente push
