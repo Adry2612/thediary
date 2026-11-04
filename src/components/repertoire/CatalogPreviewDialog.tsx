@@ -84,6 +84,10 @@ export function CatalogPreviewDialog({
   const coverChanged =
     updates.coverUrl !== undefined &&
     updates.coverUrl !== (item.coverUrl ?? "");
+  // La vista previa enseña la carátula actual y la que quedará al aplicar,
+  // sin imprimir sus URLs.
+  const currentCoverUrl = item.coverUrl?.trim() || undefined;
+  const nextCoverUrl = updates.coverUrl?.trim() || currentCoverUrl;
 
   return (
     <ModalDialog
@@ -138,24 +142,38 @@ export function CatalogPreviewDialog({
             </div>
           ))}
           <div
-            className={`grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.1fr)_minmax(0,1.1fr)] gap-2 px-3 py-3 text-sm ${
+            className={`grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.1fr)_minmax(0,1.1fr)] items-center gap-2 px-3 py-3 text-sm ${
               coverChanged ? "bg-accent-green-bg/20" : ""
             }`}
           >
             <span className="text-xs text-muted">
               {text.catalogPreviewCover}
             </span>
-            <span className="flex items-center gap-2 text-xs text-muted">
-              <CoverArt coverUrl={item.coverUrl} size="sm" />
-              <span className="min-w-0 break-words">
-                {item.coverUrl?.trim() || empty}
-              </span>
+            <span className="flex min-w-0 items-center gap-3">
+              <CoverArt
+                key={`current-${currentCoverUrl ?? "none"}`}
+                coverUrl={currentCoverUrl}
+                size="sm"
+                alt={text.catalogPreviewCover}
+              />
+              {!currentCoverUrl && (
+                <span className="text-xs text-muted">
+                  {text.catalogPreviewNoCover}
+                </span>
+              )}
             </span>
-            <span className="flex items-center gap-2 text-xs text-muted">
-              <CoverArt coverUrl={updates.coverUrl} size="sm" />
-              <span className="min-w-0 break-words">
-                {updates.coverUrl?.trim() || empty}
-              </span>
+            <span className="flex min-w-0 items-center gap-3">
+              <CoverArt
+                key={`next-${nextCoverUrl ?? "none"}`}
+                coverUrl={nextCoverUrl}
+                size="sm"
+                alt={text.catalogPreviewCover}
+              />
+              {!nextCoverUrl && (
+                <span className="text-xs text-muted">
+                  {text.catalogPreviewNoCover}
+                </span>
+              )}
             </span>
           </div>
         </div>

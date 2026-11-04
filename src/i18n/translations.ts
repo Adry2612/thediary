@@ -233,7 +233,7 @@ Object.assign(es.repertoire, {
   catalogUnavailable:
     'No se pudo conectar con el catálogo. Puedes crear la canción a mano.',
   catalogUse: 'Usar',
-  catalogBackfill: 'Buscar datos',
+  catalogEdit: 'Editar datos del tema',
   catalogAlbum: 'Álbum',
   catalogYear: 'Año de lanzamiento',
   catalogCover: 'URL de la carátula',
@@ -246,6 +246,7 @@ Object.assign(es.repertoire, {
   catalogPreviewTitleField: 'Título',
   catalogPreviewArtist: 'Artista',
   catalogPreviewCover: 'Carátula',
+  catalogPreviewNoCover: 'Sin carátula',
   catalogPreviewApply: 'Aplicar cambios',
   catalogPreviewCancel: 'Cancelar',
   catalogPreviewNoChanges: 'No hay cambios que aplicar.',
@@ -265,7 +266,7 @@ Object.assign(en.repertoire, {
   catalogUnavailable:
     'The catalog could not be reached. You can still create the song by hand.',
   catalogUse: 'Use',
-  catalogBackfill: 'Find details',
+  catalogEdit: 'Edit song details',
   catalogAlbum: 'Album',
   catalogYear: 'Release year',
   catalogCover: 'Artwork URL',
@@ -278,6 +279,7 @@ Object.assign(en.repertoire, {
   catalogPreviewTitleField: 'Title',
   catalogPreviewArtist: 'Artist',
   catalogPreviewCover: 'Artwork',
+  catalogPreviewNoCover: 'No artwork',
   catalogPreviewApply: 'Apply changes',
   catalogPreviewCancel: 'Cancel',
   catalogPreviewNoChanges: 'There are no changes to apply.',

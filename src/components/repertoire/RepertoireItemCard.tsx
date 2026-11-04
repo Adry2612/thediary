@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { CheckboxField } from '@/components/ui/CheckboxField';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { TextField } from '@/components/ui/Field';
-import { ChevronIcon, DeleteIcon } from '@/components/ui/icons';
+import { ChevronIcon, DeleteIcon, EditIcon } from '@/components/ui/icons';
 import { SelectField } from '@/components/ui/SelectField';
 import { formatPracticeDuration } from '@/utils/dashboard-data';
 import type {
@@ -255,6 +255,9 @@ export function RepertoireItemCard({
         onKeyDown={
           onOpen ?
             (event) => {
+              // Solo el propio contenedor abre la canción: las teclas de sus
+              // botones (editar, borrar, desplegar) no deben navegar.
+              if (event.target !== event.currentTarget) return;
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
                 onOpen(item);
@@ -358,6 +361,28 @@ export function RepertoireItemCard({
               {text.quickPractice}
             </button>
           )}
+          {item.kind === 'song' && (
+            <span className='group/edit relative inline-flex shrink-0'>
+              <button
+                type='button'
+                aria-label={text.catalogEdit}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsCatalogSearchOpen(true);
+                }}
+                className='flex size-9 shrink-0 items-center justify-center border border-line text-muted transition hover:border-ink/40 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60'
+              >
+                <EditIcon className='size-4' />
+              </button>
+              <span
+                role='tooltip'
+                aria-hidden='true'
+                className='pointer-events-none absolute right-0 top-full z-20 mt-2 hidden whitespace-nowrap rounded-md border border-line bg-surface px-2 py-1 text-xs text-ink shadow-lg shadow-black/30 group-hover/edit:block group-focus-within/edit:block'
+              >
+                {text.catalogEdit}
+              </span>
+            </span>
+          )}
           <button
             type='button'
             aria-label={text.deleteItem}
@@ -390,14 +415,6 @@ export function RepertoireItemCard({
               {text.parts} · {item.parts.length}
             </p>
             <div className='flex flex-wrap items-center gap-2'>
-              <Button
-                type='button'
-                variant='ghost'
-                size='field'
-                onClick={() => setIsCatalogSearchOpen(true)}
-              >
-                {text.catalogBackfill}
-              </Button>
               <Button
                 type='button'
                 onClick={addPart}

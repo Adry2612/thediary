@@ -152,7 +152,8 @@ test("keeps the catalog copy in both languages", () => {
     "catalogEmpty",
     "catalogUnavailable",
     "catalogUse",
-    "catalogBackfill",
+    "catalogEdit",
+    "catalogPreviewNoCover",
   ];
 
   for (const key of keys) {
