@@ -29,6 +29,7 @@ test("uses safe defaults when persisted state is absent", () => {
     practiceGoals: DEFAULT_PRACTICE_GOALS,
     guitars: [],
     guitarEntries: [],
+    studyMaterials: [],
   });
 });
 
@@ -105,6 +106,7 @@ test("preserves valid collections and normalizes optional persisted settings", (
       practiceGoals: { dailyMinutes: 90, weeklyDays: 3 },
       guitars: [],
       guitarEntries: [],
+      studyMaterials: [],
     },
   );
 });
@@ -158,6 +160,7 @@ test("replaces malformed collections and settings with defaults", () => {
       practiceGoals: DEFAULT_PRACTICE_GOALS,
       guitars: [],
       guitarEntries: [],
+      studyMaterials: [],
     },
   );
 });

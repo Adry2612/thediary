@@ -433,6 +433,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       customChords: Array.isArray(rawGuestState?.customChords)
         ? rawGuestState.customChords
         : [],
+      studyMaterials: Array.isArray(rawGuestState?.studyMaterials)
+        ? rawGuestState.studyMaterials
+        : [],
       weeklySchedule:
         rawGuestState?.weeklySchedule ??
         getPersistedPracticeState().weeklySchedule,
@@ -471,6 +474,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       sessions: guestState.history.length,
       templates: guestState.templates.length,
       repertoireItems: guestState.repertoireItems.length,
+      studyMaterials: guestState.studyMaterials.length,
       recordings: importedFiles.recordings,
       assets: importedFiles.assets,
     };

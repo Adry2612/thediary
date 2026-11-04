@@ -18,6 +18,24 @@ Si no se configuran las credenciales OAuth, la aplicación sigue funcionando:
 graba, reproduce y borra audio local, guarda metadatos en Supabase y no muestra
 proveedores de drive habilitados.
 
+## Datos de práctica y material de estudio
+
+La fila `practice_data.state` guarda el snapshot completo de práctica: historial,
+rutinas, repertorio, licks, acordes, guitarras y **material de estudio**
+(`studyMaterials`). El material de estudio se sincroniza con el resto del
+snapshot, no en una tabla aparte.
+
+- Al cargar, `studyMaterials` se normaliza: se descartan entradas sin
+  identificador, título o tipo válido y se conserva el resto.
+- Al mezclar dos dispositivos, cada material se une por `id`. Si ambos lados
+  tienen el mismo identificador, gana la copia local, igual que en el resto de
+  colecciones.
+- Los archivos subidos siguen el flujo de assets: copia local en IndexedDB y
+  copia en Supabase Storage cuando hay cuenta. Borrar una entrada de la
+  biblioteca no borra el asset, porque puede seguir adjunto a una práctica.
+- Un estado antiguo sin `studyMaterials` carga con la biblioteca vacía; no hace
+  falta migración ni cambio de versión del esquema.
+
 ## Configuración con variables de entorno
 
 Las credenciales OAuth se configuran en el servidor con variables de entorno

@@ -66,3 +66,12 @@ export function isAllowedResourceUrl(
     return false;
   }
 }
+
+/** Si el texto es una URL HTTPS parseable. */
+export function isHttpsUrl(value: string): boolean {
+  try {
+    return new URL(value.trim()).protocol === "https:";
+  } catch {
+    return false;
+  }
+}

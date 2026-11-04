@@ -26,6 +26,7 @@ export const PRACTICE_RESOURCE_KINDS = [
   "youtube",
   "spotify",
   "tab",
+  "link",
 ] as const;
 
 export type PracticeResourceKind = (typeof PRACTICE_RESOURCE_KINDS)[number];
@@ -38,6 +39,24 @@ export interface PracticeResource {
   assetId?: string;
   fileName?: string;
   text?: string;
+}
+
+/**
+ * Material de estudio reutilizable. Guarda la misma fuente que un
+ * `PracticeResource`, pero con su propio título y notas para poder buscarlo en
+ * la biblioteca antes de adjuntarlo a una práctica.
+ */
+export interface StudyMaterial {
+  id: string;
+  title: string;
+  kind: PracticeResourceKind;
+  url?: string;
+  assetId?: string;
+  fileName?: string;
+  text?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type RepertoireItemKind = "song" | "lick";

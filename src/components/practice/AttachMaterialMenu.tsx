@@ -1,6 +1,7 @@
 'use client';
 
 import { useDismissibleMenu } from '@/hooks/useDismissibleMenu';
+import { useI18nSection } from '@/i18n/I18nProvider';
 import {
   ATTACHMENT_TYPES,
   type AttachmentType,
@@ -9,14 +10,22 @@ import { ATTACHMENT_OPTIONS } from '@/utils/practice-attachments';
 
 interface Props {
   onSelect: (type: AttachmentType) => void;
+  /** Abre el selector de material guardado en la biblioteca. */
+  onUseLibrary?: () => void;
 }
 
-export const AttachMaterialMenu = ({ onSelect }: Props) => {
+export const AttachMaterialMenu = ({ onSelect, onUseLibrary }: Props) => {
+  const materials = useI18nSection('materials');
   const { containerRef, isOpen, toggle, close } = useDismissibleMenu();
 
   function handleSelect(type: AttachmentType) {
     close();
     onSelect(type);
+  }
+
+  function handleUseLibrary() {
+    close();
+    onUseLibrary?.();
   }
 
   return (
@@ -46,6 +55,21 @@ export const AttachMaterialMenu = ({ onSelect }: Props) => {
           aria-label='Tipo de material'
           className='absolute right-0 top-full z-30 mt-2 w-56 max-w-[calc(100vw-3rem)] overflow-hidden rounded-xl border border-line bg-surface p-1 shadow-lg shadow-black/40'
         >
+          {onUseLibrary && (
+            <li role='none'>
+              <button
+                type='button'
+                role='menuitem'
+                onClick={handleUseLibrary}
+                className='flex min-h-11 w-full items-baseline justify-between gap-3 rounded-md px-3 py-2 text-left text-sm transition hover:bg-white/5 focus-visible:bg-white/5 focus-visible:outline-none'
+              >
+                <span className='font-medium'>{materials.useSaved}</span>
+                <span className='truncate text-xs text-muted'>
+                  {materials.useSavedHint}
+                </span>
+              </button>
+            </li>
+          )}
           {ATTACHMENT_TYPES.map((type) => (
             <li
               key={type}

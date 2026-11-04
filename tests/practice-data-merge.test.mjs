@@ -45,6 +45,54 @@ test("normalizing a state without saved chords yields an empty collection", () =
   assert.deepEqual(state.customChords, []);
 });
 
+function studyMaterial(id, title) {
+  return {
+    id,
+    title,
+    kind: "pdf",
+    assetId: `asset-${id}`,
+    fileName: `${id}.pdf`,
+    createdAt: "2026-11-01T00:00:00.000Z",
+    updatedAt: "2026-11-01T00:00:00.000Z",
+  };
+}
+
+test("merges study materials from cloud and local without duplicating", () => {
+  const remote = normalizePracticeData({
+    studyMaterials: [studyMaterial("a", "Escalas"), studyMaterial("b", "Arpegios")],
+  });
+  const local = normalizePracticeData({
+    studyMaterials: [studyMaterial("b", "Arpegios"), studyMaterial("c", "Acordes")],
+  });
+
+  const merged = mergePracticeData(remote, local);
+
+  assert.deepEqual(
+    merged.studyMaterials.map((entry) => entry.id).sort(),
+    ["a", "b", "c"],
+  );
+});
+
+test("a local study material wins when both sides share the id", () => {
+  const remote = normalizePracticeData({
+    studyMaterials: [studyMaterial("a", "Escalas")],
+  });
+  const local = normalizePracticeData({
+    studyMaterials: [studyMaterial("a", "Escalas comentadas")],
+  });
+
+  const merged = mergePracticeData(remote, local);
+
+  assert.equal(merged.studyMaterials.length, 1);
+  assert.equal(merged.studyMaterials[0].title, "Escalas comentadas");
+});
+
+test("normalizing a state without the library yields an empty collection", () => {
+  const state = normalizePracticeData({ history: [] });
+
+  assert.deepEqual(state.studyMaterials, []);
+});
+
 test("normalizing an old session fills the lick skill and keeps lick links", () => {
   const state = normalizePracticeData({
     history: [

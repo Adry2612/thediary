@@ -13,6 +13,7 @@ import {
   normalizeGuitars,
 } from "../utils/equipment.ts";
 import type { GuitarEntry } from "@/types/equipment";
+import { normalizeStudyMaterials } from "../utils/study-materials.ts";
 
 interface NormalizePracticeStorageStateInput {
   state: Partial<PersistedPracticeState> | undefined;
@@ -93,6 +94,7 @@ export function normalizePracticeStorageState({
     repertoireItems: migration.repertoireItems,
     licks: migration.licks,
     customChords: Array.isArray(state?.customChords) ? state.customChords : [],
+    studyMaterials: normalizeStudyMaterials(state?.studyMaterials),
     weeklySchedule: normalizeSchedule(state?.weeklySchedule),
     practiceGoals: normalizeGoals(state?.practiceGoals),
     guitars: normalizeGuitars(state?.guitars),

@@ -13,6 +13,7 @@ import type { SessionRecord, PracticeTemplate, RepertoireItem, UserChord } from 
 import { migrateRepertoireLicks } from "../../utils/licks/migration.ts";
 import { normalizeLicks } from "../../utils/licks/normalize.ts";
 import { normalizeSessionRecord } from "../../utils/practice-session-record.ts";
+import { normalizeStudyMaterials } from "../../utils/study-materials.ts";
 import {
   migrateLegacyEquipmentEntries,
   normalizeGuitarEntries,
@@ -90,6 +91,7 @@ export function normalizePracticeData(value: unknown): PersistedPracticeState {
     customChords: Array.isArray(state.customChords)
       ? (state.customChords as UserChord[])
       : [],
+    studyMaterials: normalizeStudyMaterials(state.studyMaterials),
     weeklySchedule: normalizeWeeklyRoutineSchedule(state.weeklySchedule),
     practiceGoals: normalizePracticeGoals(state.practiceGoals),
     guitars: normalizeGuitars(state.guitars),
@@ -113,6 +115,7 @@ export function mergePracticeData(
     repertoireItems: mergeById(remote.repertoireItems, local.repertoireItems),
     licks: mergeById(remote.licks, local.licks),
     customChords: mergeById(remote.customChords, local.customChords),
+    studyMaterials: mergeById(remote.studyMaterials, local.studyMaterials),
     guitars: mergeById(remote.guitars, local.guitars),
     guitarEntries: mergeById(remote.guitarEntries, local.guitarEntries),
     weeklySchedule: hasAssignedRoutine(local.weeklySchedule)
@@ -178,6 +181,7 @@ export function createEmptyPracticeData(): PersistedPracticeState {
     repertoireItems: [],
     licks: [],
     customChords: [],
+    studyMaterials: [],
     weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
     practiceGoals: { ...DEFAULT_PRACTICE_GOALS },
     guitars: [],

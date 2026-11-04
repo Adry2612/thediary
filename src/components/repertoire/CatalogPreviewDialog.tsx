@@ -105,7 +105,7 @@ export function CatalogPreviewDialog({
           titleId={titleId}
           title={text.catalogPreviewTitle}
           description={text.catalogPreviewDescription}
-          onClose={closeDialog.requestClose}
+          onClose={() => closeDialog.requestClose()}
           closeLabel={text.close}
         />
 

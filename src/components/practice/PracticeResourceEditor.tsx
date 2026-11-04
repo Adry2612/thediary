@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { AttachMaterialForm } from '@/components/practice/AttachMaterialForm';
 import { AttachMaterialMenu } from '@/components/practice/AttachMaterialMenu';
+import { MaterialLibraryPicker } from '@/components/materials/MaterialLibraryPicker';
 import { usePracticeAttachment } from '@/hooks/usePracticeAttachment';
 import { RESOURCE_LABELS } from '@/utils/practice-resources';
 import type { PracticePhase, PracticeResource } from '@/types/practice';
@@ -22,6 +24,7 @@ export function PracticeResourceEditor({
   onChange,
 }: Props) {
   const text = useI18nSection('practice');
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   function addResource(resource: PracticeResource) {
     onChange(phaseId, { resources: [...resources, resource] });
   }
@@ -41,7 +44,10 @@ export function PracticeResourceEditor({
           <p className='text-xs uppercase  text-muted'>{text.materials}</p>
           <p className='mt-1 text-sm text-muted'>{text.setupDescription}</p>
         </div>
-        <AttachMaterialMenu onSelect={attachment.open} />
+        <AttachMaterialMenu
+          onSelect={attachment.open}
+          onUseLibrary={() => setIsLibraryOpen(true)}
+        />
       </div>
 
       {resources.length > 0 && (
@@ -85,6 +91,14 @@ export function PracticeResourceEditor({
             onCancel={attachment.close}
           />
         </div>
+      )}
+
+      {isLibraryOpen && (
+        <MaterialLibraryPicker
+          open
+          onSelect={addResource}
+          onClose={() => setIsLibraryOpen(false)}
+        />
       )}
     </div>
   );

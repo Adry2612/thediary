@@ -14,4 +14,5 @@ export const RESOURCE_LABELS: Record<PracticeResourceKind, string> = {
   youtube: "YouTube",
   spotify: "Spotify",
   tab: "TAB",
+  link: "Enlace",
 };

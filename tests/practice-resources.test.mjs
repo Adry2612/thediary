@@ -27,5 +27,6 @@ test("keeps the labels the lists were showing", () => {
     youtube: "YouTube",
     spotify: "Spotify",
     tab: "TAB",
+    link: "Enlace",
   });
 });
