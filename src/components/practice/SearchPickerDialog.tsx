@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { DialogHeader } from "@/components/ui/DialogHeader";
 import { ModalDialog } from "@/components/ui/ModalDialog";
 import { SearchField } from "@/components/ui/SearchField";
@@ -19,6 +26,10 @@ interface SearchPickerDialogProps {
   emptyMessage: string;
   noResultsMessage: string;
   closeLabel: string;
+  /** Cabecera de las entradas del catálogo cuando hay nombres propios. */
+  catalogGroupLabel?: string;
+  /** Cabecera de los nombres creados por el usuario. */
+  customGroupLabel?: string;
   items: readonly SearchPickerItem[];
   selectedId?: string;
   onSelect: (id: string) => void;
@@ -38,6 +49,8 @@ export function SearchPickerDialog({
   emptyMessage,
   noResultsMessage,
   closeLabel,
+  catalogGroupLabel,
+  customGroupLabel,
   items,
   selectedId,
   onSelect,
@@ -53,6 +66,19 @@ export function SearchPickerDialog({
     [items, query],
   );
 
+  // Solo se separan cuando de verdad hay nombres propios que mostrar.
+  const groups = useMemo(() => {
+    const custom = visibleItems.filter((item) => item.group === "custom");
+    const catalog = visibleItems.filter((item) => item.group !== "custom");
+    if (custom.length === 0 || catalog.length === 0) {
+      return [{ key: "all", label: undefined, items: visibleItems }];
+    }
+    return [
+      { key: "catalog", label: catalogGroupLabel, items: catalog },
+      { key: "custom", label: customGroupLabel, items: custom },
+    ];
+  }, [catalogGroupLabel, customGroupLabel, visibleItems]);
+
   useEffect(() => {
     if (!open) return;
     setQuery("");
@@ -63,6 +89,41 @@ export function SearchPickerDialog({
   function pick(id: string) {
     onSelect(id);
     onClose();
+  }
+
+  function renderItem(item: SearchPickerItem) {
+    const selected = item.id === selectedId;
+    return (
+      <li key={item.id}>
+        <button
+          type="button"
+          onClick={() => pick(item.id)}
+          aria-current={selected ? "true" : undefined}
+          className={`flex w-full items-start justify-between gap-3 px-3 py-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink/60 ${
+            selected ? "bg-accent-green-bg/20" : "hover:bg-white/[0.04]"
+          }`}
+        >
+          <span className="min-w-0">
+            <span className="block break-words font-medium text-ink">
+              {item.label}
+            </span>
+            {item.description?.trim() ? (
+              <span className="mt-0.5 block text-xs text-muted">
+                {item.description.trim()}
+              </span>
+            ) : null}
+          </span>
+          {selected ? (
+            <span
+              aria-hidden="true"
+              className="shrink-0 font-mono text-sm text-accent-green-fg"
+            >
+              ✓
+            </span>
+          ) : null}
+        </button>
+      </li>
+    );
   }
 
   return (
@@ -104,42 +165,16 @@ export function SearchPickerDialog({
         <div className="mt-4 max-h-[55vh] overflow-y-auto border-y border-line">
           {visibleItems.length > 0 ? (
             <ul className="divide-y divide-line">
-              {visibleItems.map((item) => {
-                const selected = item.id === selectedId;
-                return (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => pick(item.id)}
-                      aria-current={selected ? "true" : undefined}
-                      className={`flex w-full items-start justify-between gap-3 px-3 py-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink/60 ${
-                        selected
-                          ? "bg-accent-green-bg/20"
-                          : "hover:bg-white/[0.04]"
-                      }`}
-                    >
-                      <span className="min-w-0">
-                        <span className="block break-words font-medium text-ink">
-                          {item.label}
-                        </span>
-                        {item.description?.trim() ? (
-                          <span className="mt-0.5 block text-xs text-muted">
-                            {item.description.trim()}
-                          </span>
-                        ) : null}
-                      </span>
-                      {selected ? (
-                        <span
-                          aria-hidden="true"
-                          className="shrink-0 font-mono text-sm text-accent-green-fg"
-                        >
-                          ✓
-                        </span>
-                      ) : null}
-                    </button>
-                  </li>
-                );
-              })}
+              {groups.map((group) => (
+                <Fragment key={group.key}>
+                  {group.label ? (
+                    <li className="bg-white/[0.02] px-3 pb-1.5 pt-3 text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
+                      {group.label}
+                    </li>
+                  ) : null}
+                  {group.items.map((item) => renderItem(item))}
+                </Fragment>
+              ))}
             </ul>
           ) : (
             <p

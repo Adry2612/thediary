@@ -782,6 +782,8 @@ export const es: Dict = {
     selectLick: 'Elige un lick',
     techniqueName: 'Técnica',
     selectTechnique: 'Elige una técnica',
+    pickerCatalogGroup: 'Del catálogo',
+    pickerCustomGroup: 'Personalizados',
     techniquePickerTitle: 'Buscar técnica',
     techniquePickerDescription:
       'Filtra el catálogo por nombre. Las técnicas propias de rutinas antiguas también aparecen.',

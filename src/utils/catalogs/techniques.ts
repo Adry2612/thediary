@@ -85,7 +85,6 @@ export const TECHNIQUE_CATALOG: readonly TechniqueCatalogEntry[] = [
     es: "Dobles cuerdas",
     en: "Double stops",
     glyph: "DB",
-    translated: true,
   },
   {
     id: "ARPEGGIOS",

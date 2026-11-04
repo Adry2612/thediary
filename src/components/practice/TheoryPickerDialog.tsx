@@ -33,10 +33,16 @@ export function TheoryPickerDialog({
       id: topic.en,
       label: getTheoryName(topic.id, techniqueNameLanguage),
       searchText: `${topic.es} ${topic.en}`,
+      group: "catalog",
     }));
     const current = selectedTheory?.trim();
     if (current && !resolveTheoryEntry(current)) {
-      catalog.push({ id: current, label: current, searchText: current });
+      catalog.push({
+        id: current,
+        label: current,
+        searchText: current,
+        group: "custom",
+      });
     }
     return catalog;
   }, [selectedTheory, techniqueNameLanguage]);
@@ -55,6 +61,8 @@ export function TheoryPickerDialog({
       emptyMessage={text.theoryPickerEmpty}
       noResultsMessage={text.theoryPickerNoResults}
       closeLabel={text.theoryPickerClose}
+      catalogGroupLabel={text.pickerCatalogGroup}
+      customGroupLabel={text.pickerCustomGroup}
       items={items}
       selectedId={selectedId}
       onSelect={onSelect}

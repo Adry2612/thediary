@@ -775,6 +775,8 @@ export const en: Dict = {
     selectLick: 'Choose a lick',
     techniqueName: 'Technique',
     selectTechnique: 'Choose a technique',
+    pickerCatalogGroup: 'From the catalogue',
+    pickerCustomGroup: 'Custom',
     techniquePickerTitle: 'Find a technique',
     techniquePickerDescription:
       'Filter the catalogue by name. Custom techniques from older routines are listed too.',

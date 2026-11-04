@@ -80,6 +80,7 @@ test("translations only use the original name in an English interface", () => {
     "Sweep picking",
   );
   assert.equal(getTechniqueName("PALM_MUTE", "original-es"), "Palm mute");
+  assert.equal(getTechniqueName("DOUBLE_STOPS", "original-es"), "Double stops");
   assert.equal(getTechniqueName("HARMONICS", "original-es"), "Armónicos");
   assert.equal(getTechniqueName("HARMONICS", "original"), "Harmonics");
   assert.equal(getTechniqueName("ARPEGGIOS", "original-es"), "Arpegios");

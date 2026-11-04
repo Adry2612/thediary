@@ -27,6 +27,7 @@ import { useScreenWakeLock } from "@/hooks/useScreenWakeLock";
 import { useSplitViewAvailability } from "@/hooks/useSplitViewAvailability";
 import { getLocalDateKey } from "@/utils/local-date";
 import { formatClock } from "@/utils/format";
+import { formatClockInput } from "@/utils/clock-time";
 import {
   addBpmSample,
   getTimeWeightedAverageBpm,
@@ -64,6 +65,7 @@ import { useI18nSection } from "@/i18n/I18nProvider";
 export function PracticeSession({ session }: { session: ActivePracticeSession }) {
   const text = useI18nSection("practice");
   const timerText = useI18nSection("timer");
+  const app = useI18nSection("app");
   const { techniqueNameLanguage } = useDisplayPreferences();
   const pathname = usePathname();
   const isPracticeRoute = pathname === "/practice";
@@ -147,6 +149,40 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     sessionId,
   );
   useScreenWakeLock(timer.isRunning);
+
+  // La pestaña muestra el tiempo total mientras haya una práctica empezada.
+  const tabTitle = `${formatClockInput(timer.elapsedSeconds)} · ${app.name}`;
+  const tabTitleRef = useRef(tabTitle);
+  tabTitleRef.current = tabTitle;
+
+  useEffect(() => {
+    document.title = tabTitle;
+  }, [tabTitle]);
+
+  // Next puede reescribir el título al navegar: se mantiene el tiempo visible.
+  useEffect(() => {
+    const titleElement = document.querySelector("title");
+    if (!titleElement) return;
+
+    const observer = new MutationObserver(() => {
+      if (document.title !== tabTitleRef.current) {
+        document.title = tabTitleRef.current;
+      }
+    });
+    observer.observe(titleElement, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      document.title = app.name;
+    };
+  }, [app.name]);
+
   const timerElapsedSecondsRef = useRef(timer.elapsedSeconds);
   timerElapsedSecondsRef.current = timer.elapsedSeconds;
   const previousTimerStartedAtRef = useRef(timer.startedAt);

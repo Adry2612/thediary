@@ -33,10 +33,16 @@ export function TechniquePickerDialog({
       id: technique.en,
       label: getTechniqueName(technique.id, techniqueNameLanguage),
       searchText: `${technique.es} ${technique.en}`,
+      group: "catalog",
     }));
     const current = selectedTechnique?.trim();
     if (current && !resolveTechniqueEntry(current)) {
-      catalog.push({ id: current, label: current, searchText: current });
+      catalog.push({
+        id: current,
+        label: current,
+        searchText: current,
+        group: "custom",
+      });
     }
     return catalog;
   }, [selectedTechnique, techniqueNameLanguage]);
@@ -55,6 +61,8 @@ export function TechniquePickerDialog({
       emptyMessage={text.techniquePickerEmpty}
       noResultsMessage={text.techniquePickerNoResults}
       closeLabel={text.techniquePickerClose}
+      catalogGroupLabel={text.pickerCatalogGroup}
+      customGroupLabel={text.pickerCustomGroup}
       items={items}
       selectedId={selectedId}
       onSelect={onSelect}
