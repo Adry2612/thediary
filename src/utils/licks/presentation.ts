@@ -17,6 +17,16 @@ export const LICK_CHART_COLORS = [
   "#9b9bd1",
   "#8bc99b",
   "#c0a37a",
+  "#6ea8a0",
+  "#b58fc1",
+  "#c9a26d",
+  "#7f9fd6",
+  "#a7c07a",
+  "#d18f9f",
+  "#8fa3c9",
+  "#c4b06f",
+  "#7fbfae",
+  "#b08fc9",
 ] as const;
 
 export function getLastPracticedLabel(

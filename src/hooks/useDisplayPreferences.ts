@@ -65,6 +65,9 @@ export function useDisplayPreferences() {
 
   return {
     preference,
+    /** Valor elegido en Configuración, sin resolver por el idioma. */
+    techniqueNamePreference:
+      preference.techniqueNameLanguage ?? (locale === "en" ? "original" : "es"),
     techniqueNameLanguage: resolveTechniqueNameLanguage(preference, locale),
     tuningDisplay: preference.tuningDisplay,
     setTechniqueNameLanguage,

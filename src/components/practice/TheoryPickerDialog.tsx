@@ -6,6 +6,7 @@ import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import {
   THEORY_CATALOG,
+  getTheoryName,
   resolveTheoryEntry,
 } from "@/utils/catalogs/theory";
 import type { SearchPickerItem } from "@/utils/search-picker";
@@ -30,7 +31,7 @@ export function TheoryPickerDialog({
   const items = useMemo<SearchPickerItem[]>(() => {
     const catalog: SearchPickerItem[] = THEORY_CATALOG.map((topic) => ({
       id: topic.en,
-      label: techniqueNameLanguage === "original" ? topic.en : topic.es,
+      label: getTheoryName(topic.id, techniqueNameLanguage),
       searchText: `${topic.es} ${topic.en}`,
     }));
     const current = selectedTheory?.trim();

@@ -50,6 +50,10 @@ The system SHALL apply the technique-name preference to lick badges, technique p
 - **WHEN** a saved technique block carries a name outside the catalogue
 - **THEN** it is shown exactly as stored in either preference
 
+#### Scenario: A translated technique name
+- **WHEN** the interface is in Spanish, the user chooses original names and a technique only has a translated name, such as strumming
+- **THEN** it is shown in Spanish, while proper names such as sweep picking keep their original form
+
 #### Scenario: Analytics group both languages
 - **WHEN** two practices store the same technique once in Spanish and once in its original name
 - **THEN** the technique analytics count them as one technique

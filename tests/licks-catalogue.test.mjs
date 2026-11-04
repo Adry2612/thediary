@@ -51,6 +51,41 @@ test("resolves a technique by either of its names", () => {
   assert.equal(getTechniqueName("propia", "es"), "propia");
 });
 
+test("the catalogue includes the common missing techniques", () => {
+  for (const id of [
+    "PALM_MUTE",
+    "HARMONICS",
+    "STRING_SKIPPING",
+    "TREMOLO_PICKING",
+    "DOUBLE_STOPS",
+    "ARPEGGIOS",
+    "SLAP",
+    "POP",
+    "CHICKEN_PICKING",
+    "WHAMMY_BAR",
+  ]) {
+    const entry = getLickTechnique(id);
+    assert.ok(entry, `${id} is missing from the catalogue`);
+    assert.notEqual(entry.es, "");
+    assert.notEqual(entry.en, "");
+  }
+});
+
+test("translations only use the original name in an English interface", () => {
+  assert.equal(getTechniqueName("RHYTHM_STRUMMING", "es"), "Rasgueo");
+  assert.equal(getTechniqueName("RHYTHM_STRUMMING", "original"), "Strumming");
+  assert.equal(getTechniqueName("RHYTHM_STRUMMING", "original-es"), "Rasgueo");
+  assert.equal(
+    getTechniqueName("SWEEP_PICKING", "original-es"),
+    "Sweep picking",
+  );
+  assert.equal(getTechniqueName("PALM_MUTE", "original-es"), "Palm mute");
+  assert.equal(getTechniqueName("HARMONICS", "original-es"), "Armónicos");
+  assert.equal(getTechniqueName("HARMONICS", "original"), "Harmonics");
+  assert.equal(getTechniqueName("ARPEGGIOS", "original-es"), "Arpegios");
+  assert.equal(getTechniqueName("ARPEGGIOS", "original"), "Arpeggios");
+});
+
 test("unknown techniques are rejected and valid ones keep catalogue order", () => {
   assert.equal(isTechniqueId("LEGATO"), true);
   assert.equal(isTechniqueId("legato"), false);

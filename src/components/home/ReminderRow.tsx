@@ -14,40 +14,45 @@ export function ReminderRow() {
   return (
     <section
       aria-labelledby='home-reminder-title'
-      className='mt-5 rounded-xl border border-accent-green-fg/40 bg-accent-green-bg/20 p-4 sm:p-5'
+      className='mt-5 rounded-xl border border-line bg-surface p-5 sm:p-6'
     >
-      <div className='flex items-start justify-between gap-4'>
-        <div className='min-w-0'>
-          <h2
-            id='home-reminder-title'
-            className='text-sm font-medium text-ink'
+      <h2
+        id='home-reminder-title'
+        className='text-xs font-medium uppercase tracking-[0.08em] text-muted'
+      >
+        {text.inAppTitle}
+      </h2>
+      <ul className='mt-3 space-y-2'>
+        {reasons.map((reason) => (
+          <li
+            key={reason.kind}
+            className='flex items-start gap-3 text-sm leading-6'
           >
-            {text.inAppTitle}
-          </h2>
-          <ul className='mt-2 space-y-1 text-sm leading-6 text-muted'>
-            {reasons.map((reason) => (
-              <li key={reason.kind} className='break-words'>
-                <Link
-                  href={reason.url}
-                  className='underline decoration-line underline-offset-4 hover:text-ink'
-                >
-                  {reason.text}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <Link
-            href='/settings#settings-reminders'
-            className='mt-3 inline-flex min-h-9 items-center text-xs text-muted underline decoration-line underline-offset-4 hover:text-ink'
-          >
-            {text.inAppSettings}
-          </Link>
-        </div>
+            <span
+              aria-hidden
+              className='mt-2.5 size-1.5 shrink-0 rounded-full bg-accent-green-fg'
+            />
+            <Link
+              href={reason.url}
+              className='min-w-0 break-words text-ink transition hover:text-accent-green-fg'
+            >
+              {reason.text}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <div className='mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs'>
+        <Link
+          href='/settings#settings-reminders'
+          className='text-muted transition hover:text-ink'
+        >
+          {text.inAppSettings}
+        </Link>
         <button
           type='button'
           onClick={dismiss}
           aria-label={text.inAppDismiss}
-          className='min-h-9 shrink-0 rounded-md border border-line px-3 text-xs text-muted transition hover:bg-white/5 hover:text-ink'
+          className='min-h-8 text-muted transition hover:text-ink'
         >
           {text.inAppDismiss}
         </button>

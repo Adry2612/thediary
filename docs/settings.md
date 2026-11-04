@@ -9,7 +9,7 @@ Son preferencias **por dispositivo**: se guardan en `localStorage` (`thediary.di
 ### Nombres de las técnicas
 
 - **Español**: muestra el nombre español del catálogo de técnicas, aunque la interfaz esté en inglés.
-- **Original**: muestra el nombre original (inglés) del catálogo, aunque la interfaz esté en español.
+- **Original**: muestra el nombre original (inglés) del catálogo, aunque la interfaz esté en español. Los nombres que solo son una traducción, como `Strumming`, se muestran en español (`Rasgueo`) mientras la interfaz esté en español.
 - Sin una elección guardada, se sigue el idioma de la interfaz: español si la app está en español y original si está en inglés.
 
 La preferencia se aplica a las insignias y editores de licks, a los títulos de bloques de práctica, al detalle de una práctica guardada y a los análisis de técnicas.

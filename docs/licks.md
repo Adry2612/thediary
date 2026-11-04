@@ -30,6 +30,7 @@ Las técnicas de un lick salen de un catálogo único compartido con los bloques
 
 - Un lick guarda el id de la técnica, no el texto visible, así que cambiar el idioma de presentación no altera sus datos.
 - En Configuración se elige si las técnicas se muestran en español o con su nombre original. La preferencia se aplica a las tarjetas, la ficha, el editor, los bloques de práctica y la distribución de técnicas.
+- Con la interfaz en español, el modo original respeta los nombres propios (`Sweep picking`, `Palm mute`) pero mantiene en español los que solo son una traducción, como `Strumming` → `Rasgueo`. Si la interfaz está en inglés, se usa siempre el nombre original.
 - Sin una elección guardada, se sigue el idioma de la interfaz.
 - Los nombres personalizados de bloques de rutinas antiguas no forman parte del catálogo y se muestran tal como se guardaron.
 

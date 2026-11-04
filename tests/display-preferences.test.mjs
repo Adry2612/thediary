@@ -48,6 +48,13 @@ test("an explicit choice overrides the interface language", () => {
       { techniqueNameLanguage: "original", tuningDisplay: "name" },
       "es",
     ),
+    "original-es",
+  );
+  assert.equal(
+    resolveTechniqueNameLanguage(
+      { techniqueNameLanguage: "original", tuningDisplay: "name" },
+      "en",
+    ),
     "original",
   );
   assert.equal(

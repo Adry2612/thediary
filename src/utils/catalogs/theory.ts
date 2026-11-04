@@ -73,7 +73,7 @@ export function getTheoryName(
 ): string {
   const entry = getTheoryEntry(value) ?? resolveTheoryEntry(value);
   if (!entry) return value;
-  return language === "original" ? entry.en : entry.es;
+  return language === "es" ? entry.es : entry.en;
 }
 
 /** Nombres de todos los temas en el idioma pedido. */
@@ -81,7 +81,7 @@ export function getTheoryCatalogNames(
   language: CatalogNameLanguage,
 ): string[] {
   return THEORY_CATALOG.map((topic) =>
-    language === "original" ? topic.en : topic.es,
+    language === "es" ? topic.es : topic.en,
   );
 }
 

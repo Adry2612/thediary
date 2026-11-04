@@ -6,6 +6,7 @@ import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import {
   TECHNIQUE_CATALOG,
+  getTechniqueName,
   resolveTechniqueEntry,
 } from "@/utils/catalogs/techniques";
 import type { SearchPickerItem } from "@/utils/search-picker";
@@ -30,8 +31,7 @@ export function TechniquePickerDialog({
   const items = useMemo<SearchPickerItem[]>(() => {
     const catalog: SearchPickerItem[] = TECHNIQUE_CATALOG.map((technique) => ({
       id: technique.en,
-      label:
-        techniqueNameLanguage === "original" ? technique.en : technique.es,
+      label: getTechniqueName(technique.id, techniqueNameLanguage),
       searchText: `${technique.es} ${technique.en}`,
     }));
     const current = selectedTechnique?.trim();

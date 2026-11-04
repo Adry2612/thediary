@@ -44,7 +44,7 @@ export function SettingsView() {
         description={settings.description}
       />
 
-      <div className='max-w-3xl space-y-4'>
+      <div className='mx-auto max-w-3xl space-y-4'>
         <section
           data-tour-target='settings-account'
           aria-labelledby='settings-account-title'
@@ -126,7 +126,7 @@ export function SettingsView() {
               <SelectField
                 className='mt-1'
                 ariaLabel={settings.techniqueNames}
-                value={display.techniqueNameLanguage}
+                value={display.techniqueNamePreference}
                 options={[
                   { value: 'es', label: settings.techniqueNamesSpanish },
                   {

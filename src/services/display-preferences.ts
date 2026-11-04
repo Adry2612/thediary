@@ -1,3 +1,5 @@
+import type { CatalogNameLanguage } from "../types/display.ts";
+
 export type TechniqueNameLanguage = "es" | "original";
 export type TuningDisplay = "name" | "notes";
 
@@ -79,8 +81,10 @@ export function saveDisplayPreferences(value: unknown): DisplayPreferences {
 export function resolveTechniqueNameLanguage(
   preference: DisplayPreferences,
   locale: "es" | "en",
-): TechniqueNameLanguage {
-  return (
-    preference.techniqueNameLanguage ?? (locale === "en" ? "original" : "es")
-  );
+): CatalogNameLanguage {
+  if (preference.techniqueNameLanguage === "es") return "es";
+  if (preference.techniqueNameLanguage === "original") {
+    return locale === "en" ? "original" : "original-es";
+  }
+  return locale === "en" ? "original" : "es";
 }

@@ -59,7 +59,7 @@ The system SHALL let the user classify a lick with one musical key from a fixed 
 
 ### Requirement: Techniques come from a closed global catalogue
 
-The system SHALL let the user classify a lick with any combination of techniques from a single global catalogue shared with practice technique blocks — alternate picking, sweep picking, legato, bending, tapping, hybrid picking, economy picking, fingerstyle, rhythm strumming and slide —, SHALL keep a Spanish and an original name for each technique, SHALL NOT accept a technique chosen as free text, SHALL keep the classification optional, and SHALL discard stored techniques outside the catalogue without discarding the lick.
+The system SHALL let the user classify a lick with any combination of techniques from a single global catalogue shared with practice technique blocks — alternate picking, sweep picking, legato, bending, tapping, hybrid picking, economy picking, fingerstyle, strumming, slide, palm mute, harmonics, string skipping, tremolo picking, double stops, arpeggios, slap, pop, chicken picking and whammy bar —, SHALL keep a Spanish and an original name for each technique, SHALL NOT accept a technique chosen as free text, SHALL keep the classification optional, and SHALL discard stored techniques outside the catalogue without discarding the lick.
 
 #### Scenario: Choosing several techniques
 - **WHEN** the user selects two or more techniques for a lick
@@ -80,6 +80,10 @@ The system SHALL let the user classify a lick with any combination of techniques
 #### Scenario: The original name is available in Spanish
 - **WHEN** the interface is in Spanish and the user chooses original technique names
 - **THEN** badges, pickers and analytics show the original names instead of the Spanish ones
+
+#### Scenario: A translated name stays in Spanish
+- **WHEN** the interface is in Spanish, the user chooses original technique names and the technique's original name is only a translation, such as strumming
+- **THEN** it is shown as “Rasgueo”, while proper names such as “Sweep picking” keep their original form
 
 #### Scenario: The preference applies to every lick surface
 - **WHEN** the user changes the technique-name preference
