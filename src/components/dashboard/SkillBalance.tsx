@@ -104,6 +104,7 @@ export function SkillBalance({
 
       <div className="mt-8 flex flex-1 items-center justify-center">
         <svg
+          key={period}
           ref={chartRef}
           viewBox="0 0 120 120"
           className="size-44 -rotate-90"
@@ -118,7 +119,7 @@ export function SkillBalance({
             stroke="#27272a"
             strokeWidth="13"
           />
-          {PRACTICE_SKILLS.map((skill) => {
+          {PRACTICE_SKILLS.map((skill, index) => {
             const category = distribution.categories[skill];
             const fraction = distribution.totalMinutes
               ? category.minutes / distribution.totalMinutes
@@ -138,6 +139,14 @@ export function SkillBalance({
                 strokeWidth="13"
                 strokeDasharray={`${length} ${circumference - length}`}
                 strokeDashoffset={-offset}
+                className="chart-ring-draw"
+                style={
+                  {
+                    "--ring-dasharray": `${length} ${circumference - length}`,
+                    "--ring-circumference": circumference,
+                    "--chart-index": index,
+                  } as CSSProperties
+                }
                 onPointerEnter={() => showSummary(chartRef.current, skill)}
               />
             );

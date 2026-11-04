@@ -65,6 +65,7 @@ export function GuitarBalance({
       <div className="mt-6 flex flex-1 flex-col items-center justify-center">
         <div className="relative w-full max-w-[16rem]">
           <svg
+            key={period}
             viewBox="0 0 120 68"
             className="w-full"
             role="img"
@@ -86,6 +87,14 @@ export function GuitarBalance({
                   strokeWidth="13"
                   pathLength={100}
                   strokeDasharray={`${shares.electric} 100`}
+                  className="chart-ring-draw"
+                  style={
+                    {
+                      "--ring-dasharray": `${shares.electric} 100`,
+                      "--ring-circumference": 100,
+                      "--chart-index": 0,
+                    } as CSSProperties
+                  }
                 />
                 <path
                   d="M10 60 A50 50 0 0 1 110 60"
@@ -95,6 +104,14 @@ export function GuitarBalance({
                   pathLength={100}
                   strokeDasharray={`${shares.acoustic} 100`}
                   strokeDashoffset={-shares.electric}
+                  className="chart-ring-draw"
+                  style={
+                    {
+                      "--ring-dasharray": `${shares.acoustic} 100`,
+                      "--ring-circumference": 100,
+                      "--chart-index": 1,
+                    } as CSSProperties
+                  }
                 />
               </>
             )}

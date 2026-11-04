@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   getBucketComparison,
   getContainedTooltipPosition,
+  isDateKeyInBucket,
 } from "../src/utils/practice-chart-tooltip.ts";
 
 test("keeps tooltip coordinates inside the chart at all edges", () => {
@@ -58,4 +59,14 @@ test("an empty bucket does not divide by zero", () => {
     gapRatio: 0,
     useDuration: false,
   });
+});
+
+test("detects the bucket that contains today", () => {
+  const november = { startDate: "2026-11-01", endDate: "2026-11-30" };
+
+  assert.equal(isDateKeyInBucket("2026-11-04", november), true);
+  assert.equal(isDateKeyInBucket("2026-11-01", november), true);
+  assert.equal(isDateKeyInBucket("2026-11-30", november), true);
+  assert.equal(isDateKeyInBucket("2026-10-31", november), false);
+  assert.equal(isDateKeyInBucket("2026-12-01", november), false);
 });

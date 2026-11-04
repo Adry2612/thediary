@@ -267,9 +267,24 @@ export function PracticeWorkspace({
         }
         actions={
           !activePlan && flow.step === 'choose' && !isBuilding ?
-            <Button type='button' size='field' onClick={startQuickPractice}>
-              {text.quickPractice}
-            </Button>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button
+                type='button'
+                variant='ghost'
+                size='field'
+                onClick={() => openBuilder(null)}
+              >
+                {text.createPractice}
+              </Button>
+              <Button
+                type='button'
+                variant='primary'
+                size='field'
+                onClick={startQuickPractice}
+              >
+                {text.quickPractice}
+              </Button>
+            </div>
           : undefined
         }
       />
@@ -351,29 +366,6 @@ export function PracticeWorkspace({
                 onStart={reviewTemplate}
                 onEdit={(templateId) => openBuilder(templateId)}
               />
-              <div className='flex flex-wrap items-center gap-4 border-t border-line pt-5'>
-                {templates.length === 0 ? (
-                  <Button
-                    type='button'
-                    variant='primary'
-                    size='field'
-                    onClick={() => openBuilder(null)}
-                  >
-                    {text.createPractice}
-                  </Button>
-                ) : (
-                  <button
-                    type='button'
-                    onClick={() => openBuilder(null)}
-                    className='text-sm text-muted underline underline-offset-4 hover:text-ink'
-                  >
-                    {text.createPractice}
-                  </button>
-                )}
-                <p className='max-w-xl text-xs leading-6 text-muted'>
-                  {text.quickPracticeDescription}
-                </p>
-              </div>
             </>
           )}
         </>

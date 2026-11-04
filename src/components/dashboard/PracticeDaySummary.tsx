@@ -17,14 +17,17 @@ type PracticeDaySummaryProps = {
   titleId?: string;
   className?: string;
   /**
-   * Vista previa del calendario anual: no se puede desplazar, así que limita
-   * la lista a tres sesiones y omite los bloques y las notas.
+   * Vista previa del calendario anual: no se puede desplazar, así que muestra
+   * el contenido de las sesiones (bloques y notas) con límites de altura.
    */
   compact?: boolean;
 };
 
 /** Sesiones que caben en la vista previa no interactiva del calendario anual. */
-export const COMPACT_SUMMARY_SESSION_LIMIT = 3;
+export const COMPACT_SUMMARY_SESSION_LIMIT = 2;
+
+/** Bloques por sesión en la vista previa del calendario anual. */
+export const COMPACT_SUMMARY_PHASE_LIMIT = 3;
 
 /**
  * Contenido compartido del resumen de un día: lo usan la ficha flotante del
@@ -76,7 +79,10 @@ export function PracticeDaySummary({
             }
           >
             {visibleSessions.map((session) => {
-              const phaseLines = compact ? [] : getSessionPhaseLines(session);
+              const phaseLines = getSessionPhaseLines(session).slice(
+                0,
+                compact ? COMPACT_SUMMARY_PHASE_LIMIT : undefined,
+              );
               return (
                 <li
                   key={session.id}
@@ -107,7 +113,7 @@ export function PracticeDaySummary({
                               phase.elapsedSeconds / 60,
                             )}
                           </span>
-                          {phase.notes && (
+                          {phase.notes && !compact && (
                             <p className="mt-0.5 whitespace-pre-wrap text-muted">
                               {phase.notes}
                             </p>
@@ -116,8 +122,10 @@ export function PracticeDaySummary({
                       ))}
                     </ul>
                   )}
-                  {!compact && session.notes && (
-                    <p className="mt-2 whitespace-pre-wrap border-t border-zinc-800 pt-2 text-xs leading-relaxed text-zinc-400">
+                  {session.notes && (
+                    <p
+                      className={`mt-2 whitespace-pre-wrap border-t border-zinc-800 pt-2 text-xs leading-relaxed text-zinc-400 ${compact ? "line-clamp-2" : ""}`}
+                    >
                       {session.notes}
                     </p>
                   )}

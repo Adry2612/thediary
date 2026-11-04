@@ -405,6 +405,7 @@ export type Dict = {
     tooltipShortOfDay: string;
     tooltipShortOfWeek: string;
     tooltipShortOfMonth: string;
+    tooltipToBeatMonth: string;
     tempoProgress: string;
     tempoDescription: string;
     tempoWeek: string;

@@ -327,7 +327,7 @@ The system SHALL place the practice rhythm card and the skill balance in the sam
 
 ### Requirement: The rhythm chart tooltip details each bucket
 
-The system SHALL show, for each practised bucket of the practice rhythm chart, a card with its label, total time, number of sessions, average time per session and, when it is not the best bucket, how far short it falls of the best day, week or month in the selected period.
+The system SHALL show, for each practised bucket of the practice rhythm chart, a card with its label, total time, number of sessions, average time per session and, when it is not the best bucket, how far short it falls of the best day, week or month in the selected period. When the bucket is the current month in the year period and is below the best month, the card SHALL instead say what percentage is left to beat the best month.
 
 #### Scenario: Hovering a practised bucket
 - **WHEN** the user points at a bucket that has practice
@@ -344,6 +344,10 @@ The system SHALL show, for each practised bucket of the practice rhythm chart, a
 #### Scenario: A bucket below the best
 - **WHEN** the bucket has less practice than the best one
 - **THEN** the comparison says how far short it fell, as a percentage when the gap is under an hour and as a duration when it is an hour or more
+
+#### Scenario: The current month is still below the best month
+- **WHEN** the year period is shown, the bucket is the current month and another month has more practice
+- **THEN** the card says the percentage left to beat the best month instead of how far short it fell
 
 #### Scenario: Bucket without practice
 - **WHEN** the user points at a bucket without practice
@@ -403,7 +407,7 @@ On a coarse pointer, the system SHALL open a day's summary on the first tap with
 
 ### Requirement: The annual calendar previews a day in a non-blocking card
 
-The system SHALL show the annual calendar's day summary in a floating card next to the day under the pointer or keyboard focus, SHALL let pointer events pass through the card so the day underneath it stays hoverable and clickable, and SHALL keep the preview compact: date, session count, total time and up to three sessions, with a count of the sessions that do not fit.
+The system SHALL show the annual calendar's day summary in a floating card next to the day under the pointer or keyboard focus, SHALL let pointer events pass through the card so the day underneath it stays hoverable and clickable, and SHALL keep the preview compact: date, session count, total time, the name, time and BPM of up to two sessions, the blocks of each session and its notes, with a count of the sessions that do not fit.
 
 #### Scenario: Opening a day
 - **WHEN** the pointer enters a day of the annual calendar
@@ -422,8 +426,8 @@ The system SHALL show the annual calendar's day summary in a floating card next 
 - **THEN** the card opens next to it and describes that day until the focus moves
 
 #### Scenario: Many sessions in a day
-- **WHEN** the day has more than three sessions
-- **THEN** the card lists the first three and shows how many more sessions that day has
+- **WHEN** the day has more than two sessions
+- **THEN** the card lists the first two with their blocks and shows how many more sessions that day has
 
 #### Scenario: A day without practice
 - **WHEN** the pointer or focus reaches a day without saved practice
@@ -707,7 +711,7 @@ The system SHALL replace the period dropdown of the practice rhythm chart with t
 
 ### Requirement: The evolution charts animate on appearance and change
 
-The system SHALL animate the practice rhythm bars, the skill-balance bars, the monthly heatmap and the annual calendar when they first appear or when their period, month or year changes, using only opacity and transform so no layout shifts, and SHALL finish within 500 ms with a stagger delay capped so the last element starts within 250 ms.
+The system SHALL animate the practice rhythm bars, the skill-balance bars and ring, the guitar balance arc, the monthly heatmap and the annual calendar when they first appear or when their period, month or year changes, using only opacity, transform or SVG stroke drawing so no layout shifts, and SHALL finish within 500 ms with a stagger delay capped so the last element starts within 250 ms.
 
 #### Scenario: The chart appears
 - **WHEN** the evolution screen shows a chart with data

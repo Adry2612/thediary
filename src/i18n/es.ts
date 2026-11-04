@@ -381,6 +381,7 @@ export const es: Dict = {
     tooltipShortOfDay: 'Te quedaste a {gap} de tu mejor día',
     tooltipShortOfWeek: 'Te quedaste a {gap} de tu mejor semana',
     tooltipShortOfMonth: 'Te quedaste a {gap} de tu mejor mes',
+    tooltipToBeatMonth: 'Te queda {gap} para superar tu mejor mes',
     tempoProgress: 'Progreso de tempo',
     tempoDescription: 'Frente al periodo anterior',
     tempoWeek: '7 días',

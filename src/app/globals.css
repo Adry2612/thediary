@@ -136,6 +136,15 @@ textarea,
   }
 }
 
+@keyframes chart-ring-draw {
+  from {
+    stroke-dasharray: 0 var(--ring-circumference, 100);
+  }
+  to {
+    stroke-dasharray: var(--ring-dasharray, 100 0);
+  }
+}
+
 @keyframes chart-cell-in {
   from {
     opacity: 0;
@@ -168,6 +177,11 @@ textarea,
   animation: chart-bar-grow-x 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: min(calc(var(--chart-index, 0) * 10ms), 140ms);
   transform-origin: left;
+}
+
+.chart-ring-draw {
+  animation: chart-ring-draw 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: min(calc(var(--chart-index, 0) * 30ms), 120ms);
 }
 
 .chart-cell-in {
@@ -315,6 +329,7 @@ dialog.overlay-motion[data-closing="true"]::backdrop {
 
   .chart-bar-rise,
   .chart-bar-grow-x,
+  .chart-ring-draw,
   .chart-cell-in,
   .chart-calendar-in {
     animation: none;

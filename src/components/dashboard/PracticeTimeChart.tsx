@@ -6,8 +6,10 @@ import { getPracticeTimeBuckets, getPracticeTimeSummary } from "@/utils/practice
 import {
   getBucketComparison,
   getContainedTooltipPosition,
+  isDateKeyInBucket,
 } from "@/utils/practice-chart-tooltip";
 import { interpolate } from "@/utils/interpolate";
+import { toDateKey } from "@/utils/practice-calendar";
 import type { PracticeChartPeriod, PracticeTimeBucket } from "@/utils/practice-analytics";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import type { SessionRecord } from "@/types/practice";
@@ -44,6 +46,7 @@ export function PracticeTimeChart({
     () => getPracticeTimeSummary(history, period, today),
     [history, period, today],
   );
+  const todayKey = useMemo(() => toDateKey(today), [today]);
   const maximumSeconds = Math.max(
     0,
     ...buckets.map((bucket) => bucket.totalSeconds),
@@ -104,9 +107,15 @@ export function PracticeTimeChart({
     const gap = comparison.useDuration
       ? formatTotal(comparison.gapSeconds)
       : gapFormatter.format(comparison.gapRatio);
+    const isCurrentMonth =
+      period === "year" && isDateKeyInBucket(todayKey, bucket);
     const ofBest = comparison.isBest
       ? bestBucketLabel
-      : interpolate(shortOfLabel, { gap });
+      : isCurrentMonth
+        ? interpolate(dashboard.tooltipToBeatMonth, {
+            gap: gapFormatter.format(comparison.gapRatio),
+          })
+        : interpolate(shortOfLabel, { gap });
 
     setTooltip({
       label: bucket.label,

@@ -29,6 +29,14 @@ export function getBucketComparison(
   };
 }
 
+/** Indica si una clave `AAAA-MM-DD` cae dentro del intervalo de un bucket. */
+export function isDateKeyInBucket(
+  dateKey: string,
+  bucket: { startDate: string; endDate: string },
+): boolean {
+  return bucket.startDate <= dateKey && dateKey <= bucket.endDate;
+}
+
 export function getContainedTooltipPosition(
   anchorX: number,
   anchorY: number,
