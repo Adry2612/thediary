@@ -15,21 +15,25 @@ export interface TechniqueCatalogEntry {
    * aunque la preferencia sea «original».
    */
   translated?: boolean;
+  /** Nombres antiguos o alternativos que siguen resolviendo a esta técnica. */
+  aliases?: readonly string[];
 }
 
 /** Fuente única para licks, bloques de práctica, análisis y ajustes. */
 export const TECHNIQUE_CATALOG: readonly TechniqueCatalogEntry[] = [
   {
     id: "ALTERNATE_PICKING",
-    es: "Púa alterna",
+    es: "Alternate picking",
     en: "Alternate picking",
     glyph: "AP",
+    aliases: ["Púa alterna"],
   },
   {
     id: "SWEEP_PICKING",
-    es: "Barridos",
+    es: "Sweep picking",
     en: "Sweep picking",
     glyph: "SW",
+    aliases: ["Barridos", "Barrido de cuerdas"],
   },
   { id: "LEGATO", es: "Legato", en: "Legato", glyph: "LG" },
   {
@@ -58,6 +62,7 @@ export const TECHNIQUE_CATALOG: readonly TechniqueCatalogEntry[] = [
     en: "Strumming",
     glyph: "RH",
     translated: true,
+    aliases: ["Ritmo y rascado", "Rhythm and strumming"],
   },
   { id: "SLIDE", es: "Slide", en: "Slide", glyph: "SL" },
   { id: "PALM_MUTE", es: "Palm mute", en: "Palm mute", glyph: "PM" },
@@ -82,9 +87,10 @@ export const TECHNIQUE_CATALOG: readonly TechniqueCatalogEntry[] = [
   },
   {
     id: "DOUBLE_STOPS",
-    es: "Dobles cuerdas",
+    es: "Double stops",
     en: "Double stops",
     glyph: "DB",
+    aliases: ["Dobles cuerdas"],
   },
   {
     id: "ARPEGGIOS",
@@ -137,7 +143,10 @@ export function resolveTechniqueEntry(
     TECHNIQUE_CATALOG.find(
       (technique) =>
         normalizeCatalogName(technique.es) === normalized ||
-        normalizeCatalogName(technique.en) === normalized,
+        normalizeCatalogName(technique.en) === normalized ||
+        (technique.aliases ?? []).some(
+          (alias) => normalizeCatalogName(alias) === normalized,
+        ),
     ) ?? null
   );
 }

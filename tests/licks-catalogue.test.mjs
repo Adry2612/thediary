@@ -51,6 +51,15 @@ test("resolves a technique by either of its names", () => {
   assert.equal(getTechniqueName("propia", "es"), "propia");
 });
 
+test("the classic picking techniques keep their English name in Spanish", () => {
+  assert.equal(getTechniqueName("ALTERNATE_PICKING", "es"), "Alternate picking");
+  assert.equal(getTechniqueName("SWEEP_PICKING", "es"), "Sweep picking");
+  assert.equal(getTechniqueName("DOUBLE_STOPS", "es"), "Double stops");
+  assert.equal(getTechniqueName("Dobles cuerdas", "original-es"), "Double stops");
+  assert.equal(getTechniqueName("Barridos", "es"), "Sweep picking");
+  assert.equal(resolveTechniqueEntry("Ritmo y rascado")?.id, "RHYTHM_STRUMMING");
+});
+
 test("the catalogue includes the common missing techniques", () => {
   for (const id of [
     "PALM_MUTE",

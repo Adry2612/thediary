@@ -141,7 +141,10 @@ test("resolves catalogue technique and theory names to the chosen language", () 
   const custom = { name: "Barrido propio", skill: "technique" };
   const theory = { name: "Major scale", skill: "theory" };
 
-  assert.equal(getPracticeBlockDisplayTitle(technique, [], "es"), "Púa alterna");
+  assert.equal(
+    getPracticeBlockDisplayTitle(technique, [], "es"),
+    "Alternate picking",
+  );
   assert.equal(
     getPracticeBlockDisplayTitle(legacy, [], "original"),
     "Alternate picking",
