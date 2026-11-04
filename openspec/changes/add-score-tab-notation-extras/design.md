@@ -65,12 +65,12 @@ type TabBeat = {
 | `section` | `\section "texto"` en el compás |
 | `text` | `{txt "texto"}` |
 | `chord` | `\chord ("nombre" …)` en la cabecera si la biblioteca la conoce, y `{ch "nombre"}` en el pulso |
-| `stroke` | `{bd}`, `{bu}` y `{rasg …}` |
-| `fermata` | `{f}` |
-| `grace` | pulso de apoyatura previo `{gr}` / `{gr ob}` con su nota |
-| `pickup` | marca de compás anacrúsico del compás |
+| `stroke` | `{bd}`, `{bu}` y `{rasg ii}` |
+| `fermata` | `{fermata medium 0}` |
+| `grace` | pulso de apoyatura previo `:32 2.6 {gr}` / `:32 2.6 {gr ob}` |
+| `pickup` | `\ac` en el compás |
 
-La tabla se verifica con la misma prueba de ida y vuelta del cambio base, una marca por vez. Las sintaxis exactas de `dec`, `rasg`, `section` y de la anacrusis se confirman en esa prueba contra alphaTab 1.8.4 antes de darlas por buenas.
+Todas las propiedades de un pulso van en un solo bloque `{…}`: el importador rechaza dos bloques seguidos. El calderón necesita tipo y longitud (`{fermata medium 0}`), no `{f}`. La tabla se verifica con la misma prueba de ida y vuelta del cambio base, una marca por vez; la tarea 3.2 ya confirmó estas sintaxis contra alphaTab 1.8.4.
 
 ### 3. Diagramas de acorde desde la biblioteca
 

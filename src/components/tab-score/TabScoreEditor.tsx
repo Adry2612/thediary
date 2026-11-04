@@ -28,12 +28,18 @@ import { useI18nSection } from "@/i18n/I18nProvider";
 import { useTabScoreEditor } from "@/hooks/useTabScoreEditor";
 import type { TabScore } from "@/types/tab-score";
 import {
+  TAB_MAX_CHORD_LENGTH,
   TAB_MAX_FRET,
+  TAB_MAX_REPEAT,
+  TAB_MAX_SECTION_LENGTH,
   TAB_MAX_TEMPO,
+  TAB_MAX_TEXT_LENGTH,
+  TAB_MIN_REPEAT,
   TAB_MIN_TEMPO,
   TAB_TUPLETS,
   type TabTuplet,
 } from "@/types/tab-score";
+import { getChordLibrary } from "@/utils/chords";
 import { announceSelection } from "@/utils/tab-score/announce";
 import { buildAlphaTex } from "@/utils/tab-score/alphatex";
 import { getStringCount } from "@/utils/tab-score/model";
@@ -99,7 +105,18 @@ export function TabScoreEditor({
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [anchor, setAnchor] = useState<PaletteAnchor | null>(null);
   const [coarsePointer, setCoarsePointer] = useState(false);
-  const [form, setForm] = useState<"time" | "tempo" | "tuplet" | null>(null);
+  const [form, setForm] = useState<
+    | "time"
+    | "tempo"
+    | "tuplet"
+    | "text"
+    | "section"
+    | "chord"
+    | "grace"
+    | "repeatEnd"
+    | "ending"
+    | null
+  >(null);
   const [playback, setPlayback] = useState<TabScorePlaybackState>({
     ready: false,
     playing: false,
@@ -113,6 +130,13 @@ export function TabScoreEditor({
   const [numerator, setNumerator] = useState("4");
   const [denominator, setDenominator] = useState<"2" | "4" | "8" | "16">("4");
   const [tempoDraft, setTempoDraft] = useState("90");
+  const [textDraft, setTextDraft] = useState("");
+  const [sectionDraft, setSectionDraft] = useState("");
+  const [chordDraft, setChordDraft] = useState("");
+  const [graceFretDraft, setGraceFretDraft] = useState("2");
+  const [graceTiming, setGraceTiming] = useState<"before" | "on">("before");
+  const [repeatCountDraft, setRepeatCountDraft] = useState("2");
+  const [endingDraft, setEndingDraft] = useState("1");
 
   const stringCount = useMemo(
     () => getStringCount(editor.score.tuning),
@@ -139,6 +163,7 @@ export function TabScoreEditor({
     () => scoreToText(editor.score),
     [editor.score],
   );
+  const chordSuggestions = useMemo(() => getChordLibrary(), []);
   const paletteState = useMemo(
     () =>
       getPaletteState({
@@ -327,6 +352,38 @@ export function TabScoreEditor({
       setForm("tuplet");
       return;
     }
+    if (
+      action.type === "openText" ||
+      action.type === "openSection" ||
+      action.type === "openChord" ||
+      action.type === "openGrace" ||
+      action.type === "openRepeatEnd" ||
+      action.type === "openEnding"
+    ) {
+      const bar = editor.score.bars[editor.selection.bar];
+      const beat = bar?.beats[editor.selection.beat];
+      if (action.type === "openText") {
+        setTextDraft(beat?.text ?? "");
+        setForm("text");
+      } else if (action.type === "openSection") {
+        setSectionDraft(bar?.section ?? "");
+        setForm("section");
+      } else if (action.type === "openChord") {
+        setChordDraft(beat?.chord ?? "");
+        setForm("chord");
+      } else if (action.type === "openGrace") {
+        setGraceFretDraft(String(beat?.grace?.fret ?? 2));
+        setGraceTiming(beat?.grace?.timing ?? "before");
+        setForm("grace");
+      } else if (action.type === "openRepeatEnd") {
+        setRepeatCountDraft(String(bar?.repeat?.end ?? 2));
+        setForm("repeatEnd");
+      } else {
+        setEndingDraft(bar?.endings?.join(", ") ?? "1");
+        setForm("ending");
+      }
+      return;
+    }
     if (action.type === "splitBeat") {
       // El pulso nuevo queda seleccionado: se cierra la paleta y se devuelve el
       // foco para poder escribir el traste sin un clic más.
@@ -340,9 +397,17 @@ export function TabScoreEditor({
     editor.dispatch(action);
   }
 
-  function submitForm(event: FormEvent) {
+  function handleDialogKeyDown(
+    event: ReactKeyboardEvent<HTMLFormElement | HTMLDivElement>,
+  ) {
+    if (event.key !== "Escape") return;
     event.preventDefault();
-    if (form === "time") {
+    event.stopPropagation();
+    setForm(null);
+  }
+
+  function submitForm(event?: FormEvent) {
+    event?.preventDefault();    if (form === "time") {
       editor.dispatch({
         type: "setTimeSignature",
         numerator: Number(numerator),
@@ -352,8 +417,74 @@ export function TabScoreEditor({
     if (form === "tempo") {
       editor.dispatch({ type: "setTempo", tempo: Number(tempoDraft) });
     }
+    if (form === "text") {
+      editor.dispatch({
+        type: "setBeatText",
+        text: textDraft.trim() || null,
+      });
+    }
+    if (form === "section") {
+      editor.dispatch({
+        type: "setBarSection",
+        section: sectionDraft.trim() || null,
+      });
+    }
+    if (form === "chord") {
+      editor.dispatch({
+        type: "setBeatChord",
+        chord: chordDraft.trim() || null,
+      });
+    }
+    if (form === "grace") {
+      editor.dispatch({
+        type: "setGrace",
+        grace: {
+          fret: Number(graceFretDraft),
+          timing: graceTiming,
+        },
+      });
+    }
+    if (form === "repeatEnd") {
+      editor.dispatch({
+        type: "setRepeatEnd",
+        count: Number(repeatCountDraft),
+      });
+    }
+    if (form === "ending") {
+      editor.dispatch({
+        type: "setEndings",
+        endings: endingDraft
+          .split(",")
+          .map((entry) => Number(entry.trim()))
+          .filter((entry) => Number.isInteger(entry)),
+      });
+    }
+    setPaletteOpen(false);
+    window.requestAnimationFrame(() =>
+      containerRef.current?.focus({ preventScroll: true }),
+    );
     setForm(null);
-    containerRef.current?.focus({ preventScroll: true });
+  }
+
+  function removeMark() {
+    if (form === "text") {
+      editor.dispatch({ type: "setBeatText", text: null });
+    } else if (form === "section") {
+      editor.dispatch({ type: "setBarSection", section: null });
+    } else if (form === "chord") {
+      editor.dispatch({ type: "setBeatChord", chord: null });
+    } else if (form === "grace") {
+      editor.dispatch({ type: "setGrace", grace: null });
+    } else if (form === "repeatEnd") {
+      editor.dispatch({ type: "setRepeatEnd", count: null });
+    } else if (form === "ending") {
+      editor.dispatch({ type: "setEndings", endings: [] });
+    }
+    setPaletteOpen(false);
+    window.requestAnimationFrame(() =>
+      containerRef.current?.focus({ preventScroll: true }),
+    );
+    setForm(null);
   }
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
@@ -717,6 +848,7 @@ export function TabScoreEditor({
           role="dialog"
           aria-modal="true"
           aria-label={paletteText.subdivisionTitle}
+          onKeyDown={handleDialogKeyDown}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
         >
           <div
@@ -799,15 +931,15 @@ export function TabScoreEditor({
         </div>
       )}
 
-      {form && form !== "tuplet" && (
+      {(form === "time" || form === "tempo") && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label={form === "time" ? paletteText.timeSignature : paletteText.tempo}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
         >
-          <form
-            onSubmit={submitForm}
+          <div
+            onKeyDown={handleDialogKeyDown}
             className="w-full max-w-xs rounded-xl bg-white p-4 text-zinc-900 shadow-xl"
           >
             <h3 className="mb-3 text-sm font-semibold">
@@ -865,13 +997,201 @@ export function TabScoreEditor({
               >
                 {paletteText.close}
               </Button>
-              <Button type="submit" size="field" variant="primary">
+              <Button
+                type="button"
+                size="field"
+                variant="primary"
+                onClick={() => submitForm()}
+              >
                 {paletteText.apply}
               </Button>
             </div>
-          </form>
+          </div>
         </div>
       )}
+
+      {form &&
+        form !== "tuplet" &&
+        form !== "time" &&
+        form !== "tempo" && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={
+              form === "text"
+                ? paletteText.textTitle
+                : form === "section"
+                  ? paletteText.sectionTitle
+                  : form === "chord"
+                    ? paletteText.chordTitle
+                    : form === "grace"
+                      ? paletteText.graceTitle
+                      : form === "repeatEnd"
+                        ? paletteText.repeatTitle
+                        : paletteText.endingTitle
+            }
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          >
+            <div
+              onKeyDown={handleDialogKeyDown}
+              className="w-full max-w-sm rounded-xl bg-white p-4 text-zinc-900 shadow-xl"
+            >
+              <h3 className="mb-3 text-sm font-semibold">
+                {form === "text"
+                  ? paletteText.textTitle
+                  : form === "section"
+                    ? paletteText.sectionTitle
+                    : form === "chord"
+                      ? paletteText.chordTitle
+                      : form === "grace"
+                        ? paletteText.graceTitle
+                        : form === "repeatEnd"
+                          ? paletteText.repeatTitle
+                          : paletteText.endingTitle}
+              </h3>
+
+              {form === "text" && (
+                <label className="block text-xs text-zinc-600">
+                  {paletteText.textLabel}
+                  <input
+                    value={textDraft}
+                    onChange={(event) => setTextDraft(event.target.value)}
+                    maxLength={TAB_MAX_TEXT_LENGTH}
+                    placeholder={paletteText.textPlaceholder}
+                    autoFocus
+                    className="mt-1 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                  />
+                </label>
+              )}
+
+              {form === "section" && (
+                <label className="block text-xs text-zinc-600">
+                  {paletteText.sectionLabel}
+                  <input
+                    value={sectionDraft}
+                    onChange={(event) => setSectionDraft(event.target.value)}
+                    maxLength={TAB_MAX_SECTION_LENGTH}
+                    placeholder={paletteText.sectionPlaceholder}
+                    autoFocus
+                    className="mt-1 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                  />
+                </label>
+              )}
+
+              {form === "chord" && (
+                <label className="block text-xs text-zinc-600">
+                  {paletteText.chordLabel}
+                  <input
+                    value={chordDraft}
+                    onChange={(event) => setChordDraft(event.target.value)}
+                    maxLength={TAB_MAX_CHORD_LENGTH}
+                    placeholder={paletteText.chordPlaceholder}
+                    list="tab-chord-suggestions"
+                    autoFocus
+                    className="mt-1 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                  />
+                  <datalist id="tab-chord-suggestions">
+                    {chordSuggestions.map((chord) => (
+                      <option key={chord.name} value={chord.name} />
+                    ))}
+                  </datalist>
+                </label>
+              )}
+
+              {form === "grace" && (
+                <div className="grid gap-3">
+                  <label className="block text-xs text-zinc-600">
+                    {paletteText.graceFret}
+                    <input
+                      type="number"
+                      min={0}
+                      max={TAB_MAX_FRET}
+                      value={graceFretDraft}
+                      onChange={(event) => setGraceFretDraft(event.target.value)}
+                      autoFocus
+                      className="mt-1 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                    />
+                  </label>
+                  <label className="block text-xs text-zinc-600">
+                    {paletteText.graceTiming}
+                    <select
+                      value={graceTiming}
+                      onChange={(event) =>
+                        setGraceTiming(event.target.value as "before" | "on")
+                      }
+                      className="mt-1 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                    >
+                      <option value="before">{paletteText.graceBefore}</option>
+                      <option value="on">{paletteText.graceOn}</option>
+                    </select>
+                  </label>
+                </div>
+              )}
+
+              {form === "repeatEnd" && (
+                <label className="block text-xs text-zinc-600">
+                  {paletteText.repeatCount}
+                  <input
+                    type="number"
+                    min={TAB_MIN_REPEAT}
+                    max={TAB_MAX_REPEAT}
+                    value={repeatCountDraft}
+                    onChange={(event) => setRepeatCountDraft(event.target.value)}
+                    autoFocus
+                    className="mt-1 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                  />
+                  <span className="mt-1 block text-[11px] text-zinc-500">
+                    {paletteText.repeatCountHint}
+                  </span>
+                </label>
+              )}
+
+              {form === "ending" && (
+                <label className="block text-xs text-zinc-600">
+                  {paletteText.endingPasses}
+                  <input
+                    value={endingDraft}
+                    onChange={(event) => setEndingDraft(event.target.value)}
+                    autoFocus
+                    className="mt-1 w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
+                  />
+                  <span className="mt-1 block text-[11px] text-zinc-500">
+                    {paletteText.endingPassesHint}
+                  </span>
+                </label>
+              )}
+
+              <div className="mt-4 flex flex-wrap justify-end gap-2">
+                <Button
+                  type="button"
+                  size="field"
+                  variant="ghost"
+                  onClick={removeMark}
+                  className="border-zinc-300 text-zinc-700"
+                >
+                  {paletteText.removeMark}
+                </Button>
+                <Button
+                  type="button"
+                  size="field"
+                  variant="ghost"
+                  onClick={() => setForm(null)}
+                  className="border-zinc-300 text-zinc-700"
+                >
+                  {paletteText.cancel}
+                </Button>
+                <Button
+                  type="button"
+                  size="field"
+                  variant="primary"
+                  onClick={() => submitForm()}
+                >
+                  {paletteText.apply}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
     </div>
   );

@@ -63,6 +63,38 @@ alphaTab. Reglas que no son obvias:
 | Deslizamiento | `{sl}` / `{ss}` en la nota anterior |
 | Bend | `{b (0 2)}`, con liberación `{b (0 2 0)}` |
 
+### Marcas de expresión y estructura
+
+| Marca | Modelo | AlphaTex |
+| --- | --- | --- |
+| Dinámica | `beat.dynamic` | `{dy mf}` |
+| Crescendo / decrescendo | `beat.hairpin` | `{cre}` / `{dec}` |
+| Repetición | `bar.repeat.start` / `bar.repeat.end` | `\ro` / `\rc 2` |
+| Finales alternativos | `bar.endings` | `\ae (1 2)` |
+| Sección | `bar.section` | `\section "Intro"` |
+| Anacrusa | `bar.pickup` | `\ac` |
+| Texto | `beat.text` | `{txt "let it ring"}` |
+| Acorde en el pulso | `beat.chord` | `{ch "Em"}` |
+| Diagrama de acorde | nombre conocido en la biblioteca | `\chord ("Em" 0 2 2 0 0 0)` |
+| Púa / rasgueo | `beat.stroke` | `{bd}` / `{bu}` / `{rasg ii}` |
+| Calderón | `beat.fermata` | `{fermata medium 0}` |
+| Apoyatura | `beat.grace` | `:32 2.6 {gr}` / `:32 2.6 {gr ob}` |
+
+Reglas que impone el importador de alphaTab 1.8.4:
+
+- todas las propiedades de un pulso van en **un solo bloque** `{…}` después
+  del contenido; dos bloques seguidos dan error;
+- `\chord` necesita paréntesis alrededor de sus argumentos;
+- la apoyatura es un pulso corto **anterior** con `{gr}` (antes) u `{gr ob}`
+  (sobre el pulso), y la propiedad va después de la nota;
+- el calderón es `{fermata short|medium|long <longitud>}`, no `{f}`;
+- el cierre de repetición es `\rc <veces>` y los finales son números de pasada
+  separados por espacios.
+
+Las marcas se copian, se pegan, se borran con su pulso o compás y se deshacen
+con el resto del historial. `scoreToText` y `announceSelection` las nombran
+(«compás 3, abre repetición», «pulso 2, mf, texto: let it ring»).
+
 El mapeo de cuerdas es el punto más fácil de romper:
 
 - modelo: `0` = grave … `5` = aguda;

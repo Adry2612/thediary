@@ -3,18 +3,31 @@ import type {
   TabBar,
   TabBeat,
   TabBeatDuration,
+  TabDynamic,
+  TabGrace,
+  TabHairpin,
   TabNote,
   TabScore,
+  TabStroke,
   TabTimeSignature,
   TabTuplet,
 } from "../../types/tab-score.ts";
 import {
   TAB_BEAT_DURATIONS,
+  TAB_DYNAMICS,
+  TAB_HAIRPINS,
   TAB_MAX_BARS,
+  TAB_MAX_CHORD_LENGTH,
+  TAB_MAX_ENDING,
   TAB_MAX_FRET,
+  TAB_MAX_REPEAT,
+  TAB_MAX_SECTION_LENGTH,
   TAB_MAX_TEMPO,
+  TAB_MAX_TEXT_LENGTH,
   TAB_MIN_FRET,
+  TAB_MIN_REPEAT,
   TAB_MIN_TEMPO,
+  TAB_STROKES,
   TAB_TIME_SIGNATURE_DENOMINATORS,
   TAB_TUPLETS,
 } from "../../types/tab-score.ts";
@@ -64,6 +77,48 @@ function isOneOf<T extends string>(
   allowed: readonly T[],
 ): value is T {
   return typeof value === "string" && (allowed as readonly string[]).includes(value);
+}
+
+/** Texto corto de una marca, sin espacios sobrantes y con tope de longitud. */
+function normalizeMarkText(value: unknown, maxLength: number): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const text = value.replace(/\s+/g, " ").trim();
+  return text ? text.slice(0, maxLength) : undefined;
+}
+
+function normalizeGrace(value: unknown): TabGrace | undefined {
+  if (!isRecord(value)) return undefined;
+  const fret = normalizeInteger(value.fret, TAB_MIN_FRET, TAB_MAX_FRET);
+  const timing =
+    value.timing === "before" || value.timing === "on"
+      ? value.timing
+      : undefined;
+  return fret === null || !timing ? undefined : { fret, timing };
+}
+
+function normalizeRepeat(value: unknown): TabBar["repeat"] {
+  if (!isRecord(value)) return undefined;
+  const repeat: NonNullable<TabBar["repeat"]> = {};
+  if (value.start === true) repeat.start = true;
+  const end = normalizeInteger(value.end, TAB_MIN_REPEAT, TAB_MAX_REPEAT);
+  if (end !== null) repeat.end = end;
+  return repeat.start || repeat.end !== undefined ? repeat : undefined;
+}
+
+function normalizeEndings(value: unknown): number[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const endings = [
+    ...new Set(
+      value.filter(
+        (entry): entry is number =>
+          typeof entry === "number" &&
+          Number.isInteger(entry) &&
+          entry >= 1 &&
+          entry <= TAB_MAX_ENDING,
+      ),
+    ),
+  ].sort((left, right) => left - right);
+  return endings.length > 0 ? endings : undefined;
 }
 
 function normalizeBend(value: unknown) {
@@ -168,6 +223,23 @@ function normalizeBeat(value: unknown, stringCount: number): TabBeat {
     beat.tuplet = value.tuplet as TabTuplet;
   }
 
+  if (isOneOf(value.dynamic, TAB_DYNAMICS)) {
+    beat.dynamic = value.dynamic as TabDynamic;
+  }
+  if (isOneOf(value.hairpin, TAB_HAIRPINS)) {
+    beat.hairpin = value.hairpin as TabHairpin;
+  }
+  const text = normalizeMarkText(value.text, TAB_MAX_TEXT_LENGTH);
+  if (text) beat.text = text;
+  const chord = normalizeMarkText(value.chord, TAB_MAX_CHORD_LENGTH);
+  if (chord) beat.chord = chord;
+  if (isOneOf(value.stroke, TAB_STROKES)) {
+    beat.stroke = value.stroke as TabStroke;
+  }
+  if (value.fermata === true) beat.fermata = true;
+  const grace = normalizeGrace(value.grace);
+  if (grace && !beat.rest && beat.notes.length > 0) beat.grace = grace;
+
   return beat;
 }
 
@@ -211,7 +283,47 @@ function normalizeBar(value: unknown, stringCount: number): TabBar {
   const tempo = normalizeTempo(value.tempo);
   if (tempo !== null) bar.tempo = tempo;
 
+  const section = normalizeMarkText(value.section, TAB_MAX_SECTION_LENGTH);
+  if (section) bar.section = section;
+  const repeat = normalizeRepeat(value.repeat);
+  if (repeat) bar.repeat = repeat;
+  const endings = normalizeEndings(value.endings);
+  if (endings) bar.endings = endings;
+  if (value.pickup === true) bar.pickup = true;
+
   return bar;
+}
+
+export type TabRepeatRange = { start: number; end: number };
+
+/**
+ * Tramos de repetición de una partitura. Un cierre sin apertura repite desde el
+ * primer compás, que es la convención de la notación.
+ */
+export function getRepeatRanges(
+  bars: readonly Pick<TabBar, "repeat">[],
+): TabRepeatRange[] {
+  const ranges: TabRepeatRange[] = [];
+  let start = 0;
+
+  bars.forEach((bar, index) => {
+    if (bar.repeat?.start) start = index;
+    if (bar.repeat?.end !== undefined) {
+      ranges.push({ start, end: index });
+      start = 0;
+    }
+  });
+
+  return ranges;
+}
+
+export function isBarInsideRepeat(
+  bars: readonly Pick<TabBar, "repeat">[],
+  index: number,
+): boolean {
+  return getRepeatRanges(bars).some(
+    (range) => index >= range.start && index <= range.end,
+  );
 }
 
 function normalizeTempo(value: unknown): number | null {
@@ -308,6 +420,7 @@ export function cloneTabBeat(beat: TabBeat): TabBeat {
       ...note,
       ...(note.bend ? { bend: { ...note.bend } } : {}),
     })),
+    ...(beat.grace ? { grace: { ...beat.grace } } : {}),
   };
 }
 
@@ -318,6 +431,17 @@ export function cloneTabBar(bar: TabBar): TabBar {
       ? { timeSignature: { ...bar.timeSignature } }
       : {}),
     ...(bar.tempo !== undefined ? { tempo: bar.tempo } : {}),
+    ...(bar.section ? { section: bar.section } : {}),
+    ...(bar.repeat
+      ? {
+          repeat: {
+            ...(bar.repeat.start ? { start: true as const } : {}),
+            ...(bar.repeat.end !== undefined ? { end: bar.repeat.end } : {}),
+          },
+        }
+      : {}),
+    ...(bar.endings ? { endings: [...bar.endings] } : {}),
+    ...(bar.pickup ? { pickup: true as const } : {}),
     beats: bar.beats.map(cloneTabBeat),
   };
 }
@@ -366,6 +490,19 @@ export function normalizeTabScore(
         .map((bar) => normalizeBar(bar, stringCount))
         .slice(0, TAB_MAX_BARS)
     : [];
+
+  const repeatRanges = getRepeatRanges(bars);
+  bars.forEach((bar, index) => {
+    if (index !== 0 && bar.pickup) delete bar.pickup;
+    if (
+      bar.endings &&
+      !repeatRanges.some(
+        (range) => index >= range.start && index <= range.end,
+      )
+    ) {
+      delete bar.endings;
+    }
+  });
 
   return {
     version: 2,

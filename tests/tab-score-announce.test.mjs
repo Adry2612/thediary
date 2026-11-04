@@ -156,3 +156,48 @@ test("names every subdivision", () => {
     );
   }
 });
+
+test("announces the marks of the selected beat and bar", () => {
+  const state = {
+    bars: [
+      {
+        id: "bar-a",
+        timeSignature: { numerator: 4, denominator: 4 },
+        section: "Intro",
+        repeat: { start: true },
+        pickup: true,
+        beats: [
+          {
+            id: "b1",
+            duration: 4,
+            rest: false,
+            notes: [{ string: 0, fret: 3 }],
+            dynamic: "mf",
+            text: "let it ring",
+            chord: "Em",
+            stroke: "up",
+            fermata: true,
+            grace: { fret: 2, timing: "on" },
+          },
+        ],
+      },
+    ],
+  };
+
+  const text = announceSelection({
+    score: state,
+    selection: { bar: 0, beat: 0, string: 0 },
+    stringCount: 6,
+    labels,
+  });
+
+  assert.match(text, /mf/);
+  assert.match(text, /texto: let it ring/);
+  assert.match(text, /acorde: Em/);
+  assert.match(text, /púa arriba/);
+  assert.match(text, /calderón/);
+  assert.match(text, /apoyatura 2 sobre/);
+  assert.match(text, /sección: Intro/);
+  assert.match(text, /abre repetición/);
+  assert.match(text, /anacrusa/);
+});

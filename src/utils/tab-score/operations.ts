@@ -2,20 +2,33 @@ import type {
   TabBar,
   TabBeat,
   TabBeatDuration,
+  TabDynamic,
+  TabGrace,
+  TabHairpin,
   TabNote,
   TabScore,
+  TabStroke,
   TabTimeSignature,
   TabTuplet,
 } from "../../types/tab-score.ts";
 import type { TabBend } from "../../types/practice.ts";
 import {
   TAB_BEAT_DURATIONS,
+  TAB_DYNAMICS,
+  TAB_HAIRPINS,
   TAB_MAX_BARS,
   TAB_MAX_BEATS_PER_BAR,
+  TAB_MAX_CHORD_LENGTH,
+  TAB_MAX_ENDING,
   TAB_MAX_FRET,
+  TAB_MAX_REPEAT,
+  TAB_MAX_SECTION_LENGTH,
   TAB_MAX_TEMPO,
+  TAB_MAX_TEXT_LENGTH,
   TAB_MIN_FRET,
+  TAB_MIN_REPEAT,
   TAB_MIN_TEMPO,
+  TAB_STROKES,
   TAB_TIME_SIGNATURE_DENOMINATORS,
   TAB_TUPLETS,
   TAB_TUPLET_IN_TIME,
@@ -28,7 +41,9 @@ import {
   createRestBeat,
   createRestBeats,
   createTabId,
+  getRepeatRanges,
   getStringCount,
+  isBarInsideRepeat,
 } from "./model.ts";
 import {
   getBarTicks,
@@ -61,7 +76,13 @@ export type TabOperationError =
   | "tupletNeedsBeats"
   | "tupletExactCount"
   | "tupletDifferentValues"
-  | "tupletAcrossBars";
+  | "tupletAcrossBars"
+  | "graceOnRest"
+  | "strokeNeedsChord"
+  | "endingOutsideRepeat"
+  | "pickupNotFirstBar"
+  | "invalidRepeat"
+  | "invalidText";
 
 export type TabOperationResult =
   | { score: TabScore; selection: TabSelection }
@@ -988,6 +1009,349 @@ export function setBendFlag(
       }),
     }));
   }
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+function cleanMarkText(value: string, maxLength: number): string {
+  return value.replace(/\s+/g, " ").trim().slice(0, maxLength);
+}
+
+function firstSelectedBeatPosition(
+  score: TabScore,
+  selection: TabSelection,
+): { bar: number; beat: number } | null {
+  return getRangeBeats(score, selection)[0] ?? null;
+}
+
+function pruneEndings(score: TabScore): TabScore {
+  const ranges = getRepeatRanges(score.bars);
+  let changed = false;
+  const bars = score.bars.map((bar, index) => {
+    if (!bar.endings) return bar;
+    if (ranges.some((range) => index >= range.start && index <= range.end)) {
+      return bar;
+    }
+    changed = true;
+    const { endings: _endings, ...rest } = bar;
+    return rest;
+  });
+  return changed ? { ...score, bars } : score;
+}
+
+/** Dinámica en el primer pulso de la selección; `null` la quita. */
+export function setDynamic(
+  score: TabScore,
+  selection: TabSelection,
+  dynamic: TabDynamic | null,
+): TabOperationResult {
+  if (dynamic !== null && !(TAB_DYNAMICS as readonly string[]).includes(dynamic)) {
+    return { error: "noSelection" };
+  }
+  const position = firstSelectedBeatPosition(score, selection);
+  if (!position) return { error: "noSelection" };
+
+  const next = replaceBeat(score, position.bar, position.beat, (beat) => {
+    const copy = { ...beat };
+    if (dynamic) copy.dynamic = dynamic;
+    else delete copy.dynamic;
+    return copy;
+  });
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Aplica o quita un regulador en todos los pulsos de la selección. */
+export function toggleHairpin(
+  score: TabScore,
+  selection: TabSelection,
+  hairpin: TabHairpin,
+): TabOperationResult {
+  if (!(TAB_HAIRPINS as readonly string[]).includes(hairpin)) {
+    return { error: "noSelection" };
+  }
+  const positions = getRangeBeats(score, selection);
+  if (positions.length === 0) return { error: "noSelection" };
+
+  const all = positions.every(
+    (position) =>
+      getBeatAt(score, position.bar, position.beat)?.hairpin === hairpin,
+  );
+
+  let next = score;
+  for (const position of positions) {
+    next = replaceBeat(next, position.bar, position.beat, (beat) => {
+      const copy = { ...beat };
+      if (all) delete copy.hairpin;
+      else copy.hairpin = hairpin;
+      return copy;
+    });
+  }
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Texto libre en el primer pulso de la selección; `null` lo quita. */
+export function setBeatText(
+  score: TabScore,
+  selection: TabSelection,
+  value: string | null,
+): TabOperationResult {
+  const position = firstSelectedBeatPosition(score, selection);
+  if (!position) return { error: "noSelection" };
+
+  const text = value ? cleanMarkText(value, TAB_MAX_TEXT_LENGTH) : "";
+  const next = replaceBeat(score, position.bar, position.beat, (beat) => {
+    const copy = { ...beat };
+    if (text) copy.text = text;
+    else delete copy.text;
+    return copy;
+  });
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Nombre de sección sobre el compás seleccionado; `null` lo quita. */
+export function setBarSection(
+  score: TabScore,
+  selection: TabSelection,
+  value: string | null,
+): TabOperationResult {
+  const index = Math.min(Math.max(0, selection.bar), score.bars.length - 1);
+  if (!score.bars[index]) return { error: "noSelection" };
+
+  const section = value ? cleanMarkText(value, TAB_MAX_SECTION_LENGTH) : "";
+  const next = replaceBar(score, index, (bar) => {
+    const copy = { ...bar };
+    if (section) copy.section = section;
+    else delete copy.section;
+    return copy;
+  });
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Nombre de acorde en el primer pulso de la selección; `null` lo quita. */
+export function setBeatChord(
+  score: TabScore,
+  selection: TabSelection,
+  value: string | null,
+): TabOperationResult {
+  const position = firstSelectedBeatPosition(score, selection);
+  if (!position) return { error: "noSelection" };
+
+  const chord = value ? cleanMarkText(value, TAB_MAX_CHORD_LENGTH) : "";
+  const next = replaceBeat(score, position.bar, position.beat, (beat) => {
+    const copy = { ...beat };
+    if (chord) copy.chord = chord;
+    else delete copy.chord;
+    return copy;
+  });
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Dirección de púa o rasgueo; exige más de una nota en cada pulso. */
+export function toggleStroke(
+  score: TabScore,
+  selection: TabSelection,
+  stroke: TabStroke,
+): TabOperationResult {
+  if (!(TAB_STROKES as readonly string[]).includes(stroke)) {
+    return { error: "strokeNeedsChord" };
+  }
+  const positions = getRangeBeats(score, selection);
+  const beats = positions
+    .map((position) => getBeatAt(score, position.bar, position.beat))
+    .filter((beat): beat is TabBeat => beat !== null);
+  if (beats.length === 0 || beats.length !== positions.length) {
+    return { error: "noSelection" };
+  }
+  if (beats.some((beat) => beat.notes.length < 2)) {
+    return { error: "strokeNeedsChord" };
+  }
+
+  const all = beats.every((beat) => beat.stroke === stroke);
+  let next = score;
+  for (const position of positions) {
+    next = replaceBeat(next, position.bar, position.beat, (beat) => {
+      const copy = { ...beat };
+      if (all) delete copy.stroke;
+      else copy.stroke = stroke;
+      return copy;
+    });
+  }
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Calderón como interruptor sobre los pulsos seleccionados. */
+export function toggleFermata(
+  score: TabScore,
+  selection: TabSelection,
+): TabOperationResult {
+  const positions = getRangeBeats(score, selection);
+  const beats = positions
+    .map((position) => getBeatAt(score, position.bar, position.beat))
+    .filter((beat): beat is TabBeat => beat !== null);
+  if (beats.length === 0 || beats.length !== positions.length) {
+    return { error: "noSelection" };
+  }
+
+  const all = beats.every((beat) => beat.fermata === true);
+  let next = score;
+  for (const position of positions) {
+    next = replaceBeat(next, position.bar, position.beat, (beat) => {
+      const copy = { ...beat };
+      if (all) delete copy.fermata;
+      else copy.fermata = true;
+      return copy;
+    });
+  }
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Apoyatura sobre la primera nota del pulso; `null` la quita. */
+export function setGrace(
+  score: TabScore,
+  selection: TabSelection,
+  grace: TabGrace | null,
+): TabOperationResult {
+  const position = firstSelectedBeatPosition(score, selection);
+  if (!position) return { error: "noSelection" };
+  const beat = getBeatAt(score, position.bar, position.beat);
+  if (!beat) return { error: "noSelection" };
+  if (grace && (beat.rest || beat.notes.length === 0)) {
+    return { error: "graceOnRest" };
+  }
+  if (
+    grace &&
+    (!Number.isInteger(grace.fret) ||
+      grace.fret < TAB_MIN_FRET ||
+      grace.fret > TAB_MAX_FRET ||
+      (grace.timing !== "before" && grace.timing !== "on"))
+  ) {
+    return { error: "invalidFret" };
+  }
+
+  const next = replaceBeat(score, position.bar, position.beat, (current) => {
+    const copy = { ...current };
+    if (grace) copy.grace = { ...grace };
+    else delete copy.grace;
+    return copy;
+  });
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Abre o cierra una repetición en el compás seleccionado. */
+export function toggleRepeatStart(
+  score: TabScore,
+  selection: TabSelection,
+): TabOperationResult {
+  const index = Math.min(Math.max(0, selection.bar), score.bars.length - 1);
+  const bar = score.bars[index];
+  if (!bar) return { error: "noSelection" };
+
+  const next = replaceBar(score, index, (current) => {
+    const repeat = { ...(current.repeat ?? {}) };
+    if (repeat.start) delete repeat.start;
+    else repeat.start = true;
+    const copy = { ...current };
+    if (repeat.start || repeat.end !== undefined) copy.repeat = repeat;
+    else delete copy.repeat;
+    return copy;
+  });
+
+  return {
+    score: pruneEndings(next),
+    selection: clampSelection(next, selection),
+  };
+}
+
+/** Fija o quita el cierre de repetición y sus veces. */
+export function setRepeatEnd(
+  score: TabScore,
+  selection: TabSelection,
+  count: number | null,
+): TabOperationResult {
+  if (
+    count !== null &&
+    (!Number.isInteger(count) ||
+      count < TAB_MIN_REPEAT ||
+      count > TAB_MAX_REPEAT)
+  ) {
+    return { error: "invalidRepeat" };
+  }
+  const index = Math.min(Math.max(0, selection.bar), score.bars.length - 1);
+  const bar = score.bars[index];
+  if (!bar) return { error: "noSelection" };
+
+  const next = replaceBar(score, index, (current) => {
+    const repeat = { ...(current.repeat ?? {}) };
+    if (count !== null) repeat.end = count;
+    else delete repeat.end;
+    const copy = { ...current };
+    if (repeat.start || repeat.end !== undefined) copy.repeat = repeat;
+    else delete copy.repeat;
+    return copy;
+  });
+
+  return {
+    score: pruneEndings(next),
+    selection: clampSelection(next, selection),
+  };
+}
+
+/** Pasadas en las que suena el compás; solo dentro de una repetición. */
+export function setEndings(
+  score: TabScore,
+  selection: TabSelection,
+  endings: readonly number[],
+): TabOperationResult {
+  const index = Math.min(Math.max(0, selection.bar), score.bars.length - 1);
+  const bar = score.bars[index];
+  if (!bar) return { error: "noSelection" };
+
+  const normalized = [
+    ...new Set(
+      endings.filter(
+        (entry) =>
+          Number.isInteger(entry) && entry >= 1 && entry <= TAB_MAX_ENDING,
+      ),
+    ),
+  ].sort((left, right) => left - right);
+
+  if (normalized.length > 0 && !isBarInsideRepeat(score.bars, index)) {
+    return { error: "endingOutsideRepeat" };
+  }
+
+  const next = replaceBar(score, index, (current) => {
+    const copy = { ...current };
+    if (normalized.length > 0) copy.endings = normalized;
+    else delete copy.endings;
+    return copy;
+  });
+
+  return { score: next, selection: clampSelection(next, selection) };
+}
+
+/** Marca el primer compás como anacrúsico. */
+export function setPickup(
+  score: TabScore,
+  selection: TabSelection,
+  value: boolean,
+): TabOperationResult {
+  if (selection.bar !== 0) return { error: "pickupNotFirstBar" };
+  if (!score.bars[0]) return { error: "noSelection" };
+
+  const next = replaceBar(score, 0, (bar) => {
+    const copy = { ...bar };
+    if (value) copy.pickup = true;
+    else delete copy.pickup;
+    return copy;
+  });
 
   return { score: next, selection: clampSelection(next, selection) };
 }

@@ -76,20 +76,55 @@ function noteLabel(note: TabNote): string {
 }
 
 function beatLabel(beat: TabBeat): string {
-  const duration = durationLabel(beat);
-  if (beat.rest) {
-    return `${duration}, silencio`;
+  const parts = [durationLabel(beat)];
+  if (beat.rest) parts.push("silencio");
+  else if (beat.notes.length === 0) parts.push("vacío");
+  else parts.push(beat.notes.map(noteLabel).join(", "));
+
+  if (beat.dynamic) parts.push(beat.dynamic);
+  if (beat.hairpin) {
+    parts.push(beat.hairpin === "crescendo" ? "crescendo" : "decrescendo");
   }
-  if (beat.notes.length === 0) {
-    return `${duration}, vacío`;
+  if (beat.text) parts.push(`texto: ${beat.text}`);
+  if (beat.chord) parts.push(`acorde: ${beat.chord}`);
+  if (beat.stroke) {
+    parts.push(
+      `púa ${
+        beat.stroke === "down"
+          ? "abajo"
+          : beat.stroke === "up"
+            ? "arriba"
+            : "rasgueado"
+      }`,
+    );
   }
-  return `${duration}, ${beat.notes.map(noteLabel).join(", ")}`;
+  if (beat.fermata) parts.push("calderón");
+  if (beat.grace) {
+    parts.push(
+      `apoyatura traste ${beat.grace.fret} ${
+        beat.grace.timing === "before" ? "antes del pulso" : "sobre el pulso"
+      }`,
+    );
+  }
+
+  return parts.join(", ");
 }
 
 function barHeader(bar: TabBar, index: number, score: Pick<TabScore, "bars">): string {
   const timeSignature = resolveTimeSignature(score, index);
   const tempo = bar.tempo !== undefined ? ` · tempo ${bar.tempo}` : "";
-  return `Compás ${index + 1} (${timeSignature.numerator}/${timeSignature.denominator})${tempo}`;
+  const marks: string[] = [];
+  if (bar.section) marks.push(`sección ${bar.section}`);
+  if (bar.repeat?.start) marks.push("abre repetición");
+  if (bar.repeat?.end !== undefined) {
+    marks.push(`cierra repetición (${bar.repeat.end} veces)`);
+  }
+  if (bar.endings && bar.endings.length > 0) {
+    marks.push(`final ${bar.endings.join(", ")}`);
+  }
+  if (bar.pickup) marks.push("anacrusa");
+  const markText = marks.map((mark) => ` · ${mark}`).join("");
+  return `Compás ${index + 1} (${timeSignature.numerator}/${timeSignature.denominator})${tempo}${markText}`;
 }
 
 /**

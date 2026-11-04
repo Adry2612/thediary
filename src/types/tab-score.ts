@@ -27,6 +27,31 @@ export const TAB_TUPLET_IN_TIME: Record<TabTuplet, number> = {
 
 export type TabAccent = "normal" | "heavy";
 
+export const TAB_DYNAMICS = ["pp", "p", "mp", "mf", "f", "ff"] as const;
+
+export type TabDynamic = (typeof TAB_DYNAMICS)[number];
+
+export const TAB_HAIRPINS = ["crescendo", "decrescendo"] as const;
+
+export type TabHairpin = (typeof TAB_HAIRPINS)[number];
+
+export const TAB_STROKES = ["down", "up", "rasgueado"] as const;
+
+export type TabStroke = (typeof TAB_STROKES)[number];
+
+export type TabGrace = {
+  fret: number;
+  timing: "before" | "on";
+};
+
+export const TAB_MAX_SECTION_LENGTH = 30;
+export const TAB_MAX_TEXT_LENGTH = 40;
+export const TAB_MAX_CHORD_LENGTH = 30;
+export const TAB_MIN_REPEAT = 2;
+export const TAB_MAX_REPEAT = 99;
+/** alphaTab solo admite 31 pasadas distintas en un final. */
+export const TAB_MAX_ENDING = 31;
+
 export type TabTimeSignature = {
   numerator: number;
   denominator: 2 | 4 | 8 | 16;
@@ -65,6 +90,18 @@ export type TabBeat = {
   /** Pulso que ocupa su tiempo pero no tiene notas ni figura de silencio. */
   empty?: true;
   notes: TabNote[];
+  /** Dinámica que rige desde este pulso hasta la siguiente. */
+  dynamic?: TabDynamic;
+  /** Marca de regulador; cada pulso del tramo lleva la misma. */
+  hairpin?: TabHairpin;
+  /** Texto libre sobre el pulso, hasta 40 caracteres. */
+  text?: string;
+  /** Nombre del acorde, hasta 30 caracteres. */
+  chord?: string;
+  stroke?: TabStroke;
+  fermata?: true;
+  /** Apoyatura sobre la primera nota del pulso. */
+  grace?: TabGrace;
 };
 
 export type TabBar = {
@@ -74,6 +111,14 @@ export type TabBar = {
   /** Cambio de tempo desde este compás. */
   tempo?: number;
   beats: TabBeat[];
+  /** Nombre de sección, hasta 30 caracteres. */
+  section?: string;
+  /** Apertura y cierre de repetición en este compás. */
+  repeat?: { start?: true; end?: number };
+  /** Pasadas en las que suena este compás, p. ej. [1] o [2, 3]. */
+  endings?: number[];
+  /** Compás anacrúsico; solo puede ser el primero. */
+  pickup?: true;
 };
 
 export type TabScore = {
