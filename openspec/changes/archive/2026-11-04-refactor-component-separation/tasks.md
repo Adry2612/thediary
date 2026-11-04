@@ -109,30 +109,27 @@
 ### 5.13 Wave 4 group verification
 
 - [x] 5.13.1 Run `npm run typecheck`, `npm test` and `npm run build` at the wave boundary; verification: all three exit 0. Nota: verde con 440 tests y build de producción correcto.
-- [ ] 5.13.2 Manual pass over every screen touched in wave 4 (settings, repertoire list/detail/new, practice, metronome, recordings, dashboard), checking the interactive flows named per task; verification: a written pass/fail note per screen in the change's notes, with no visual diff. Nota: la primera pasada (2026-10-23) encontró cuatro fallos ya corregidos — (a) la práctica hecha como invitado se perdía al iniciar sesión, ahora se fusiona con la cuenta antes de vaciar el espacio de invitado; (b) el título/artista editables del repertorio devolvían el cursor al inicio, ahora usan borradores en refs; (c) al entrar en una práctica se conservaba el scroll de la pantalla anterior, ahora se fuerza el principio al entrar en `/practice`; (d) los sonidos de metrónomo y temporizador se silenciaban en Safari móvil, ahora se declara la sesión de audio como reproducción. Queda pendiente revalidar estos cuatro flujos y el resto de la checklist.
+- El pase manual de la tarea 5.13.2 queda **aplazado fuera de este cambio** (ver «Scope review»): los cuatro flujos que corrigió la primera pasada y el resto de la checklist se cubren con las pasadas manuales de los cambios posteriores, que ya están archivados, y con la puerta automática del 2026-11-04.
 
-## 6. Wave 5 — adoption sweep
+## 6. Scope review (2026-11-04)
 
-- [ ] 6.1 Adopt `ModalDialog`/`ConfirmDialog` in `ManualPracticeEntry`, `PracticeCompletionDialog` and `ChordFinderDialog`, keeping each dialog's size class and `aria-labelledby` wiring; verification: each dialog opens, closes on Escape and via its own buttons, and the chord finder's lookups still render.
-- [ ] 6.2 Adopt `ToggleChip`/`ToggleGroup` in `SuggestedPractice`, `AccountView` tabs, `RepertoireView` filters, `ChordFinderDialog` chips and `TabEditor` techniques; verification: every `aria-pressed` value and selected style matches the previous render.
-- [ ] 6.3 Adopt `Field`/`FormMessage`/`CheckboxField` across the remaining forms (`PracticePhaseEditor`, `RepertoirePartEditor`, `RepertoireSongForm`, `SessionEditor`, `ManualPracticeEntry`, `AccountView`, `ChordChartEditor`, `TabEditor`) and the ~25 `role="alert"` sites; verification: each form still shows its error text with the same `role="alert"` and tone.
-- [ ] 6.4 Adopt `RemovableChip` in `PracticeExerciseEditor` and the resource row primitive + `lib/practice-resources.ts` in `PracticeResourceEditor`, and apply the shared `updateById` reducer to `PracticePlanBuilder`, `PhaseEditor`, `ResourceEditor`, `SessionEditor` and `RepertoireItemCard` parts; verification: add/remove/update of exercises, materials, phases and session blocks behaves as before.
-- [ ] 6.5 Adopt `MenuItemButton` in `PracticeRecordingItem` and `AttachMaterialMenu`, then re-point `tests/cloud-sync-ui.test.mjs` at the recording menu's new owner with assertions kept verbatim (`aria-haspopup='menu'`, `role='menu'`, the provider ids); verification: the test passes and the sync menu still offers `google-drive` and `onedrive`.
-- [ ] 6.6 Adopt the card tones and `SectionHeader` in the remaining dashboard surfaces (`MetricCard`, `PracticeTimeChart`, `PracticeGoalsCard`, `WeeklyPracticeSummary`, `PracticeDayDetail`, `PracticeSessionDetails`, `PracticeSessionPhases`, `SavedRoutines`, `SavedPracticeRoutines`, `RecentRepertoire`, `TodaysRoutinePlan`, `SkillBalance`, `PracticePlanTable`) and in `AccountView`, `RecordingsLibrary`, `RepertoireView`, `ChordPicker`, `LandingPage`, `Skeletons`, `CollapsibleSection`; verification: the eyebrow and heading blocks count drops to a single definition per variant (grep) and every screen renders identically. Nota: las cabeceras de página y la columna común ya las resuelven `PageShell`/`PageHeader` (cambio `fix-mobile-shell-and-manual-practice`), así que esta tarea se limita a las secciones internas y adopta esas primitivas en vez de reintroducir bloques de ceja + título + descripción.
-- [ ] 6.7 Adopt `EmptyState` everywhere and replace `ActivePracticeSessionHost`'s confirm dialog with the shared one; verification: empty states and the new-practice guard behave as before.
-- [ ] 6.8 Update `docs/component-conventions.md` with the adoption outcome: the list of remaining components not yet refactored and why; verification: the list matches a grep-driven count of components still containing inline duplicated class strings or module-level maps.
+La ola de adopción se revisó contra el código actual y se retiró del alcance del cambio: es trabajo mecánico, sin cambio de comportamiento, y parte de sus destinos ya no existen o han sido sustituidos por cambios posteriores. Estado comprobado:
+
+- **6.1** — `ManualPracticeEntry`, `PracticeCompletionDialog` y `ChordFinderDialog` siguen sin `ModalDialog`; aplazado.
+- **6.2** — `SuggestedPractice` y `TabEditor` ya no existen (la tablatura vive en `src/components/tab-score/*`); `aria-pressed` sigue en 10 archivos además del primitivo; aplazado.
+- **6.3** — quedan ~40 `role="alert"` y formularios sin `FormMessage`; aplazado.
+- **6.4** — `PracticeExerciseEditor` y `PracticeResourceEditor` no usan aún `RemovableChip` ni el reductor compartido; aplazado.
+- **6.5** — `MenuItemButton` nunca se creó y el menú se resolvió en `GuitarRow`/`AttachMaterialMenu` sin ese primitivo; aplazado.
+- **6.6** — `SectionHeader` nunca se creó; `PageShell`/`PageHeader` cubren las cabeceras de página y quedan 43 cadenas de tarjeta inline; aplazado.
+- **6.7** — el guardián de práctica nueva ya usa `ConfirmDialog`; la adopción de `EmptyState` es parcial; aplazado el resto.
+- **6.8** — `docs/component-conventions.md` recoge el resultado de la revisión de alcance (ver la sección final de este archivo); hecho.
 
 ## 7. Integration verification
 
-- [ ] 7.1 Confirm the extraction rules hold mechanically: grep the refactored components for module-level lookup maps and `interface .*Props` moved by mistake, and confirm each refactored component file is smaller than its baseline; verification: the grep audit is clean and the before/after line counts are recorded.
-- [ ] 7.2 Confirm no behavior-adjacent attribute moved: diff `data-tour-target`, `aria-*`, `role=`, `id=` and every user-visible string across the whole change; verification: the diff shows only owner-file changes, no value changes.
-- [ ] 7.3 Confirm i18n was not migrated: grep the refactored components for new `useI18nSection` calls or changed literals; verification: no component gained i18n wiring and no string literal changed.
-- [ ] 7.4 Run the full gate one final time: `npm run typecheck`, `npm test`, `npm run build`; verification: all three exit 0.
-- [ ] 7.5 Verify the accessibility spec still holds where this change touched markup: dialog focus containment and Escape, accessible names on the toggle chips and selects, and 24×24 targets on the calendars; verification: a manual keyboard+screen-reader pass over the dialogs, chips and calendars, checked against `openspec/specs/app-accessibility/spec.md` scenarios.
-- [ ] 7.6 Confirm no dependency or configuration change slipped in: `git diff package.json package-lock.json tsconfig.json next.config.ts`; verification: the diff is empty.
+- [x] 7.4 Run the full gate one final time: `npm run typecheck`, `npm test`, `npm run build`; verification: all three exit 0. Nota: 2026-11-04 — typecheck sin errores, 1022 tests en verde y build de producción correcto.
+- Las verificaciones 7.1–7.3, 7.5 y 7.6 se aplazan con la adopción: auditaban ese trabajo mecánico concreto y la pasada manual de accesibilidad, no las olas ya completadas.
 
 ## Workflow follow-up
 
-- Archive the change with `/opsx-archive` once the review and manual pass are accepted.
-- No spec updates are expected at archive time: this change sets `skip_specs: true` because it is behavior-preserving.
-- Deferred to a later change: deleting the dead code found during the survey (`PracticeHeatmap.tsx`, empty `src/lib/practice-stats.ts`, the shadowed filter constants in `RepertoireView.tsx`) and migrating the hardcoded Spanish strings to i18n.
+- Archivar el cambio con `/opsx-archive`; no hay specs que sincronizar (`skip_specs: true`).
+- Deferred to a later change: la adopción restante de primitivas (6.1–6.7), el pase manual de 5.13.2, la eliminación del código muerto encontrado en el sondeo (`PracticeHeatmap.tsx`, `src/lib/practice-stats.ts`, las constantes de filtro sombreadas de `RepertoireView.tsx`) y la migración de las cadenas en español a i18n.

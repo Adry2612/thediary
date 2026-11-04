@@ -124,3 +124,25 @@ no se añaden clases sueltas cuando una variante existente ya cubre el caso.
   servidor/cliente no las detecta el typecheck).
 - Los atributos que son contrato (`data-tour-target`, `aria-*`, `role`, `id`)
   se quedan en el mismo elemento renderizado tras cualquier extracción.
+
+## Alcance pendiente (revisión de 2026-11-04)
+
+La extracción de lógica a `src/utils` y `src/hooks`, los tipos de dominio y las
+primitivas de `ui/` están completos. La adopción de esas primitivas en el resto
+de componentes quedó fuera del cambio `refactor-component-separation` por ser
+trabajo mecánico sin cambio de comportamiento:
+
+- `ManualPracticeEntry`, `PracticeCompletionDialog` y `ChordFinderDialog` no usan
+  todavía `ModalDialog`/`ConfirmDialog`.
+- `aria-pressed` sigue escrito a mano en 10 archivos además de `ToggleChip`.
+- Quedan ~40 `role="alert"` y varios formularios sin `FormMessage`.
+- `PracticeExerciseEditor` y `PracticeResourceEditor` no usan `RemovableChip` ni
+  el reductor compartido.
+- `MenuItemButton` y `SectionHeader` no llegaron a crearse; `PageShell` y
+  `PageHeader` cubren las cabeceras de página.
+- Quedan 43 cadenas de tarjeta (`rounded-xl border border-line bg-surface`)
+  inline en lugar de usar `Card`/`Block`.
+
+`PracticeHeatmap.tsx` sigue importándose en ningún sitio y `RepertoireView.tsx`
+conserva constantes de filtro sombreadas; su limpieza y la migración de las
+cadenas en español a i18n se aplazan a un cambio posterior.
