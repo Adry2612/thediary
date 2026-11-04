@@ -55,6 +55,7 @@ test("reconstructs a repeatable plan from a saved session without sharing mutabl
         ],
         repertoireItemId: "song-1",
         repertoirePartId: "part-1",
+        catalogSong: undefined,
         lickId: undefined,
       },
       {
@@ -66,6 +67,7 @@ test("reconstructs a repeatable plan from a saved session without sharing mutabl
         resources: undefined,
         repertoireItemId: undefined,
         repertoirePartId: undefined,
+        catalogSong: undefined,
         lickId: undefined,
       },
     ],
@@ -226,6 +228,7 @@ test("copies a template plan without sharing the stored phases", () => {
         ...phases[0],
         repertoireItemId: undefined,
         repertoirePartId: undefined,
+        catalogSong: undefined,
         lickId: undefined,
       },
     ],

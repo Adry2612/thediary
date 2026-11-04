@@ -811,7 +811,7 @@ export const es: Dict = {
     addBlock: 'Añadir bloque',
     deleteTemplate: 'Eliminar plantilla',
     saveTemplate: 'Guardar plantilla',
-    startSession: 'Iniciar sesión',
+    startSession: 'Empezar práctica',
     total: 'min en total',
     storageNote:
       'Las plantillas y archivos se guardan en este navegador. Los enlaces de Songsterr requieren conexión a internet.',
@@ -859,12 +859,17 @@ export const es: Dict = {
     changeSong: 'Cambiar canción',
     songPickerTitle: 'Buscar canción',
     songPickerDescription:
-      'Filtra por título, artista o parte. Solo aparecen canciones del repertorio.',
+      'Filtra por título, artista o parte. Si no está en tu repertorio, búscala en el catálogo.',
     songPickerSearch: 'Buscar canción',
     songPickerSearchPlaceholder: 'Título, artista o parte',
     songPickerEmpty: 'Todavía no hay canciones en tu repertorio.',
     songPickerNoResults: 'No hay canciones que coincidan con esa búsqueda.',
     songPickerClose: 'Cerrar el buscador de canciones',
+    songPickerCatalogSearch: 'Buscar en el catálogo',
+    catalogAddTitle: 'Canciones fuera del repertorio',
+    catalogAddDescription:
+      'Las practicaste sin tenerlas en tu repertorio. Marca las que quieras añadir al guardar.',
+    sessionSong: 'Canción',
     repertoireLink: 'Repertorio',
     selectSong: 'Elige una canción',
     noPart: 'Sin parte',

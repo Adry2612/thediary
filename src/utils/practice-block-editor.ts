@@ -1,4 +1,5 @@
 import type { GuitarLick } from "../types/lick.ts";
+import type { CatalogCandidate } from "../types/catalog.ts";
 import type {
   PracticePhase,
   PracticeSkill,
@@ -78,12 +79,32 @@ export function getRepertoireSongChanges(
   song: Pick<RepertoireItem, "id" | "title">,
 ): Pick<
   PracticePhase,
-  "name" | "repertoireItemId" | "repertoirePartId"
+  "name" | "repertoireItemId" | "repertoirePartId" | "catalogSong"
 > {
   return {
     name: song.title,
     repertoireItemId: song.id,
     repertoirePartId: undefined,
+    catalogSong: undefined,
+  };
+}
+
+/**
+ * Datos que cambian en un bloque de repertorio al elegir una canción del
+ * catálogo que todavía no está en el repertorio. Se guarda la referencia para
+ * poder ofrecer añadirla al terminar la práctica.
+ */
+export function getCatalogSongChanges(
+  candidate: CatalogCandidate,
+): Pick<
+  PracticePhase,
+  "name" | "repertoireItemId" | "repertoirePartId" | "catalogSong"
+> {
+  return {
+    name: candidate.title,
+    repertoireItemId: undefined,
+    repertoirePartId: undefined,
+    catalogSong: { ...candidate },
   };
 }
 
@@ -101,6 +122,7 @@ export function applySkillChange(
   if (skill !== "repertoire") {
     next.repertoireItemId = undefined;
     next.repertoirePartId = undefined;
+    next.catalogSong = undefined;
   }
   if (skill !== "lick") {
     next.lickId = undefined;

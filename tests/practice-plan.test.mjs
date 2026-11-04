@@ -47,6 +47,7 @@ test("clones phases and their mutable collections without changing the source", 
       ...phases[0],
       repertoireItemId: undefined,
       repertoirePartId: undefined,
+      catalogSong: undefined,
     },
   ]);
   assert.notEqual(clone, phases);
@@ -124,11 +125,13 @@ test("normalizes links that do not belong to the block category", () => {  const
     skill: "technique",
     repertoireItemId: undefined,
     repertoirePartId: undefined,
+    catalogSong: undefined,
     lickId: undefined,
   });
   assert.deepEqual(normalizePracticePhaseLinks({ ...base, skill: "repertoire" }), {
     ...base,
     skill: "repertoire",
+    catalogSong: undefined,
     lickId: undefined,
   });
   assert.deepEqual(normalizePracticePhaseLinks({ ...base, skill: "lick" }), {
@@ -136,7 +139,37 @@ test("normalizes links that do not belong to the block category", () => {  const
     skill: "lick",
     repertoireItemId: undefined,
     repertoirePartId: undefined,
+    catalogSong: undefined,
   });
+});
+
+test("keeps a catalog song only while the block is repertoire", () => {
+  const catalogSong = {
+    source: "itunes",
+    id: "catalog-1",
+    title: "Canción",
+    artist: "Artista",
+  };
+  const phase = {
+    id: "phase-1",
+    name: "Canción",
+    durationMinutes: 10,
+    skill: "repertoire",
+    catalogSong,
+  };
+
+  assert.deepEqual(normalizePracticePhaseLinks(phase), { ...phase, lickId: undefined });
+  assert.equal(
+    normalizePracticePhaseLinks({ ...phase, skill: "technique" }).catalogSong,
+    undefined,
+  );
+  assert.equal(
+    normalizePracticePhaseLinks({
+      ...phase,
+      repertoireItemId: "song-1",
+    }).catalogSong,
+    undefined,
+  );
 });
 
 test("the plan key changes with structure but not with block content", () => {

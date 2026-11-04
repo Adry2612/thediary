@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/Button";
 import { TextArea } from "@/components/ui/Field";
 import { PracticeMetricScale } from "@/components/practice/PracticeMetricScale";
 import { formatClock } from "@/utils/format";
+import { getCatalogSongKey } from "@/utils/practice-catalog-songs";
 import { usePracticeFeedbackPreference } from "@/hooks/usePracticeFeedbackPreference";
 import { useDialogMotion } from "@/hooks/useDialogMotion";
 import { useI18nSection } from "@/i18n/I18nProvider";
+import type { CatalogCandidate } from "@/types/catalog";
 import {
   PRACTICE_SKILLS,
   type PracticeMetricValue,
@@ -19,11 +21,14 @@ interface PracticeCompletionDialogProps {
   isVisible: boolean;
   routineName?: string;
   canUpdateRoutine?: boolean;
+  /** Canciones del catálogo practicadas que aún no están en el repertorio. */
+  catalogSongs?: CatalogCandidate[];
   onSave: (
     sessionNotes: string,
     phaseNotes: Record<number, string>,
     updateRoutine: boolean,
     metrics: { mood?: PracticeMetricValue; focus?: PracticeMetricValue },
+    catalogSongsToAdd: CatalogCandidate[],
   ) => void;
   onDiscard: () => void;
 }
@@ -33,6 +38,7 @@ export function PracticeCompletionDialog({
   isVisible,
   routineName,
   canUpdateRoutine = false,
+  catalogSongs = [],
   onSave,
   onDiscard,
 }: PracticeCompletionDialogProps) {
@@ -49,6 +55,9 @@ export function PracticeCompletionDialog({
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [mood, setMood] = useState<PracticeMetricValue | null>(null);
   const [focus, setFocus] = useState<PracticeMetricValue | null>(null);
+  const [catalogSelection, setCatalogSelection] = useState<Set<string>>(
+    new Set(),
+  );
 
   useEffect(() => {
     if (!result || !isVisible) return;
@@ -60,7 +69,10 @@ export function PracticeCompletionDialog({
     setIsNotesOpen(false);
     setMood(null);
     setFocus(null);
-  }, [isVisible, refresh, result]);
+    setCatalogSelection(
+      new Set(catalogSongs.map((song) => getCatalogSongKey(song))),
+    );
+  }, [catalogSongs, isVisible, refresh, result]);
 
   const practicedSkills = result
     ? PRACTICE_SKILLS.filter(
@@ -76,10 +88,18 @@ export function PracticeCompletionDialog({
   const hasMetricQuestions = isMoodEnabled || isFocusEnabled;
 
   function handleSave() {
-    onSave(sessionNotes, phaseNotes, updateRoutine, {
-      ...(mood ? { mood } : {}),
-      ...(focus ? { focus } : {}),
-    });
+    onSave(
+      sessionNotes,
+      phaseNotes,
+      updateRoutine,
+      {
+        ...(mood ? { mood } : {}),
+        ...(focus ? { focus } : {}),
+      },
+      catalogSongs.filter((song) =>
+        catalogSelection.has(getCatalogSongKey(song)),
+      ),
+    );
   }
 
   return (
@@ -134,6 +154,51 @@ export function PracticeCompletionDialog({
             </ul>
           )}
         </section>
+
+        {catalogSongs.length > 0 && (
+          <section
+            aria-label={text.catalogAddTitle}
+            className="mt-5 rounded-xl border border-accent-green-fg/30 bg-accent-green-bg/20 p-4"
+          >
+            <h3 className="text-sm font-medium text-ink">
+              {text.catalogAddTitle}
+            </h3>
+            <p className="mt-1 text-xs leading-5 text-muted">
+              {text.catalogAddDescription}
+            </p>
+            <ul className="mt-3 space-y-2">
+              {catalogSongs.map((song) => {
+                const key = getCatalogSongKey(song);
+                const checked = catalogSelection.has(key);
+                return (
+                  <li key={key}>
+                    <label className="flex items-start gap-2.5 text-sm text-ink">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          setCatalogSelection((current) => {
+                            const next = new Set(current);
+                            if (next.has(key)) next.delete(key);
+                            else next.add(key);
+                            return next;
+                          })
+                        }
+                        className="mt-0.5 size-4 accent-current"
+                      />
+                      <span className="min-w-0">
+                        <span className="block break-words">{song.title}</span>
+                        <span className="block text-xs text-muted">
+                          {song.artist}
+                        </span>
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
 
         {hasMetricQuestions && (
           <section

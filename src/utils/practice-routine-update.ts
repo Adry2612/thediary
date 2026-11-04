@@ -10,6 +10,12 @@ const LINK_FIELDS = [
   "lickId",
 ] as const;
 
+function catalogSongKey(
+  song: PracticePhase["catalogSong"],
+): string {
+  return song ? `${song.source}:${song.id}` : "";
+}
+
 /**
  * Si la sesión cambió los vínculos de los bloques respecto a la rutina de la
  * que salió. Se comparan por id de bloque, no por posición, para no confundir
@@ -28,8 +34,10 @@ export function hasPracticeLinkChanges(
   return sessionPhases.some((phase) => {
     const routinePhase = routineById.get(phase.id);
     if (!routinePhase) return true;
-    return LINK_FIELDS.some(
-      (field) => phase[field] !== routinePhase[field],
+    return (
+      LINK_FIELDS.some((field) => phase[field] !== routinePhase[field]) ||
+      catalogSongKey(phase.catalogSong) !==
+        catalogSongKey(routinePhase.catalogSong)
     );
   });
 }
@@ -59,6 +67,7 @@ export function applyRoutineLinkChanges(
         name: sessionPhase.name,
         repertoireItemId: sessionPhase.repertoireItemId,
         repertoirePartId: sessionPhase.repertoirePartId,
+        catalogSong: sessionPhase.catalogSong,
         lickId: sessionPhase.lickId,
       };
     }),

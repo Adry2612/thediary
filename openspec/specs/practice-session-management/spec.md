@@ -49,6 +49,46 @@ The system SHALL keep creating a new practice that opens the routine editor as a
 - **WHEN** the user finishes a quick practice and saves it
 - **THEN** the app records a practice session in the history that the user can edit afterwards like any other
 
+### Requirement: A practice block can use a catalog song
+
+The system SHALL let a repertoire practice block search both the saved repertoire and the external catalog in the plan builder, the session editor and the song picker used during a practice. Choosing a catalog result SHALL keep a temporary reference with the song's title and artist, SHALL show that title in the block and SHALL NOT add the song to the repertoire yet.
+
+#### Scenario: Choosing a saved song
+- **WHEN** the user picks a song that is already in the repertoire
+- **THEN** the block links to that song and its parts become available
+
+#### Scenario: Choosing a catalog song
+- **WHEN** the user searches the catalog and picks a song that is not in the repertoire
+- **THEN** the block shows the catalog title and artist and keeps a temporary reference instead of a repertoire link
+
+#### Scenario: Editing a saved practice
+- **WHEN** the user edits a saved practice and opens the song picker of a repertoire block
+- **THEN** the picker offers both the saved repertoire and the catalog search
+
+#### Scenario: Changing the block category
+- **WHEN** a block with a catalog song stops being a repertoire block
+- **THEN** the temporary catalog reference is removed with the other repertoire links
+
+### Requirement: A practised catalog song is offered to the repertoire
+
+The system SHALL, when saving a practice that practised one or more catalog songs not in the repertoire, list each song with its title and artist, let the user uncheck it, and add the checked songs to the repertoire linked to the saved practice's blocks.
+
+#### Scenario: Accepting the suggested song
+- **WHEN** the practice finishes with a practised catalog song and the user keeps it checked
+- **THEN** the app creates the repertoire item with the catalog metadata and links the saved block to it
+
+#### Scenario: Declining the suggestion
+- **WHEN** the user unchecks the catalog song
+- **THEN** the song is not added and the saved practice keeps its title without a repertoire link
+
+#### Scenario: The song is already in the repertoire
+- **WHEN** a catalog song was added to the repertoire between choosing and saving it
+- **THEN** the app reuses that item instead of creating a duplicate
+
+#### Scenario: A block without practised time
+- **WHEN** a catalog song belongs to a block with zero elapsed time
+- **THEN** the app does not offer to add it
+
 ### Requirement: Saved practices can be edited
 
 The system SHALL let the user edit a saved practice session, including its title, notes, completion state, duration and its blocks, SHALL present every block's real time and the session duration as `mm:ss` or `h:mm:ss`, SHALL accept the same clock formats when typing, SHALL keep the reported totals consistent with the edited blocks, SHALL report an invalid time next to its field without losing the other edits, and SHALL NOT block a valid save because of a native number-step mismatch.

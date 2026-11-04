@@ -205,3 +205,30 @@ test("ignores unnamed blocks and always falls back for the title", () => {
   assert.equal(updated.phases, undefined);
   assert.equal(updated.durationSeconds, 1_500);
 });
+
+test("keeps a catalog song reference while editing a saved practice", () => {
+  const catalogSong = {
+    source: "deezer",
+    id: "catalog-1",
+    title: "Canción del catálogo",
+    artist: "Artista",
+  };
+  const original = session({
+    phases: [
+      {
+        id: 1,
+        name: "Canción del catálogo",
+        skill: "repertoire",
+        elapsedSeconds: 600,
+        catalogSong,
+      },
+    ],
+  });
+
+  const draft = toEditableSession(original);
+  assert.deepEqual(draft.blocks[0].catalogSong, catalogSong);
+  assert.notEqual(draft.blocks[0].catalogSong, original.phases[0].catalogSong);
+
+  const updated = applySessionEdit(original, draft);
+  assert.deepEqual(updated.phases[0].catalogSong, catalogSong);
+});

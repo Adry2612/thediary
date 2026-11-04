@@ -852,12 +852,17 @@ export const en: Dict = {
     changeSong: 'Change song',
     songPickerTitle: 'Find a song',
     songPickerDescription:
-      'Filter by title, artist or part. Only repertoire songs are shown.',
+      'Filter by title, artist or part. If it is not in your repertoire, search the catalog.',
     songPickerSearch: 'Search songs',
     songPickerSearchPlaceholder: 'Title, artist or part',
     songPickerEmpty: 'There are no songs in your repertoire yet.',
     songPickerNoResults: 'No songs match that search.',
     songPickerClose: 'Close the song search',
+    songPickerCatalogSearch: 'Search the catalog',
+    catalogAddTitle: 'Songs outside your repertoire',
+    catalogAddDescription:
+      'You practised them without having them in your repertoire. Tick the ones you want to add when saving.',
+    sessionSong: 'Song',
     repertoireLink: 'Repertoire',
     selectSong: 'Choose a song',
     noPart: 'No part',

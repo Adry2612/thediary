@@ -30,6 +30,8 @@ interface SearchPickerDialogProps {
   catalogGroupLabel?: string;
   /** Cabecera de los nombres creados por el usuario. */
   customGroupLabel?: string;
+  /** Acción extra al pie, como buscar la misma consulta en el catálogo. */
+  footerAction?: { label: string; onClick: (query: string) => void };
   items: readonly SearchPickerItem[];
   selectedId?: string;
   onSelect: (id: string) => void;
@@ -51,6 +53,7 @@ export function SearchPickerDialog({
   closeLabel,
   catalogGroupLabel,
   customGroupLabel,
+  footerAction,
   items,
   selectedId,
   onSelect,
@@ -186,6 +189,18 @@ export function SearchPickerDialog({
             </p>
           )}
         </div>
+
+        {footerAction ? (
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => footerAction.onClick(query)}
+              className="text-sm text-muted underline underline-offset-4 transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
+            >
+              {footerAction.label}
+            </button>
+          </div>
+        ) : null}
       </div>
     </ModalDialog>
   );

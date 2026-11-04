@@ -4,6 +4,7 @@ import type {
   SessionPhaseRecord,
   SessionRecord,
 } from "../types/practice.ts";
+import type { CatalogCandidate } from "../types/catalog.ts";
 
 export interface EditableSessionBlock {
   id: SessionPhaseRecord["id"];
@@ -16,6 +17,7 @@ export interface EditableSessionBlock {
   resources?: SessionPhaseRecord["resources"];
   repertoireItemId?: string;
   repertoirePartId?: string;
+  catalogSong?: CatalogCandidate;
   lickId?: string;
   /** BPM del bloque ya guardado; se conserva si no se toca. */
   averageBpm?: number;
@@ -53,6 +55,7 @@ export function toEditableSession(session: SessionRecord): EditableSession {
       resources: phase.resources?.map((resource) => ({ ...resource })),
       repertoireItemId: phase.repertoireItemId,
       repertoirePartId: phase.repertoirePartId,
+      ...(phase.catalogSong ? { catalogSong: { ...phase.catalogSong } } : {}),
       lickId: phase.lickId,
       averageBpm: phase.averageBpm,
     })),
@@ -87,6 +90,9 @@ export function applySessionEdit(
         : {}),
       ...(block.repertoirePartId
         ? { repertoirePartId: block.repertoirePartId }
+        : {}),
+      ...(block.catalogSong && !block.repertoireItemId
+        ? { catalogSong: { ...block.catalogSong } }
         : {}),
       ...(block.lickId ? { lickId: block.lickId } : {}),
       ...(block.averageBpm && block.averageBpm > 0

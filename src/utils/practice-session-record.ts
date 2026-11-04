@@ -94,6 +94,9 @@ export function createPracticeSessionRecord({
       notes: phaseNotes[index]?.trim() || undefined,
       repertoireItemId: phases[index]?.repertoireItemId,
       repertoirePartId: phases[index]?.repertoirePartId,
+      ...(phases[index]?.catalogSong
+        ? { catalogSong: { ...phases[index].catalogSong } }
+        : {}),
       lickId: phases[index]?.lickId,
     })),
   };

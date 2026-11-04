@@ -4,8 +4,13 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { TextField, TextArea } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
-import { TrashIcon } from "@/components/ui/icons";
+import { SearchIcon, TrashIcon } from "@/components/ui/icons";
+import { SongPickerDialog } from "@/components/practice/SongPickerDialog";
 import { PRACTICE_SKILL_LABELS } from "@/utils/dashboard-data";
+import {
+  getCatalogSongChanges,
+  getRepertoireSongChanges,
+} from "@/utils/practice-block-editor";
 import {
   applySessionEdit,
   toEditableSession,
@@ -22,6 +27,7 @@ import { createId } from "@/utils/create-id";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { PRACTICE_SKILLS, type SessionRecord } from "@/types/practice";
+import type { CatalogCandidate } from "@/types/catalog";
 
 interface SessionEditorProps {
   session: SessionRecord;
@@ -59,9 +65,19 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
     createEditorState(session),
   );
   const guitars = usePracticeStore((state) => state.guitars);
+  const repertoireItems = usePracticeStore((state) => state.repertoireItems);
   const practiceText = useI18nSection("practice");
+  const [songPickerBlockId, setSongPickerBlockId] = useState<
+    EditableSessionBlock["id"] | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const { draft, clocks, fieldErrors } = state;
+  const repertoireSongs = repertoireItems.filter(
+    (item) => item.kind === "song",
+  );
+  const songPickerBlock = draft.blocks.find(
+    (block) => block.id === songPickerBlockId,
+  );
 
   const derivedSeconds = draft.blocks.reduce(
     (total, block) => total + block.actualSeconds,
@@ -81,6 +97,13 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
         ),
       },
     }));
+  }
+
+  function changeBlockCatalogSong(
+    blockId: EditableSessionBlock["id"],
+    candidate: CatalogCandidate,
+  ) {
+    updateBlock(blockId, getCatalogSongChanges(candidate));
   }
 
   function updateBlockClock(blockId: EditableSessionBlock["id"], value: string) {
@@ -374,10 +397,48 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
                       onChange={(value) =>
                         updateBlock(block.id, {
                           skill: value as EditableSessionBlock["skill"],
+                          ...(value === "repertoire"
+                            ? {}
+                            : {
+                                repertoireItemId: undefined,
+                                repertoirePartId: undefined,
+                                catalogSong: undefined,
+                              }),
                         })
                       }
                     />
                   </div>
+                  {block.skill === "repertoire" && (
+                    <div className="block text-xs text-muted">
+                      {practiceText.sessionSong}
+                      <button
+                        type="button"
+                        onClick={() => setSongPickerBlockId(block.id)}
+                        aria-label={`${practiceText.sessionSong}: ${
+                          repertoireSongs.find(
+                            (song) => song.id === block.repertoireItemId,
+                          )?.title ??
+                          block.catalogSong?.title ??
+                          practiceText.selectSong
+                        }`}
+                        className="mt-1 flex min-h-12 w-full items-center justify-between gap-3 border border-line bg-canvas px-4 py-3 text-left text-sm text-ink transition hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg"
+                      >
+                        <span className="min-w-0 break-words">
+                          {repertoireSongs.find(
+                            (song) => song.id === block.repertoireItemId,
+                          )?.title ??
+                            block.catalogSong?.title ??
+                            practiceText.selectSong}
+                        </span>
+                        <SearchIcon className="size-4 shrink-0 text-muted" />
+                      </button>
+                      {block.catalogSong && (
+                        <span className="mt-1 block text-[11px] text-muted">
+                          {block.catalogSong.artist}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <label className="block text-xs text-muted">
                     {practiceText.actualTime}
                     <TextField
@@ -482,6 +543,21 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
           Guardar cambios
         </Button>
       </div>
+
+      {songPickerBlock && (
+        <SongPickerDialog
+          open
+          songs={repertoireSongs}
+          selectedSongId={songPickerBlock.repertoireItemId}
+          onSelect={(song) =>
+            updateBlock(songPickerBlock.id, getRepertoireSongChanges(song))
+          }
+          onSelectCatalog={(candidate) =>
+            changeBlockCatalogSong(songPickerBlock.id, candidate)
+          }
+          onClose={() => setSongPickerBlockId(null)}
+        />
+      )}
     </form>
   );
 }

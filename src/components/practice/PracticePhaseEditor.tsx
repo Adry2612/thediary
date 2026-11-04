@@ -24,12 +24,14 @@ import { getTechniqueName } from '@/utils/catalogs/techniques';
 import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
 import {
   applySkillChange,
+  getCatalogSongChanges,
   getLickOptions,
   getRepertoirePartOptions,
   getRepertoireSongChanges,
   shouldAdoptLinkedTitle,
 } from '@/utils/practice-block-editor';
 import { useI18nSection } from '@/i18n/I18nProvider';
+import type { CatalogCandidate } from '@/types/catalog';
 
 interface PracticePhaseEditorProps {
   phase: PracticePhase;
@@ -65,7 +67,8 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
   );
   const selectedLick = licks.find((lick) => lick.id === phase.lickId);
   const songs = repertoireItems.filter((item) => item.kind === 'song');
-  const songTriggerLabel = selectedSong?.title ?? text.selectSong;
+  const songTriggerLabel =
+    selectedSong?.title ?? phase.catalogSong?.title ?? text.selectSong;
   const techniqueTriggerLabel = phase.name.trim()
     ? getTechniqueName(phase.name, techniqueNameLanguage)
     : text.selectTechnique;
@@ -93,6 +96,10 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
 
   function changeSong(song: RepertoireItem) {
     onChange(phase.id, getRepertoireSongChanges(song));
+  }
+
+  function changeCatalogSong(candidate: CatalogCandidate) {
+    onChange(phase.id, getCatalogSongChanges(candidate));
   }
 
   function changeLick(lickId: string) {
@@ -157,7 +164,7 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
                 </span>
                 <SearchIcon className='size-4 shrink-0 text-muted' />
               </button>
-              {!selectedSong && (
+              {!selectedSong && !phase.catalogSong && (
                 <span
                   className='mt-2 block text-xs text-red-300'
                   role='status'
@@ -166,18 +173,6 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
                   {phase.repertoireItemId
                     ? text.missingReference
                     : text.missingSongLink}
-                </span>
-              )}
-              {songs.length === 0 && (
-                <span className='mt-2 block leading-relaxed'>
-                  {text.noSongsHelp}{' '}
-                  <Link
-                    href='/repertoire'
-                    className='text-ink underline decoration-line underline-offset-4'
-                  >
-                    {text.repertoireLink}
-                  </Link>{' '}
-                  {text.linkHelpSuffix}
                 </span>
               )}
             </div>
@@ -334,6 +329,7 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
         songs={songs}
         selectedSongId={phase.repertoireItemId}
         onSelect={changeSong}
+        onSelectCatalog={changeCatalogSong}
         onClose={() => setIsSongPickerOpen(false)}
       />
       <TechniquePickerDialog
