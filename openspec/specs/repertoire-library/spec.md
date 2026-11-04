@@ -183,10 +183,10 @@ The system SHALL store album, release year, artwork and the catalog source and i
 
 ### Requirement: An existing song can be completed from the catalog
 
-The system SHALL offer the same lookup from an existing song's edit form, in its own dialog, pre-filled with that song's title and artist and searched as soon as it opens, SHALL fill only the empty metadata fields of the song from the chosen candidate, and SHALL NOT change its title, artist, tuning, capo, parts, chord chart or tablature.
+The system SHALL offer the same lookup from an existing song's edit form, in its own dialog, pre-filled with that song's title and artist and searched as soon as it opens, SHALL show a preview of the candidate's title, artist, album, release year and artwork before changing the song, SHALL on confirmation update those fields when the candidate provides them and set the catalog source and identifier, and SHALL NOT change its tuning, capo, parts, chord chart, tablature or study material.
 
 #### Scenario: Filling the gaps
-- **WHEN** the user searches from a song that has no album, no release year and no artwork and picks a candidate
+- **WHEN** the user searches from a song that has no album, no release year and no artwork, picks a candidate and confirms the preview
 - **THEN** those three fields are filled from the candidate
 
 #### Scenario: Opening from a saved song
@@ -194,16 +194,28 @@ The system SHALL offer the same lookup from an existing song's edit form, in its
 - **THEN** the dialog is already searching for that song's title and artist and shows the results without a further action
 
 #### Scenario: Keeping what the song already has
-- **WHEN** the song already has an album or a release year and the user picks a candidate
-- **THEN** the values the song already had are kept
+- **WHEN** the song already has an album or a release year and the candidate does not provide that value
+- **THEN** the value the song already had is kept
 
 #### Scenario: Practice data is never touched
 - **WHEN** a candidate is applied to an existing song
-- **THEN** its title, artist, tuning, capo, parts, chord chart and tablature stay exactly as they were
+- **THEN** its tuning, capo, parts, chord chart, tablature and study material stay exactly as they were
 
 #### Scenario: Closing without choosing
 - **WHEN** the user opens the lookup and closes it without picking a candidate
 - **THEN** the song is left unchanged
+
+#### Scenario: Previewing the changes
+- **WHEN** the user picks a candidate for an existing song
+- **THEN** a preview shows the current and the new title, artist, album, release year and artwork before anything is saved
+
+#### Scenario: Applying the candidate
+- **WHEN** the user confirms the preview
+- **THEN** the song takes the candidate's title, artist and every optional field the candidate provides, and the catalog source and identifier are stored
+
+#### Scenario: Cancelling the preview
+- **WHEN** the user closes the preview without confirming
+- **THEN** the song keeps its current title, artist, album, release year and artwork
 
 ### Requirement: The library shows artwork without depending on the network
 
