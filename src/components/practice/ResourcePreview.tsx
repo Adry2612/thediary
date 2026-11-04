@@ -7,6 +7,7 @@ import { normalizeSongsterrUrl } from "@/utils/practice-templates";
 import {
   extractSpotifyTrackId,
   extractYoutubeVideoId,
+  isHttpsUrl,
 } from "@/utils/practice-resource-links";
 import { RESOURCE_LABELS } from "@/utils/practice-resources";
 import type { PracticeResource } from "@/types/practice";
@@ -54,6 +55,32 @@ export function ResourcePreview({
       <pre className="max-h-[32rem] overflow-auto bg-canvas p-4 font-mono text-xs leading-relaxed text-ink sm:text-sm">
         {resource.text}
       </pre>
+    );
+  }
+
+  if (resource.kind === "link") {
+    if (!isHttpsUrl(resource.url ?? "")) {
+      return (
+        <p className="p-6 text-sm text-muted">
+          El enlace no es válido.
+        </p>
+      );
+    }
+
+    return (
+      <div className="flex flex-col items-start gap-3 p-5 sm:p-6">
+        <p className="text-sm text-muted">
+          Este material se abre fuera de la aplicación.
+        </p>
+        <a
+          href={resource.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-10 items-center rounded-md border border-line px-3 text-sm text-ink transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
+        >
+          Abrir enlace en otra pestaña
+        </a>
+      </div>
     );
   }
 

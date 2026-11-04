@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PracticeMaterials } from '@/components/practice/PracticeMaterials';
 import { CatalogSearchDialog } from '@/components/repertoire/CatalogSearchDialog';
+import { CatalogPreviewDialog } from '@/components/repertoire/CatalogPreviewDialog';
 import { CoverArt } from '@/components/repertoire/CoverArt';
 import { RepertoirePartEditor } from '@/components/repertoire/RepertoirePartEditor';
 import { Button } from '@/components/ui/Button';
 import { CheckboxField } from '@/components/ui/CheckboxField';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { TextField } from '@/components/ui/Field';
-import { ChevronIcon, DeleteIcon } from '@/components/ui/icons';
+import { ChevronIcon, DeleteIcon, EditIcon } from '@/components/ui/icons';
 import { SelectField } from '@/components/ui/SelectField';
 import { formatPracticeDuration } from '@/utils/dashboard-data';
 import type {
@@ -34,8 +35,9 @@ import type {
   RepertoireDifficulty,
 } from '@/types/practice';
 import type { CatalogCandidate } from '@/types/catalog';
-import { buildCatalogFillUpdates } from '@/utils/repertoire-catalog';
-import { useI18nSection } from '@/i18n/I18nProvider';
+import { useI18n, useI18nSection } from '@/i18n/I18nProvider';
+import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
+import { formatTuning } from '@/utils/catalogs/tunings';
 import { createId as createIdentifier } from '@/utils/create-id';
 import { COMMON_TUNINGS } from '@/utils/repertoire-item';
 import { useActivePracticeSessionStore } from '@/stores/useActivePracticeSessionStore';
@@ -64,6 +66,8 @@ export function RepertoireItemCard({
   const router = useRouter();
   const text = useI18nSection('repertoire');
   const practiceText = useI18nSection('practice');
+  const { locale } = useI18n();
+  const { tuningDisplay } = useDisplayPreferences();
   const activeSession = useActivePracticeSessionStore(
     (state) => state.activeSession,
   );
@@ -100,6 +104,8 @@ export function RepertoireItemCard({
   );
   const [coverUrl, setCoverUrl] = useState(item.coverUrl ?? '');
   const [isCatalogSearchOpen, setIsCatalogSearchOpen] = useState(false);
+  const [pendingCatalogCandidate, setPendingCatalogCandidate] =
+    useState<CatalogCandidate | null>(null);
   const [isFutureLearn, setIsFutureLearn] = useState(
     item.isFutureLearn ?? false,
   );
@@ -175,13 +181,7 @@ export function RepertoireItemCard({
   }
 
   function applyCatalogCandidate(candidate: CatalogCandidate) {
-    const updates = buildCatalogFillUpdates(
-      item,
-      candidate,
-      new Date().toISOString(),
-    );
-
-    if (updates) onSave({ ...item, ...updates });
+    setPendingCatalogCandidate(candidate);
     setIsCatalogSearchOpen(false);
   }
 
@@ -255,6 +255,9 @@ export function RepertoireItemCard({
         onKeyDown={
           onOpen ?
             (event) => {
+              // Solo el propio contenedor abre la canción: las teclas de sus
+              // botones (editar, borrar, desplegar) no deben navegar.
+              if (event.target !== event.currentTarget) return;
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
                 onOpen(item);
@@ -358,6 +361,28 @@ export function RepertoireItemCard({
               {text.quickPractice}
             </button>
           )}
+          {item.kind === 'song' && (
+            <span className='group/edit relative inline-flex shrink-0'>
+              <button
+                type='button'
+                aria-label={text.catalogEdit}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsCatalogSearchOpen(true);
+                }}
+                className='flex size-9 shrink-0 items-center justify-center border border-line text-muted transition hover:border-ink/40 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60'
+              >
+                <EditIcon className='size-4' />
+              </button>
+              <span
+                role='tooltip'
+                aria-hidden='true'
+                className='pointer-events-none absolute right-0 top-full z-20 mt-2 hidden whitespace-nowrap rounded-md border border-line bg-surface px-2 py-1 text-xs text-ink shadow-lg shadow-black/30 group-hover/edit:block group-focus-within/edit:block'
+              >
+                {text.catalogEdit}
+              </span>
+            </span>
+          )}
           <button
             type='button'
             aria-label={text.deleteItem}
@@ -389,13 +414,15 @@ export function RepertoireItemCard({
             <p className='text-xs uppercase text-muted'>
               {text.parts} · {item.parts.length}
             </p>
-            <Button
-              type='button'
-              onClick={addPart}
-              className='h-11 min-w-11 px-4'
-            >
-              {text.addPart}
-            </Button>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button
+                type='button'
+                onClick={addPart}
+                className='h-11 min-w-11 px-4'
+              >
+                {text.addPart}
+              </Button>
+            </div>
           </div>
 
           <ul className='mt-3 space-y-3'>
@@ -440,7 +467,10 @@ export function RepertoireItemCard({
                     ariaLabel={text.tuning}
                     options={COMMON_TUNINGS.map((t) => ({
                       value: t,
-                      label: t,
+                      label:
+                        t === 'Otra...'
+                          ? t
+                          : formatTuning(t, { display: tuningDisplay, locale }),
                     }))}
                   />
                 </label>
@@ -550,17 +580,6 @@ export function RepertoireItemCard({
                   />
                 </label>
               </div>
-
-              <div className='mt-4'>
-                <Button
-                  type='button'
-                  size='field'
-                  variant='ghost'
-                  onClick={() => setIsCatalogSearchOpen(true)}
-                >
-                  {text.catalogBackfill}
-                </Button>
-              </div>
             </div>
           </details>
 
@@ -589,6 +608,17 @@ export function RepertoireItemCard({
           initialQuery={buildCatalogQuery(item.title, item.artist)}
           onSelect={applyCatalogCandidate}
           onClose={() => setIsCatalogSearchOpen(false)}
+        />
+      )}
+      {pendingCatalogCandidate && (
+        <CatalogPreviewDialog
+          item={item}
+          candidate={pendingCatalogCandidate}
+          onConfirm={(updates) => {
+            onSave({ ...item, ...updates });
+            setPendingCatalogCandidate(null);
+          }}
+          onClose={() => setPendingCatalogCandidate(null)}
         />
       )}
       {isQuickPracticeDialogOpen && (

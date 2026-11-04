@@ -12,6 +12,12 @@ import {
   type EditableSession,
   type EditableSessionBlock,
 } from "@/utils/practice-session-editing";
+import {
+  applySessionClockDrafts,
+  createSessionClockDrafts,
+  type SessionClockDrafts,
+} from "@/utils/practice-session-editor";
+import { formatClockInput, parseClockInput } from "@/utils/clock-time";
 import { createId } from "@/utils/create-id";
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import { useI18nSection } from "@/i18n/I18nProvider";
@@ -33,16 +39,32 @@ function toNumberInput(value: string): number {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
+interface EditorState {
+  draft: EditableSession;
+  clocks: SessionClockDrafts;
+  fieldErrors: Record<string, string>;
+}
+
+function createEditorState(session: SessionRecord): EditorState {
+  const draft = toEditableSession(session);
+  return {
+    draft,
+    clocks: createSessionClockDrafts(draft),
+    fieldErrors: {},
+  };
+}
+
 export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps) {
-  const [draft, setDraft] = useState<EditableSession>(() =>
-    toEditableSession(session),
+  const [state, setState] = useState<EditorState>(() =>
+    createEditorState(session),
   );
   const guitars = usePracticeStore((state) => state.guitars);
   const practiceText = useI18nSection("practice");
   const [error, setError] = useState<string | null>(null);
+  const { draft, clocks, fieldErrors } = state;
 
-  const derivedMinutes = draft.blocks.reduce(
-    (total, block) => total + block.actualMinutes,
+  const derivedSeconds = draft.blocks.reduce(
+    (total, block) => total + block.actualSeconds,
     0,
   );
 
@@ -50,54 +72,162 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
     blockId: EditableSessionBlock["id"],
     changes: Partial<EditableSessionBlock>,
   ) {
-    setDraft((current) => ({
+    setState((current) => ({
       ...current,
-      blocks: current.blocks.map((block) =>
-        block.id === blockId ? { ...block, ...changes } : block,
-      ),
+      draft: {
+        ...current.draft,
+        blocks: current.draft.blocks.map((block) =>
+          block.id === blockId ? { ...block, ...changes } : block,
+        ),
+      },
     }));
   }
 
-  function addBlock() {
-    setDraft((current) => ({
-      ...current,
-      blocks: [
-        ...current.blocks,
-        {
-          id: createId(),
-          name: "",
-          skill: "technique",
-          plannedMinutes: null,
-          actualMinutes: 0,
-          notes: "",
+  function updateBlockClock(blockId: EditableSessionBlock["id"], value: string) {
+    setState((current) => {
+      const clocks = {
+        ...current.clocks,
+        blocks: { ...current.clocks.blocks, [blockId]: value },
+      };
+      const parsed = value.trim() === "" ? 0 : parseClockInput(value);
+      if (parsed === null) return { ...current, clocks };
+
+      return {
+        ...current,
+        clocks,
+        draft: {
+          ...current.draft,
+          blocks: current.draft.blocks.map((block) =>
+            block.id === blockId ? { ...block, actualSeconds: parsed } : block,
+          ),
         },
-      ],
+        fieldErrors: { ...current.fieldErrors, [`block:${blockId}`]: "" },
+      };
+    });
+  }
+
+  function validateBlockClock(blockId: EditableSessionBlock["id"]) {
+    setState((current) => {
+      const value = current.clocks.blocks[blockId] ?? "";
+      const fieldErrors = { ...current.fieldErrors };
+      if (value.trim() !== "" && parseClockInput(value) === null) {
+        fieldErrors[`block:${blockId}`] = practiceText.clockTimeInvalid;
+      } else {
+        delete fieldErrors[`block:${blockId}`];
+      }
+      return { ...current, fieldErrors };
+    });
+  }
+
+  function updateDurationClock(value: string) {
+    setState((current) => {
+      const clocks = { ...current.clocks, duration: value };
+      const parsed = value.trim() === "" ? 0 : parseClockInput(value);
+      if (parsed === null) return { ...current, clocks };
+
+      return {
+        ...current,
+        clocks,
+        draft: { ...current.draft, durationSeconds: parsed },
+        fieldErrors: { ...current.fieldErrors, duration: "" },
+      };
+    });
+  }
+
+  function validateDurationClock() {
+    setState((current) => {
+      const value = current.clocks.duration;
+      const fieldErrors = { ...current.fieldErrors };
+      if (value.trim() !== "" && parseClockInput(value) === null) {
+        fieldErrors.duration = practiceText.clockTimeInvalid;
+      } else {
+        delete fieldErrors.duration;
+      }
+      return { ...current, fieldErrors };
+    });
+  }
+
+  function addBlock() {
+    const id = createId();
+    setState((current) => ({
+      ...current,
+      draft: {
+        ...current.draft,
+        blocks: [
+          ...current.draft.blocks,
+          {
+            id,
+            name: "",
+            skill: "technique",
+            plannedMinutes: null,
+            actualSeconds: 0,
+            notes: "",
+          },
+        ],
+      },
+      clocks: {
+        ...current.clocks,
+        blocks: { ...current.clocks.blocks, [id]: "0:00" },
+      },
     }));
   }
 
   function removeBlock(blockId: EditableSessionBlock["id"]) {
-    setDraft((current) => ({
-      ...current,
-      blocks: current.blocks.filter((block) => block.id !== blockId),
-    }));
+    setState((current) => {
+      const blocks = { ...current.clocks.blocks };
+      delete blocks[blockId];
+      const nextErrors = { ...current.fieldErrors };
+      delete nextErrors[`block:${blockId}`];
+      return {
+        ...current,
+        draft: {
+          ...current.draft,
+          blocks: current.draft.blocks.filter((block) => block.id !== blockId),
+        },
+        clocks: { ...current.clocks, blocks },
+        fieldErrors: nextErrors,
+      };
+    });
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (draft.blocks.some((block) => !block.name.trim())) {
+    const parsed = applySessionClockDrafts(draft, clocks);
+    if (Object.keys(parsed.errors).length > 0) {
+      setState((current) => ({
+        ...current,
+        fieldErrors: {
+          ...current.fieldErrors,
+          ...Object.fromEntries(
+            Object.keys(parsed.errors).map((key) => [
+              key,
+              practiceText.clockTimeInvalid,
+            ]),
+          ),
+        },
+      }));
+      setError(practiceText.clockTimeInvalid);
+      return;
+    }
+
+    if (parsed.session.blocks.some((block) => !block.name.trim())) {
       setError("Cada bloque necesita un nombre.");
       return;
     }
-    if (draft.blocks.length === 0 && draft.durationMinutes <= 0) {
+    if (
+      parsed.session.blocks.length === 0 &&
+      parsed.session.durationSeconds <= 0
+    ) {
       setError("Indica una duración mayor que cero.");
       return;
     }
     setError(null);
-    onSave(applySessionEdit(session, draft));
+    onSave(applySessionEdit(session, parsed.session));
   }
 
   return (
     <form
+      noValidate
       onSubmit={handleSubmit}
       className="rounded-xl border border-accent-green-fg/40 bg-surface p-6 sm:p-8"
     >
@@ -111,7 +241,10 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
           value={draft.title}
           maxLength={80}
           onChange={(event) =>
-            setDraft((current) => ({ ...current, title: event.target.value }))
+            setState((current) => ({
+              ...current,
+              draft: { ...current.draft, title: event.target.value },
+            }))
           }
           className="mt-1"
         />
@@ -122,7 +255,10 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
         <TextArea
           value={draft.notes}
           onChange={(event) =>
-            setDraft((current) => ({ ...current, notes: event.target.value }))
+            setState((current) => ({
+              ...current,
+              draft: { ...current.draft, notes: event.target.value },
+            }))
           }
           className="mt-1"
         />
@@ -140,10 +276,13 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
             { value: "acoustic", label: "Acústica" },
           ]}
           onChange={(value) =>
-            setDraft((current) => ({
+            setState((current) => ({
               ...current,
-              guitarType:
-                value === "electric" || value === "acoustic" ? value : null,
+              draft: {
+                ...current.draft,
+                guitarType:
+                  value === "electric" || value === "acoustic" ? value : null,
+              },
             }))
           }
         />
@@ -164,9 +303,12 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
               })),
             ]}
             onChange={(value) =>
-              setDraft((current) => ({
+              setState((current) => ({
                 ...current,
-                guitarId: value === "none" ? null : value,
+                draft: {
+                  ...current.draft,
+                  guitarId: value === "none" ? null : value,
+                },
               }))
             }
           />
@@ -180,7 +322,7 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
           </h3>
           <span className="font-mono text-xs text-muted">
             {draft.blocks.length > 0
-              ? `${derivedMinutes} min reales`
+              ? `${formatClockInput(derivedSeconds)} ${practiceText.realTotalSuffix}`
               : "Sin bloques"}
           </span>
         </div>
@@ -237,22 +379,29 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
                     />
                   </div>
                   <label className="block text-xs text-muted">
-                    Tiempo real (min)
+                    {practiceText.actualTime}
                     <TextField
-                      type="number"
-                      min={0}
-                      step={0.5}
-                      value={String(block.actualMinutes)}
+                      type="text"
+                      inputMode="numeric"
+                      value={clocks.blocks[block.id] ?? ""}
                       onChange={(event) =>
-                        updateBlock(block.id, {
-                          actualMinutes: toNumberInput(event.target.value),
-                        })
+                        updateBlockClock(block.id, event.target.value)
                       }
-                      className="mt-1"
+                      onBlur={() => validateBlockClock(block.id)}
+                      aria-invalid={Boolean(fieldErrors[`block:${block.id}`])}
+                      className="mt-1 font-mono"
                     />
+                    {fieldErrors[`block:${block.id}`] ? (
+                      <span
+                        role="alert"
+                        className="mt-1 block text-xs text-red-300"
+                      >
+                        {fieldErrors[`block:${block.id}`]}
+                      </span>
+                    ) : null}
                   </label>
                   <label className="block text-xs text-muted">
-                    Tiempo planificado (min)
+                    {practiceText.plannedTime}
                     <TextField
                       type="number"
                       min={0}
@@ -281,20 +430,21 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
 
         {draft.blocks.length === 0 && (
           <label className="mt-4 block max-w-48 text-xs text-muted">
-            Duración (min)
+            {practiceText.sessionDuration}
             <TextField
-              type="number"
-              min={0}
-              step={1}
-              value={String(draft.durationMinutes)}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  durationMinutes: toNumberInput(event.target.value),
-                }))
-              }
-              className="mt-1"
+              type="text"
+              inputMode="numeric"
+              value={clocks.duration}
+              onChange={(event) => updateDurationClock(event.target.value)}
+              onBlur={validateDurationClock}
+              aria-invalid={Boolean(fieldErrors.duration)}
+              className="mt-1 font-mono"
             />
+            {fieldErrors.duration ? (
+              <span role="alert" className="mt-1 block text-xs text-red-300">
+                {fieldErrors.duration}
+              </span>
+            ) : null}
           </label>
         )}
 
@@ -308,9 +458,9 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
           type="checkbox"
           checked={draft.completed}
           onChange={(event) =>
-            setDraft((current) => ({
+            setState((current) => ({
               ...current,
-              completed: event.target.checked,
+              draft: { ...current.draft, completed: event.target.checked },
             }))
           }
           className="size-4 accent-current"

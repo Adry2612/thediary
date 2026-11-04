@@ -5,6 +5,9 @@ import type {
   RepertoireItem,
   SessionPhaseRecord,
 } from "../types/practice.ts";
+import type { CatalogNameLanguage } from "../types/display.ts";
+import { getTechniqueName } from "./catalogs/techniques.ts";
+import { getTheoryName } from "./catalogs/theory.ts";
 
 /** Elemento de repertorio al que apunta un bloque, si todavía existe. */
 export function getLinkedRepertoireItem(
@@ -67,6 +70,24 @@ export function getPracticeBlockTitle(
 ): string {
   if (phase.skill !== "repertoire") return phase.name;
   return getLinkedRepertoireItem(phase, repertoireItems)?.title ?? phase.name;
+}
+
+/**
+ * Título visible de un bloque: resuelve las técnicas y los temas de teoría al
+ * idioma elegido, y deja intactos los nombres personalizados.
+ */
+export function getPracticeBlockDisplayTitle(
+  phase: Pick<
+    SessionPhaseRecord,
+    "name" | "skill" | "repertoireItemId"
+  >,
+  repertoireItems: readonly RepertoireItem[],
+  language: CatalogNameLanguage,
+): string {
+  const title = getPracticeBlockTitle(phase, repertoireItems);
+  if (phase.skill === "technique") return getTechniqueName(title, language);
+  if (phase.skill === "theory") return getTheoryName(title, language);
+  return title;
 }
 
 /** Título del lick vinculado a un bloque guardado, si todavía existe. */

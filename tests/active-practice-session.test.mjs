@@ -80,6 +80,7 @@ test("keeps the session target and can clear it", () => {
     id: "practice-session-target",
     name: "Práctica libre",
     isCountUp: true,
+    allowsTarget: true,
     phases: [
       { id: "free", name: "Práctica libre", durationMinutes: 1, skill: "repertoire" },
     ],
@@ -92,6 +93,28 @@ test("keeps the session target and can clear it", () => {
   );
 
   useActivePracticeSessionStore.getState().setTargetMinutes(null);
+  assert.equal(
+    "targetMinutes" in
+      (useActivePracticeSessionStore.getState().activeSession ?? {}),
+    false,
+  );
+
+  useActivePracticeSessionStore.getState().clearActiveSession();
+});
+
+test("does not set a target on a routine that does not allow it", () => {
+  useActivePracticeSessionStore.getState().setActiveSession({
+    id: "practice-session-routine",
+    name: "Rutina",
+    templateId: "template-1",
+    allowsTarget: false,
+    targetMinutes: 30,
+    phases: [
+      { id: "a", name: "Técnica", durationMinutes: 5, skill: "technique" },
+    ],
+  });
+
+  useActivePracticeSessionStore.getState().setTargetMinutes(45);
   assert.equal(
     "targetMinutes" in
       (useActivePracticeSessionStore.getState().activeSession ?? {}),

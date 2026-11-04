@@ -1,5 +1,6 @@
 "use client";
 
+import { type CSSProperties } from "react";
 import {
   formatPracticeDuration,
   PRACTICE_SKILLS,
@@ -46,6 +47,7 @@ export function PracticeHeatmap({
   const firstDayOffset = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
   const weekCount = Math.ceil((firstDayOffset + daysInMonth) / 7);
   const practiceByDate = new Map(days.map((day) => [day.dateKey, day]));
+  const hasMonthPractice = days.some((day) => day.minutes > 0);
   const selectedDay = practiceByDate.get(selectedDate);
   const visibleCells = Array.from({ length: weekCount * 7 }, (_, index) => {
     const dayNumber = index - firstDayOffset + 1;
@@ -134,7 +136,8 @@ export function PracticeHeatmap({
                    aria-label={`${cell.dayNumber} de ${monthLabel}: ${minutes ? `${minutes} minutos de práctica` : calendar.noPractice}`}
                   aria-pressed={isSelected}
                   title={`${cell.dayNumber}: ${minutes} min`}
-                  className={`size-4 rounded-[3px] ${getIntensity(minutes)} transition hover:outline hover:outline-1 hover:outline-zinc-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-200 disabled:cursor-default disabled:opacity-30 ${isSelected ? "outline outline-2 outline-offset-1 outline-[#d9c68f]" : ""}`}
+                  className={`size-4 rounded-[3px] ${getIntensity(minutes)} transition hover:outline hover:outline-1 hover:outline-zinc-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-200 disabled:cursor-default disabled:opacity-30 ${hasMonthPractice ? "chart-cell-in" : ""} ${isSelected ? "outline outline-2 outline-offset-1 outline-[#d9c68f]" : ""}`}
+                  style={{ "--chart-index": index } as CSSProperties}
                 />
               );
             })}

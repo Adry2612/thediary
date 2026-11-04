@@ -37,6 +37,7 @@ test("reconstructs a repeatable plan from a saved session without sharing mutabl
 
   assert.deepEqual(plan, {
     name: "Mi sesión",
+    allowsTarget: false,
     phases: [
       {
         id: "phase-1",
@@ -96,6 +97,7 @@ test("builds the quick practice plan as one timed technique block", () => {
         },
       ],
       isCountUp: true,
+      allowsTarget: true,
     },
   );
 });
@@ -130,6 +132,7 @@ test("builds a quick repertoire plan linked to the item and its material", () =>
     ],
     attachedResources: [guitarPro],
     isCountUp: true,
+    allowsTarget: true,
   });
 });
 
@@ -227,6 +230,7 @@ test("copies a template plan without sharing the stored phases", () => {
       },
     ],
     templateId: "template-1",
+    allowsTarget: false,
   });
   assert.notEqual(plan.phases, phases);
 });

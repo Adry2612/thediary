@@ -60,7 +60,7 @@ export function getBarTicks(bar: Pick<TabBar, "beats">): number {
 }
 
 export function getBarFill(
-  bar: Pick<TabBar, "beats">,
+  bar: Pick<TabBar, "beats"> & { pickup?: true },
   timeSignature: TabTimeSignature = DEFAULT_TIME_SIGNATURE,
 ): TabBarFill {
   const expected = getTimeSignatureTicks(timeSignature);
@@ -73,7 +73,7 @@ export function getBarFill(
     : 0;
   if (Math.abs(actual - expected) <= tolerance) return "exact";
 
-  if (actual < expected) return "under";
+  if (actual < expected) return bar.pickup ? "exact" : "under";
   if (actual > expected) return "over";
   return "exact";
 }

@@ -291,6 +291,86 @@ function content(id: string, group: TabPaletteGroup) {
           {glyph("P", 8)}
         </>
       );
+    case "dynamic-pp":
+      return glyph("pp", 9);
+    case "dynamic-p":
+      return glyph("p", 10);
+    case "dynamic-mp":
+      return glyph("mp", 9);
+    case "dynamic-mf":
+      return glyph("mf", 9);
+    case "dynamic-f":
+      return glyph("f", 10);
+    case "dynamic-ff":
+      return glyph("ff", 9);
+    case "hairpin-crescendo":
+      return (
+        <>
+          <path d="M4 12l16-6M4 12l16 6" />
+          <path d="M20 6v12" />
+        </>
+      );
+    case "hairpin-decrescendo":
+      return (
+        <>
+          <path d="M20 12L4 6M20 12l-16 6" />
+          <path d="M4 6v12" />
+        </>
+      );
+    case "beat-text":
+      return glyph("T");
+    case "beat-chord":
+      return glyph("C");
+    case "stroke-down":
+      return (
+        <>
+          <path d="M12 4v15M7 14l5 5 5-5" />
+        </>
+      );
+    case "stroke-up":
+      return (
+        <>
+          <path d="M12 20V5M7 10l5-5 5 5" />
+        </>
+      );
+    case "stroke-rasgueado":
+      return glyph("R");
+    case "grace":
+      return (
+        <>
+          {note({ x: 13 })}
+          {glyph("g", 7)}
+        </>
+      );
+    case "fermata":
+      return (
+        <>
+          <path d="M5 14c2-4 12-4 14 0" />
+          <circle cx="12" cy="9" r="1.4" fill="currentColor" stroke="none" />
+        </>
+      );
+    case "repeat-start":
+      return (
+        <>
+          <path d="M6 4v16M10 4v16" />
+          <circle cx="15" cy="9" r="1.2" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="15" r="1.2" fill="currentColor" stroke="none" />
+        </>
+      );
+    case "repeat-end":
+      return (
+        <>
+          <path d="M14 4v16M18 4v16" />
+          <circle cx="9" cy="9" r="1.2" fill="currentColor" stroke="none" />
+          <circle cx="9" cy="15" r="1.2" fill="currentColor" stroke="none" />
+        </>
+      );
+    case "ending":
+      return glyph("1.");
+    case "section":
+      return glyph("S");
+    case "pickup":
+      return glyph("A");
     case "bar-insert":
       return (
         <>
@@ -351,6 +431,32 @@ function groupIcon(group: TabPaletteGroup) {
       return <path d="M4 12c4 6 12 6 16 0" />;
     case "bend":
       return <path d="M6 19c0-7 5-12 12-14M15 4l3 1-1 3" />;
+    case "dynamic":
+      return glyph("mf", 9);
+    case "hairpin":
+      return <path d="M4 12l16-6M4 12l16 6" />;
+    case "text":
+      return glyph("T");
+    case "chord":
+      return glyph("C");
+    case "stroke":
+      return <path d="M12 4v15M7 14l5 5 5-5" />;
+    case "grace":
+      return note({ x: 13 });
+    case "fermata":
+      return <path d="M5 14c2-4 12-4 14 0" />;
+    case "repeat":
+      return (
+        <>
+          <path d="M6 4v16M10 4v16" />
+          <circle cx="15" cy="9" r="1.2" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="15" r="1.2" fill="currentColor" stroke="none" />
+        </>
+      );
+    case "section":
+      return glyph("S");
+    case "pickup":
+      return glyph("A");
     case "bar":
       return <rect x="4" y="6" width="16" height="12" rx="1" />;
     case "technique":

@@ -4,6 +4,8 @@ export interface SearchPickerItem {
   description?: string;
   /** Texto adicional que participa en la búsqueda (por ejemplo, partes). */
   searchText?: string;
+  /** Separa los nombres del catálogo de los que creó el usuario. */
+  group?: "catalog" | "custom";
 }
 
 function normalizeSearchText(value: string) {

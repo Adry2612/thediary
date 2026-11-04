@@ -45,6 +45,26 @@ function groupTitle(
       return text.techniques;
     case "bend":
       return text.bends;
+    case "dynamic":
+      return text.dynamics;
+    case "hairpin":
+      return text.hairpins;
+    case "text":
+      return text.texts;
+    case "chord":
+      return text.chords;
+    case "stroke":
+      return text.strokes;
+    case "grace":
+      return text.graces;
+    case "fermata":
+      return text.fermatas;
+    case "repeat":
+      return text.repeats;
+    case "section":
+      return text.sections;
+    case "pickup":
+      return text.pickup;
     case "bar":
       return text.bars;
   }
@@ -61,6 +81,10 @@ function reasonText(
   if (reason === "beatLimit") return text.beatLimit;
   if (reason === "noAdjacentBeat") return text.noAdjacentBeat;
   if (reason === "alreadySubdivided") return text.alreadySubdivided;
+  if (reason === "graceOnRest") return text.graceOnRest;
+  if (reason === "strokeNeedsChord") return text.strokeNeedsChord;
+  if (reason === "endingOutsideRepeat") return text.endingOutsideRepeat;
+  if (reason === "pickupNotFirstBar") return text.pickupNotFirstBar;
   return undefined;
 }
 

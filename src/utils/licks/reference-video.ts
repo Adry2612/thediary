@@ -1,46 +1,23 @@
 import { extractYoutubeVideoId } from "../practice-resource-links.ts";
+import {
+  MAX_CLOCK_SECONDS,
+  formatClockInput,
+  parseClockInput,
+} from "../clock-time.ts";
 import type { LickReferenceVideo } from "../../types/lick.ts";
 
-const MAX_SECONDS = 24 * 60 * 60;
+const MAX_SECONDS = MAX_CLOCK_SECONDS;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Acepta `83`, `1:23` y `1:02:03`; devuelve segundos o `null`. */
-export function parseClipTime(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (!/^\d+(:\d{1,2}){0,2}$/.test(trimmed)) return null;
-
-  const parts = trimmed.split(":").map(Number);
-  if (parts.some((part) => !Number.isInteger(part) || part < 0)) return null;
-
-  let seconds: number;
-  if (parts.length === 1) {
-    seconds = parts[0];
-  } else if (parts.length === 2) {
-    if (parts[1] >= 60) return null;
-    seconds = parts[0] * 60 + parts[1];
-  } else {
-    if (parts[1] >= 60 || parts[2] >= 60) return null;
-    seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
-  }
-
-  return seconds < MAX_SECONDS ? seconds : null;
-}
-
-/** Devuelve `m:ss` o `h:mm:ss`. */
-export function formatClipTime(seconds: number): string {
-  const safe = Math.max(0, Math.floor(seconds));
-  const hours = Math.floor(safe / 3600);
-  const minutes = Math.floor((safe % 3600) / 60);
-  const rest = safe % 60;
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
-  }
-  return `${minutes}:${String(rest).padStart(2, "0")}`;
-}
+/**
+ * El clip y la edición de prácticas comparten el mismo parser y formateador.
+ * Se mantienen estos alias para no romper a los consumidores del clip.
+ */
+export const parseClipTime = parseClockInput;
+export const formatClipTime = formatClockInput;
 
 export type ReferenceDraftError =
   | "invalidUrl"

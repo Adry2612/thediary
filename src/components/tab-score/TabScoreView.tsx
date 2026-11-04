@@ -70,8 +70,13 @@ export function TabScoreView({
   );
   const alphaTex = useMemo(
     () =>
-      buildAlphaTex(visibleScore, { standardNotation: showStandardNotation }),
-    [visibleScore, showStandardNotation],
+      buildAlphaTex(visibleScore, {
+        standardNotation: showStandardNotation,
+        // En una tarjeta el diagrama de acorde ocupa más que la tablatura y
+        // deja la pauta fuera del recorte: el nombre del acorde sigue en el pulso.
+        chordDiagrams: !compact,
+      }),
+    [visibleScore, showStandardNotation, compact],
   );
   const stringCount = useMemo(
     () => getStringCount(visibleScore.tuning),

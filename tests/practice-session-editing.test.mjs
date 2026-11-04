@@ -33,20 +33,63 @@ test("loads a saved session into the editable draft", () => {
   const draft = toEditableSession(session());
 
   assert.equal(draft.title, "Rutina de tarde");
-  assert.equal(draft.durationMinutes, 25);
+  assert.equal(draft.durationSeconds, 1_500);
   assert.deepEqual(
-    draft.blocks.map((block) => [block.name, block.actualMinutes]),
+    draft.blocks.map((block) => [block.name, block.actualSeconds]),
     [
-      ["Técnica", 15],
-      ["Repertorio", 10],
+      ["Técnica", 900],
+      ["Repertorio", 600],
     ],
   );
 });
 
+test("keeps exact seconds without rounding", () => {
+  const original = session({
+    durationSeconds: 83,
+    phases: [
+      {
+        id: 1,
+        name: "Frase",
+        skill: "technique",
+        elapsedSeconds: 83,
+        durationMinutes: 1,
+      },
+    ],
+  });
+  const draft = toEditableSession(original);
+
+  assert.equal(draft.durationSeconds, 83);
+  assert.equal(draft.blocks[0].actualSeconds, 83);
+
+  const updated = applySessionEdit(original, draft);
+  assert.equal(updated.durationSeconds, 83);
+  assert.equal(updated.phases[0].elapsedSeconds, 83);
+});
+
+test("keeps a session longer than an hour", () => {
+  const original = session({
+    durationSeconds: 3_723,
+    phases: [
+      {
+        id: 1,
+        name: "Sesión larga",
+        skill: "technique",
+        elapsedSeconds: 3_723,
+        durationMinutes: 62,
+      },
+    ],
+  });
+  const draft = toEditableSession(original);
+
+  assert.equal(draft.durationSeconds, 3_723);
+  assert.equal(draft.blocks[0].actualSeconds, 3_723);
+  assert.equal(applySessionEdit(original, draft).durationSeconds, 3_723);
+});
+
 test("derives duration and skill totals from the edited blocks", () => {
   const draft = toEditableSession(session());
-  draft.blocks[0] = { ...draft.blocks[0], actualMinutes: 20, skill: "technique" };
-  draft.blocks[1] = { ...draft.blocks[1], actualMinutes: 5, skill: "theory" };
+  draft.blocks[0] = { ...draft.blocks[0], actualSeconds: 1_200, skill: "technique" };
+  draft.blocks[1] = { ...draft.blocks[1], actualSeconds: 300, skill: "theory" };
 
   const updated = applySessionEdit(session(), draft);
 
@@ -78,7 +121,7 @@ test("keeps block links and details when a saved session is edited", () => {
     }],
   });
   const draft = toEditableSession(original);
-  draft.blocks[0] = { ...draft.blocks[0], actualMinutes: 2 };
+  draft.blocks[0] = { ...draft.blocks[0], actualSeconds: 120 };
 
   const updated = applySessionEdit(original, draft);
 
@@ -108,7 +151,7 @@ test("keeps the guitar type and each block's BPM through an edit", () => {
   assert.equal(draft.guitarType, "acoustic");
   assert.equal(draft.blocks[0].averageBpm, 88);
 
-  draft.blocks[0] = { ...draft.blocks[0], actualMinutes: 12 };
+  draft.blocks[0] = { ...draft.blocks[0], actualSeconds: 720 };
   const updated = applySessionEdit(original, draft);
 
   assert.equal(updated.guitarType, "acoustic");
@@ -131,7 +174,7 @@ test("keeps the guitar type when all blocks are removed", () => {
   const original = session({ guitarType: "electric" });
   const draft = toEditableSession(original);
   draft.blocks = [];
-  draft.durationMinutes = 30;
+  draft.durationSeconds = 1_800;
 
   const updated = applySessionEdit(original, draft);
 
@@ -142,7 +185,7 @@ test("keeps the guitar type when all blocks are removed", () => {
 test("drops the blocks and keeps the previous skill split when all are removed", () => {
   const draft = toEditableSession(session());
   draft.blocks = [];
-  draft.durationMinutes = 30;
+  draft.durationSeconds = 1_800;
 
   const updated = applySessionEdit(session(), draft);
 

@@ -14,6 +14,17 @@ export type TabScoreAnnouncementLabels = {
   emptyLabel: string;
   noNoteLabel: string;
   noSelectionLabel: string;
+  dynamicLabel?: string;
+  textLabel?: string;
+  chordLabel?: string;
+  strokeLabel?: string;
+  fermataLabel?: string;
+  graceLabel?: string;
+  repeatStartLabel?: string;
+  repeatEndLabel?: string;
+  endingLabel?: string;
+  sectionLabel?: string;
+  pickupLabel?: string;
   durationWhole: string;
   durationHalf: string;
   durationQuarter: string;
@@ -82,6 +93,53 @@ export function announceSelection({
           : labels.noNoteLabel,
     describeBeatDuration(beat, labels),
   ];
+
+  if (beat.dynamic) parts.push(beat.dynamic);
+  if (beat.hairpin) {
+    parts.push(beat.hairpin === "crescendo" ? "crescendo" : "decrescendo");
+  }
+  if (beat.text) {
+    parts.push(`${labels.textLabel ?? "texto"}: ${beat.text}`);
+  }
+  if (beat.chord) {
+    parts.push(`${labels.chordLabel ?? "acorde"}: ${beat.chord}`);
+  }
+  if (beat.stroke) {
+    parts.push(
+      `${labels.strokeLabel ?? "púa"} ${
+        beat.stroke === "down"
+          ? "abajo"
+          : beat.stroke === "up"
+            ? "arriba"
+            : "rasgueado"
+      }`,
+    );
+  }
+  if (beat.fermata) parts.push(labels.fermataLabel ?? "calderón");
+  if (beat.grace) {
+    parts.push(
+      `${labels.graceLabel ?? "apoyatura"} ${beat.grace.fret} ${
+        beat.grace.timing === "before" ? "antes" : "sobre"
+      }`,
+    );
+  }
+
+  const bar = score.bars[selection.bar];
+  if (bar?.section) {
+    parts.push(`${labels.sectionLabel ?? "sección"}: ${bar.section}`);
+  }
+  if (bar?.repeat?.start) {
+    parts.push(labels.repeatStartLabel ?? "abre repetición");
+  }
+  if (bar?.repeat?.end !== undefined) {
+    parts.push(
+      `${labels.repeatEndLabel ?? "cierra repetición"} ${bar.repeat.end}`,
+    );
+  }
+  if (bar?.endings && bar.endings.length > 0) {
+    parts.push(`${labels.endingLabel ?? "final"} ${bar.endings.join(", ")}`);
+  }
+  if (bar?.pickup) parts.push(labels.pickupLabel ?? "anacrusa");
 
   const sentence = `${parts.join(", ")}.`;
   return sentence.charAt(0).toUpperCase() + sentence.slice(1);

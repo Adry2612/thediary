@@ -14,22 +14,17 @@ import {
   TUNING_PRESETS,
   getTuningTargets,
 } from "@/utils/tuner";
-import { useI18nSection } from "@/i18n/I18nProvider";
-import type { Dict } from "@/i18n/dictionary";
+import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
+import { formatTuningPreset } from "@/utils/catalogs/tunings";
 
 const IN_TUNE_CENTS = 5;
 const MAX_CENTS = 50;
 
-const PRESET_LABEL_KEYS: Record<string, keyof Dict["tools"]> = {
-  standard: "tuningStandard",
-  "drop-d": "tuningDropD",
-  "eb-standard": "tuningEbStandard",
-  "open-g": "tuningOpenG",
-  dadgad: "tuningDadgad",
-};
-
 export function TunerPanel({ active }: { active: boolean }) {
   const text = useI18nSection("tools");
+  const { locale } = useI18n();
+  const { tuningDisplay } = useDisplayPreferences();
   const [presetId, setPresetId] = useState(DEFAULT_TUNING_PRESET_ID);
   const [a4, setA4] = useState(DEFAULT_A4_REFERENCE);
   const tuner = useTuner(active, a4);
@@ -97,7 +92,10 @@ export function TunerPanel({ active }: { active: boolean }) {
             onChange={setPresetId}
             options={TUNING_PRESETS.map((preset) => ({
               value: preset.id,
-              label: text[PRESET_LABEL_KEYS[preset.id] ?? "tuningStandard"],
+              label: formatTuningPreset(preset.id, {
+                display: tuningDisplay,
+                locale,
+              }),
             }))}
           />
         </div>

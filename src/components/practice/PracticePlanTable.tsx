@@ -1,8 +1,9 @@
 import { formatPracticeDuration } from '@/utils/dashboard-data';
 import { getPracticePlanDuration } from '@/utils/practice-plan';
+import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
 import {
   getLinkedRepertoirePartName,
-  getPracticeBlockTitle,
+  getPracticeBlockDisplayTitle,
 } from '@/utils/practice-session-details';
 import type { PracticePhase, RepertoireItem } from '@/types/practice';
 import { useI18nSection } from '@/i18n/I18nProvider';
@@ -16,6 +17,7 @@ export function PracticePlanTable({
 }) {
   const text = useI18nSection('practice');
   const skills = useI18nSection('skills');
+  const { techniqueNameLanguage } = useDisplayPreferences();
   const totalMinutes = getPracticePlanDuration(phases);
 
   return (
@@ -54,7 +56,11 @@ export function PracticePlanTable({
           </thead>
           <tbody>
             {phases.map((phase, index) => {
-              const title = getPracticeBlockTitle(phase, repertoireItems);
+              const title = getPracticeBlockDisplayTitle(
+                phase,
+                repertoireItems,
+                techniqueNameLanguage,
+              );
               const linkedPart = getLinkedRepertoirePartName(
                 phase,
                 repertoireItems,

@@ -3,6 +3,11 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppData } from "@/components/providers/AppDataProvider";
+import {
+  getCurrentPushEndpoint,
+  unsubscribeFromPush,
+} from "@/services/push-reminders";
+import { deletePushSubscription } from "@/services/supabase/push-subscriptions";
 import { errorMessage } from "@/utils/error-message";
 import type { SignOutState } from "@/types/settings";
 
@@ -12,7 +17,7 @@ import type { SignOutState } from "@/types/settings";
  */
 export function useSignOut(errorFallback: string): SignOutState {
   const router = useRouter();
-  const { signOut } = useAppData();
+  const { signOut, user } = useAppData();
   const [isWorking, setIsWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,6 +25,12 @@ export function useSignOut(errorFallback: string): SignOutState {
     setIsWorking(true);
     setError(null);
     try {
+      // Quita la suscripción de este dispositivo antes de perder la sesión.
+      if (user) {
+        const endpoint = await getCurrentPushEndpoint();
+        if (endpoint) await deletePushSubscription(user.id, endpoint);
+      }
+      await unsubscribeFromPush();
       await signOut();
       router.replace("/account");
     } catch (signOutError) {
@@ -27,7 +38,7 @@ export function useSignOut(errorFallback: string): SignOutState {
     } finally {
       setIsWorking(false);
     }
-  }, [errorFallback, router, signOut]);
+  }, [errorFallback, router, signOut, user]);
 
   return { isWorking, error, submit };
 }

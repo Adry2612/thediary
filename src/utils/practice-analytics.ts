@@ -8,6 +8,8 @@ import {
   type SkillDistribution,
 } from "../types/practice.ts";
 import { getComparisonSpans, sumSecondsInSpan } from "./period-comparison.ts";
+import { resolveTechniqueEntry } from "./catalogs/techniques.ts";
+import { resolveTheoryEntry } from "./catalogs/theory.ts";
 
 export type PracticeChartPeriod = "week" | "month" | "year";
 export type PracticeTimeRange = {
@@ -618,11 +620,24 @@ export function getPracticeContentRankings(
 
       const name = phase.name.trim();
       if (!name) continue;
-      const key = `${phase.skill}:${normalizePracticeContentName(name)}`;
       if (phase.skill === "technique") {
-        addLessonTime(techniques, key, name, phase.elapsedSeconds, session.id);
+        const canonical = resolveTechniqueEntry(name)?.en ?? name;
+        addLessonTime(
+          techniques,
+          `technique:${normalizePracticeContentName(canonical)}`,
+          canonical,
+          phase.elapsedSeconds,
+          session.id,
+        );
       } else if (phase.skill === "theory") {
-        addLessonTime(theory, key, name, phase.elapsedSeconds, session.id);
+        const canonical = resolveTheoryEntry(name)?.en ?? name;
+        addLessonTime(
+          theory,
+          `theory:${normalizePracticeContentName(canonical)}`,
+          canonical,
+          phase.elapsedSeconds,
+          session.id,
+        );
       }
     }
   }

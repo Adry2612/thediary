@@ -27,6 +27,7 @@ import { useScreenWakeLock } from "@/hooks/useScreenWakeLock";
 import { useSplitViewAvailability } from "@/hooks/useSplitViewAvailability";
 import { getLocalDateKey } from "@/utils/local-date";
 import { formatClock } from "@/utils/format";
+import { formatClockInput } from "@/utils/clock-time";
 import {
   addBpmSample,
   getTimeWeightedAverageBpm,
@@ -39,6 +40,7 @@ import { targetMinutesToSeconds } from "@/utils/practice-target";
 import { getPhaseMaterials } from "@/utils/practice-materials";
 import { normalizeRepertoirePhaseNames } from "@/utils/practice-plan";
 import {
+  getPracticeBlockDisplayTitle,
   getPracticeBlockTitle,
 } from "@/utils/practice-session-details";
 import { getRepertoireSongChanges } from "@/utils/practice-block-editor";
@@ -48,6 +50,7 @@ import {
 } from "@/utils/practice-routine-update";
 import { getPracticedLickIds } from "@/utils/practice-lick-progress";
 import { getTechniqueLabels } from "@/utils/licks/presentation";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import {
   useActivePracticeSessionStore,
   type ActivePracticeSession,
@@ -62,7 +65,8 @@ import { useI18nSection } from "@/i18n/I18nProvider";
 export function PracticeSession({ session }: { session: ActivePracticeSession }) {
   const text = useI18nSection("practice");
   const timerText = useI18nSection("timer");
-  const licksText = useI18nSection("licks");
+  const app = useI18nSection("app");
+  const { techniqueNameLanguage } = useDisplayPreferences();
   const pathname = usePathname();
   const isPracticeRoute = pathname === "/practice";
   const { id: sessionId, name, phases } = session;
@@ -145,6 +149,40 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     sessionId,
   );
   useScreenWakeLock(timer.isRunning);
+
+  // La pestaña muestra el tiempo total mientras haya una práctica empezada.
+  const tabTitle = `${formatClockInput(timer.elapsedSeconds)} · ${app.name}`;
+  const tabTitleRef = useRef(tabTitle);
+  tabTitleRef.current = tabTitle;
+
+  useEffect(() => {
+    document.title = tabTitle;
+  }, [tabTitle]);
+
+  // Next puede reescribir el título al navegar: se mantiene el tiempo visible.
+  useEffect(() => {
+    const titleElement = document.querySelector("title");
+    if (!titleElement) return;
+
+    const observer = new MutationObserver(() => {
+      if (document.title !== tabTitleRef.current) {
+        document.title = tabTitleRef.current;
+      }
+    });
+    observer.observe(titleElement, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      document.title = app.name;
+    };
+  }, [app.name]);
+
   const timerElapsedSecondsRef = useRef(timer.elapsedSeconds);
   timerElapsedSecondsRef.current = timer.elapsedSeconds;
   const previousTimerStartedAtRef = useRef(timer.startedAt);
@@ -300,6 +338,10 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     isCompleted ||
     (timer.awaitingPhaseAdvance && !timer.isRunning && !timer.continueAfterBlockTime);
   const isStopDisabled = !currentPhase || isCompleted;
+  // Tiempo sumado al bloque una vez agotado, visible en la barra flotante.
+  const barOvertimeSeconds = timer.isCountUp
+    ? 0
+    : Math.max(0, timer.phaseElapsedSeconds - timer.phasePlannedSeconds);
   const isFinishDialogVisible = isFinishDialogOpen && !isCompleted;
   const sessionStatus = getSessionStatus(isCompleted, timer.isRunning);
   const sessionStatusLabel =
@@ -318,7 +360,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     ? licks.find((lick) => lick.id === currentPhase.lickId)
     : undefined;
   const currentLickTechniques = currentLick
-    ? getTechniqueLabels(licksText, currentLick.techniques)
+    ? getTechniqueLabels(currentLick.techniques, techniqueNameLanguage)
     : [];
   const repertoireSongs = repertoireItems.filter(
     (item) => item.kind === "song",
@@ -345,8 +387,15 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         setPracticeEndSound={setPracticeEndSound}
         targetMinutes={session.targetMinutes}
         onChangeTargetMinutes={setTargetMinutes}
+        canSetTarget={session.allowsTarget ?? !session.templateId}
         artist={currentRepertoireItem?.artist}
-        title={currentRepertoireItem?.title ?? currentPhase?.name}
+        title={currentRepertoireItem?.title ?? (currentPhase
+          ? getPracticeBlockDisplayTitle(
+              currentPhase,
+              repertoireItems,
+              techniqueNameLanguage,
+            )
+          : undefined)}
         repertoireSongs={repertoireSongs}
         onChangeRepertoireSong={changeCurrentSong}
       />
@@ -398,7 +447,11 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
             ? [
                 {
                   ...currentPhase,
-                  name: getPracticeBlockTitle(currentPhase, repertoireItems),
+                  name: getPracticeBlockDisplayTitle(
+                    currentPhase,
+                    repertoireItems,
+                    techniqueNameLanguage,
+                  ),
                   resources: getPhaseMaterials(currentPhase, repertoireItems),
                 },
               ]
@@ -540,7 +593,13 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
             </span>
             {timer.currentPhase && !isCompleted && (
               <span className="pointer-events-none relative z-10 shrink-0 font-mono text-sm tabular-nums text-ink sm:text-base">
-                {formatClock(timer.remainingSeconds)}
+                {barOvertimeSeconds > 0 ? (
+                  <span className="text-accent-green-fg">
+                    +{formatClock(barOvertimeSeconds)}
+                  </span>
+                ) : (
+                  formatClock(timer.remainingSeconds)
+                )}
               </span>
             )}
             <div className="relative z-10 flex shrink-0 items-center gap-2">

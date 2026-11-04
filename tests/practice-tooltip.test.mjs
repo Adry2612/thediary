@@ -110,3 +110,16 @@ test("keeps the blocks when the session has no title", () => {
 
   assert.deepEqual(getSessionPhaseLines({ phases }), phases);
 });
+
+test("drops the blocks that were planned but not practised", () => {
+  const practised = phase("Riff principal");
+  const planned = { ...phase("Solo"), id: 2, elapsedSeconds: 0 };
+
+  assert.deepEqual(
+    getSessionPhaseLines({
+      title: "Master of Puppets",
+      phases: [practised, planned],
+    }),
+    [practised],
+  );
+});

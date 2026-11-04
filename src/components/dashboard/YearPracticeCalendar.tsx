@@ -51,7 +51,7 @@ export function YearPracticeCalendar({
     scheduleHide,
     handleCardPointerEnter,
     handleCardPointerLeave,
-  } = usePracticeDayTooltip({ preview: true });
+  } = usePracticeDayTooltip();
   const calendarScrollRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   /**
@@ -75,6 +75,7 @@ export function YearPracticeCalendar({
   const yearStart = new Date(year, 0, 1);
   const firstWeekday = (yearStart.getDay() + 6) % 7;
   const weekCount = Math.ceil((firstWeekday + days.length) / 7);
+  const hasYearPractice = days.some((day) => day.totalMinutes > 0);
   const monthMarkers = getMonthMarkers(year, weekCount, firstWeekday, locale);
   const cells = useMemo(
     () =>
@@ -226,9 +227,10 @@ export function YearPracticeCalendar({
             </div>
             <div
               ref={gridRef}
+              key={year}
               role="group"
               aria-label={`${calendar.yearDays} ${yearLabel}`}
-              className="grid grid-flow-col grid-rows-7 gap-0"
+              className={`grid grid-flow-col grid-rows-7 gap-0 ${hasYearPractice ? "chart-calendar-in" : ""}`}
               onMouseLeave={scheduleHide}
               style={{
                 gridTemplateColumns: `repeat(${weekCount}, ${PRACTICE_DAY_TARGET_SIZE}px)`,
@@ -287,7 +289,6 @@ export function YearPracticeCalendar({
             cardRef={cardRef}
             onPointerEnter={handleCardPointerEnter}
             onPointerLeave={handleCardPointerLeave}
-            interactive={false}
             compact
           />,
           document.body,

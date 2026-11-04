@@ -327,11 +327,11 @@ The system SHALL place the practice rhythm card and the skill balance in the sam
 
 ### Requirement: The rhythm chart tooltip details each bucket
 
-The system SHALL show, for each practised bucket of the practice rhythm chart, a card with its label, total time, number of sessions, average time per session and the percentage it represents of the best day, week or month in the selected period.
+The system SHALL show, for each practised bucket of the practice rhythm chart, a card with its label, total time, number of sessions, average time per session and, when it is not the best bucket, how far short it falls of the best day, week or month in the selected period. When the bucket is the current month in the year period and is below the best month, the card SHALL instead say what percentage is left to beat the best month.
 
 #### Scenario: Hovering a practised bucket
 - **WHEN** the user points at a bucket that has practice
-- **THEN** the card shows the bucket label, its total time, its session count, the average time per session and its percentage of the best bucket in the period
+- **THEN** the card shows the bucket label, its total time, its session count, the average time per session and how far short it falls of the best bucket, or that it is the best bucket
 
 #### Scenario: Keyboard focus
 - **WHEN** the user focuses a practised bucket with the keyboard
@@ -339,7 +339,15 @@ The system SHALL show, for each practised bucket of the practice rhythm chart, a
 
 #### Scenario: Best bucket of the period
 - **WHEN** the bucket is the one with the most practice in the selected period
-- **THEN** the comparison reads as 100 % of the best day, week or month according to the selected period
+- **THEN** the comparison names it as the best day, week or month instead of showing a percentage
+
+#### Scenario: A bucket below the best
+- **WHEN** the bucket has less practice than the best one
+- **THEN** the comparison says how far short it fell, as a percentage when the gap is under an hour and as a duration when it is an hour or more
+
+#### Scenario: The current month is still below the best month
+- **WHEN** the year period is shown, the bucket is the current month and another month has more practice
+- **THEN** the card says the percentage left to beat the best month instead of how far short it fell
 
 #### Scenario: Bucket without practice
 - **WHEN** the user points at a bucket without practice
@@ -397,29 +405,33 @@ On a coarse pointer, the system SHALL open a day's summary on the first tap with
 - **WHEN** the pointer hovers a day and then clicks it
 - **THEN** the summary opens on hover and the click opens the day detail, as before
 
-### Requirement: The annual calendar previews a day in a non-blocking card
+### Requirement: The annual calendar previews a day with its full content
 
-The system SHALL show the annual calendar's day summary in a floating card next to the day under the pointer or keyboard focus, SHALL let pointer events pass through the card so the day underneath it stays hoverable and clickable, and SHALL keep the preview compact: date, session count, total time and up to three sessions, with a count of the sessions that do not fit.
+The system SHALL show the annual calendar's day summary in a floating card next to the day under the pointer or keyboard focus, SHALL let the pointer enter the card and scroll its session list, and SHALL show the full content of the day: date, session count, total time and every session with its name, time, BPM, practised blocks and notes.
 
 #### Scenario: Opening a day
 - **WHEN** the pointer enters a day of the annual calendar
 - **THEN** its summary card opens next to that day without waiting for a dwell
 
-#### Scenario: Moving across the card
-- **WHEN** the pointer leaves the day and crosses the area occupied by the card
-- **THEN** the day underneath the pointer receives the hover and the card updates to that day instead of keeping the previous one
+#### Scenario: Entering the card
+- **WHEN** the pointer leaves the day and enters the open card
+- **THEN** the card stays open and its session list can be scrolled
 
-#### Scenario: Choosing a day under the card
-- **WHEN** the pointer clicks a day whose cell is covered by the open card
-- **THEN** that day's detail opens normally
+#### Scenario: Scrolling the card
+- **WHEN** the day has more content than fits in the card and the user scrolls inside it
+- **THEN** the card stays open and shows the rest of the sessions, blocks and notes
 
 #### Scenario: Keyboard focus
 - **WHEN** a day receives keyboard focus
 - **THEN** the card opens next to it and describes that day until the focus moves
 
 #### Scenario: Many sessions in a day
-- **WHEN** the day has more than three sessions
-- **THEN** the card lists the first three and shows how many more sessions that day has
+- **WHEN** the day has several sessions
+- **THEN** the card lists every session with its practised blocks and notes, without a "more sessions" summary
+
+#### Scenario: A block that was not practised
+- **WHEN** a session includes a block with zero practised time
+- **THEN** the card omits that block and its notes from the day summary
 
 #### Scenario: A day without practice
 - **WHEN** the pointer or focus reaches a day without saved practice
@@ -700,3 +712,47 @@ The system SHALL replace the period dropdown of the practice rhythm chart with t
 #### Scenario: Stable layout
 - **WHEN** the user changes the period
 - **THEN** the card keeps its height and the content below it does not move
+
+### Requirement: The evolution charts animate on appearance and change
+
+The system SHALL animate the practice rhythm bars, the skill-balance bars and ring, the guitar balance arc, the monthly heatmap and the annual calendar on first appearance or a period, month or year change, using only opacity, transform or SVG stroke drawing so no layout shifts, and SHALL finish within 500 ms. Bar and cell staggers SHALL start within 250 ms. The ring and the arc SHALL draw as one continuous sweep without background gaps between sections.
+
+#### Scenario: The ring draws without gaps
+- **WHEN** the skill ring or the guitar arc animates
+- **THEN** it draws as one continuous sweep and no background gap appears between its sections
+
+#### Scenario: The chart appears
+- **WHEN** the evolution screen shows a chart with data
+- **THEN** its bars or cells enter with the short animation and settle in their final position
+
+#### Scenario: The period changes
+- **WHEN** the user switches the period of the practice rhythm or the month of the heatmap or calendar
+- **THEN** the new bars or cells animate once from their baseline
+
+#### Scenario: The layout does not move
+- **WHEN** a chart animates
+- **THEN** its labels, cards and surrounding content keep their position and the page does not shift
+
+#### Scenario: An empty chart
+- **WHEN** the selected period has no practice to draw
+- **THEN** the chart shows its empty state without an entrance animation
+
+### Requirement: Chart motion does not replay or block reduced-motion users
+
+The system SHALL NOT replay the chart animation on hover, focus or an unrelated re-render, SHALL show the final state immediately when the user prefers reduced motion, and SHALL keep every value, label and accessible name available while the animation runs or when it is skipped.
+
+#### Scenario: The same data re-renders
+- **WHEN** an unrelated state change re-renders the dashboard without changing the chart data
+- **THEN** the animation does not replay
+
+#### Scenario: Hovering a bar or cell
+- **WHEN** the user points at or focuses a bar or cell
+- **THEN** it shows its tooltip or focus style with no entrance animation
+
+#### Scenario: Reduced motion
+- **WHEN** the user prefers reduced motion
+- **THEN** every chart is shown directly in its final state with no transition or stagger
+
+#### Scenario: The data is readable without motion
+- **WHEN** the animation is skipped or still running
+- **THEN** the chart's values, labels and accessible names are already available

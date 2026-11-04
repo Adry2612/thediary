@@ -41,6 +41,8 @@ export function SkillBalance({
     ? distribution.categories[activeSkill]
     : null;
   const circumference = 2 * Math.PI * 45;
+  /** Duración total del barrido del anillo; cada tramo ocupa su parte. */
+  const ringDrawMs = 400;
   let accumulatedLength = 0;
 
   const hideSummary = useCallback(() => {
@@ -104,6 +106,7 @@ export function SkillBalance({
 
       <div className="mt-8 flex flex-1 items-center justify-center">
         <svg
+          key={period}
           ref={chartRef}
           viewBox="0 0 120 120"
           className="size-44 -rotate-90"
@@ -126,6 +129,16 @@ export function SkillBalance({
             const length = circumference * fraction;
             const offset = accumulatedLength;
             accumulatedLength += length;
+            // Barrido continuo: cada tramo empieza donde acaba el anterior para
+            // que no queden huecos entre secciones mientras se dibuja.
+            const delay = Math.round((offset / circumference) * ringDrawMs);
+            const duration =
+              length > 0
+                ? Math.max(
+                    1,
+                    Math.round((length / circumference) * ringDrawMs),
+                  )
+                : 0;
 
             return (
               <circle
@@ -138,6 +151,15 @@ export function SkillBalance({
                 strokeWidth="13"
                 strokeDasharray={`${length} ${circumference - length}`}
                 strokeDashoffset={-offset}
+                className="chart-ring-draw"
+                style={
+                  {
+                    "--ring-dasharray": `${length} ${circumference - length}`,
+                    "--ring-circumference": circumference,
+                    "--ring-delay": `${delay}ms`,
+                    "--ring-duration": `${duration}ms`,
+                  } as CSSProperties
+                }
                 onPointerEnter={() => showSummary(chartRef.current, skill)}
               />
             );
@@ -151,7 +173,7 @@ export function SkillBalance({
       </div>
 
       <ul className="mt-8 space-y-4">
-        {PRACTICE_SKILLS.map((skill) => {
+        {PRACTICE_SKILLS.map((skill, index) => {
           const category = distribution.categories[skill];
           const skillLabel = PRACTICE_SKILL_LABELS[skill];
 
@@ -185,11 +207,12 @@ export function SkillBalance({
                 </span>
                 <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-zinc-800">
                   <span
-                    className="block h-full rounded-full"
+                    className={`block h-full rounded-full ${category.percentage > 0 ? "chart-bar-grow-x" : ""}`}
                     style={{
                       width: `${category.percentage}%`,
                       backgroundColor: PRACTICE_SKILL_COLORS[skill],
-                    }}
+                      "--chart-index": index,
+                    } as CSSProperties}
                   />
                 </span>
               </button>

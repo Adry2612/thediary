@@ -5,6 +5,7 @@ import type {
   TabScore,
 } from "../../types/tab-score.ts";
 import type { TabBend } from "../../types/practice.ts";
+import { getChordShape } from "../chords.ts";
 import { getStringCount } from "./model.ts";
 
 type NoteToken = {
@@ -210,8 +211,38 @@ function renderBeat(beat: TabBeat, tokens: NoteToken[]): string {
   const parts = [`:${beat.duration}`];
   if (beat.tuplet) parts.push(`{tu ${beat.tuplet}}`);
   parts.push(renderContent(tokens, beat));
-  if (beat.dots === 1) parts.push("{d}");
+
+  const properties: string[] = [];
+  if (beat.dots === 1) properties.push("d");
+  if (beat.dynamic) properties.push(`dy ${beat.dynamic}`);
+  if (beat.hairpin === "crescendo") properties.push("cre");
+  if (beat.hairpin === "decrescendo") properties.push("dec");
+  if (beat.text) {
+    properties.push(`txt "${escapeAlphaTexString(beat.text)}"`);
+  }
+  if (beat.chord) {
+    properties.push(`ch "${escapeAlphaTexString(beat.chord)}"`);
+  }
+  if (beat.stroke === "down") properties.push("bd");
+  if (beat.stroke === "up") properties.push("bu");
+  if (beat.stroke === "rasgueado") properties.push("rasg ii");
+  if (beat.fermata) properties.push("fermata medium 0");
+
+  if (properties.length > 0) parts.push(`{${properties.join(" ")}}`);
   return parts.join(" ");
+}
+
+function escapeAlphaTexString(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+/** Apoyatura como pulso corto delante del pulso principal. */
+function renderGrace(beat: TabBeat, stringCount: number): string | null {
+  if (!beat.grace || beat.notes.length === 0) return null;
+  const note = beat.notes[0];
+  const token = noteToken({ string: note.string, fret: beat.grace.fret }, stringCount);
+  const timing = beat.grace.timing === "before" ? "gr" : "gr ob";
+  return `:32 ${renderToken(token)} {${timing}}`;
 }
 
 function buildBar(bar: TabBar, stringCount: number): string {
@@ -219,6 +250,7 @@ function buildBar(bar: TabBar, stringCount: number): string {
   let previousBeat: TabBeat | null = null;
   let previousTokens: NoteToken[] = [];
   let previousByString = new Map<number, NoteToken>();
+  let previousGrace: string | null = null;
 
   for (const beat of bar.beats) {
     const tokens = beat.rest
@@ -243,19 +275,48 @@ function buildBar(bar: TabBar, stringCount: number): string {
       }
     }
 
-    if (previousBeat) parts.push(renderBeat(previousBeat, previousTokens));
+    if (previousBeat) {
+      if (previousGrace) parts.push(previousGrace);
+      parts.push(renderBeat(previousBeat, previousTokens));
+    }
+    previousGrace = renderGrace(beat, stringCount);
     previousBeat = beat;
     previousTokens = tokens;
     previousByString = tokensByString;
   }
 
-  if (previousBeat) parts.push(renderBeat(previousBeat, previousTokens));
+  if (previousBeat) {
+    if (previousGrace) parts.push(previousGrace);
+    parts.push(renderBeat(previousBeat, previousTokens));
+  }
   return `${parts.join(" ")} |`;
+}
+
+/** Nombres de acorde distintos de la partitura con su forma conocida. */
+function collectChordDefinitions(score: TabScore): string[] {
+  const names = new Set<string>();
+  for (const bar of score.bars) {
+    for (const beat of bar.beats) {
+      if (beat.chord) names.add(beat.chord);
+    }
+  }
+
+  return [...names].flatMap((name) => {
+    const shape = getChordShape(name);
+    if (!shape) return [];
+    const frets = shape.frets
+      .map((fret) => (fret === null ? "x" : String(fret)))
+      .join(" ");
+    return [`\\chord ("${escapeAlphaTexString(name)}" ${frets})`];
+  });
 }
 
 export function buildAlphaTex(
   score: TabScore,
-  { standardNotation = false }: { standardNotation?: boolean } = {},
+  {
+    standardNotation = false,
+    chordDiagrams = true,
+  }: { standardNotation?: boolean; chordDiagrams?: boolean } = {},
 ): string {
   const stringCount = getStringCount(score.tuning);
   const tuning = tuningToAlphaTexNotes(score.tuning, stringCount);
@@ -265,6 +326,7 @@ export function buildAlphaTex(
 
   if (tuning) lines.push(`\\tuning (${tuning.join(" ")})`);
   lines.push(`\\tempo ${score.tempo}`);
+  if (chordDiagrams) lines.push(...collectChordDefinitions(score));
   lines.push(".");
 
   score.bars.forEach((bar) => {
@@ -274,6 +336,15 @@ export function buildAlphaTex(
       );
     }
     if (bar.tempo !== undefined) lines.push(`\\tempo ${bar.tempo}`);
+    if (bar.endings && bar.endings.length > 0) {
+      lines.push(`\\ae (${bar.endings.join(" ")})`);
+    }
+    if (bar.repeat?.start) lines.push("\\ro");
+    if (bar.repeat?.end !== undefined) lines.push(`\\rc ${bar.repeat.end}`);
+    if (bar.section) {
+      lines.push(`\\section "${escapeAlphaTexString(bar.section)}"`);
+    }
+    if (bar.pickup) lines.push("\\ac");
     lines.push(buildBar(bar, stringCount));
   });
 

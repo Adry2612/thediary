@@ -145,7 +145,7 @@ export function CatalogSearchDialog({
           titleId={titleId}
           title={text.catalogSearchTitle}
           description={text.catalogSearchHint}
-          onClose={closeDialog.requestClose}
+          onClose={() => closeDialog.requestClose()}
           closeLabel={text.close}
         />
 

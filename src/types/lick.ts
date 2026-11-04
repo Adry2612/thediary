@@ -13,6 +13,16 @@ export const TECHNIQUE_IDS = [
   "FINGERSTYLE",
   "RHYTHM_STRUMMING",
   "SLIDE",
+  "PALM_MUTE",
+  "HARMONICS",
+  "STRING_SKIPPING",
+  "TREMOLO_PICKING",
+  "DOUBLE_STOPS",
+  "ARPEGGIOS",
+  "SLAP",
+  "POP",
+  "CHICKEN_PICKING",
+  "WHAMMY_BAR",
 ] as const;
 
 export type TechniqueId = (typeof TECHNIQUE_IDS)[number];

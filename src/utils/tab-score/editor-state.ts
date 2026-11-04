@@ -1,4 +1,11 @@
-import type { TabScore, TabTuplet } from "../../types/tab-score.ts";
+import type {
+  TabDynamic,
+  TabGrace,
+  TabHairpin,
+  TabScore,
+  TabStroke,
+  TabTuplet,
+} from "../../types/tab-score.ts";
 import { TAB_TICKS_PER_QUARTER } from "../../types/tab-score.ts";
 import {
   copyBars,
@@ -28,15 +35,27 @@ import {
   fitRestBeat,
   insertBarAfter,
   moveBeat,
+  setBarSection,
+  setBeatChord,
+  setBeatText,
   setBendFlag,
   setDots,
+  setDynamic,
   setDuration,
+  setEndings,
+  setGrace,
+  setPickup,
+  setRepeatEnd,
   setTempo,
   setTimeSignature,
   setTuplet,
   splitBeat,
   splitBeatAt,
+  toggleFermata,
+  toggleHairpin,
+  toggleRepeatStart,
   toggleRest,
+  toggleStroke,
   toggleTie,
   writeFret,
   type TabOperationError,
@@ -111,6 +130,18 @@ export type TabScoreEditorAction =
   | { type: "deleteBar" }
   | { type: "setTimeSignature"; numerator: number; denominator: 2 | 4 | 8 | 16 }
   | { type: "setTempo"; tempo: number }
+  | { type: "setDynamic"; dynamic: TabDynamic | null }
+  | { type: "toggleHairpin"; hairpin: TabHairpin }
+  | { type: "setBeatText"; text: string | null }
+  | { type: "setBarSection"; section: string | null }
+  | { type: "setBeatChord"; chord: string | null }
+  | { type: "toggleStroke"; stroke: TabStroke }
+  | { type: "toggleFermata" }
+  | { type: "setGrace"; grace: TabGrace | null }
+  | { type: "toggleRepeatStart" }
+  | { type: "setRepeatEnd"; count: number | null }
+  | { type: "setEndings"; endings: number[] }
+  | { type: "togglePickup" }
   | { type: "copyBeats" }
   | { type: "copyBars" }
   | { type: "cutBeats" }
@@ -445,6 +476,73 @@ export function tabScoreEditorReducer(
 
     case "setTempo":
       return withResult(state, setTempo(state.score, selection, action.tempo));
+
+    case "setDynamic":
+      return withResult(
+        state,
+        setDynamic(state.score, selection, action.dynamic),
+      );
+
+    case "toggleHairpin":
+      return withResult(
+        state,
+        toggleHairpin(state.score, selection, action.hairpin),
+      );
+
+    case "setBeatText":
+      return withResult(
+        state,
+        setBeatText(state.score, selection, action.text),
+      );
+
+    case "setBarSection":
+      return withResult(
+        state,
+        setBarSection(state.score, selection, action.section),
+      );
+
+    case "setBeatChord":
+      return withResult(
+        state,
+        setBeatChord(state.score, selection, action.chord),
+      );
+
+    case "toggleStroke":
+      return withResult(
+        state,
+        toggleStroke(state.score, selection, action.stroke),
+      );
+
+    case "toggleFermata":
+      return withResult(state, toggleFermata(state.score, selection));
+
+    case "setGrace":
+      return withResult(state, setGrace(state.score, selection, action.grace));
+
+    case "toggleRepeatStart":
+      return withResult(state, toggleRepeatStart(state.score, selection));
+
+    case "setRepeatEnd":
+      return withResult(
+        state,
+        setRepeatEnd(state.score, selection, action.count),
+      );
+
+    case "setEndings":
+      return withResult(
+        state,
+        setEndings(state.score, selection, action.endings),
+      );
+
+    case "togglePickup":
+      return withResult(
+        state,
+        setPickup(
+          state.score,
+          selection,
+          state.score.bars[0]?.pickup !== true,
+        ),
+      );
 
     case "copyBeats": {
       const clipboard = copyBeats(state.score, selection);

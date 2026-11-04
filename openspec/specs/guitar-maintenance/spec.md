@@ -204,3 +204,127 @@ The system SHALL give every form control a label, SHALL let every action be reac
 #### Scenario: Touch
 - **WHEN** the user manages a guitar on a touch screen
 - **THEN** every action is available without hovering
+
+### Requirement: A guitar remembers its string type
+
+The system SHALL let the user set a string type of electric, acoustic or classical on each guitar, SHALL store it with the guitar, and SHALL use it as the starting type when a string change is recorded.
+
+#### Scenario: Setting the type
+- **WHEN** the user adds or edits a guitar and picks a string type
+- **THEN** the type is saved with the guitar and appears selected the next time the form opens
+
+#### Scenario: A type already known
+- **WHEN** the user records a string change on a guitar that has a type
+- **THEN** the set list shows only that type of strings, without asking again
+
+#### Scenario: A guitar without a type
+- **WHEN** the user records a string change on a guitar that has no type
+- **THEN** the form shows the type selector so it can be chosen
+
+#### Scenario: Remembering the first choice
+- **WHEN** the user records a string change on a guitar that had no type and saves it
+- **THEN** the chosen type is stored on the guitar and the next change no longer shows the selector
+
+#### Scenario: An invalid stored type
+- **WHEN** a stored guitar has a type the app does not know
+- **THEN** the type is discarded and the guitar is treated as having none
+
+### Requirement: The string-change form only asks for the date and the set
+
+The string-change form SHALL ask for the date and the mounted set, SHALL hide the type selector when the guitar already has a type, and SHALL NOT offer a free-text field.
+
+#### Scenario: A short form
+- **WHEN** the user opens the string-change form for a guitar with a known type
+- **THEN** the form shows the date, the set picker and the save action only
+
+#### Scenario: No free-text details
+- **WHEN** the user opens the string-change form
+- **THEN** there is no details field, and the note can still be written later from the history
+
+#### Scenario: Custom set
+- **WHEN** the user picks a set that is not in the catalogue
+- **THEN** the brand, model and gauges are still asked for, and the type comes from the guitar
+
+### Requirement: A string change records the set that was mounted
+
+The system SHALL let the user record a string change with its date and the set mounted, SHALL offer a catalogue of sets grouped by guitar family —eléctrica, acústica y española— with brand, model and gauges, SHALL accept a set typed by hand, and SHALL allow saving the change without specifying any set.
+
+#### Scenario: Choosing a set from the catalogue
+- **WHEN** the user opens a string change and picks a model
+- **THEN** the brand, the model and its six gauges are shown before saving
+
+#### Scenario: Filtering by family
+- **WHEN** the user switches between eléctrica, acústica and española
+- **THEN** the list shows only the sets of that family, each with its gauges
+
+#### Scenario: A set typed by hand
+- **WHEN** the user chooses the free option
+- **THEN** they can write the brand, the model and the gauges, and that is what is saved
+
+#### Scenario: No set
+- **WHEN** the user saves the change without choosing a set
+- **THEN** the change is recorded with its date and no set
+
+#### Scenario: The catalogue needs no connection
+- **WHEN** the app is offline
+- **THEN** the catalogue is still available, because it ships with the app
+
+### Requirement: The mounted set is kept with the change
+
+The system SHALL store a copy of the mounted set with the history entry, SHALL show it in the history and in the change form, and SHALL keep showing it even if the model is later removed from the catalogue.
+
+#### Scenario: Reading the history
+- **WHEN** the user opens the history of a guitar
+- **THEN** each string change shows the set that was mounted, with its gauges
+
+#### Scenario: A retired model
+- **WHEN** a stored set no longer exists in the catalogue
+- **THEN** the history still shows its brand, model and gauges
+
+#### Scenario: Older entries
+- **WHEN** an entry was saved before this change
+- **THEN** it keeps showing its date and notes, without a set
+
+### Requirement: Guitar photos accept what phones produce
+
+The system SHALL accept JPG, PNG, WebP, AVIF, GIF, HEIC and HEIF images for the guitar photo, SHALL reject a file it cannot decode at the moment it is chosen, and SHALL say which formats it accepts.
+
+#### Scenario: A photo from an iPhone
+- **WHEN** the user chooses a HEIC photo in a browser that can read it
+- **THEN** the photo is accepted, reduced and shown before saving
+
+#### Scenario: A format the browser cannot read
+- **WHEN** the user chooses an image whose format the browser cannot decode
+- **THEN** the form says so at once and no photo is saved
+
+#### Scenario: An unsupported file
+- **WHEN** the user chooses a PDF or another non-image file
+- **THEN** the form lists the accepted image formats
+
+#### Scenario: Too large
+- **WHEN** the image exceeds the size limit
+- **THEN** the form says it is too large and keeps the rest of the form as it was
+
+### Requirement: A string set can show its packaging image
+
+The system SHALL let each catalogue set reference an optional photo, SHALL show it as a thumbnail in the set picker, in the string-change history and in the strings row, and SHALL show nothing in its place when the set has no photo or the file cannot be loaded.
+
+#### Scenario: Choosing a set
+- **WHEN** the user opens the set picker
+- **THEN** each set with a photo shows its thumbnail next to the brand and model, and a set without one shows only its text
+
+#### Scenario: Reading the history
+- **WHEN** the user opens the history of a guitar
+- **THEN** each string change that has a photo shows its thumbnail
+
+#### Scenario: The strings row
+- **WHEN** a guitar has a string change with a photo
+- **THEN** the row shows a small thumbnail of that set
+
+#### Scenario: No image
+- **WHEN** a set has no photo
+- **THEN** no thumbnail and no empty box are shown, and the text does not move to fill a gap
+
+#### Scenario: A decorative image
+- **WHEN** a screen reader reaches a set with a photo
+- **THEN** the image is not announced twice, because the brand and model already name the set

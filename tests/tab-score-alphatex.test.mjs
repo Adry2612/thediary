@@ -281,3 +281,186 @@ test("the generated AlphaTex round-trips through the alphaTab importer", async (
   assert.equal(secondBar[0].notes[0].isHammerPullOrigin, true);
   assert.equal(secondBar[1].notes[0].vibrato, 2);
 });
+
+test("writes the expression marks of a beat in one property block", () => {
+  const tex = buildAlphaTex(
+    score([
+      {
+        id: "bar-a",
+        beats: [
+          beat({
+            duration: 4,
+            rest: false,
+            notes: [
+              { string: 0, fret: 3 },
+              { string: 1, fret: 5 },
+            ],
+            dynamic: "mf",
+            hairpin: "crescendo",
+            text: "let it ring",
+            chord: "Em",
+            stroke: "down",
+            fermata: true,
+            grace: { fret: 2, timing: "before" },
+          }),
+        ],
+      },
+    ]),
+  );
+
+  assert.match(tex, /\\chord \("Em" 0 2 2 0 0 0\)/);
+  assert.match(tex, /:32 2\.6 \{gr\}/);
+  assert.match(tex, /\{dy mf cre txt "let it ring" ch "Em" bd fermata medium 0\}/);
+});
+
+test("writes repeats, endings, sections and a pickup", () => {
+  const tex = buildAlphaTex(
+    score([
+      {
+        id: "bar-a",
+        section: "Intro",
+        repeat: { start: true },
+        pickup: true,
+        beats: [beat()],
+      },
+      {
+        id: "bar-b",
+        repeat: { end: 3 },
+        endings: [1, 2],
+        beats: [beat()],
+      },
+    ]),
+  );
+
+  assert.match(tex, /\\ro/);
+  assert.match(tex, /\\rc 3/);
+  assert.match(tex, /\\ae \(1 2\)/);
+  assert.match(tex, /\\section "Intro"/);
+  assert.match(tex, /\\ac/);
+});
+
+test("an unknown chord only keeps its name on the beat", () => {
+  const tex = buildAlphaTex(
+    score([
+      {
+        id: "bar-a",
+        beats: [beat({ duration: 4, chord: "Hm7b5" })],
+      },
+    ]),
+  );
+
+  assert.doesNotMatch(tex, /\\chord/);
+  assert.match(tex, /\{ch "Hm7b5"\}/);
+});
+
+test("the new marks round-trip through the alphaTab importer", async () => {
+  const alphaTab = await import("@coderline/alphatab");
+  const model = score([
+    {
+      id: "bar-a",
+      timeSignature: { numerator: 4, denominator: 4 },
+      section: "Intro",
+      repeat: { start: true },
+      pickup: true,
+      beats: [
+        beat({
+          id: "b1",
+          duration: 4,
+          rest: false,
+          notes: [
+            { string: 0, fret: 3 },
+            { string: 1, fret: 5 },
+          ],
+          dynamic: "mf",
+          hairpin: "crescendo",
+          text: "let it ring",
+          chord: "Em",
+          stroke: "down",
+          fermata: true,
+          grace: { fret: 2, timing: "before" },
+        }),
+        beat({ id: "b2", duration: 4, rest: true }),
+      ],
+    },
+    {
+      id: "bar-b",
+      repeat: { end: 2 },
+      beats: [
+        beat({
+          id: "b3",
+          duration: 4,
+          rest: false,
+          notes: [{ string: 1, fret: 5 }],
+          dynamic: "f",
+          hairpin: "decrescendo",
+        }),
+      ],
+    },
+    {
+      id: "bar-c",
+      endings: [1, 2],
+      beats: [
+        beat({
+          id: "b4",
+          duration: 4,
+          rest: false,
+          notes: [{ string: 0, fret: 3 }],
+          grace: { fret: 4, timing: "on" },
+        }),
+      ],
+    },
+  ]);
+
+  const importer = new alphaTab.importer.AlphaTexImporter();
+  importer.initFromString(buildAlphaTex(model), new alphaTab.Settings());
+  const parsed = importer.readScore();
+
+  assert.equal(parsed.masterBars[0].isRepeatStart, true);
+  assert.equal(parsed.masterBars[0].section.text, "Intro");
+  assert.equal(parsed.masterBars[0].isAnacrusis, true);
+  assert.equal(parsed.masterBars[1].isRepeatEnd, true);
+  assert.equal(parsed.masterBars[1].repeatCount, 2);
+  assert.equal(parsed.masterBars[2].alternateEndings, 3);
+
+  const beats = parsed.tracks[0].staves[0].bars[0].voices[0].beats;
+  const marked = beats.find((entry) => entry.text === "let it ring");
+  assert.equal(marked.dynamics, alphaTab.model.DynamicValue.MF);
+  assert.equal(marked.crescendo, alphaTab.model.CrescendoType.Crescendo);
+  assert.equal(marked.text, "let it ring");
+  assert.equal(marked.chord.name, "Em");
+  assert.equal(marked.brushType, alphaTab.model.BrushType.BrushDown);
+  assert.equal(marked.fermata.type, alphaTab.model.FermataType.Medium);
+
+  const graceBeat = beats.find(
+    (entry) => entry.graceType === alphaTab.model.GraceType.BeforeBeat,
+  );
+  assert.ok(graceBeat);
+  assert.equal(graceBeat.notes[0].fret, 2);
+
+  const secondBar = parsed.tracks[0].staves[0].bars[1].voices[0].beats;
+  assert.equal(secondBar[0].dynamics, alphaTab.model.DynamicValue.F);
+  assert.equal(secondBar[0].crescendo, alphaTab.model.CrescendoType.Decrescendo);
+
+  const thirdBar = parsed.tracks[0].staves[0].bars[2].voices[0].beats;
+  const onBeatGrace = thirdBar.find(
+    (entry) => entry.graceType === alphaTab.model.GraceType.OnBeat,
+  );
+  assert.ok(onBeatGrace);
+  assert.equal(onBeatGrace.notes[0].fret, 4);
+});
+
+test("omits the chord diagrams when a preview asks for them to be off", () => {
+  const value = score([
+    {
+      id: "bar-a",
+      beats: [beat({ duration: 4, chord: "Em" })],
+    },
+  ]);
+
+  const full = buildAlphaTex(value);
+  const preview = buildAlphaTex(value, { chordDiagrams: false });
+
+  assert.match(full, /\\chord \("Em" 0 2 2 0 0 0\)/);
+  assert.doesNotMatch(preview, /\\chord/);
+  assert.match(preview, /\{ch "Em"\}/);
+});

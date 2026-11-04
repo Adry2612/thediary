@@ -6,6 +6,7 @@ import {
   type SessionRecord,
   type PracticeTemplate,
   type RepertoireItem,
+  type StudyMaterial,
   type UserChord,
 } from "@/types/practice";
 import type { GuitarLick } from "@/types/lick";
@@ -41,6 +42,7 @@ type PracticeStoreState = {
   repertoireItems: RepertoireItem[];
   licks: GuitarLick[];
   customChords: UserChord[];
+  studyMaterials: StudyMaterial[];
   weeklySchedule: WeeklyRoutineSchedule;
   practiceGoals: PracticeGoals;
   guitars: Guitar[];
@@ -65,6 +67,8 @@ type PracticeStoreState = {
   markLickPracticed: (lickId: string, practicedAt?: string) => void;
   saveCustomChord: (chord: UserChord) => void;
   deleteCustomChord: (chordId: string) => void;
+  saveStudyMaterial: (material: StudyMaterial) => void;
+  deleteStudyMaterial: (materialId: string) => void;
   saveGuitar: (guitar: Guitar) => void;
   deleteGuitar: (guitarId: string) => void;
   saveGuitarEntry: (entry: GuitarEntry) => void;
@@ -81,6 +85,7 @@ export const usePracticeStore = create<PracticeStoreState>()(
       repertoireItems: [],
       licks: [],
       customChords: [],
+      studyMaterials: [],
       weeklySchedule: { ...DEFAULT_WEEKLY_ROUTINE_SCHEDULE },
       practiceGoals: { ...DEFAULT_PRACTICE_GOALS },
       guitars: [],
@@ -209,6 +214,23 @@ export const usePracticeStore = create<PracticeStoreState>()(
           ),
           persistenceError: null,
         })),
+      saveStudyMaterial: (material) =>
+        set((state) => ({
+          studyMaterials: [
+            ...state.studyMaterials.filter(
+              (candidate) => candidate.id !== material.id,
+            ),
+            material,
+          ],
+          persistenceError: null,
+        })),
+      deleteStudyMaterial: (materialId) =>
+        set((state) => ({
+          studyMaterials: state.studyMaterials.filter(
+            (material) => material.id !== materialId,
+          ),
+          persistenceError: null,
+        })),
       saveGuitar: (guitar) =>
         set((state) => ({
           guitars: [
@@ -261,6 +283,7 @@ export const usePracticeStore = create<PracticeStoreState>()(
           repertoireItems: state.repertoireItems,
           licks: state.licks,
           customChords: state.customChords,
+          studyMaterials: state.studyMaterials,
           weeklySchedule: state.weeklySchedule,
           practiceGoals: state.practiceGoals,
           guitars: state.guitars,
@@ -299,6 +322,7 @@ export function getPersistedPracticeState(): PersistedPracticeState {
     repertoireItems,
     licks,
     customChords,
+    studyMaterials,
     weeklySchedule,
     practiceGoals,
     guitars,
@@ -310,6 +334,7 @@ export function getPersistedPracticeState(): PersistedPracticeState {
     repertoireItems,
     licks,
     customChords,
+    studyMaterials,
     weeklySchedule,
     practiceGoals,
     guitars,

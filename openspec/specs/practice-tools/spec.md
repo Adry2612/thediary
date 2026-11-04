@@ -40,7 +40,7 @@ The system SHALL offer a tools section at `/tools`, SHALL name it "Herramientas"
 
 ### Requirement: The tuner detects the played note
 
-The tuner SHALL listen to the microphone, SHALL let the user choose a tuning preset and an A4 reference, SHALL show the detected note with its deviation in cents and whether it is in tune, SHALL start listening from its start control without a reload, including on mobile browsers whose audio context starts suspended, SHALL show an error instead of staying idle when audio cannot start, SHALL ask for the microphone only when the tuner is started and SHALL stop listening when the user leaves the tool.
+The tuner SHALL listen to the microphone, SHALL let the user choose a tuning preset and an A4 reference, SHALL label the preset according to the tuning-display preference, SHALL show the detected note with its deviation in cents and whether it is in tune, SHALL start listening from its start control without a reload, including on mobile browsers whose audio context starts suspended, SHALL show an error instead of staying idle when audio cannot start, SHALL ask for the microphone only when the tuner is started and SHALL stop listening when the user leaves the tool.
 
 #### Scenario: Tuning a string
 - **WHEN** the user starts the tuner and plays a note
@@ -69,6 +69,14 @@ The tuner SHALL listen to the microphone, SHALL let the user choose a tuning pre
 #### Scenario: Leaving the tool
 - **WHEN** the user switches to another row or leaves the section
 - **THEN** the tuner stops using the microphone
+
+#### Scenario: The preset label follows the preference
+- **WHEN** the user changes the tuning-display preference
+- **THEN** the preset labels show the tuning name or its per-string notes according to the choice
+
+#### Scenario: The preset strings do not change
+- **WHEN** the user changes the tuning-display preference
+- **THEN** the notes the tuner listens for stay the same
 
 ### Requirement: The tone generator plays a sustained tone
 
@@ -194,21 +202,29 @@ The beat dots SHALL announce their state in words, SHALL be reachable in order w
 - **WHEN** the user manages the beats on a touch screen
 - **THEN** both actions are available without hovering
 
-### Requirement: The beat row stays centred with any meter
+### Requirement: The beat row keeps its spacing and centres fewer beats
 
-The beat dots SHALL stay centred in the card with any meter, including the ones with fewer than four beats, instead of hugging the left edge.
+The metronome SHALL lay the beat dots out with the same column width and the same gap they have in a four-beat meter, and SHALL centre the group when the meter has two or three beats.
 
-#### Scenario: A meter with two beats
+#### Scenario: A four-beat meter
+- **WHEN** the user uses 4/4, 12/8 or 12/4
+- **THEN** the four dots are spread across the card exactly as before
+
+#### Scenario: A two-beat meter
 - **WHEN** the user changes to 6/8 or 6/4
-- **THEN** the two dots are centred in the card
+- **THEN** the two dots keep the four-beat column width and the group is centred in the card
 
-#### Scenario: A meter with three beats
+#### Scenario: A three-beat meter
 - **WHEN** the user changes to 9/8 or 9/4
-- **THEN** the three dots are centred in the card
+- **THEN** the three dots keep the four-beat column width and the group is centred in the card
 
-#### Scenario: A meter with four beats
-- **WHEN** the user changes to 4/4, 12/8 or 12/4
-- **THEN** the four dots are centred in the card
+#### Scenario: A narrow screen
+- **WHEN** the metronome is shown at 320 px wide with any meter
+- **THEN** the dots stay inside the card without horizontal overflow
+
+#### Scenario: The dots stay operable
+- **WHEN** the user reaches a dot with the pointer or the keyboard
+- **THEN** its size, its state and its accessible name are the same as before
 
 ### Requirement: The metronome offers several click voices
 

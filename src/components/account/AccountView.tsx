@@ -6,6 +6,7 @@ import { TextField } from '@/components/ui/Field';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { AccountSkeleton } from '@/components/ui/Skeletons';
+import { AccountSettingsSections } from '@/components/account/AccountSettingsSections';
 import { useAccountView } from '@/hooks/useAccountView';
 import { useI18nSection } from '@/i18n/I18nProvider';
 
@@ -217,6 +218,8 @@ export function AccountView() {
             {view.message}
           </p>
         )}
+
+        <AccountSettingsSections />
       </div>
     </PageShell>
   );

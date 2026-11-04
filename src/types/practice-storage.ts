@@ -3,6 +3,7 @@ import type {
   PracticeTemplate,
   RepertoireItem,
   SessionRecord,
+  StudyMaterial,
   UserChord,
 } from "./practice";
 import type { Guitar, GuitarEntry } from "./equipment";
@@ -15,6 +16,7 @@ export type PersistedPracticeState = {
   repertoireItems: RepertoireItem[];
   licks: GuitarLick[];
   customChords: UserChord[];
+  studyMaterials: StudyMaterial[];
   weeklySchedule: WeeklyRoutineSchedule;
   practiceGoals: PracticeGoals;
   guitars: Guitar[];

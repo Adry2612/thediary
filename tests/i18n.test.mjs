@@ -152,7 +152,8 @@ test("keeps the catalog copy in both languages", () => {
     "catalogEmpty",
     "catalogUnavailable",
     "catalogUse",
-    "catalogBackfill",
+    "catalogEdit",
+    "catalogPreviewNoCover",
   ];
 
   for (const key of keys) {
@@ -161,4 +162,19 @@ test("keeps the catalog copy in both languages", () => {
     assert.ok(translations.es.repertoire[key].length > 0, key);
     assert.ok(translations.en.repertoire[key].length > 0, key);
   }
+});
+
+test("keeps the study material copy in both languages", () => {
+  assert.deepEqual(
+    Object.keys(translations.es.materials).sort(),
+    Object.keys(translations.en.materials).sort(),
+  );
+  assert.deepEqual(
+    Object.keys(translations.es.materials.kindLabels).sort(),
+    Object.keys(translations.en.materials.kindLabels).sort(),
+  );
+  assert.equal(translations.es.materials.title, "Material de estudio");
+  assert.equal(translations.en.materials.title, "Study material");
+  assert.equal(translations.es.materials.kindLabels.link, "Enlace");
+  assert.equal(translations.en.materials.kindLabels.link, "Link");
 });

@@ -118,6 +118,84 @@ textarea,
   animation: number-value-change 180ms ease-out both;
 }
 
+@keyframes chart-bar-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(var(--bar-scale, 1));
+  }
+}
+
+@keyframes chart-bar-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes chart-ring-draw {
+  from {
+    stroke-dasharray: 0 var(--ring-circumference, 100);
+  }
+  to {
+    stroke-dasharray: var(--ring-dasharray, 100 0);
+  }
+}
+
+@keyframes chart-cell-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes chart-calendar-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chart-bar-rise {
+  animation: chart-bar-rise 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: min(calc(var(--chart-index, 0) * 10ms), 140ms);
+  transform-origin: bottom;
+}
+
+.chart-bar-grow-x {
+  animation: chart-bar-grow-x 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: min(calc(var(--chart-index, 0) * 10ms), 140ms);
+  transform-origin: left;
+}
+
+.chart-ring-draw {
+  animation-name: chart-ring-draw;
+  animation-duration: var(--ring-duration, 360ms);
+  animation-delay: var(--ring-delay, 0ms);
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
+.chart-cell-in {
+  animation: chart-cell-in 260ms ease-out both;
+  animation-delay: min(calc(var(--chart-index, 0) * 3ms), 120ms);
+}
+
+.chart-calendar-in {
+  animation: chart-calendar-in 300ms ease-out both;
+}
+
 .enter {
   /* `backwards` y no `both`: al acabar, el bloque no conserva el `transform`
      de la entrada, que lo convertiría en el bloque contenedor de cualquier
@@ -249,6 +327,14 @@ dialog.overlay-motion[data-closing="true"]::backdrop {
   }
 
   .tour-highlight {
+    animation: none;
+  }
+
+  .chart-bar-rise,
+  .chart-bar-grow-x,
+  .chart-ring-draw,
+  .chart-cell-in,
+  .chart-calendar-in {
     animation: none;
   }
 

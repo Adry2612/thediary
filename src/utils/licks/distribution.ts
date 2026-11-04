@@ -4,8 +4,7 @@ import { LICK_TECHNIQUES, normalizeTechniques } from "./techniques.ts";
 
 export interface DistributionGroup {
   id: string;
-  /** Clave de traducción para las técnicas; las tonalidades usan `name`. */
-  labelKey?: string;
+  /** Nombre ya resuelto para tonalidades o contenidos sin catálogo. */
   name?: string;
   count: number;
   percentage: number;
@@ -42,7 +41,6 @@ export function getTechniqueDistribution(licks: GuitarLick[]): LickDistribution 
       ? [
           {
             id: technique.id,
-            labelKey: technique.labelKey,
             count,
             percentage: toPercentage(count, licks.length),
           },

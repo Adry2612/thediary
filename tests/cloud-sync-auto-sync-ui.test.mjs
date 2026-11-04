@@ -21,12 +21,17 @@ test("the root layout mounts the automatic synchronization host", async () => {
   assert.match(layout, /<CloudAutoSyncHost \/>/);
 });
 
-test("settings exposes an accessible automatic synchronization toggle", async () => {
+test("the account page exposes an accessible automatic synchronization toggle", async () => {
+  const accountSections = await readSource(
+    "../src/components/account/AccountSettingsSections.tsx",
+  );
   const settings = await readSource(
     "../src/components/account/SettingsView.tsx",
   );
   const settingsHook = await readSource("../src/hooks/useSettingsView.ts");
-  assert.match(settings, /aria-pressed=\{view\.autoSync\.enabled\}/);
+  assert.match(accountSections, /aria-pressed=\{view\.autoSync\.enabled\}/);
   assert.match(settingsHook, /setAutoSyncEnabled\(!autoSyncEnabled\)/);
-  assert.doesNotMatch(settings, /icloud/i);
+  assert.doesNotMatch(accountSections, /icloud/i);
+  // La sincronización de grabaciones vive en la página de cuenta, no en Ajustes.
+  assert.doesNotMatch(settings, /cloudSyncTitle/);
 });

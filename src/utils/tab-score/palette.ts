@@ -1,9 +1,17 @@
-import type { TabBeat, TabNote, TabScore } from "../../types/tab-score.ts";
+import type {
+  TabBeat,
+  TabDynamic,
+  TabHairpin,
+  TabNote,
+  TabScore,
+  TabStroke,
+} from "../../types/tab-score.ts";
 import {
   TAB_MAX_BARS,
   TAB_MAX_BEATS_PER_BAR,
 } from "../../types/tab-score.ts";
 import type { TabScoreEditorAction } from "./editor-state.ts";
+import { isBarInsideRepeat } from "./model.ts";
 import {
   getBeatAt,
   getNoteAt,
@@ -17,6 +25,16 @@ export const TAB_PALETTE_GROUPS = [
   "tie",
   "technique",
   "bend",
+  "dynamic",
+  "hairpin",
+  "text",
+  "chord",
+  "stroke",
+  "grace",
+  "fermata",
+  "repeat",
+  "section",
+  "pickup",
   "bar",
 ] as const;
 
@@ -27,6 +45,16 @@ export type TabPaletteGroup =
   | "tie"
   | "technique"
   | "bend"
+  | "dynamic"
+  | "hairpin"
+  | "text"
+  | "chord"
+  | "stroke"
+  | "grace"
+  | "fermata"
+  | "repeat"
+  | "section"
+  | "pickup"
   | "bar";
 
 export type TabPaletteOption = {
@@ -42,7 +70,13 @@ export type TabPaletteOption = {
     | { type: "bendPrebend" }
     | { type: "openTimeSignature" }
     | { type: "openTempo" }
-    | { type: "openTuplet" };
+    | { type: "openTuplet" }
+    | { type: "openText" }
+    | { type: "openSection" }
+    | { type: "openChord" }
+    | { type: "openGrace" }
+    | { type: "openRepeatEnd" }
+    | { type: "openEnding" };
 };
 
 export type TabPaletteReason =
@@ -52,7 +86,11 @@ export type TabPaletteReason =
   | "cannotSplit"
   | "beatLimit"
   | "noAdjacentBeat"
-  | "alreadySubdivided";
+  | "alreadySubdivided"
+  | "graceOnRest"
+  | "strokeNeedsChord"
+  | "endingOutsideRepeat"
+  | "pickupNotFirstBar";
 
 export type TabPaletteOptionState = {
   active: boolean;
@@ -347,6 +385,146 @@ export const TAB_PALETTE: readonly TabPaletteOption[] = [
     action: { type: "bendPrebend" },
   },
   {
+    id: "dynamic-pp",
+    group: "dynamic",
+    labelKey: "dynamicPp",
+    shortcut: "K",
+    action: { type: "setDynamic", dynamic: "pp" },
+  },
+  {
+    id: "dynamic-p",
+    group: "dynamic",
+    labelKey: "dynamicP",
+    shortcut: "p",
+    action: { type: "setDynamic", dynamic: "p" },
+  },
+  {
+    id: "dynamic-mp",
+    group: "dynamic",
+    labelKey: "dynamicMp",
+    shortcut: "b",
+    action: { type: "setDynamic", dynamic: "mp" },
+  },
+  {
+    id: "dynamic-mf",
+    group: "dynamic",
+    labelKey: "dynamicMf",
+    shortcut: "d",
+    action: { type: "setDynamic", dynamic: "mf" },
+  },
+  {
+    id: "dynamic-f",
+    group: "dynamic",
+    labelKey: "dynamicF",
+    shortcut: "f",
+    action: { type: "setDynamic", dynamic: "f" },
+  },
+  {
+    id: "dynamic-ff",
+    group: "dynamic",
+    labelKey: "dynamicFf",
+    shortcut: "g",
+    action: { type: "setDynamic", dynamic: "ff" },
+  },
+  {
+    id: "hairpin-crescendo",
+    group: "hairpin",
+    labelKey: "crescendo",
+    shortcut: "<",
+    action: { type: "toggleHairpin", hairpin: "crescendo" },
+  },
+  {
+    id: "hairpin-decrescendo",
+    group: "hairpin",
+    labelKey: "decrescendo",
+    shortcut: ">",
+    action: { type: "toggleHairpin", hairpin: "decrescendo" },
+  },
+  {
+    id: "beat-text",
+    group: "text",
+    labelKey: "text",
+    shortcut: "e",
+    action: { type: "openText" },
+  },
+  {
+    id: "beat-chord",
+    group: "chord",
+    labelKey: "chord",
+    shortcut: "i",
+    action: { type: "openChord" },
+  },
+  {
+    id: "stroke-down",
+    group: "stroke",
+    labelKey: "strokeDown",
+    shortcut: "v",
+    action: { type: "toggleStroke", stroke: "down" },
+  },
+  {
+    id: "stroke-up",
+    group: "stroke",
+    labelKey: "strokeUp",
+    shortcut: ";",
+    action: { type: "toggleStroke", stroke: "up" },
+  },
+  {
+    id: "stroke-rasgueado",
+    group: "stroke",
+    labelKey: "rasgueado",
+    shortcut: "\\",
+    action: { type: "toggleStroke", stroke: "rasgueado" },
+  },
+  {
+    id: "grace",
+    group: "grace",
+    labelKey: "grace",
+    shortcut: "G",
+    action: { type: "openGrace" },
+  },
+  {
+    id: "fermata",
+    group: "fermata",
+    labelKey: "fermata",
+    shortcut: "F",
+    action: { type: "toggleFermata" },
+  },
+  {
+    id: "repeat-start",
+    group: "repeat",
+    labelKey: "repeatStart",
+    shortcut: "[",
+    action: { type: "toggleRepeatStart" },
+  },
+  {
+    id: "repeat-end",
+    group: "repeat",
+    labelKey: "repeatEnd",
+    shortcut: "]",
+    action: { type: "openRepeatEnd" },
+  },
+  {
+    id: "ending",
+    group: "repeat",
+    labelKey: "ending",
+    shortcut: "E",
+    action: { type: "openEnding" },
+  },
+  {
+    id: "section",
+    group: "section",
+    labelKey: "section",
+    shortcut: "c",
+    action: { type: "openSection" },
+  },
+  {
+    id: "pickup",
+    group: "pickup",
+    labelKey: "pickup",
+    shortcut: "A",
+    action: { type: "togglePickup" },
+  },
+  {
     id: "bar-insert",
     group: "bar",
     labelKey: "insertBar",
@@ -520,6 +698,47 @@ export function getPaletteState({
           const semitones = Number(option.id.replace("bend-", ""));
           return notes.every((note) => note.bend?.semitones === semitones);
         }
+        case "dynamic": {
+          if (beats.length === 0) return false;
+          const dynamic = option.id.replace("dynamic-", "") as TabDynamic;
+          return beats.every((beat) => beat.dynamic === dynamic);
+        }
+        case "hairpin": {
+          if (beats.length === 0) return false;
+          const hairpin: TabHairpin =
+            option.id === "hairpin-crescendo" ? "crescendo" : "decrescendo";
+          return beats.every((beat) => beat.hairpin === hairpin);
+        }
+        case "text":
+          return beats.length > 0 && Boolean(beats[0].text);
+        case "chord":
+          return beats.length > 0 && Boolean(beats[0].chord);
+        case "stroke": {
+          if (beats.length === 0) return false;
+          const stroke: TabStroke =
+            option.id === "stroke-down"
+              ? "down"
+              : option.id === "stroke-up"
+                ? "up"
+                : "rasgueado";
+          return beats.every((beat) => beat.stroke === stroke);
+        }
+        case "grace":
+          return beats.length > 0 && Boolean(beats[0].grace);
+        case "fermata":
+          return beats.length > 0 && beats.every((beat) => beat.fermata === true);
+        case "repeat": {
+          const bar = score.bars[selection.bar];
+          if (option.id === "repeat-start") return bar?.repeat?.start === true;
+          if (option.id === "repeat-end") {
+            return bar?.repeat?.end !== undefined;
+          }
+          return Boolean(bar?.endings && bar.endings.length > 0);
+        }
+        case "section":
+          return Boolean(score.bars[selection.bar]?.section);
+        case "pickup":
+          return score.bars[0]?.pickup === true;
         case "bar":
           return false;
         default:
@@ -547,6 +766,47 @@ export function getPaletteState({
         disabled = true;
         reason = "requiresPreviousNote";
       }
+    }
+
+    if (
+      option.group === "dynamic" ||
+      option.group === "hairpin" ||
+      option.group === "text" ||
+      option.group === "chord" ||
+      option.group === "grace" ||
+      option.group === "fermata"
+    ) {
+      if (beats.length === 0) {
+        disabled = true;
+        reason = "requiresNote";
+      }
+    }
+
+    if (option.group === "stroke") {
+      if (beats.length === 0) {
+        disabled = true;
+        reason = "requiresNote";
+      } else if (beats.some((beat) => beat.notes.length < 2)) {
+        disabled = true;
+        reason = "strokeNeedsChord";
+      }
+    }
+
+    if (option.id === "grace" && beats[0]) {
+      if (beats[0].rest || beats[0].notes.length === 0) {
+        disabled = true;
+        reason = "graceOnRest";
+      }
+    }
+
+    if (option.id === "ending" && !isBarInsideRepeat(score.bars, selection.bar)) {
+      disabled = true;
+      reason = "endingOutsideRepeat";
+    }
+
+    if (option.id === "pickup" && selection.bar !== 0) {
+      disabled = true;
+      reason = "pickupNotFirstBar";
     }
 
     if (

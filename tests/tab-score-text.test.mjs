@@ -144,3 +144,43 @@ test("names every subdivision in the text alternative", () => {
     );
   }
 });
+
+test("describes the expression and structure marks", () => {
+  const text = scoreToText({
+    bars: [
+      {
+        id: "bar-a",
+        timeSignature: { numerator: 4, denominator: 4 },
+        section: "Intro",
+        repeat: { start: true },
+        pickup: true,
+        beats: [
+          {
+            id: "b1",
+            duration: 4,
+            rest: false,
+            notes: [{ string: 0, fret: 3 }],
+            dynamic: "mf",
+            hairpin: "crescendo",
+            text: "let it ring",
+            chord: "Em",
+            stroke: "down",
+            fermata: true,
+            grace: { fret: 2, timing: "before" },
+          },
+        ],
+      },
+      {
+        id: "bar-b",
+        repeat: { end: 2 },
+        endings: [1, 2],
+        beats: [{ id: "b2", duration: 4, rest: true, notes: [] }],
+      },
+    ],
+  });
+
+  assert.match(text, /Compás 1 \(4\/4\) · sección Intro · abre repetición · anacrusa/);
+  assert.match(text, /mf, crescendo, texto: let it ring, acorde: Em, púa abajo, calderón/);
+  assert.match(text, /apoyatura traste 2 antes del pulso/);
+  assert.match(text, /cierra repetición \(2 veces\) · final 1, 2/);
+});

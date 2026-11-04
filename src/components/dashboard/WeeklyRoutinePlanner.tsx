@@ -63,7 +63,7 @@ export function WeeklyRoutinePlanner({
           para planificarla aquí.
         </p>
       ) : (
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {WEEKDAY_INDEXES.map((weekday) => {
             const assignedRoutineId = schedule[weekday];
             const hasUnavailableRoutine =
@@ -75,14 +75,15 @@ export function WeeklyRoutinePlanner({
             return (
               <div
                 key={weekday}
-                className="min-w-0 bg-transparent p-3"
+                className="flex h-full min-w-0 flex-col bg-transparent p-3"
               >
-                <p className="mb-2 text-xs uppercase tracking-[0.1em] text-zinc-300">
+                <p className="mb-2 min-h-4 text-xs uppercase leading-4 tracking-[0.1em] text-zinc-300">
                    {weekdays.long[weekday]}
                 </p>
                 <SelectField
                   value={assignedRoutineId ?? ""}
                    ariaLabel={`${home.routineByDay}: ${weekdays.long[weekday]}`}
+                  truncateLabel
                   onChange={(templateId) =>
                     onScheduleChange(
                       weekday,

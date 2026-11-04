@@ -56,7 +56,7 @@ export function RepertoireItemDialog({
           titleId={titleId}
           title={text.newItemTitle}
           description={text.newItemDescription}
-          onClose={closeDialog.requestClose}
+          onClose={() => closeDialog.requestClose()}
           closeLabel={text.close}
         />
         <RepertoireSongForm

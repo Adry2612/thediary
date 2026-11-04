@@ -6,6 +6,7 @@ export interface ImportedDataCounts {
   sessions: number;
   templates: number;
   repertoireItems: number;
+  studyMaterials: number;
   recordings: number;
   assets: number;
 }

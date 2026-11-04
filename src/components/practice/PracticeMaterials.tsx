@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { AttachMaterialForm } from '@/components/practice/AttachMaterialForm';
 import { AttachMaterialMenu } from '@/components/practice/AttachMaterialMenu';
+import { MaterialLibraryPicker } from '@/components/materials/MaterialLibraryPicker';
 import { ResourcePreview } from '@/components/practice/ResourcePreview';
 import { useMaterialSelection } from '@/hooks/useMaterialSelection';
 import { usePracticeAttachment } from '@/hooks/usePracticeAttachment';
@@ -42,6 +43,7 @@ export function PracticeMaterials({
     [phases, attachedResources],
   );
   const { activeResource, selectResource } = useMaterialSelection(resources);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   function handleAttach(resource: PracticeResource) {
     selectResource(resource.id);
@@ -53,6 +55,7 @@ export function PracticeMaterials({
   if (resources.length === 0 && !onAttach) return null;
 
   return (
+    <>
     <Card
       bare={embedded}
       className={embedded ? 'p-4 sm:p-6' : 'p-5 sm:p-8'}
@@ -64,7 +67,7 @@ export function PracticeMaterials({
             Material y backing tracks
           </h2>
         </div>
-        {onAttach && <AttachMaterialMenu onSelect={attachment.open} />}
+        {onAttach && <AttachMaterialMenu onSelect={attachment.open} onUseLibrary={() => setIsLibraryOpen(true)} />}
       </div>
       {attachment.activeType && (
         <AttachMaterialForm
@@ -128,5 +131,13 @@ export function PracticeMaterials({
         </div>
       )}
     </Card>
+    {isLibraryOpen && (
+      <MaterialLibraryPicker
+        open
+        onSelect={handleAttach}
+        onClose={() => setIsLibraryOpen(false)}
+      />
+    )}
+    </>
   );
 }

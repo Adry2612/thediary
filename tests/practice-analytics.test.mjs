@@ -449,6 +449,46 @@ test("ranks songs, techniques and theory over the full history", () => {
   );
 });
 
+test("groups catalogue techniques and theory across both languages", () => {
+  const history = [
+    createSession("language-a", "2026-10-01T12:00:00.000Z", {
+      phases: [
+        phase({ name: "Púa alterna", skill: "technique", elapsedSeconds: 300 }),
+        phase({ name: "Escala mayor", skill: "theory", elapsedSeconds: 200 }),
+      ],
+    }),
+    createSession("language-b", "2026-10-02T12:00:00.000Z", {
+      phases: [
+        phase({
+          name: "Alternate picking",
+          skill: "technique",
+          elapsedSeconds: 300,
+        }),
+        phase({ name: "Major scale", skill: "theory", elapsedSeconds: 200 }),
+      ],
+    }),
+  ];
+
+  const rankings = getPracticeContentRankings(history);
+
+  assert.deepEqual(
+    rankings.techniques.map(({ label, seconds, sessionCount }) => ({
+      label,
+      seconds,
+      sessionCount,
+    })),
+    [{ label: "Alternate picking", seconds: 600, sessionCount: 2 }],
+  );
+  assert.deepEqual(
+    rankings.theory.map(({ label, seconds, sessionCount }) => ({
+      label,
+      seconds,
+      sessionCount,
+    })),
+    [{ label: "Major scale", seconds: 400, sessionCount: 2 }],
+  );
+});
+
 test("returns empty rankings when there is no phase data", () => {
   const rankings = getPracticeContentRankings([], []);
 

@@ -1,9 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { formatPracticeDuration, formatTotal } from "@/utils/format";
 import { getPracticeTimeBuckets, getPracticeTimeSummary } from "@/utils/practice-analytics";
-import { getContainedTooltipPosition } from "@/utils/practice-chart-tooltip";
+import {
+  getBucketComparison,
+  getContainedTooltipPosition,
+  isDateKeyInBucket,
+} from "@/utils/practice-chart-tooltip";
+import { interpolate } from "@/utils/interpolate";
+import { toDateKey } from "@/utils/practice-calendar";
 import type { PracticeChartPeriod, PracticeTimeBucket } from "@/utils/practice-analytics";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import type { SessionRecord } from "@/types/practice";
@@ -14,6 +20,11 @@ const changeFormatter = new Intl.NumberFormat("es-ES", {
   style: "percent",
   maximumFractionDigits: 0,
   signDisplay: "always",
+});
+
+const gapFormatter = new Intl.NumberFormat("es-ES", {
+  style: "percent",
+  maximumFractionDigits: 0,
 });
 
 export function PracticeTimeChart({
@@ -35,6 +46,7 @@ export function PracticeTimeChart({
     () => getPracticeTimeSummary(history, period, today),
     [history, period, today],
   );
+  const todayKey = useMemo(() => toDateKey(today), [today]);
   const maximumSeconds = Math.max(
     0,
     ...buckets.map((bucket) => bucket.totalSeconds),
@@ -52,12 +64,18 @@ export function PracticeTimeChart({
       : summary.changeRatio === 0
         ? dashboard.summarySame
         : changeFormatter.format(summary.changeRatio);
-  const bestSuffix =
+  const bestBucketLabel =
     period === "week"
-      ? dashboard.tooltipOfBestDay
+      ? dashboard.tooltipBestDay
       : period === "month"
-        ? dashboard.tooltipOfBestWeek
-        : dashboard.tooltipOfBestMonth;
+        ? dashboard.tooltipBestWeek
+        : dashboard.tooltipBestMonth;
+  const shortOfLabel =
+    period === "week"
+      ? dashboard.tooltipShortOfDay
+      : period === "month"
+        ? dashboard.tooltipShortOfWeek
+        : dashboard.tooltipShortOfMonth;
   const comparisonLabel =
     period === "week"
       ? dashboard.summaryComparisonWeek
@@ -82,10 +100,22 @@ export function PracticeTimeChart({
       containerBounds.width,
       containerBounds.height,
     );
-    const shareOfBest =
-      maximumSeconds > 0
-        ? Math.round((bucket.totalSeconds / maximumSeconds) * 100)
-        : 0;
+    const comparison = getBucketComparison(
+      bucket.totalSeconds,
+      maximumSeconds,
+    );
+    const gap = comparison.useDuration
+      ? formatTotal(comparison.gapSeconds)
+      : gapFormatter.format(comparison.gapRatio);
+    const isCurrentMonth =
+      period === "year" && isDateKeyInBucket(todayKey, bucket);
+    const ofBest = comparison.isBest
+      ? bestBucketLabel
+      : isCurrentMonth
+        ? interpolate(dashboard.tooltipToBeatMonth, {
+            gap: gapFormatter.format(comparison.gapRatio),
+          })
+        : interpolate(shortOfLabel, { gap });
 
     setTooltip({
       label: bucket.label,
@@ -97,7 +127,7 @@ export function PracticeTimeChart({
               bucket.totalSeconds / 60 / bucket.sessionCount,
             )
           : "—",
-      ofBest: `${shareOfBest} % ${bestSuffix}`,
+      ofBest,
       ...position,
     });
   }
@@ -176,6 +206,7 @@ export function PracticeTimeChart({
 
       <div className="relative mt-5 min-h-0 flex-1 overflow-x-auto">
         <ul
+           key={period}
            aria-label={dashboard.chartAria}
           className="grid h-full min-h-56 min-w-full items-end gap-2 border-b border-zinc-800 pb-2 sm:gap-3"
           style={{
@@ -184,7 +215,7 @@ export function PracticeTimeChart({
               buckets.length > 14 ? `${buckets.length * 1.75}rem` : undefined,
           }}
         >
-          {buckets.map((bucket) => {
+          {buckets.map((bucket, index) => {
             const hasPractice = bucket.totalSeconds > 0;
             const barHeight =
               maximumSeconds > 0
@@ -221,10 +252,12 @@ export function PracticeTimeChart({
                 <div className="flex min-h-0 w-full flex-1 items-end justify-center">
                   <span
                     aria-hidden="true"
-                    className={`h-full w-full max-w-10 origin-bottom rounded-t-[3px] transition-transform duration-300 ${hasPractice ? "bg-[#6d8c72]" : "bg-zinc-800"}`}
+                    className={`h-full w-full max-w-10 origin-bottom rounded-t-[3px] transition-transform duration-300 ${hasPractice ? "bg-[#6d8c72] chart-bar-rise" : "bg-zinc-800"}`}
                     style={{
                       transform: `scaleY(${hasPractice ? barHeight / 100 : 0})`,
-                    }}
+                      "--bar-scale": hasPractice ? barHeight / 100 : 0,
+                      "--chart-index": index,
+                    } as CSSProperties}
                   />
                 </div>
                 <span className="max-w-full truncate font-mono text-[10px] text-muted">

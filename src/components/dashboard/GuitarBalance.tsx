@@ -24,6 +24,12 @@ export function GuitarBalance({
   const classifiedSeconds = balance.electricSeconds + balance.acousticSeconds;
   const shares = getGuitarBalanceShares(balance);
   const hasClassified = classifiedSeconds > 0;
+  /** Duración total del barrido; cada tramo ocupa su parte del arco. */
+  const ringDrawMs = 400;
+  const electricDuration =
+    shares.electric > 0
+      ? Math.max(1, Math.round((shares.electric / 100) * ringDrawMs))
+      : 0;
   const rows = [
     {
       key: "electric" as const,
@@ -65,6 +71,7 @@ export function GuitarBalance({
       <div className="mt-6 flex flex-1 flex-col items-center justify-center">
         <div className="relative w-full max-w-[16rem]">
           <svg
+            key={period}
             viewBox="0 0 120 68"
             className="w-full"
             role="img"
@@ -86,6 +93,15 @@ export function GuitarBalance({
                   strokeWidth="13"
                   pathLength={100}
                   strokeDasharray={`${shares.electric} 100`}
+                  className="chart-ring-draw"
+                  style={
+                    {
+                      "--ring-dasharray": `${shares.electric} 100`,
+                      "--ring-circumference": 100,
+                      "--ring-delay": "0ms",
+                      "--ring-duration": `${electricDuration}ms`,
+                    } as CSSProperties
+                  }
                 />
                 <path
                   d="M10 60 A50 50 0 0 1 110 60"
@@ -95,6 +111,22 @@ export function GuitarBalance({
                   pathLength={100}
                   strokeDasharray={`${shares.acoustic} 100`}
                   strokeDashoffset={-shares.electric}
+                  className="chart-ring-draw"
+                  style={
+                    {
+                      "--ring-dasharray": `${shares.acoustic} 100`,
+                      "--ring-circumference": 100,
+                      "--ring-delay": `${electricDuration}ms`,
+                      "--ring-duration": `${
+                        shares.acoustic > 0
+                          ? Math.max(
+                              1,
+                              ringDrawMs - electricDuration,
+                            )
+                          : 0
+                      }ms`,
+                    } as CSSProperties
+                  }
                 />
               </>
             )}

@@ -213,3 +213,124 @@ test("enables the subdivision picker on a plain beat", () => {
   assert.equal(state.subdivision.disabled, false);
   assert.equal(state.subdivision.reason, undefined);
 });
+
+test("the new expression and structure options are in the catalogue", () => {
+  const ids = new Set(TAB_PALETTE.map((option) => option.id));
+  for (const id of [
+    "dynamic-pp",
+    "dynamic-p",
+    "dynamic-mp",
+    "dynamic-mf",
+    "dynamic-f",
+    "dynamic-ff",
+    "hairpin-crescendo",
+    "hairpin-decrescendo",
+    "beat-text",
+    "beat-chord",
+    "stroke-down",
+    "stroke-up",
+    "stroke-rasgueado",
+    "grace",
+    "fermata",
+    "repeat-start",
+    "repeat-end",
+    "ending",
+    "section",
+    "pickup",
+  ]) {
+    assert.equal(ids.has(id), true, id);
+  }
+});
+
+test("marks the new options as active when the beat or bar carries them", () => {
+  const value = {
+    version: 2,
+    tuning: "EADGBE",
+    tempo: 90,
+    bars: [
+      {
+        id: "bar-a",
+        timeSignature: { numerator: 4, denominator: 4 },
+        section: "Intro",
+        repeat: { start: true },
+        pickup: true,
+        beats: [
+          {
+            id: "b1",
+            duration: 4,
+            rest: false,
+            notes: [
+              { string: 0, fret: 3 },
+              { string: 1, fret: 5 },
+            ],
+            dynamic: "mf",
+            hairpin: "crescendo",
+            text: "let it ring",
+            chord: "Em",
+            stroke: "down",
+            fermata: true,
+            grace: { fret: 2, timing: "before" },
+          },
+        ],
+      },
+      {
+        id: "bar-b",
+        repeat: { end: 2 },
+        endings: [1],
+        beats: [{ id: "b2", duration: 4, rest: true, notes: [] }],
+      },
+    ],
+  };
+  const first = stateFor(value, { bar: 0, beat: 0, string: 0 });
+
+  assert.equal(first["dynamic-mf"].active, true);
+  assert.equal(first["dynamic-f"].active, false);
+  assert.equal(first["hairpin-crescendo"].active, true);
+  assert.equal(first["beat-text"].active, true);
+  assert.equal(first["beat-chord"].active, true);
+  assert.equal(first["stroke-down"].active, true);
+  assert.equal(first.grace.active, true);
+  assert.equal(first.fermata.active, true);
+  assert.equal(first["repeat-start"].active, true);
+  assert.equal(first.section.active, true);
+  assert.equal(first.pickup.active, true);
+
+  const second = stateFor(value, { bar: 1, beat: 0, string: 0 });
+  assert.equal(second["repeat-end"].active, true);
+  assert.equal(second.ending.active, true);
+  assert.equal(second["repeat-start"].active, false);
+  assert.equal(second.pickup.disabled, true);
+  assert.equal(second.pickup.reason, "pickupNotFirstBar");
+});
+
+test("explains why a grace, stroke or ending is unavailable", () => {
+  const rest = stateFor(
+    score([{ id: "b1", duration: 4, rest: true, notes: [] }]),
+    { bar: 0, beat: 0, string: 0 },
+  );
+  assert.equal(rest.grace.disabled, true);
+  assert.equal(rest.grace.reason, "graceOnRest");
+  assert.equal(rest["stroke-down"].disabled, true);
+  assert.equal(rest["stroke-down"].reason, "strokeNeedsChord");
+  assert.equal(rest.ending.disabled, true);
+  assert.equal(rest.ending.reason, "endingOutsideRepeat");
+});
+
+test("a stroke is available with two notes", () => {
+  const value = score([
+    {
+      id: "b1",
+      duration: 4,
+      rest: false,
+      notes: [
+        { string: 0, fret: 3 },
+        { string: 1, fret: 5 },
+      ],
+    },
+  ]);
+  const state = stateFor(value, { bar: 0, beat: 0, string: 0 });
+
+  assert.equal(state["stroke-down"].disabled, false);
+  assert.equal(state["stroke-down"].reason, undefined);
+  assert.equal(state["stroke-up"].disabled, false);
+});

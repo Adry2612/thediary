@@ -9,7 +9,11 @@ import type { SessionPhaseRecord, SessionRecord } from "../types/practice.ts";
 export function getSessionPhaseLines(
   session: Pick<SessionRecord, "title" | "phases">,
 ): SessionPhaseRecord[] {
-  const phases = session.phases ?? [];
+  // Un bloque con 0 segundos es un bloque previsto que no llegó a practicarse:
+  // no forma parte del resumen de la sesión.
+  const phases = (session.phases ?? []).filter(
+    (phase) => phase.elapsedSeconds > 0,
+  );
   if (phases.length !== 1) return phases;
 
   const title = session.title?.trim();

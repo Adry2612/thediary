@@ -6,6 +6,7 @@ import { PracticeExerciseEditor } from '@/components/practice/PracticeExerciseEd
 import { PracticeResourceEditor } from '@/components/practice/PracticeResourceEditor';
 import { SongPickerDialog } from '@/components/practice/SongPickerDialog';
 import { TechniquePickerDialog } from '@/components/practice/TechniquePickerDialog';
+import { TheoryPickerDialog } from '@/components/practice/TheoryPickerDialog';
 import { Button } from '@/components/ui/Button';
 import { Block } from '@/components/ui/Block';
 import { TextField } from '@/components/ui/Field';
@@ -18,13 +19,14 @@ import {
   type RepertoireItem,
 } from '@/types/practice';
 import type { GuitarLick } from '@/types/lick';
-import { LICK_TECHNIQUES } from '@/utils/licks/techniques';
+import { getTheoryName } from '@/utils/catalogs/theory';
+import { getTechniqueName } from '@/utils/catalogs/techniques';
+import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
 import {
   applySkillChange,
   getLickOptions,
   getRepertoirePartOptions,
   getRepertoireSongChanges,
-  getTechniqueNames,
   shouldAdoptLinkedTitle,
 } from '@/utils/practice-block-editor';
 import { useI18nSection } from '@/i18n/I18nProvider';
@@ -54,18 +56,22 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
 }: PracticePhaseEditorProps) {
   const text = useI18nSection('practice');
   const skills = useI18nSection('skills');
-  const licksText = useI18nSection('licks');
+  const { techniqueNameLanguage } = useDisplayPreferences();
   const [isSongPickerOpen, setIsSongPickerOpen] = useState(false);
   const [isTechniquePickerOpen, setIsTechniquePickerOpen] = useState(false);
+  const [isTheoryPickerOpen, setIsTheoryPickerOpen] = useState(false);
   const selectedSong = repertoireItems.find(
     (item) => item.id === phase.repertoireItemId && item.kind === 'song',
   );
   const selectedLick = licks.find((lick) => lick.id === phase.lickId);
   const songs = repertoireItems.filter((item) => item.kind === 'song');
   const songTriggerLabel = selectedSong?.title ?? text.selectSong;
-  const techniqueLabels = LICK_TECHNIQUES.map(
-    (technique) => licksText[technique.labelKey],
-  ).filter(Boolean);
+  const techniqueTriggerLabel = phase.name.trim()
+    ? getTechniqueName(phase.name, techniqueNameLanguage)
+    : text.selectTechnique;
+  const theoryTriggerLabel = phase.name.trim()
+    ? getTheoryName(phase.name, techniqueNameLanguage)
+    : text.selectTheoryTopic;
 
   const partOptions = getRepertoirePartOptions(
     selectedSong,
@@ -79,7 +85,6 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
     phase.lickId,
     text.missingReference,
   );
-  const techniqueNames = getTechniqueNames(techniqueLabels, phase.name);
 
   function changeSkill(value: string) {
     const skill = PRACTICE_SKILLS.find((candidate) => candidate === value);
@@ -124,7 +129,7 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
                 className={pickerTriggerClass}
               >
                 <span className='min-w-0 whitespace-normal break-words'>
-                  {phase.name.trim() || text.selectTechnique}
+                  {techniqueTriggerLabel}
                 </span>
                 <SearchIcon className='size-4 shrink-0 text-muted' />
               </button>
@@ -173,6 +178,30 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
                     {text.repertoireLink}
                   </Link>{' '}
                   {text.linkHelpSuffix}
+                </span>
+              )}
+            </div>
+          ) : phase.skill === 'theory' ? (
+            <div className='text-xs text-muted'>
+              <span className='block'>{text.theoryTopic}</span>
+              <button
+                type='button'
+                onClick={() => setIsTheoryPickerOpen(true)}
+                aria-label={`${text.theoryTopic} ${index + 1}: ${theoryTriggerLabel}`}
+                className={pickerTriggerClass}
+              >
+                <span className='min-w-0 whitespace-normal break-words'>
+                  {theoryTriggerLabel}
+                </span>
+                <SearchIcon className='size-4 shrink-0 text-muted' />
+              </button>
+              {!phase.name.trim() && (
+                <span
+                  className='mt-2 block text-xs text-red-300'
+                  role='status'
+                  aria-live='polite'
+                >
+                  {text.missingTheoryTopic}
                 </span>
               )}
             </div>
@@ -309,10 +338,15 @@ export const PracticePhaseEditor = memo(function PracticePhaseEditor({
       />
       <TechniquePickerDialog
         open={isTechniquePickerOpen}
-        techniques={techniqueNames}
         selectedTechnique={phase.name.trim()}
         onSelect={(technique) => onChange(phase.id, { name: technique })}
         onClose={() => setIsTechniquePickerOpen(false)}
+      />
+      <TheoryPickerDialog
+        open={isTheoryPickerOpen}
+        selectedTheory={phase.name.trim()}
+        onSelect={(theory) => onChange(phase.id, { name: theory })}
+        onClose={() => setIsTheoryPickerOpen(false)}
       />
     </>
   );

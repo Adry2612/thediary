@@ -67,6 +67,12 @@ export function PracticeCompletionDialog({
         (skill) => (result.skillSeconds[skill] ?? 0) > 0,
       )
     : [];
+  // Un bloque con 0 segundos no se practicó: fuera del resumen y de sus notas.
+  const practicedPhases = result
+    ? result.phases
+        .map((phase, index) => ({ phase, index }))
+        .filter(({ phase }) => phase.elapsedSeconds > 0)
+    : [];
   const hasMetricQuestions = isMoodEnabled || isFocusEnabled;
 
   function handleSave() {
@@ -108,8 +114,8 @@ export function PracticeCompletionDialog({
             </span>
           </div>
           <p className="mt-2 text-sm leading-6 text-muted">
-            {result?.phases.length
-              ? `${result.phases.length} ${result.phases.length === 1 ? text.blockSingular : text.blocksCount} · ${text.completionRecorded}`
+            {practicedPhases.length
+              ? `${practicedPhases.length} ${practicedPhases.length === 1 ? text.blockSingular : text.blocksCount} · ${text.completionRecorded}`
               : text.completionRecorded}
           </p>
           {practicedSkills.length > 0 && (
@@ -197,7 +203,7 @@ export function PracticeCompletionDialog({
                   rows={3}
                 />
               </label>
-              {result && result.phases.length > 0 && (
+              {practicedPhases.length > 0 && (
                 <section
                   aria-labelledby="completion-phase-notes"
                   className="mt-5"
@@ -209,7 +215,7 @@ export function PracticeCompletionDialog({
                     {text.phaseNotes}
                   </h3>
                   <div className="mt-3 space-y-3">
-                    {result.phases.map((phase, index) => (
+                    {practicedPhases.map(({ phase, index }) => (
                       <label
                         key={`${phase.id}-${index}`}
                         className="block text-sm text-ink"
