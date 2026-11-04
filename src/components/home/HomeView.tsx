@@ -7,7 +7,6 @@ import { TodaysRoutinePlan } from '@/components/dashboard/TodaysRoutinePlan';
 import { WeeklyRoutinePlanner } from '@/components/dashboard/WeeklyRoutinePlanner';
 import { PracticeGoalsCard } from '@/components/dashboard/PracticeGoalsCard';
 import { StringsReminder } from '@/components/home/StringsReminder';
-import { ReminderRow } from '@/components/home/ReminderRow';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { parseDateKey } from '@/utils/practice-calendar';
 import type { WeekdayIndex } from '@/utils/weekly-routine-schedule';
@@ -41,8 +40,6 @@ export function HomeView({ todayKey }: { todayKey: string }) {
   return (
     <PageShell>
       <PageHeader title={home.title} description={home.description} />
-
-      <ReminderRow />
 
       <TodaysRoutinePlan
         routine={todaysRoutine}

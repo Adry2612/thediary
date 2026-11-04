@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Delivers optional daily reminders about the pending practice, the guitars whose strings are due and long stretches without practising, both as system notifications with the app closed and as an in-app row when push is not available.
+Delivers optional daily reminders about the pending practice, the guitars whose strings are due and long stretches without practising, as system notifications that reach the device with the app closed.
 
 ## ADDED Requirements
 
@@ -40,11 +40,7 @@ The system SHALL store the reminder switch, the chosen reminders, the time, the 
 
 #### Scenario: A guest
 - **WHEN** the user has no account
-- **THEN** Settings explains that system notifications require signing in and that the in-app reminder still works
-
-#### Scenario: Signing in on a configured device
-- **WHEN** a guest enables reminders and then signs in
-- **THEN** the subscription is recreated for the account instead of staying tied to the guest session
+- **THEN** Settings explains that system notifications require signing in and the switch stays off
 
 #### Scenario: Signing out
 - **WHEN** the user signs out
@@ -204,7 +200,7 @@ The system SHALL show whether notifications are unsupported, not yet allowed, al
 
 #### Scenario: Unsupported browser
 - **WHEN** the browser cannot receive push notifications
-- **THEN** Settings says so and keeps the in-app reminder available
+- **THEN** Settings says so and keeps reminders off
 
 #### Scenario: Waiting for permission
 - **WHEN** the user has not decided on the permission yet

@@ -51,6 +51,8 @@ type SelectFieldProps = {
   ariaLabel: string;
   className?: string;
   disabled?: boolean;
+  /** Recorta el valor a una línea en vez de dejar que envuelva. */
+  truncateLabel?: boolean;
 };
 
 export function SelectField({
@@ -60,6 +62,7 @@ export function SelectField({
   ariaLabel,
   className = "",
   disabled = false,
+  truncateLabel = false,
 }: SelectFieldProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -248,7 +251,13 @@ export function SelectField({
             image={selectedOption?.image}
             size="size-5"
           />
-          <span className="min-w-0 whitespace-normal break-words">
+          <span
+            className={
+              truncateLabel
+                ? "min-w-0 truncate whitespace-nowrap"
+                : "min-w-0 whitespace-normal break-words"
+            }
+          >
             {selectedOption?.label ?? ""}
           </span>
         </span>

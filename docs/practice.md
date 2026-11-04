@@ -25,8 +25,15 @@ Guardar o actualizar una rutina confirma el resultado con un toast («Rutina gua
 - Con la opción desactivada, el reloj se queda en `0:00`.
 - **Bloque terminado** y **Tiempo cumplido** se muestran como un toast breve que se anuncia como estado y desaparece solo; no tapa el reloj ni los botones.
 - El **tiempo total** de la sesión tiene su propia fila **encima** del reloj grande, con el mismo formato `mm:ss` o `h:mm:ss`. En las prácticas de tiempo acumulado el reloj grande ya es el total, así que la fila no se repite.
-- Si el bloque sigue en tiempo extra con la tarjeta fuera de pantalla, la barra flotante mantiene `0:00` y añade el tiempo sumado en verde (`+0:12`).
+- Si el bloque sigue en tiempo extra con la tarjeta fuera de pantalla, la barra flotante muestra solo el tiempo sumado en verde (`+0:12`), sin el `0:00` blanco. Sin tiempo extra mantiene el tiempo restante normal.
 - Al avanzar al siguiente bloque, el tiempo extra y el toast desaparecen y el nuevo bloque empieza con su tiempo completo.
+
+## Rutina por día
+
+- Las siete tarjetas de la planificación semanal comparten altura, relleno y ancho de selector en todos los tamaños de pantalla.
+- Los días sin rutina asignada ocupan el mismo espacio que los días con rutina.
+- Un nombre de rutina largo se recorta dentro del selector sin ensanchar la tarjeta ni romper la cuadrícula.
+- En pantallas estrechas las tarjetas se reparten en menos columnas sin desbordamiento horizontal.
 
 ## Catálogos de técnica y teoría
 

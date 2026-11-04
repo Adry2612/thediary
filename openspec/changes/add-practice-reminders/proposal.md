@@ -20,7 +20,6 @@ La app ya sabe qué rutina toca hoy, cuándo vence el cambio de cuerdas de cada 
   - **Inactividad**: solo si han pasado los días configurados sin ninguna sesión.
   - Sin motivos aplicables no se envía nada.
 - Al pulsar la notificación se abre la pantalla correspondiente: Inicio para la práctica, Herramientas/Cuerdas para el mantenimiento.
-- Si el push no está disponible —invitado, navegador sin soporte o permiso denegado—, Inicio muestra el mismo recordatorio como una fila descartable, una vez al día y solo después de la hora elegida.
 - Cada dispositivo guarda su suscripción y su zona horaria; la hora se interpreta en la zona del dispositivo. No se envían duplicados y las suscripciones caducadas se eliminan.
 - La infraestructura de envío se apoya en Supabase: tabla de suscripciones, plan diario de avisos y una función programada que entrega los que vencen.
 
@@ -30,25 +29,24 @@ Fuera del alcance:
 - Horas distintas por tipo de recordatorio.
 - Elegir una guitarra concreta: el aviso nombra la más urgente.
 - Centro de historial de notificaciones, sonidos personalizados o silencio por franjas.
-- Recordatorios para invitados con la app cerrada: sin cuenta no hay datos en el servidor y solo reciben el aviso dentro de la app.
+- Recordatorios para invitados con la app cerrada: sin cuenta no hay datos en el servidor, así que no reciben avisos.
 - Sincronizar las preferencias de recordatorios entre dispositivos: cada dispositivo tiene su permiso, su suscripción y su configuración.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `practice-reminders`: preferencias de recordatorios, permiso y suscripción push por dispositivo, reglas del aviso diario combinado, entrega programada y alternativa dentro de la app.
+- `practice-reminders`: preferencias de recordatorios, permiso y suscripción push por dispositivo, reglas del aviso diario combinado y entrega programada.
 
 ### Modified Capabilities
 
-- `home-overview`: añade la fila de recordatorio diario cuando el push no está disponible.
+<!-- none -->
 
 ## Impact
 
 - Ajustes: nueva sección en `src/components/account/SettingsView.tsx`, hook de preferencias y textos en `src/i18n/es.ts` y `src/i18n/en.ts`.
 - Lógica pura: evaluación de motivos, zona horaria, generación del plan diario y mensajes combinados en `src/utils/` y `src/services/`.
 - Navegador: service worker en `public/`, registro y ciclo de suscripción push, permiso y notificación de prueba.
-- Inicio: nueva fila descartable en `src/components/home/`.
 - Supabase: migración para `push_subscriptions` y el plan de avisos con RLS, función Edge de envío y programación periódica; secretos VAPID fuera del repositorio.
 - Configuración: nuevas variables en `.env.example` y documentación del despliegue de la función y las claves.
-- Pruebas: evaluación de los tres motivos, zona horaria, combinación de mensajes, generación del plan, preferencias y descarte diario.
+- Pruebas: evaluación de los tres motivos, zona horaria, combinación de mensajes, generación del plan y preferencias.

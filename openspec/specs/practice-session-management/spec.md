@@ -395,7 +395,7 @@ The system SHALL detect when the links of a practice started from a saved routin
 
 ### Requirement: The timer can continue past a block's planned time
 
-The system SHALL offer an option to keep the timer running after a block's planned time until the user advances to the next block, SHALL show the block's overtime in the large timer in green with a brief toast for the finished block, SHALL keep the next-block action available while the timer waits or runs overtime, SHALL include the overtime in the session total, SHALL show the session total in a dedicated row above the large timer, and SHALL leave the option off by default.
+The system SHALL offer an option to keep the timer running after a block's planned time until the user advances to the next block, SHALL show the block's overtime in the large timer in green with a brief toast for the finished block, SHALL keep the next-block action available while the timer waits or runs overtime, SHALL include the overtime in the session total, SHALL show the session total in a dedicated row above the large timer, SHALL show only the overtime in the floating bar while the block runs past zero, and SHALL leave the option off by default.
 
 #### Scenario: The option is off
 - **WHEN** a block reaches its planned time with the option off
@@ -443,7 +443,12 @@ The system SHALL offer an option to keep the timer running after a block's plann
 
 #### Scenario: The floating bar counts the overtime
 - **WHEN** a block runs overtime with the option on and the timer card is out of view
-- **THEN** the floating bar keeps the block at `0:00` and adds the overtime as `+mm:ss` in green
+- **THEN** the floating bar shows a single `+mm:ss` value in green instead of the countdown
+- **AND** no white `0:00` is printed next to the overtime
+
+#### Scenario: The floating bar still shows zero when there is no overtime
+- **WHEN** a block reaches its planned time without continuing and the timer card is out of view
+- **THEN** the floating bar shows `0:00` in the normal colour with no green value
 
 #### Scenario: The overtime display clears on advance
 - **WHEN** the user advances to the next block

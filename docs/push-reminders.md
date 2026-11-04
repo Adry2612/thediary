@@ -100,6 +100,6 @@ de otras cuentas.
 - En iOS el push web exige la app instalada (16.4+).
 - Sin abrir la app durante más de 90 días el plan se agota; al abrirla se
   regenera.
-- Si el push no está disponible (invitado, navegador sin soporte, permiso
-  bloqueado o sin suscripción), Inicio muestra el mismo recordatorio como fila
-  descartable, una vez al día y solo después de la hora elegida.
+- Los recordatorios son solo notificaciones del sistema: no hay fila ni aviso
+  dentro de Inicio. Un invitado no recibe avisos porque no hay datos suyos en
+  el servidor; Configuración explica que hace falta una cuenta.

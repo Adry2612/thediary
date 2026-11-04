@@ -36,18 +36,12 @@
 - [x] 5.2 Conecta la sección con los estados del permiso y las acciones de activar, desactivar y enviar una notificación de prueba, incluyendo los casos no soportado, no configurado y bloqueado; verifica en el navegador cada estado y que el aviso de error usa `role="alert"`.
 - [x] 5.3 Revisa la sección a 320, 375, 768 y 1280 px en ambos idiomas; verifica que no hay desbordamiento horizontal, que el selector de umbral solo aparece cuando el motivo de inactividad está activo y que los textos caben.
 
-## 6. Recordatorio dentro de la app
+## 6. Verificación de integración
 
-- [x] 6.1 Implementa la disponibilidad del aviso dentro de la app (invitado, sin soporte, permiso no concedido o sin suscripción), la evaluación de hoy tras la hora elegida y el descarte por fecha local; verifica con pruebas las combinaciones y que el descarte no se repite hasta el día siguiente.
-- [x] 6.2 Añade la fila descartable bajo la cabecera de Inicio con los motivos aplicables, enlaces a Inicio/Cuerdas y acceso a Configuración para activar los avisos; verifica en el navegador como invitado, con permiso denegado y con push activo, y que desaparece al guardar la práctica del día.
-- [x] 6.3 Revisa la fila a 320, 375, 768 y 1280 px; verifica que no duplica el aviso cuando el push está activo y que el botón de descartar es accesible por teclado y lector de pantalla.
-
-## 7. Verificación de integración
-
-- [x] 7.1 Ejecuta `npm test`, `npm run typecheck` y `npm run build`; verifica que todo pasa y que las pruebas nuevas cubren preferencias, zonas horarias, motivos, plan, filtro y descarte.
-- [ ] 7.2 Prueba el recorrido completo con claves VAPID reales: activar, fijar una hora dos minutos por delante, cerrar la pestaña, recibir un solo aviso, pulsarlo y comprobar la pantalla de destino; repite con permiso denegado y en modo invitado.
-- [ ] 7.3 Comprueba que un segundo dispositivo no recibe la configuración del primero, que practicar en uno elimina el motivo de práctica del otro y que desactivar o cerrar sesión deja de enviar avisos.
-- [ ] 7.4 Ejecuta `openspec validate add-practice-reminders --strict`; verifica que el cambio es válido y que todas las tareas quedan marcadas.
+- [x] 6.1 Ejecuta `npm test`, `npm run typecheck` y `npm run build`; verifica que todo pasa y que las pruebas nuevas cubren preferencias, zonas horarias, motivos, plan y filtro.
+- [ ] 6.2 Prueba el recorrido completo con claves VAPID reales: activar, fijar una hora dos minutos por delante, cerrar la pestaña, recibir un solo aviso, pulsarlo y comprobar la pantalla de destino; repite con permiso denegado.
+- [ ] 6.3 Comprueba que un segundo dispositivo no recibe la configuración del primero, que practicar en uno elimina el motivo de práctica del otro y que desactivar o cerrar sesión deja de enviar avisos.
+- [ ] 6.4 Ejecuta `openspec validate add-practice-reminders --strict`; verifica que el cambio es válido y que todas las tareas quedan marcadas.
 
 ## Workflow follow-up
 

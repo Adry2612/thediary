@@ -16,7 +16,7 @@ See `proposal.md` for motivation and `specs/` for the required behavior.
 
 - Reuse the existing schedule, session and maintenance rules instead of duplicating them in SQL.
 - Deliver exactly one notification per device and local day, at a time the user chose, with the app closed.
-- Keep the feature usable when push is impossible: guests, unsupported browsers and blocked permissions get the in-app row.
+- Keep guests and unsupported devices honest: Settings explains why notifications cannot be enabled instead of promising a fallback.
 - Keep secrets out of the repository and make the backend safe to deploy incrementally.
 
 **Non-Goals:**
@@ -84,10 +84,9 @@ Texts are localized when the plan is written, so the sender never needs the i18n
 The master switch, the three reasons, the time and the inactivity threshold live in `localStorage` under a versioned key (`thediary.reminders.v1`), normalized on read. They intentionally do **not** enter `practice_data`:
 
 - Permission and subscription are per device; syncing an "enabled" flag would lie on a device without permission.
-- Guests use the same preferences for the in-app row.
 - No changes to the persisted practice schema, merge rules or cloud import are needed.
 
-A small external store (with `useSyncExternalStore`) keeps Settings and the Home row in sync without adding a second Zustand slice. A storage event handles changes from another tab.
+A small external store (with `useSyncExternalStore`) keeps Settings and the runtime hooks in sync without adding a second Zustand slice. A storage event handles changes from another tab.
 
 ### 5. Time zones and DST are resolved on the device
 
@@ -110,7 +109,7 @@ The sender never converts wall times: it receives `scheduled_at` as a UTC instan
 - Enabling reminders requires a signed-in user, runs inside the click gesture, requests permission, subscribes with the VAPID public key and upserts the row by `endpoint`.
 - Every app start with reminders enabled and permission granted refreshes the subscription, the time zone and the plan. This also repairs a subscription rotated by the browser.
 - Disabling reminders, signing out or losing the account removes the subscription and its plan. Switching accounts deletes the old row before creating the new one.
-- A missing `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is treated as "not configured": the UI explains it and the in-app row keeps working.
+- A missing `NEXT_PUBLIC_VAPID_PUBLIC_KEY` is treated as "not configured": the UI explains it and reminders cannot be enabled.
 
 ### 8. Service worker stays minimal
 
@@ -118,13 +117,7 @@ The sender never converts wall times: it receives `scheduled_at` as a UTC instan
 
 `pushsubscriptionchange` posts a message to open clients so the next app focus re-registers; if no client is open, the stale subscription is cleaned up when the push service rejects it.
 
-### 9. In-app row uses the same evaluation at runtime
-
-`useInAppReminder` evaluates today's reasons with the current store, the device preferences and the local time. It is available when the device cannot use push (guest, unsupported, permission not granted, or no active subscription) and the chosen time has passed. Dismissal is a per-local-date `localStorage` key. The row is rendered under the page header on Home and disappears as soon as no reason applies.
-
-The existing string line on Home remains: the in-app row is a general reminder, while the string line is the standing maintenance status.
-
-### 10. Backend shape
+### 9. Backend shape
 
 - `push_subscriptions`: one row per browser subscription (`user_id`, `endpoint` unique, `p256dh`, `auth`, `timezone`, timestamps). RLS lets a user manage only their own rows.
 - `push_reminder_plan`: one row per subscription and local date (`scheduled_at`, `title`, `reasons jsonb`, `url`, `tag`, `sent_at`, `attempts`). Unique `(subscription_id, local_date)`; RLS by `user_id`; service role bypasses it for sending.
@@ -136,7 +129,7 @@ The alternative — a Next.js API route with an external cron — was rejected b
 
 ## Risks / Trade-offs
 
-- **iOS requires the app to be installed** (16.4+) for Web Push → the in-app row covers browser-only users and Settings states the requirement.
+- **iOS requires the app to be installed** (16.4+) for Web Push → Settings states the installation requirement.
 - **Lock-screen privacy**: a notification may show a routine or guitar name → keep texts short and documented; a generic-text mode can be added later without changing the delivery contract.
 - **Plan staleness across devices** → the sender drops practice, inactivity and string reasons that the cloud data contradicts.
 - **A device that never opens the app** cannot extend its 90-day plan → it receives the reminders already planned, then stops; reopening the app rebuilds it.
@@ -150,7 +143,7 @@ The alternative — a Next.js API route with an external cron — was rejected b
 1. Apply the additive migration: tables, indexes, RLS and the replacement RPC. It is safe to ship before the UI.
 2. Generate VAPID keys, set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` in the app and the private key/subject as Edge Function secrets.
 3. Deploy `send-reminders` and create the Vault entries the cron migration reads; schedule it every 5 minutes.
-4. Ship the UI. With no keys or function, it shows the "not configured" state and the in-app row.
+4. Ship the UI. With no keys or function, it shows the "not configured" state.
 5. Rollback: unschedule the cron job and disable the function first; the tables are additive and can stay. Existing subscriptions are removed when the user disables reminders or the push service reports them invalid.
 
 ## Open Questions

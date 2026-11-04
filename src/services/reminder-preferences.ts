@@ -108,28 +108,3 @@ export function saveReminderPreferences(
   return preferences;
 }
 
-/** Descarte del aviso dentro de la app para una fecha local concreta. */
-export function getReminderDismissedKey(dateKey: string): string {
-  return `thediary.reminders.dismissed.${dateKey}`;
-}
-
-export function readReminderDismissed(dateKey: string): boolean {
-  if (typeof window === "undefined") return false;
-
-  try {
-    return window.localStorage.getItem(getReminderDismissedKey(dateKey)) !== null;
-  } catch {
-    return false;
-  }
-}
-
-export function dismissReminderForDate(dateKey: string): void {
-  if (typeof window === "undefined") return;
-
-  try {
-    window.localStorage.setItem(getReminderDismissedKey(dateKey), "1");
-    window.dispatchEvent(new CustomEvent(REMINDER_PREFERENCES_EVENT));
-  } catch {
-    // Si no hay almacenamiento, la fila se oculta solo en esta sesión.
-  }
-}

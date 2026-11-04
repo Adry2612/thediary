@@ -45,7 +45,6 @@ export function ReminderSettings() {
   const push = usePushReminders();
   const {
     preferences,
-    setEnabled,
     setReason,
     setTime,
     setInactivityDays,
@@ -59,12 +58,9 @@ export function ReminderSettings() {
       void push.disable();
       return;
     }
-    if (user && pushUsable) {
-      void push.enable();
-      return;
-    }
-    // Invitado o navegador sin push: el aviso dentro de la app sigue valiendo.
-    setEnabled(true);
+    // `push.enable` ya explica el caso de invitado o navegador sin soporte y
+    // no activa nada si no se puede suscribir.
+    void push.enable();
   }
 
   let status = text.permissionDefault;

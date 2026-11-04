@@ -137,7 +137,7 @@ export const es: Dict = {
     deviceScope:
       'Estos ajustes y la suscripción se guardan en este dispositivo; no se sincronizan con otros.',
     guestNotice:
-      'Los avisos del sistema requieren una cuenta. Como invitado, el recordatorio aparecerá dentro de la app.',
+      'Los avisos del sistema requieren una cuenta y conceder permiso al navegador.',
     permissionUnsupported: 'Este navegador no admite notificaciones push.',
     permissionDefault: 'Aún no has concedido permiso para las notificaciones.',
     permissionGranted: 'Notificaciones permitidas.',
@@ -154,9 +154,6 @@ export const es: Dict = {
       'Para volver a activarlas, abre los ajustes del sitio en tu navegador y permite las notificaciones.',
     enabledOn: 'Activados',
     enabledOff: 'Desactivados',
-    inAppTitle: 'Recordatorio de hoy',
-    inAppDismiss: 'Descartar',
-    inAppSettings: 'Configurar avisos',
     notificationTitle: 'thediary.',
     notificationPractice: 'Hoy toca «{routine}»',
     notificationStrings: 'Cambia las cuerdas de {guitar}',

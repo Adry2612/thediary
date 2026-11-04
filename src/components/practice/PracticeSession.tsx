@@ -593,12 +593,13 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
             </span>
             {timer.currentPhase && !isCompleted && (
               <span className="pointer-events-none relative z-10 shrink-0 font-mono text-sm tabular-nums text-ink sm:text-base">
-                {formatClock(timer.remainingSeconds)}
                 {barOvertimeSeconds > 0 ? (
-                  <span className="ml-2 text-accent-green-fg">
+                  <span className="text-accent-green-fg">
                     +{formatClock(barOvertimeSeconds)}
                   </span>
-                ) : null}
+                ) : (
+                  formatClock(timer.remainingSeconds)
+                )}
               </span>
             )}
             <div className="relative z-10 flex shrink-0 items-center gap-2">

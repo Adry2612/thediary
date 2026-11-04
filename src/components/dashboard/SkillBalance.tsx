@@ -151,7 +151,7 @@ export function SkillBalance({
       </div>
 
       <ul className="mt-8 space-y-4">
-        {PRACTICE_SKILLS.map((skill) => {
+        {PRACTICE_SKILLS.map((skill, index) => {
           const category = distribution.categories[skill];
           const skillLabel = PRACTICE_SKILL_LABELS[skill];
 
@@ -185,11 +185,12 @@ export function SkillBalance({
                 </span>
                 <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-zinc-800">
                   <span
-                    className="block h-full rounded-full"
+                    className={`block h-full rounded-full ${category.percentage > 0 ? "chart-bar-grow-x" : ""}`}
                     style={{
                       width: `${category.percentage}%`,
                       backgroundColor: PRACTICE_SKILL_COLORS[skill],
-                    }}
+                      "--chart-index": index,
+                    } as CSSProperties}
                   />
                 </span>
               </button>

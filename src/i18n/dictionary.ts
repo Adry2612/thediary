@@ -130,9 +130,6 @@ export type Dict = {
     blockedHelp: string;
     enabledOn: string;
     enabledOff: string;
-    inAppTitle: string;
-    inAppDismiss: string;
-    inAppSettings: string;
     notificationTitle: string;
     notificationPractice: string;
     notificationStrings: string;

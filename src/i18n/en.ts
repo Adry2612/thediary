@@ -137,7 +137,7 @@ export const en: Dict = {
     deviceScope:
       'These settings and the subscription stay on this device; they are not synchronized with others.',
     guestNotice:
-      'System notifications need an account. As a guest, the reminder will appear inside the app.',
+      'System notifications need an account and the browser permission.',
     permissionUnsupported: 'This browser does not support push notifications.',
     permissionDefault: 'You have not granted notification permission yet.',
     permissionGranted: 'Notifications are allowed.',
@@ -153,9 +153,6 @@ export const en: Dict = {
       'To turn them back on, open the site settings in your browser and allow notifications.',
     enabledOn: 'On',
     enabledOff: 'Off',
-    inAppTitle: "Today's reminder",
-    inAppDismiss: 'Dismiss',
-    inAppSettings: 'Set up reminders',
     notificationTitle: 'thediary.',
     notificationPractice: 'Today is “{routine}” day',
     notificationStrings: 'Time to change the strings on {guitar}',
