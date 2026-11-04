@@ -448,3 +448,19 @@ test("the new marks round-trip through the alphaTab importer", async () => {
   assert.ok(onBeatGrace);
   assert.equal(onBeatGrace.notes[0].fret, 4);
 });
+
+test("omits the chord diagrams when a preview asks for them to be off", () => {
+  const value = score([
+    {
+      id: "bar-a",
+      beats: [beat({ duration: 4, chord: "Em" })],
+    },
+  ]);
+
+  const full = buildAlphaTex(value);
+  const preview = buildAlphaTex(value, { chordDiagrams: false });
+
+  assert.match(full, /\\chord \("Em" 0 2 2 0 0 0\)/);
+  assert.doesNotMatch(preview, /\\chord/);
+  assert.match(preview, /\{ch "Em"\}/);
+});

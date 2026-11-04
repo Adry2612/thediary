@@ -2,6 +2,8 @@
 
 import { ChordChartEditor } from '@/components/repertoire/ChordChartEditor';
 import { TabScoreEditor } from '@/components/tab-score/TabScoreEditor';
+import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
+import { useI18nSection } from '@/i18n/I18nProvider';
 import { isTabEditorEnabled } from '@/utils/feature-flags';
 import { normalizeChordChart } from '@/utils/repertoire-chord-chart';
 import { resolveTabScore } from '@/utils/tab-score/resolve';
@@ -18,6 +20,7 @@ export function RepertoireSongEditor({
   item: RepertoireItem;
   onSave: (item: RepertoireItem) => void;
 }) {
+  const text = useI18nSection('repertoire');
   const chordChart = normalizeChordChart(item.chordChart);
   const score = resolveTabScore({
     score: item.score,
@@ -36,11 +39,16 @@ export function RepertoireSongEditor({
         onChange={(next) => update({ chordChart: next })}
       />
       {isTabEditorEnabled ? (
-        <TabScoreEditor
-          initialScore={score}
-          label={item.title}
-          onChange={(next) => update({ score: next })}
-        />
+        <CollapsibleSection
+          title={text.tabTitle}
+          description={text.tabDescription}
+        >
+          <TabScoreEditor
+            initialScore={score}
+            label={item.title}
+            onChange={(next) => update({ score: next })}
+          />
+        </CollapsibleSection>
       ) : null}
     </>
   );

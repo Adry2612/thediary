@@ -94,7 +94,7 @@ export function LickCard({
           maxLines={6}
           maxBars={1}
           variant="compact"
-          className="max-h-52"
+          className="mx-auto max-h-80 w-[86%]"
         />
       </div>
 

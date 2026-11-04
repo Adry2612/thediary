@@ -313,7 +313,10 @@ function collectChordDefinitions(score: TabScore): string[] {
 
 export function buildAlphaTex(
   score: TabScore,
-  { standardNotation = false }: { standardNotation?: boolean } = {},
+  {
+    standardNotation = false,
+    chordDiagrams = true,
+  }: { standardNotation?: boolean; chordDiagrams?: boolean } = {},
 ): string {
   const stringCount = getStringCount(score.tuning);
   const tuning = tuningToAlphaTexNotes(score.tuning, stringCount);
@@ -323,7 +326,7 @@ export function buildAlphaTex(
 
   if (tuning) lines.push(`\\tuning (${tuning.join(" ")})`);
   lines.push(`\\tempo ${score.tempo}`);
-  lines.push(...collectChordDefinitions(score));
+  if (chordDiagrams) lines.push(...collectChordDefinitions(score));
   lines.push(".");
 
   score.bars.forEach((bar) => {
