@@ -172,6 +172,13 @@ Deno.serve(async (request) => {
     auth: { persistSession: false },
   });
 
+  // Los envíos que agotaron los intentos no se vuelven a seleccionar.
+  await supabase
+    .from("push_reminder_plan")
+    .delete()
+    .is("sent_at", null)
+    .gte("attempts", MAX_ATTEMPTS);
+
   const { data: due, error: dueError } = await supabase
     .from("push_reminder_plan")
     .select(

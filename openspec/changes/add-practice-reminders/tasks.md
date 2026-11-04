@@ -34,13 +34,13 @@
 
 - [x] 5.1 Añade la sección «Recordatorios» en Configuración con el interruptor general, los tres motivos, la hora, el umbral de inactividad, la nota de configuración por dispositivo y el aviso para invitados; verifica que todos los controles tienen etiqueta y que se recorren con teclado.
 - [x] 5.2 Conecta la sección con los estados del permiso y las acciones de activar, desactivar y enviar una notificación de prueba, incluyendo los casos no soportado, no configurado y bloqueado; verifica en el navegador cada estado y que el aviso de error usa `role="alert"`.
-- [ ] 5.3 Revisa la sección a 320, 375, 768 y 1280 px en ambos idiomas; verifica que no hay desbordamiento horizontal, que el selector de umbral solo aparece cuando el motivo de inactividad está activo y que los textos caben.
+- [x] 5.3 Revisa la sección a 320, 375, 768 y 1280 px en ambos idiomas; verifica que no hay desbordamiento horizontal, que el selector de umbral solo aparece cuando el motivo de inactividad está activo y que los textos caben.
 
 ## 6. Recordatorio dentro de la app
 
 - [x] 6.1 Implementa la disponibilidad del aviso dentro de la app (invitado, sin soporte, permiso no concedido o sin suscripción), la evaluación de hoy tras la hora elegida y el descarte por fecha local; verifica con pruebas las combinaciones y que el descarte no se repite hasta el día siguiente.
 - [x] 6.2 Añade la fila descartable bajo la cabecera de Inicio con los motivos aplicables, enlaces a Inicio/Cuerdas y acceso a Configuración para activar los avisos; verifica en el navegador como invitado, con permiso denegado y con push activo, y que desaparece al guardar la práctica del día.
-- [ ] 6.3 Revisa la fila a 320, 375, 768 y 1280 px; verifica que no duplica el aviso cuando el push está activo y que el botón de descartar es accesible por teclado y lector de pantalla.
+- [x] 6.3 Revisa la fila a 320, 375, 768 y 1280 px; verifica que no duplica el aviso cuando el push está activo y que el botón de descartar es accesible por teclado y lector de pantalla.
 
 ## 7. Verificación de integración
 

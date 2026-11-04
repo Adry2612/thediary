@@ -47,9 +47,13 @@ export function useReminderPreferences() {
   }, [refresh]);
 
   const update = useCallback((patch: Partial<ReminderPreferences>) => {
-    setPreferences((current) =>
-      saveReminderPreferences({ ...current, ...patch }),
-    );
+    // Guarda y notifica antes de actualizar el estado: así el evento no
+    // provoca setState dentro del render de otro componente.
+    const next = saveReminderPreferences({
+      ...readReminderPreferences(),
+      ...patch,
+    });
+    setPreferences(next);
   }, []);
 
   const setEnabled = useCallback(

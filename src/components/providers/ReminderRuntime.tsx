@@ -36,6 +36,7 @@ export function ReminderRuntime() {
   const guitars = usePracticeStore((state) => state.guitars);
   const guitarEntries = usePracticeStore((state) => state.guitarEntries);
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
+  const [subscriptionVersion, setSubscriptionVersion] = useState(0);
   const schedulerRef = useRef<ReminderPlanScheduler | null>(null);
 
   const data = useMemo<ReminderData>(
@@ -51,6 +52,21 @@ export function ReminderRuntime() {
 
   useEffect(() => {
     void registerReminderServiceWorker();
+  }, []);
+
+  // El navegador puede rotar la suscripción: se repara en el siguiente aviso.
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+
+    function handleMessage(event: MessageEvent) {
+      if (event.data?.type === "pushsubscriptionchange") {
+        setSubscriptionVersion((current) => current + 1);
+      }
+    }
+
+    navigator.serviceWorker.addEventListener("message", handleMessage);
+    return () =>
+      navigator.serviceWorker.removeEventListener("message", handleMessage);
   }, []);
 
   useEffect(() => {
@@ -101,7 +117,7 @@ export function ReminderRuntime() {
     return () => {
       cancelled = true;
     };
-  }, [preferences.enabled, user]);
+  }, [preferences.enabled, subscriptionVersion, user]);
 
   // Recalcula el plan al guardar una sesión, cambiar preferencias o el idioma.
   useEffect(() => {
