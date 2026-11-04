@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PracticeMaterials } from '@/components/practice/PracticeMaterials';
 import { CatalogSearchDialog } from '@/components/repertoire/CatalogSearchDialog';
+import { CatalogPreviewDialog } from '@/components/repertoire/CatalogPreviewDialog';
 import { CoverArt } from '@/components/repertoire/CoverArt';
 import { RepertoirePartEditor } from '@/components/repertoire/RepertoirePartEditor';
 import { Button } from '@/components/ui/Button';
@@ -34,8 +35,9 @@ import type {
   RepertoireDifficulty,
 } from '@/types/practice';
 import type { CatalogCandidate } from '@/types/catalog';
-import { buildCatalogFillUpdates } from '@/utils/repertoire-catalog';
-import { useI18nSection } from '@/i18n/I18nProvider';
+import { useI18n, useI18nSection } from '@/i18n/I18nProvider';
+import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
+import { formatTuning } from '@/utils/catalogs/tunings';
 import { createId as createIdentifier } from '@/utils/create-id';
 import { COMMON_TUNINGS } from '@/utils/repertoire-item';
 import { useActivePracticeSessionStore } from '@/stores/useActivePracticeSessionStore';
@@ -64,6 +66,8 @@ export function RepertoireItemCard({
   const router = useRouter();
   const text = useI18nSection('repertoire');
   const practiceText = useI18nSection('practice');
+  const { locale } = useI18n();
+  const { tuningDisplay } = useDisplayPreferences();
   const activeSession = useActivePracticeSessionStore(
     (state) => state.activeSession,
   );
@@ -100,6 +104,8 @@ export function RepertoireItemCard({
   );
   const [coverUrl, setCoverUrl] = useState(item.coverUrl ?? '');
   const [isCatalogSearchOpen, setIsCatalogSearchOpen] = useState(false);
+  const [pendingCatalogCandidate, setPendingCatalogCandidate] =
+    useState<CatalogCandidate | null>(null);
   const [isFutureLearn, setIsFutureLearn] = useState(
     item.isFutureLearn ?? false,
   );
@@ -175,13 +181,7 @@ export function RepertoireItemCard({
   }
 
   function applyCatalogCandidate(candidate: CatalogCandidate) {
-    const updates = buildCatalogFillUpdates(
-      item,
-      candidate,
-      new Date().toISOString(),
-    );
-
-    if (updates) onSave({ ...item, ...updates });
+    setPendingCatalogCandidate(candidate);
     setIsCatalogSearchOpen(false);
   }
 
@@ -389,13 +389,23 @@ export function RepertoireItemCard({
             <p className='text-xs uppercase text-muted'>
               {text.parts} · {item.parts.length}
             </p>
-            <Button
-              type='button'
-              onClick={addPart}
-              className='h-11 min-w-11 px-4'
-            >
-              {text.addPart}
-            </Button>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button
+                type='button'
+                variant='ghost'
+                size='field'
+                onClick={() => setIsCatalogSearchOpen(true)}
+              >
+                {text.catalogBackfill}
+              </Button>
+              <Button
+                type='button'
+                onClick={addPart}
+                className='h-11 min-w-11 px-4'
+              >
+                {text.addPart}
+              </Button>
+            </div>
           </div>
 
           <ul className='mt-3 space-y-3'>
@@ -440,7 +450,10 @@ export function RepertoireItemCard({
                     ariaLabel={text.tuning}
                     options={COMMON_TUNINGS.map((t) => ({
                       value: t,
-                      label: t,
+                      label:
+                        t === 'Otra...'
+                          ? t
+                          : formatTuning(t, { display: tuningDisplay, locale }),
                     }))}
                   />
                 </label>
@@ -550,17 +563,6 @@ export function RepertoireItemCard({
                   />
                 </label>
               </div>
-
-              <div className='mt-4'>
-                <Button
-                  type='button'
-                  size='field'
-                  variant='ghost'
-                  onClick={() => setIsCatalogSearchOpen(true)}
-                >
-                  {text.catalogBackfill}
-                </Button>
-              </div>
             </div>
           </details>
 
@@ -589,6 +591,17 @@ export function RepertoireItemCard({
           initialQuery={buildCatalogQuery(item.title, item.artist)}
           onSelect={applyCatalogCandidate}
           onClose={() => setIsCatalogSearchOpen(false)}
+        />
+      )}
+      {pendingCatalogCandidate && (
+        <CatalogPreviewDialog
+          item={item}
+          candidate={pendingCatalogCandidate}
+          onConfirm={(updates) => {
+            onSave({ ...item, ...updates });
+            setPendingCatalogCandidate(null);
+          }}
+          onClose={() => setPendingCatalogCandidate(null)}
         />
       )}
       {isQuickPracticeDialogOpen && (

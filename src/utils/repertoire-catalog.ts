@@ -80,40 +80,56 @@ export function normalizeCatalogMetadata(
 }
 
 /**
- * Cambios para completar una canción que ya existe con un resultado del
- * catálogo. Solo rellena lo que está vacío: el título, el artista, la
- * afinación, el capo, las partes, la letra y la tablatura no se tocan nunca.
- * Devuelve `null` cuando no hay nada que completar.
+ * Cambios para actualizar una canción existente con un resultado del catálogo.
+ * El título y el artista siempre se aplican; los campos opcionales solo cuando
+ * el candidato los trae, para no vaciar datos que la canción ya tenía.
  */
-export function buildCatalogFillUpdates(
-  item: Pick<RepertoireItem, "album" | "releaseYear" | "coverUrl">,
+export interface CatalogApply {
+  updates: Partial<RepertoireItem>;
+  /** Si el candidato cambia algo visible de la ficha. */
+  changed: boolean;
+}
+
+export function buildCatalogApplyUpdates(
+  item: Pick<
+    RepertoireItem,
+    "title" | "artist" | "album" | "releaseYear" | "coverUrl"
+  >,
   candidate: CatalogCandidate,
   updatedAt: string,
-): Partial<RepertoireItem> | null {
+): CatalogApply {
   const metadata = normalizeCatalogMetadata({
     album: candidate.album,
     releaseYear: candidate.releaseYear,
     coverUrl: candidate.coverUrl,
   });
 
-  const updates: Partial<RepertoireItem> = {};
-
-  if (!item.album?.trim() && metadata.album) updates.album = metadata.album;
-  if (item.releaseYear === undefined && metadata.releaseYear !== undefined) {
-    updates.releaseYear = metadata.releaseYear;
-  }
-  if (!item.coverUrl?.trim() && metadata.coverUrl) {
-    updates.coverUrl = metadata.coverUrl;
-  }
-
-  if (Object.keys(updates).length === 0) return null;
-
-  return {
-    ...updates,
+  const changes: Partial<RepertoireItem> = {
+    title: candidate.title,
+    artist: candidate.artist || undefined,
     catalogSource: candidate.source,
     catalogId: candidate.id,
     updatedAt,
   };
+
+  let changed =
+    candidate.title !== item.title ||
+    (candidate.artist || "") !== (item.artist ?? "");
+
+  if (metadata.album !== undefined) {
+    changes.album = metadata.album;
+    if (metadata.album !== (item.album ?? "")) changed = true;
+  }
+  if (metadata.releaseYear !== undefined) {
+    changes.releaseYear = metadata.releaseYear;
+    if (metadata.releaseYear !== item.releaseYear) changed = true;
+  }
+  if (metadata.coverUrl !== undefined) {
+    changes.coverUrl = metadata.coverUrl;
+    if (metadata.coverUrl !== (item.coverUrl ?? "")) changed = true;
+  }
+
+  return { updates: changes, changed };
 }
 
 /**

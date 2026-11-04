@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  buildCatalogFillUpdates,
+  buildCatalogApplyUpdates,
   buildCatalogQuery,
   normalizeCatalogMetadata,
 } from "../src/utils/repertoire-catalog.ts";
@@ -143,74 +143,121 @@ const candidate = {
   coverUrl: "https://example.com/600x600bb.jpg",
 };
 
-test("fills the gaps of an existing song from a candidate", () => {
-  assert.deepEqual(
-    buildCatalogFillUpdates({}, candidate, "2026-10-25T00:00:00.000Z"),
+test("applies the full candidate to an existing song", () => {
+  const result = buildCatalogApplyUpdates(
     {
-      album: "American IV: The Man Comes Around",
-      releaseYear: 2002,
-      coverUrl: "https://example.com/600x600bb.jpg",
-      catalogSource: "itunes",
-      catalogId: "1440811252",
-      updatedAt: "2026-10-25T00:00:00.000Z",
+      title: "Hurt (live)",
+      artist: "NIN",
+      album: "Otro álbum",
+      releaseYear: 1994,
+      coverUrl: "https://example.com/old.jpg",
     },
+    candidate,
+    "2026-10-25T00:00:00.000Z",
   );
+
+  assert.equal(result.changed, true);
+  assert.deepEqual(result.updates, {
+    title: "Hurt",
+    artist: "Johnny Cash",
+    album: "American IV: The Man Comes Around",
+    releaseYear: 2002,
+    coverUrl: "https://example.com/600x600bb.jpg",
+    catalogSource: "itunes",
+    catalogId: "1440811252",
+    updatedAt: "2026-10-25T00:00:00.000Z",
+  });
 });
 
-test("keeps the values a song already has", () => {
-  const updates = buildCatalogFillUpdates(
+test("keeps optional values the candidate does not provide", () => {
+  const result = buildCatalogApplyUpdates(
     {
+      title: "Hurt",
+      artist: "Johnny Cash",
       album: "Mi álbum",
       releaseYear: 1999,
       coverUrl: "https://example.com/mia.jpg",
     },
+    { source: "itunes", id: "1", title: "Hurt", artist: "Johnny Cash" },
+    "2026-10-25T00:00:00.000Z",
+  );
+
+  assert.equal(result.changed, false);
+  assert.equal("album" in result.updates, false);
+  assert.equal("releaseYear" in result.updates, false);
+  assert.equal("coverUrl" in result.updates, false);
+});
+
+test("reports no visible changes when the candidate matches", () => {
+  const result = buildCatalogApplyUpdates(
+    {
+      title: "Hurt",
+      artist: "Johnny Cash",
+      album: "American IV: The Man Comes Around",
+      releaseYear: 2002,
+      coverUrl: "https://example.com/600x600bb.jpg",
+    },
     candidate,
     "2026-10-25T00:00:00.000Z",
   );
 
-  assert.equal(updates, null);
+  assert.equal(result.changed, false);
+  assert.equal(result.updates.title, "Hurt");
 });
 
-test("fills only what is missing when the song is partially complete", () => {
-  const updates = buildCatalogFillUpdates(
-    { album: "Mi álbum" },
-    candidate,
-    "2026-10-25T00:00:00.000Z",
-  );
-
-  assert.equal(updates.album, undefined);
-  assert.equal(updates.releaseYear, 2002);
-  assert.equal(updates.coverUrl, "https://example.com/600x600bb.jpg");
-});
-
-test("never writes the fields the song owns", () => {
-  const updates = buildCatalogFillUpdates(
-    {},
+test("does not touch the fields that belong to the user", () => {
+  const result = buildCatalogApplyUpdates(
+    { title: "Hurt", artist: "NIN" },
     candidate,
     "2026-10-25T00:00:00.000Z",
   );
 
   for (const forbidden of [
-    "title",
-    "artist",
     "tuning",
     "capo",
     "parts",
     "chordChart",
     "tab",
+    "score",
+    "resources",
   ]) {
-    assert.equal(forbidden in updates, false);
+    assert.equal(forbidden in result.updates, false);
   }
 });
 
-test("returns null when the candidate carries nothing to fill", () => {
-  const updates = buildCatalogFillUpdates(
-    {},
-    { source: "itunes", id: "1", title: "Hurt", artist: "Johnny Cash" },
+test("skips optional metadata that is not valid", () => {
+  const result = buildCatalogApplyUpdates(
+    { title: "Hurt", artist: "NIN" },
+    {
+      source: "itunes",
+      id: "1",
+      title: "Hurt",
+      artist: "Johnny Cash",
+      album: "",
+      releaseYear: 1899,
+      coverUrl: "http://example.com/cover.jpg",
+    },
     "2026-10-25T00:00:00.000Z",
   );
 
-  assert.equal(updates, null);
+  assert.equal("album" in result.updates, false);
+  assert.equal("releaseYear" in result.updates, false);
+  assert.equal("coverUrl" in result.updates, false);
+});
+
+test("a visible optional change still counts as a change", () => {
+  const result = buildCatalogApplyUpdates(
+    {
+      title: "Hurt",
+      artist: "Johnny Cash",
+      album: "Otro",
+    },
+    candidate,
+    "2026-10-25T00:00:00.000Z",
+  );
+
+  assert.equal(result.changed, true);
+  assert.equal(result.updates.album, "American IV: The Man Comes Around");
 });
 
 test("builds the lookup query from the title and the artist", () => {
