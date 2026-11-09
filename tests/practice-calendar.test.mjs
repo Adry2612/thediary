@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   createCalendarCells,
+  getHeatmapData,
   getLatestPracticeDateKey,
   getMonthMarkers,
   getPracticeWeekDays,
   getSessionsForWeek,
-  getYearlyHeatmapData,
   parseDateKey,
   toDateKey,
 } from "../src/utils/practice-calendar.ts";
@@ -45,7 +45,7 @@ test("builds a complete leap-year calendar and aggregates session detail", () =>
     }),
   ];
 
-  const calendar = getYearlyHeatmapData(2024, history);
+  const calendar = getHeatmapData("2024-01-01", "2024-12-31", history);
   const leapDay = calendar.find((day) => day.dateKey === "2024-02-29");
 
   assert.equal(calendar.length, 366);
@@ -68,12 +68,38 @@ test("calculates BPM averages only from sessions that recorded a tempo", () => {
     }),
   ];
 
-  const leapDay = getYearlyHeatmapData(2024, history).find(
+  const leapDay = getHeatmapData("2024-01-01", "2024-12-31", history).find(
     (day) => day.dateKey === "2024-02-29",
   );
 
   assert.equal(leapDay.sessionCount, 2);
   assert.equal(leapDay.averageBpm, 100);
+});
+
+test("a rolling range crosses a year and ignores days outside it", () => {
+  const history = [
+    createSession("before", "2025-11-30T12:00:00.000Z"),
+    createSession("inside", "2026-10-01T12:00:00.000Z"),
+    createSession("after", "2026-11-10T12:00:00.000Z"),
+  ];
+
+  const calendar = getHeatmapData("2025-12-01", "2026-11-09", history);
+
+  assert.equal(calendar.length, 344);
+  assert.equal(calendar[0].dateKey, "2025-12-01");
+  assert.equal(calendar[calendar.length - 1].dateKey, "2026-11-09");
+  assert.equal(
+    calendar.find((day) => day.dateKey === "2026-10-01").sessionCount,
+    1,
+  );
+  assert.equal(
+    calendar.some((day) => day.dateKey === "2025-11-30"),
+    false,
+  );
+  assert.equal(
+    calendar.some((day) => day.dateKey === "2026-11-10"),
+    false,
+  );
 });
 
 test("returns this calendar week's sessions without including adjacent weeks", () => {
@@ -148,29 +174,31 @@ test("formats a long date with and without the year", () => {
   assert.match(withYear, /2026/);
 });
 
-test("names every month once in the column markers", () => {
-  const year = 2026;
-  const firstWeekday = (new Date(year, 0, 1).getDay() + 6) % 7;
-  const daysInYear = getYearlyHeatmapData(year, []).length;
-  const weekCount = Math.ceil((firstWeekday + daysInYear) / 7);
-  const markers = getMonthMarkers(year, weekCount, firstWeekday, "es-ES");
+test("names every month of a twelve-month window and marks the year change", () => {
+  const start = "2025-12-01";
+  const end = "2026-11-30";
+  const firstWeekday = (parseDateKey(start).getDay() + 6) % 7;
+  const days = getHeatmapData(start, end, []);
+  const weekCount = Math.ceil((firstWeekday + days.length) / 7);
+  const markers = getMonthMarkers(start, end, weekCount, firstWeekday, "es-ES");
 
   assert.equal(markers.length, weekCount);
   assert.equal(markers.filter((marker) => marker !== "").length, 12);
-  assert.ok(markers[0].startsWith("ene"));
+  assert.match(markers[0], /dic 2025/);
+  assert.ok(markers.some((marker) => /ene 2026/.test(marker)));
 });
 
-test("builds a grid padded to whole weeks, starting on the first of January", () => {
-  const year = 2026;
-  const yearStart = new Date(year, 0, 1);
-  const firstWeekday = (yearStart.getDay() + 6) % 7;
-  const days = getYearlyHeatmapData(year, []);
+test("builds a grid padded to whole weeks, starting on the range start", () => {
+  const start = "2026-01-01";
+  const end = "2026-12-31";
+  const firstWeekday = (parseDateKey(start).getDay() + 6) % 7;
+  const days = getHeatmapData(start, end, []);
   const weekCount = Math.ceil((firstWeekday + days.length) / 7);
   const statsByDate = new Map(days.map((day) => [day.dateKey, day]));
   const sessions = [createSession("a", "2026-03-05T12:00:00.000Z")];
   const sessionsByDate = new Map([["2026-03-05", sessions]]);
   const cells = createCalendarCells(
-    year,
+    start,
     weekCount,
     firstWeekday,
     days,
@@ -180,7 +208,7 @@ test("builds a grid padded to whole weeks, starting on the first of January", ()
 
   assert.equal(cells.length, weekCount * 7);
   assert.equal(cells.slice(0, firstWeekday).filter(Boolean).length, 0);
-  assert.equal(cells[firstWeekday].dateKey, "2026-01-01");
+  assert.equal(cells[firstWeekday].dateKey, start);
   assert.equal(cells[cells.length - 1], null);
 
   const march = cells.find((cell) => cell?.dateKey === "2026-03-05");
@@ -190,12 +218,13 @@ test("builds a grid padded to whole weeks, starting on the first of January", ()
 });
 
 test("builds a full leap-year grid", () => {
-  const year = 2024;
-  const firstWeekday = (new Date(year, 0, 1).getDay() + 6) % 7;
-  const days = getYearlyHeatmapData(year, []);
+  const start = "2024-01-01";
+  const end = "2024-12-31";
+  const firstWeekday = (parseDateKey(start).getDay() + 6) % 7;
+  const days = getHeatmapData(start, end, []);
   const weekCount = Math.ceil((firstWeekday + days.length) / 7);
   const cells = createCalendarCells(
-    year,
+    start,
     weekCount,
     firstWeekday,
     days,
@@ -204,34 +233,33 @@ test("builds a full leap-year grid", () => {
   );
 
   assert.equal(days.length, 366);
-  assert.equal(cells[firstWeekday].dateKey, "2024-01-01");
+  assert.equal(cells[firstWeekday].dateKey, start);
   assert.ok(cells.some((cell) => cell?.dateKey === "2024-02-29"));
 });
 
-test("points at the day of the newest session of the year", () => {
-  const year = 2026;
-  const days = getYearlyHeatmapData(year, []);
+test("points at the day of the newest session inside the range", () => {
+  const days = getHeatmapData("2026-01-01", "2026-12-31", []);
   const history = [
     createSession("older", "2026-02-01T12:00:00.000Z"),
     createSession("newer", "2026-06-20T12:00:00.000Z"),
     createSession("other-year", "2025-12-31T12:00:00.000Z"),
   ];
 
-  assert.equal(getLatestPracticeDateKey(history, days, year), "2026-06-20");
+  assert.equal(getLatestPracticeDateKey(history, days), "2026-06-20");
 });
 
-test("falls back to the last day with minutes when the year has no sessions", () => {
-  const year = 2026;
-  const days = getYearlyHeatmapData(year, [
+test("falls back to the last day with minutes when the range has no sessions", () => {
+  const days = getHeatmapData("2026-01-01", "2026-12-31", [
     createSession("a", "2026-04-02T12:00:00.000Z"),
     createSession("b", "2026-04-09T12:00:00.000Z"),
   ]);
 
-  assert.equal(getLatestPracticeDateKey([], days, year), "2026-04-09");
+  assert.equal(getLatestPracticeDateKey([], days), "2026-04-09");
 });
 
-test("points nowhere when the year has no practice at all", () => {
-  const year = 2026;
-
-  assert.equal(getLatestPracticeDateKey([], getYearlyHeatmapData(year, []), year), undefined);
+test("points nowhere when the range has no practice at all", () => {
+  assert.equal(
+    getLatestPracticeDateKey([], getHeatmapData("2026-01-01", "2026-12-31", [])),
+    undefined,
+  );
 });

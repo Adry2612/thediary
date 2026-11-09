@@ -12,6 +12,7 @@ import {
   createCalendarCells,
   getLatestPracticeDateKey,
   getMonthMarkers,
+  parseDateKey,
   PRACTICE_DAY_TARGET_SIZE,
   toDateKey,
 } from "@/utils/practice-calendar";
@@ -27,7 +28,8 @@ type YearPracticeCalendarProps = {
   days: DailyStats[];
   history: SessionRecord[];
   todayKey: string;
-  year: number;
+  rangeStart: string;
+  rangeEnd: string;
   dailyGoalMinutes: number;
 };
 
@@ -35,7 +37,8 @@ export function YearPracticeCalendar({
   days,
   history,
   todayKey,
-  year,
+  rangeStart,
+  rangeEnd,
   dailyGoalMinutes,
 }: YearPracticeCalendarProps) {
   const router = useRouter();
@@ -67,39 +70,48 @@ export function YearPracticeCalendar({
     const grouped = new Map<string, SessionRecord[]>();
     for (const session of history) {
       const dateKey = toDateKey(new Date(session.startedAt));
-      if (!dateKey.startsWith(`${year}-`)) continue;
+      if (dateKey < rangeStart || dateKey > rangeEnd) continue;
       grouped.set(dateKey, [...(grouped.get(dateKey) ?? []), session]);
     }
     return grouped;
-  }, [history, year]);
-  const yearStart = new Date(year, 0, 1);
-  const firstWeekday = (yearStart.getDay() + 6) % 7;
+  }, [history, rangeEnd, rangeStart]);
+  const rangeStartDate = parseDateKey(rangeStart);
+  const rangeEndDate = parseDateKey(rangeEnd);
+  const firstWeekday = (rangeStartDate.getDay() + 6) % 7;
   const weekCount = Math.ceil((firstWeekday + days.length) / 7);
-  const hasYearPractice = days.some((day) => day.totalMinutes > 0);
-  const monthMarkers = getMonthMarkers(year, weekCount, firstWeekday, locale);
+  const hasRangePractice = days.some((day) => day.totalMinutes > 0);
+  const monthMarkers = getMonthMarkers(
+    rangeStart,
+    rangeEnd,
+    weekCount,
+    firstWeekday,
+    locale,
+  );
   const cells = useMemo(
     () =>
       createCalendarCells(
-        year,
+        rangeStart,
         weekCount,
         firstWeekday,
         days,
         statsByDate,
         sessionsByDate,
       ),
-    [days, firstWeekday, sessionsByDate, statsByDate, weekCount, year],
+    [days, firstWeekday, rangeStart, sessionsByDate, statsByDate, weekCount],
   );
-  const latestPracticeDateKey = getLatestPracticeDateKey(history, days, year);
-  const yearLabel = new Intl.NumberFormat(locale, {
-    useGrouping: false,
-  }).format(year);
+  const latestPracticeDateKey = getLatestPracticeDateKey(history, days);
+  const rangeFormatter = new Intl.DateTimeFormat(locale, {
+    month: "short",
+    year: "numeric",
+  });
+  const rangeLabel = `${rangeFormatter.format(rangeStartDate).replace(/\.$/, "")} – ${rangeFormatter.format(rangeEndDate).replace(/\.$/, "")}`;
 
   useLatestPracticeScroll(calendarScrollRef, cells, latestPracticeDateKey);
 
   useEffect(() => {
     armedDateRef.current = null;
     hideTooltip();
-  }, [hideTooltip, year]);
+  }, [hideTooltip, rangeEnd, rangeStart]);
 
   /**
    * En táctil, tocar fuera de la cuadrícula cierra la vista previa y desarma
@@ -168,7 +180,7 @@ export function YearPracticeCalendar({
             {calendar.consistency}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-            {calendar.title} · {yearLabel}
+            {calendar.title} · {rangeLabel}
           </h2>
           <p className="mt-2 text-sm text-muted">
             {calendar.description} {dailyGoalMinutes} min. {calendar.selectDay}.
@@ -227,10 +239,10 @@ export function YearPracticeCalendar({
             </div>
             <div
               ref={gridRef}
-              key={year}
+              key={rangeStart}
               role="group"
-              aria-label={`${calendar.yearDays} ${yearLabel}`}
-              className={`grid grid-flow-col grid-rows-7 gap-0 ${hasYearPractice ? "chart-calendar-in" : ""}`}
+              aria-label={`${calendar.yearDays} ${rangeLabel}`}
+              className={`grid grid-flow-col grid-rows-7 gap-0 ${hasRangePractice ? "chart-calendar-in" : ""}`}
               onMouseLeave={scheduleHide}
               style={{
                 gridTemplateColumns: `repeat(${weekCount}, ${PRACTICE_DAY_TARGET_SIZE}px)`,

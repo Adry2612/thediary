@@ -76,6 +76,27 @@ export function getStreakCount(
   return streak;
 }
 
+/** Mejor racha de días consecutivos con práctica de todo el historial. */
+export function getLongestStreak(history: SessionRecord[]): number {
+  const dateKeys = [...new Set(history.map(getSessionDateKey))].sort();
+  if (dateKeys.length === 0) return 0;
+
+  let best = 1;
+  let current = 1;
+  for (let index = 1; index < dateKeys.length; index += 1) {
+    const previous = new Date(`${dateKeys[index - 1]}T00:00:00`);
+    previous.setDate(previous.getDate() + 1);
+    if (toDateKey(previous) === dateKeys[index]) {
+      current += 1;
+    } else {
+      current = 1;
+    }
+    best = Math.max(best, current);
+  }
+
+  return best;
+}
+
 /** Días seguidos a partir de los que la racha se reconoce en el panel. */
 export const STREAK_FIRE_MIN_DAYS = 7;
 
@@ -227,10 +248,16 @@ function createRange(
   };
 }
 
+function parseDateKey(dateKey: string): Date {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function getWeekRanges(today: Date): PracticeChartRange[] {
-  const monday = startOfWeek(today);
+  const span = getComparisonSpans("week", today).current;
+  const start = parseDateKey(span.startDate);
   return Array.from({ length: 7 }, (_, index) => {
-    const date = addDays(monday, index);
+    const date = addDays(start, index);
     const label = new Intl.DateTimeFormat("es-ES", {
       weekday: "short",
     }).format(date);
@@ -249,12 +276,9 @@ function formatShortDate(date: Date) {
 
 /** Los 30 días que terminan hoy, agrupados en semanas de lunes a domingo. */
 function getMonthRanges(today: Date): PracticeChartRange[] {
-  const windowEnd = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-  const windowStart = addDays(windowEnd, -29);
+  const span = getComparisonSpans("month", today).current;
+  const windowStart = parseDateKey(span.startDate);
+  const windowEnd = parseDateKey(span.endDate);
   const ranges: PracticeChartRange[] = [];
 
   for (
@@ -275,18 +299,30 @@ function getMonthRanges(today: Date): PracticeChartRange[] {
   return ranges;
 }
 
+/** Los 12 meses naturales que terminan con el mes actual, recortados a hoy. */
 function getYearRanges(today: Date): PracticeChartRange[] {
-  return Array.from({ length: 12 }, (_, monthIndex) => {
-    const monthStart = new Date(today.getFullYear(), monthIndex, 1);
-    const monthEnd = new Date(today.getFullYear(), monthIndex + 1, 0);
+  const span = getComparisonSpans("year", today).current;
+  const windowStart = parseDateKey(span.startDate);
+  const windowEnd = parseDateKey(span.endDate);
+  const ranges: PracticeChartRange[] = [];
+  let cursor = new Date(windowStart.getFullYear(), windowStart.getMonth(), 1);
+
+  while (cursor <= windowEnd) {
+    const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+    const rangeStart = monthStart < windowStart ? windowStart : monthStart;
+    const rangeEnd = monthEnd > windowEnd ? windowEnd : monthEnd;
     const label = new Intl.DateTimeFormat("es-ES", {
       month: "short",
     })
       .format(monthStart)
       .replace(/\.$/, "");
 
-    return createRange(label, monthStart, monthEnd);
-  });
+    ranges.push(createRange(label, rangeStart, rangeEnd));
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+  }
+
+  return ranges;
 }
 
 /** Rangos de los intervalos que comparten los gráficos del panel. */
@@ -436,11 +472,20 @@ export function getPracticeTimeSummary(
 
 export function getPracticeStatistics(
   history: SessionRecord[],
+  timeRange?: PracticeTimeRange,
 ): PracticeStatistics {
+  const sessions = timeRange
+    ? history.filter((session) => {
+        const sessionDate = getSessionDateKey(session);
+        return (
+          sessionDate >= timeRange.startDate && sessionDate <= timeRange.endDate
+        );
+      })
+    : history;
   const skillSeconds = Object.fromEntries(
     PRACTICE_SKILLS.map((skill) => [
       skill,
-      history.reduce(
+      sessions.reduce(
         (total, session) => total + session.skillSeconds[skill],
         0,
       ),
@@ -456,8 +501,8 @@ export function getPracticeStatistics(
   }
 
   return {
-    sessionCount: history.length,
-    totalSeconds: history.reduce(
+    sessionCount: sessions.length,
+    totalSeconds: sessions.reduce(
       (total, session) => total + session.durationSeconds,
       0,
     ),
@@ -596,13 +641,22 @@ function toContentRanks(
 export function getPracticeContentRankings(
   history: SessionRecord[],
   repertoireItems: RepertoireItem[] = [],
+  timeRange?: PracticeTimeRange,
 ): PracticeContentRankings {
   const itemsById = new Map(repertoireItems.map((item) => [item.id, item]));
   const songs = new Map<string, RankAccumulator>();
   const techniques = new Map<string, RankAccumulator>();
   const theory = new Map<string, RankAccumulator>();
+  const sessions = timeRange
+    ? history.filter((session) => {
+        const sessionDate = getSessionDateKey(session);
+        return (
+          sessionDate >= timeRange.startDate && sessionDate <= timeRange.endDate
+        );
+      })
+    : history;
 
-  for (const session of history) {
+  for (const session of sessions) {
     for (const phase of session.phases ?? []) {
       if (phase.elapsedSeconds <= 0) continue;
 

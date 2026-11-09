@@ -20,6 +20,7 @@ import {
 } from '@/utils/dashboard-data';
 import {
   getGuitarBalance,
+  getLongestStreak,
   getPracticeContentRankings,
   getPracticeStatistics,
   getSkillDistribution,
@@ -31,9 +32,9 @@ import { getComparisonSpans } from '@/utils/period-comparison';
 import { getLocalDateKey } from '@/utils/local-date';
 import { hasPracticeWellbeingData } from '@/utils/practice-metrics';
 import {
+  getHeatmapData,
   getPracticeWeekDays,
   getSessionsForWeek,
-  getYearlyHeatmapData,
   parseDateKey,
 } from '@/utils/practice-calendar';
 import { usePracticeStore } from '@/stores/usePracticeStore';
@@ -54,12 +55,17 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const persistenceError = usePracticeStore((state) => state.persistenceError);
   const today = useMemo(() => parseDateKey(todayKey), [todayKey]);
-  const todayYear = today.getFullYear();
 
+  const [rhythmPeriod, setRhythmPeriod] =
+    useState<PracticeChartPeriod>('week');
   const [balancePeriod, setBalancePeriod] =
     useState<PracticeChartPeriod>('month');
-  const monthRange = useMemo(
-    () => getComparisonSpans('month', today).current,
+  const rhythmRange = useMemo(
+    () => getComparisonSpans(rhythmPeriod, today).current,
+    [rhythmPeriod, today],
+  );
+  const yearRange = useMemo(
+    () => getComparisonSpans('year', today).current,
     [today],
   );
   const balanceRange = useMemo(
@@ -67,8 +73,8 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     [balancePeriod, today],
   );
   const yearlyDays = useMemo(
-    () => getYearlyHeatmapData(todayYear, history),
-    [history, todayYear],
+    () => getHeatmapData(yearRange.startDate, yearRange.endDate, history),
+    [history, yearRange],
   );
   const weeklySessions = useMemo(
     () => getSessionsForWeek(history, today),
@@ -78,27 +84,27 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     () => getPracticeWeekDays(history, today),
     [history, today],
   );
-  const monthSessions = useMemo(
+  const periodSessions = useMemo(
     () =>
       history.filter((session) => {
         const dateKey = getLocalDateKey(new Date(session.startedAt));
         return (
-          dateKey >= monthRange.startDate && dateKey <= monthRange.endDate
+          dateKey >= rhythmRange.startDate && dateKey <= rhythmRange.endDate
         );
       }),
-    [history, monthRange],
+    [history, rhythmRange],
   );
   const skillDistribution = useMemo(
     () => getSkillDistribution(history, balanceRange),
     [balanceRange, history],
   );
   const totalMinutes = Math.round(
-    monthSessions.reduce(
+    periodSessions.reduce(
       (total, session) => total + session.durationSeconds,
       0,
     ) / 60,
   );
-  const sessionsWithBpm = monthSessions.filter(
+  const sessionsWithBpm = periodSessions.filter(
     (session) => session.averageBpm > 0,
   );
   const averageBpm =
@@ -115,12 +121,12 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     [balanceRange, history],
   );
   const contentRankings = useMemo(
-    () => getPracticeContentRankings(history, repertoireItems),
-    [history, repertoireItems],
+    () => getPracticeContentRankings(history, repertoireItems, rhythmRange),
+    [history, repertoireItems, rhythmRange],
   );
   const practiceStatistics = useMemo(
-    () => getPracticeStatistics(history),
-    [history],
+    () => getPracticeStatistics(history, rhythmRange),
+    [history, rhythmRange],
   );
   const hasWellbeing = useMemo(
     () => hasPracticeWellbeingData(history),
@@ -131,12 +137,23 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     maximumFractionDigits: 1,
   }).format(practiceStatistics.totalSeconds / 3600);
   const streak = getStreakCount(history, today);
+  const longestStreak = getLongestStreak(history);
   const metricCards = [
     {
       label: dashboard.streak,
       value: `${streak} ${dashboard.days}`,
       description: dashboard.daysPracticed,
       highlight: isStreakOnFire(streak) ? <StreakFlame /> : undefined,
+    },
+    {
+      label: dashboard.longestStreak,
+      value: `${longestStreak} ${dashboard.days}`,
+      description: dashboard.longestStreakDescription,
+      highlight: (
+        <p className='mt-2 text-xs uppercase tracking-[0.08em] text-muted'>
+          {dashboard.longestStreakRecord}
+        </p>
+      ),
     },
     {
       label: dashboard.monthTime,
@@ -198,7 +215,8 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
           days={yearlyDays}
           history={history}
           todayKey={todayKey}
-          year={todayYear}
+          rangeStart={yearRange.startDate}
+          rangeEnd={yearRange.endDate}
           dailyGoalMinutes={practiceGoals.dailyMinutes}
         />
       </div>
@@ -207,6 +225,8 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         <PracticeTimeChart
           history={history}
           today={today}
+          period={rhythmPeriod}
+          onPeriodChange={setRhythmPeriod}
         />
         <SkillBalance
           distribution={skillDistribution}
@@ -240,7 +260,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         </div>
       )}
 
-      <div className='mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3'>
+      <div className='mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4'>
         {metricCards.map((metric, index) => (
           <MetricCard
             key={metric.label}
@@ -251,7 +271,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
       </div>
 
       <p className='mt-8 text-center text-xs text-muted'>
-         {dashboard.calendarNote} {todayYear}.
+         {dashboard.calendarNote}.
       </p>
       {persistenceError && (
         <p

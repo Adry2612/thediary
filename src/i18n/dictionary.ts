@@ -236,6 +236,7 @@ export type Dict = {
     between50and99: string;
     above100: string;
     yearDays: string;
+    monthDays: string;
     previousMonth: string;
     nextMonth: string;
     selectDay: string;
@@ -300,6 +301,9 @@ export type Dict = {
     streak: string;
     daysPracticed: string;
     streakOnFire: string;
+    longestStreak: string;
+    longestStreakDescription: string;
+    longestStreakRecord: string;
     monthTime: string;
     recordedTime: string;
     averageBpm: string;

@@ -18,12 +18,6 @@ function addDays(date: Date, days: number) {
   return result;
 }
 
-function startOfWeek(date: Date) {
-  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
-  return monday;
-}
-
 function daysInMonth(year: number, monthIndex: number) {
   return new Date(year, monthIndex + 1, 0).getDate();
 }
@@ -36,21 +30,23 @@ function toSpan(startDate: Date, endDate: Date): ComparisonSpan {
 }
 
 /**
- * El periodo en curso y el mismo tramo ya transcurrido del periodo anterior.
- * El día 15 se compara con los días 1–15 del mes anterior, y un periodo
- * anterior más corto se compara entero.
+ * El periodo en curso y el tramo inmediatamente anterior de la misma longitud.
+ * La semana son los 7 días que terminan hoy, el mes los 30 días que terminan
+ * hoy y el año los 12 meses naturales que terminan con el mes actual. El tramo
+ * anterior termina siempre el día antes de que empiece el actual.
  */
 export function getComparisonSpans(
   period: PracticeChartPeriod,
   today: Date,
 ): ComparisonSpans {
   if (period === "week") {
-    const monday = startOfWeek(today);
-    const elapsedDays = ((today.getDay() + 6) % 7) + 1;
-    const previousStart = addDays(monday, -7);
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const start = addDays(end, -6);
+    const previousEnd = addDays(start, -1);
+    const previousStart = addDays(previousEnd, -6);
     return {
-      current: toSpan(monday, today),
-      previous: toSpan(previousStart, addDays(previousStart, elapsedDays - 1)),
+      current: toSpan(start, end),
+      previous: toSpan(previousStart, previousEnd),
     };
   }
 
@@ -65,19 +61,25 @@ export function getComparisonSpans(
     };
   }
 
-  const year = today.getFullYear();
-  const previousYear = year - 1;
+  const currentStart = new Date(
+    today.getFullYear(),
+    today.getMonth() - 11,
+    1,
+  );
+  const currentEnd = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  const previousYear = today.getFullYear() - 1;
   return {
-    current: toSpan(new Date(year, 0, 1), today),
+    current: toSpan(currentStart, currentEnd),
     previous: toSpan(
-      new Date(previousYear, 0, 1),
+      new Date(currentStart.getFullYear() - 1, currentStart.getMonth(), 1),
       new Date(
         previousYear,
         today.getMonth(),
-        Math.min(
-          today.getDate(),
-          daysInMonth(previousYear, today.getMonth()),
-        ),
+        Math.min(today.getDate(), daysInMonth(previousYear, today.getMonth())),
       ),
     ),
   };

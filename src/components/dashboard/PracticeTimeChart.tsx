@@ -30,11 +30,14 @@ const gapFormatter = new Intl.NumberFormat("es-ES", {
 export function PracticeTimeChart({
   history,
   today,
+  period,
+  onPeriodChange,
 }: {
   history: SessionRecord[];
   today: Date;
+  period: PracticeChartPeriod;
+  onPeriodChange: (period: PracticeChartPeriod) => void;
 }) {
-  const [period, setPeriod] = useState<PracticeChartPeriod>("week");
   const dashboard = useI18nSection("dashboard");
   const [tooltip, setTooltip] = useState<ChartTooltip | null>(null);
   const chartContainerRef = useRef<HTMLElement>(null);
@@ -153,7 +156,7 @@ export function PracticeTimeChart({
         </div>
         <PeriodSelector
           period={period}
-          onChange={setPeriod}
+          onChange={onPeriodChange}
           ariaLabel={dashboard.periodAria}
         />
       </div>

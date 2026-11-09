@@ -50,29 +50,38 @@ function emptySkillMinutes(): Record<PracticeSkill, number> {
   return { technique: 0, theory: 0, repertoire: 0, lick: 0, improvisation: 0 };
 }
 
-export function getYearlyHeatmapData(
-  year: number,
+function addDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+/** Un `DailyStats` por cada día del rango inclusivo, con la práctica volcada. */
+export function getHeatmapData(
+  startDateKey: string,
+  endDateKey: string,
   history: SessionRecord[],
 ): DailyStats[] {
-  if (!Number.isInteger(year)) {
-    throw new RangeError("El año debe ser un entero.");
-  }
+  const start = parseDateKey(startDateKey);
+  const end = parseDateKey(endDateKey);
+  if (start > end) return [];
 
-  const daysInYear =
-    (Date.UTC(year + 1, 0, 1) - Date.UTC(year, 0, 1)) / 86_400_000;
-  const days = Array.from({ length: daysInYear }, (_, index) => {
-    const date = new Date(year, 0, index + 1);
-    return {
-      dateKey: toDateKey(date),
+  const days: DailyStats[] = [];
+  for (
+    let cursor = start;
+    toDateKey(cursor) <= endDateKey;
+    cursor = addDays(cursor, 1)
+  ) {
+    days.push({
+      dateKey: toDateKey(cursor),
       sessionCount: 0,
       totalMinutes: 0,
       averageBpm: 0,
       skillMinutes: emptySkillMinutes(),
-      bpmTotal: 0,
-      bpmSessionCount: 0,
-    };
-  });
+    });
+  }
   const statsByDate = new Map(days.map((day) => [day.dateKey, day]));
+  const bpmTotals = new Map<string, { total: number; count: number }>();
 
   for (const session of history) {
     const dateKey = toDateKey(new Date(session.startedAt));
@@ -82,20 +91,22 @@ export function getYearlyHeatmapData(
     stats.sessionCount += 1;
     stats.totalMinutes += session.durationSeconds / 60;
     if (session.averageBpm > 0) {
-      stats.bpmTotal += session.averageBpm;
-      stats.bpmSessionCount += 1;
+      const bpm = bpmTotals.get(dateKey) ?? { total: 0, count: 0 };
+      bpm.total += session.averageBpm;
+      bpm.count += 1;
+      bpmTotals.set(dateKey, bpm);
     }
     for (const skill of PRACTICE_SKILLS) {
       stats.skillMinutes[skill] += session.skillSeconds[skill] / 60;
     }
   }
 
-  return days.map(({ bpmTotal, bpmSessionCount, ...day }) => ({
-    ...day,
-    averageBpm: bpmSessionCount
-      ? Math.round(bpmTotal / bpmSessionCount)
-      : 0,
-  }));
+  for (const day of days) {
+    const bpm = bpmTotals.get(day.dateKey);
+    day.averageBpm = bpm?.count ? Math.round(bpm.total / bpm.count) : 0;
+  }
+
+  return days;
 }
 
 export function getSessionsForWeek(
@@ -169,52 +180,75 @@ export function getPracticeWeekDays(
 }
 
 /**
- * Etiqueta de mes para cada columna de la rejilla anual. Solo la primera
- * columna de un mes lleva nombre; el resto quedan vacías para no repetirlo.
+ * Etiqueta de mes para cada columna de la rejilla. Solo la primera columna de
+ * un mes lleva nombre; la primera y la que cambia de año añaden el año.
  */
 export function getMonthMarkers(
-  year: number,
+  startDateKey: string,
+  endDateKey: string,
   weekCount: number,
   firstWeekday: number,
   locale: string,
 ): string[] {
   const markers = Array<string>(weekCount).fill("");
-  for (let monthIndex = 0; monthIndex < 12; monthIndex += 1) {
-    const dayOfYear =
-      (Date.UTC(year, monthIndex, 1) - Date.UTC(year, 0, 1)) / 86_400_000;
-    const weekIndex = Math.floor((firstWeekday + dayOfYear) / 7);
-    markers[weekIndex] = new Intl.DateTimeFormat(locale, {
+  const start = parseDateKey(startDateKey);
+  const end = parseDateKey(endDateKey);
+  let previousYear: number | null = null;
+  let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+  let isFirst = true;
+
+  while (cursor <= end) {
+    const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const dayOffset = Math.round(
+      (Date.UTC(
+        monthStart.getFullYear(),
+        monthStart.getMonth(),
+        monthStart.getDate(),
+      ) -
+        Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())) /
+        86_400_000,
+    );
+    const weekIndex = Math.floor((firstWeekday + dayOffset) / 7);
+    const monthLabel = new Intl.DateTimeFormat(locale, {
       month: "short",
     })
-      .format(new Date(year, monthIndex, 1))
+      .format(monthStart)
       .replace(/\.$/, "");
+    const yearChanged = previousYear !== null && monthStart.getFullYear() !== previousYear;
+    markers[weekIndex] =
+      isFirst || yearChanged
+        ? `${monthLabel} ${monthStart.getFullYear()}`
+        : monthLabel;
+
+    previousYear = monthStart.getFullYear();
+    isFirst = false;
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
   }
 
   return markers;
 }
 
 /**
- * Celdas de la rejilla anual, de la primera a la última semana del año. Las
- * posiciones que caen fuera del año son `null` para que la rejilla cuadre en
+ * Celdas de la rejilla, de la primera a la última semana del rango. Las
+ * posiciones que caen fuera del rango son `null` para que la rejilla cuadre en
  * columnas de siete.
  */
 export function createCalendarCells(
-  year: number,
+  startDateKey: string,
   weekCount: number,
   firstWeekday: number,
   days: DailyStats[],
   statsByDate: Map<string, DailyStats>,
   sessionsByDate: Map<string, SessionRecord[]>,
 ): CalendarCell[] {
-  const yearStart = new Date(year, 0, 1);
+  const start = parseDateKey(startDateKey);
   return Array.from({ length: weekCount * 7 }, (_, index) => {
     const weekIndex = Math.floor(index / 7);
     const weekdayIndex = index % 7;
     const dayOffset = weekIndex * 7 + weekdayIndex - firstWeekday;
     if (dayOffset < 0 || dayOffset >= days.length) return null;
 
-    const date = new Date(yearStart);
-    date.setDate(yearStart.getDate() + dayOffset);
+    const date = addDays(start, dayOffset);
     const dateKey = toDateKey(date);
     return {
       dateKey,
@@ -226,21 +260,21 @@ export function createCalendarCells(
 
 /**
  * Clave del día al que hay que desplazar el calendario al abrirse: la última
- * sesión del año, o si no hay ninguna, el último día con minutos acumulados.
- * `undefined` cuando el año no tiene práctica.
+ * sesión del rango, o si no hay ninguna, el último día con minutos acumulados.
+ * `undefined` cuando el rango no tiene práctica.
  */
 export function getLatestPracticeDateKey(
   history: SessionRecord[],
   days: DailyStats[],
-  year: number,
 ): string | undefined {
-  const yearSessions = history
-    .filter((session) => new Date(session.startedAt).getFullYear() === year)
+  const dateKeys = new Set(days.map((day) => day.dateKey));
+  const rangeSessions = history
+    .filter((session) => dateKeys.has(toDateKey(new Date(session.startedAt))))
     .sort(
       (a, b) =>
         new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
     );
-  if (yearSessions[0]) return toDateKey(new Date(yearSessions[0].startedAt));
+  if (rangeSessions[0]) return toDateKey(new Date(rangeSessions[0].startedAt));
 
   return [...days]
     .filter((day) => day.totalMinutes > 0)

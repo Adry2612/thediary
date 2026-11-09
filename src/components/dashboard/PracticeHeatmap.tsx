@@ -113,7 +113,7 @@ export function PracticeHeatmap({
           </div>
           <div
             role="group"
-             aria-label={`${calendar.yearDays} ${monthLabel}`}
+             aria-label={`${calendar.monthDays} ${monthLabel}`}
             className="grid grid-flow-col grid-rows-7 gap-1"
             style={{
               gridTemplateColumns: `repeat(${weekCount}, minmax(0, 1fr))`,
