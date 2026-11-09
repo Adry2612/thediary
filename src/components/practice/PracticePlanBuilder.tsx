@@ -11,6 +11,7 @@ import {
   clonePracticePhases,
   createPracticePhase,
   getPracticePlanDuration,
+  getRoutineSaveTarget,
   normalizeRepertoirePhaseNames,
 } from "@/utils/practice-plan";
 import {
@@ -70,7 +71,12 @@ export function PracticePlanBuilder({
     rememberGuitar,
     showSelector: showGuitarSelector,
   } = usePracticeGuitar({ explicitId: initialGuitarId, guitars });
-  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState(
+    initialTemplateId ?? "",
+  );
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(
+    initialTemplateId ?? null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [saveFeedback, setSaveFeedback] = useState<{
     type: "success" | "error";
@@ -102,6 +108,7 @@ export function PracticePlanBuilder({
 
     appliedTemplateRef.current = initialTemplateId;
     setSelectedTemplateId(template.id);
+    setEditingTemplateId(template.id);
     setName(template.name);
     setPhases(
       normalizeRepertoirePhaseNames(
@@ -139,6 +146,7 @@ export function PracticePlanBuilder({
 
   function selectTemplate(template: PracticeTemplate) {
     setSelectedTemplateId(template.id);
+    if (editingTemplateId !== null) setEditingTemplateId(template.id);
     setName(template.name);
     setPhases(
       normalizeRepertoirePhaseNames(
@@ -185,8 +193,10 @@ export function PracticePlanBuilder({
   function handleSaveTemplate() {
     if (!validateCurrentPlan()) return;
 
-    const templateId = selectedTemplateId || createId();
-    const isUpdate = Boolean(selectedTemplateId);
+    const { id: templateId, isUpdate } = getRoutineSaveTarget(
+      editingTemplateId,
+      createId(),
+    );
 
     try {
       saveTemplate({
@@ -203,6 +213,7 @@ export function PracticePlanBuilder({
         .templates.some((template) => template.id === templateId);
       if (!wasStored) throw new Error(text.templateSaveError);
 
+      setEditingTemplateId(templateId);
       setSelectedTemplateId(templateId);
       setSaveFeedback({
         type: "success",
@@ -231,8 +242,9 @@ export function PracticePlanBuilder({
   }
 
   function removeTemplate() {
-    if (!selectedTemplateId) return;
-    deleteTemplate(selectedTemplateId);
+    if (!editingTemplateId) return;
+    deleteTemplate(editingTemplateId);
+    setEditingTemplateId(null);
     setSelectedTemplateId("");
   }
 
@@ -264,6 +276,7 @@ export function PracticePlanBuilder({
                     return;
                   }
                   setSelectedTemplateId("");
+                  setEditingTemplateId(null);
                 }}
                 options={[
                    { value: "", label: text.newPlan },
@@ -345,7 +358,7 @@ export function PracticePlanBuilder({
            {text.addBlock}
         </Button>
         <div className="flex flex-wrap gap-2">
-          {selectedTemplateId && (
+          {editingTemplateId && (
             <Button type="button" onClick={removeTemplate}>
                <TrashIcon className="size-4" />
                {text.deleteTemplate}

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  getSkillSecondsFromPhases,
   shouldSignalBlockEnd,
   synchronizePracticeTimer,
   type PracticeTimerPlanItem,
@@ -168,12 +169,12 @@ export function usePracticeTimer(
 
   const completeSession = useCallback(
     (runtime: PracticeTimerRuntime, completed: boolean) => {
-      const skillSeconds = Object.fromEntries(
-        Object.entries(runtime.skillElapsedMs).map(([skill, milliseconds]) => [
-          skill,
-          Math.floor(milliseconds / 1000),
-        ]),
-      ) as Record<PracticeSkill, number>;
+      // El reparto por categoría se deriva de los bloques finales: si el bloque
+      // en curso cambió de categoría, todo su tiempo cuenta para la nueva.
+      const skillSeconds = getSkillSecondsFromPhases(
+        phasePlan,
+        runtime.phaseElapsedTotalsMs,
+      );
 
       setIsTargetReached(false);
       clearStoredTimer();
@@ -190,6 +191,7 @@ export function usePracticeTimer(
             (runtime.phaseElapsedTotalsMs[index] ?? 0) / 1000,
           ),
           lickId: phase.lickId,
+          notes: phase.notes,
         })),
       });
     },

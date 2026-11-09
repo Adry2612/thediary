@@ -221,6 +221,8 @@ export interface PracticePhase {
   skill: PracticeSkill;
   exercises?: string[];
   resources?: PracticeResource[];
+  /** Notas del bloque; pre-rellenan las notas de la práctica al terminar. */
+  notes?: string;
   repertoireItemId?: string;
   repertoirePartId?: string;
   /** Canción del catálogo elegida antes de añadirla al repertorio. */
@@ -282,6 +284,8 @@ export interface PracticeTimerPhaseResult {
   skill: PracticeSkill;
   elapsedSeconds: number;
   lickId?: string;
+  /** Notas escritas para el bloque durante la práctica. */
+  notes?: string;
 }
 
 export interface DailyStats {

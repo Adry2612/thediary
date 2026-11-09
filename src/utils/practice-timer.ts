@@ -5,6 +5,37 @@ export type PracticeTimerPlanItem = {
   durationMs: number;
 };
 
+/**
+ * Reparte el tiempo acumulado por bloque entre las categorías finales. Si un
+ * bloque cambió de categoría durante la práctica, todo su tiempo cuenta para la
+ * categoría con la que termina, de modo que el resumen y los bloques guardados
+ * cuentan la misma historia.
+ */
+export function getSkillSecondsFromPhases(
+  phasePlan: readonly PracticeTimerPlanItem[],
+  phaseElapsedTotalsMs: readonly number[],
+): Record<PracticeSkill, number> {
+  const milliseconds: Record<PracticeSkill, number> = {
+    technique: 0,
+    theory: 0,
+    repertoire: 0,
+    lick: 0,
+    improvisation: 0,
+  };
+
+  phasePlan.forEach(({ phase }, index) => {
+    milliseconds[phase.skill] += phaseElapsedTotalsMs[index] ?? 0;
+  });
+
+  return {
+    technique: Math.floor(milliseconds.technique / 1000),
+    theory: Math.floor(milliseconds.theory / 1000),
+    repertoire: Math.floor(milliseconds.repertoire / 1000),
+    lick: Math.floor(milliseconds.lick / 1000),
+    improvisation: Math.floor(milliseconds.improvisation / 1000),
+  };
+}
+
 export type PracticeTimerRuntime = {
   elapsedMs: number;
   phaseElapsedMs: number;

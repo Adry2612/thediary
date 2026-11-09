@@ -10,6 +10,18 @@ El editor de una práctica guardada vive en `/dashboard/practice/[date]`, en el 
 - El total de la cabecera de bloques se deriva de los segundos editados y se muestra también como reloj.
 - El tiempo planificado sigue siendo un número entero de minutos.
 - Al guardar, la práctica conserva sus vínculos de repertorio (o la canción del catálogo pendiente), lick, material, BPM medio y tipo de guitarra.
+- Los bloques de técnica y de teoría usan el mismo buscador de catálogo que el editor de rutinas. Un nombre personalizado guardado antes sigue apareciendo como opción y se muestra tal como se guardó.
+- Los bloques de repertorio mantienen el buscador de repertorio y de catálogo externo.
+
+## Editar el bloque en curso
+
+- Durante una práctica activa, el icono de edición junto al título del bloque abre el editor del bloque actual.
+- Se pueden cambiar la categoría, el contenido vinculado (canción de repertorio o catálogo, técnica, teoría, lick o nombre libre), el tiempo planificado, el detalle del bloque y sus notas. Los demás bloques no cambian.
+- Los cambios se aplican solo al guardar y **no detienen ni reinician** el temporizador: el tiempo transcurrido, el metronómetro y una grabación activa siguen funcionando.
+- Si el nuevo tiempo planificado es menor que el tiempo ya transcurrido, el bloque sigue las reglas de espera o de tiempo extra que ya estuvieran configuradas.
+- Las notas del bloque se guardan con la práctica y pre-rellenan el campo de notas del resumen final, donde todavía se pueden cambiar o borrar.
+- Si un bloque cambia de categoría a mitad de práctica, todo su tiempo cuenta para la categoría con la que termina, tanto en el resumen por categoría como en el bloque guardado.
+- La rutina de origen no se modifica por editar el bloque; sigue aplicándose la oferta de actualización de vínculos al terminar.
 
 ## Canciones del catálogo en una práctica
 
@@ -26,6 +38,12 @@ Los bloques de repertorio pueden buscar tanto en el repertorio guardado como en 
 ## Guardar una rutina
 
 Guardar o actualizar una rutina confirma el resultado con un toast («Rutina guardada» o «Rutina actualizada», con su nombre) que se anuncia como estado y desaparece solo. Un fallo de guardado se muestra como error junto a las acciones y el editor conserva su contenido.
+
+- Al **crear una rutina nueva**, elegir una plantilla guardada copia su nombre, bloques y guitarra en el plan nuevo. La plantilla no queda marcada como la rutina que se edita.
+- Guardar ese plan crea una **rutina nueva** con identidad propia y deja la plantilla intacta. La plantilla y la rutina nueva aparecen las dos en la lista de rutinas guardadas.
+- Mientras la rutina nueva no se ha guardado, no se ofrece eliminar la plantilla de origen.
+- Al **editar una rutina existente**, guardar actualiza esa misma rutina. Un segundo guardado en el plan nuevo actualiza la rutina creada por el primero.
+- El nombre de la plantilla se mantiene como punto de partida editable; no se añade ningún sufijo automático y se permiten dos rutinas con el mismo nombre.
 
 ## Temporizador: tiempo extra, total y avisos
 

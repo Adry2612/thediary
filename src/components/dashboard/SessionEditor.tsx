@@ -6,6 +6,8 @@ import { TextField, TextArea } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { SearchIcon, TrashIcon } from "@/components/ui/icons";
 import { SongPickerDialog } from "@/components/practice/SongPickerDialog";
+import { TechniquePickerDialog } from "@/components/practice/TechniquePickerDialog";
+import { TheoryPickerDialog } from "@/components/practice/TheoryPickerDialog";
 import { PRACTICE_SKILL_LABELS } from "@/utils/dashboard-data";
 import {
   getCatalogSongChanges,
@@ -40,6 +42,9 @@ const SKILL_OPTIONS = PRACTICE_SKILLS.map((skill) => ({
   label: PRACTICE_SKILL_LABELS[skill],
 }));
 
+const pickerTriggerClass =
+  "mt-1 flex h-auto min-h-12 w-full items-center justify-between gap-3 border border-line bg-canvas px-4 py-3 text-left font-mono text-sm leading-tight text-ink transition hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg";
+
 function toNumberInput(value: string): number {
   const parsed = Number(value.replace(",", "."));
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
@@ -70,6 +75,12 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
   const [songPickerBlockId, setSongPickerBlockId] = useState<
     EditableSessionBlock["id"] | null
   >(null);
+  const [techniquePickerBlockId, setTechniquePickerBlockId] = useState<
+    EditableSessionBlock["id"] | null
+  >(null);
+  const [theoryPickerBlockId, setTheoryPickerBlockId] = useState<
+    EditableSessionBlock["id"] | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const { draft, clocks, fieldErrors } = state;
   const repertoireSongs = repertoireItems.filter(
@@ -77,6 +88,12 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
   );
   const songPickerBlock = draft.blocks.find(
     (block) => block.id === songPickerBlockId,
+  );
+  const techniquePickerBlock = draft.blocks.find(
+    (block) => block.id === techniquePickerBlockId,
+  );
+  const theoryPickerBlock = draft.blocks.find(
+    (block) => block.id === theoryPickerBlockId,
   );
 
   const derivedSeconds = draft.blocks.reduce(
@@ -376,17 +393,53 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
                   </button>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <label className="block text-xs text-muted">
-                    Nombre del bloque
-                    <TextField
-                      value={block.name}
-                      maxLength={80}
-                      onChange={(event) =>
-                        updateBlock(block.id, { name: event.target.value })
-                      }
-                      className="mt-1"
-                    />
-                  </label>
+                  {block.skill === "technique" ? (
+                    <div className="block text-xs text-muted">
+                      {practiceText.techniqueName}
+                      <button
+                        type="button"
+                        onClick={() => setTechniquePickerBlockId(block.id)}
+                        aria-label={`${practiceText.techniqueName}: ${
+                          block.name.trim() || practiceText.selectTechnique
+                        }`}
+                        className={pickerTriggerClass}
+                      >
+                        <span className="min-w-0 whitespace-normal break-words">
+                          {block.name.trim() || practiceText.selectTechnique}
+                        </span>
+                        <SearchIcon className="size-4 shrink-0 text-muted" />
+                      </button>
+                    </div>
+                  ) : block.skill === "theory" ? (
+                    <div className="block text-xs text-muted">
+                      {practiceText.theoryTopic}
+                      <button
+                        type="button"
+                        onClick={() => setTheoryPickerBlockId(block.id)}
+                        aria-label={`${practiceText.theoryTopic}: ${
+                          block.name.trim() || practiceText.selectTheoryTopic
+                        }`}
+                        className={pickerTriggerClass}
+                      >
+                        <span className="min-w-0 whitespace-normal break-words">
+                          {block.name.trim() || practiceText.selectTheoryTopic}
+                        </span>
+                        <SearchIcon className="size-4 shrink-0 text-muted" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="block text-xs text-muted">
+                      Nombre del bloque
+                      <TextField
+                        value={block.name}
+                        maxLength={80}
+                        onChange={(event) =>
+                          updateBlock(block.id, { name: event.target.value })
+                        }
+                        className="mt-1"
+                      />
+                    </label>
+                  )}
                   <div className="block text-xs text-muted">
                     Categoría
                     <SelectField
@@ -558,6 +611,26 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
           onClose={() => setSongPickerBlockId(null)}
         />
       )}
+      <TechniquePickerDialog
+        open={Boolean(techniquePickerBlock)}
+        selectedTechnique={techniquePickerBlock?.name}
+        onSelect={(technique) => {
+          if (techniquePickerBlock) {
+            updateBlock(techniquePickerBlock.id, { name: technique });
+          }
+        }}
+        onClose={() => setTechniquePickerBlockId(null)}
+      />
+      <TheoryPickerDialog
+        open={Boolean(theoryPickerBlock)}
+        selectedTheory={theoryPickerBlock?.name}
+        onSelect={(theory) => {
+          if (theoryPickerBlock) {
+            updateBlock(theoryPickerBlock.id, { name: theory });
+          }
+        }}
+        onClose={() => setTheoryPickerBlockId(null)}
+      />
     </form>
   );
 }

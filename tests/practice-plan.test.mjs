@@ -5,6 +5,7 @@ import {
   createPracticePhase,
   getPracticePlanDuration,
   getPracticePlanKey,
+  getRoutineSaveTarget,
   normalizePracticePhaseLinks,
   normalizeRepertoirePhaseNames,
 } from "../src/utils/practice-plan.ts";
@@ -191,4 +192,36 @@ test("the plan key changes with structure but not with block content", () => {
     key,
   );
   assert.notEqual(getPracticePlanKey([phases[0]]), key);
+});
+
+test("a new routine creates its own identity even after loading a template", () => {
+  assert.deepEqual(getRoutineSaveTarget(null, "new-id"), {
+    id: "new-id",
+    isUpdate: false,
+  });
+  assert.deepEqual(getRoutineSaveTarget(undefined, "new-id"), {
+    id: "new-id",
+    isUpdate: false,
+  });
+});
+
+test("an existing routine keeps its identity when saved", () => {
+  assert.deepEqual(getRoutineSaveTarget("routine-1", "new-id"), {
+    id: "routine-1",
+    isUpdate: true,
+  });
+});
+
+test("clones keep block notes", () => {
+  const [clone] = clonePracticePhases([
+    {
+      id: "phase-1",
+      name: "Técnica",
+      durationMinutes: 10,
+      skill: "technique",
+      notes: "Mantener la muñeca relajada.",
+    },
+  ]);
+
+  assert.equal(clone.notes, "Mantener la muñeca relajada.");
 });

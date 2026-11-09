@@ -64,7 +64,11 @@ export function PracticeCompletionDialog({
 
     refresh();
     setSessionNotes("");
-    setPhaseNotes({});
+    setPhaseNotes(
+      Object.fromEntries(
+        result.phases.map((phase, index) => [index, phase.notes ?? ""]),
+      ),
+    );
     setUpdateRoutine(true);
     setIsNotesOpen(false);
     setMood(null);

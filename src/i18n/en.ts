@@ -828,6 +828,16 @@ export const en: Dict = {
     invalidRepeat:
       'The saved session has unlinked blocks. Edit it and complete its links before repeating it.',
     currentBlock: 'Current block',
+    editBlock: 'Edit block',
+    editBlockTitle: 'Edit current block',
+    editBlockDescription:
+      'Changes apply to this practice. The timer keeps running.',
+    closeEditBlock: 'Close the block editor',
+    saveBlock: 'Save block',
+    blockUpdated: 'Block updated',
+    blockNotes: 'Block notes',
+    blockNameRequired: 'Enter a name for the block.',
+    invalidBlockDuration: 'Use a duration between 1 and 240 minutes.',
     category: 'Category',
     guitarType: 'Guitar type',
     guitar: 'Guitar',

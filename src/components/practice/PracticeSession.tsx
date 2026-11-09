@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { PracticeCompletionDialog } from "@/components/practice/PracticeCompletionDialog";
+import { PracticeBlockEditDialog } from "@/components/practice/PracticeBlockEditDialog";
 import { FinishPracticeDialog } from "@/components/practice/FinishPracticeDialog";
 import { MetronomeCard } from "@/components/practice/MetronomeCard";
 import { PracticeAudioRecorder } from "@/components/practice/PracticeAudioRecorder";
@@ -16,6 +17,7 @@ import {
 import { PracticeMaterials } from "@/components/practice/PracticeMaterials";
 import { LickTab } from "@/components/licks/LickTab";
 import { Card } from "@/components/ui/Card";
+import { Toast } from "@/components/ui/Toast";
 import { TimerCard } from "@/components/practice/TimerCard";
 import { UpcomingBlocks } from "@/components/practice/UpcomingBlocks";
 import { useAnimatedPresence } from "@/hooks/useAnimatedPresence";
@@ -64,6 +66,7 @@ import {
 import { usePracticeStore } from "@/stores/usePracticeStore";
 import type {
   PracticeMetricValue,
+  PracticePhase,
   PracticeTimerResult,
   RepertoireItem,
 } from "@/types/practice";
@@ -80,6 +83,10 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const { id: sessionId, name, phases } = session;
   const [isCompleted, setIsCompleted] = useState(false);
   const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
+  const [editingPhaseId, setEditingPhaseId] = useState<
+    PracticePhase["id"] | null
+  >(null);
+  const [blockNotice, setBlockNotice] = useState<string | null>(null);
   const [pendingResult, setPendingResult] =
     useState<PracticeTimerResult | null>(null);
   const {
@@ -401,6 +408,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   }
 
   const currentPhase = phases[timer.currentPhaseIndex];
+  const editingPhase = editingPhaseId
+    ? phases.find((phase) => phase.id === editingPhaseId)
+    : undefined;
   const isPlayPauseDisabled =
     !currentPhase ||
     isCompleted ||
@@ -448,6 +458,18 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     updatePhase(currentPhase.id, getCatalogSongChanges(candidate));
   }
 
+  function openBlockEditor() {
+    if (!currentPhase) return;
+    setEditingPhaseId(currentPhase.id);
+  }
+
+  function saveBlockEdit(changes: Partial<PracticePhase>) {
+    if (!editingPhaseId) return;
+    updatePhase(editingPhaseId, changes);
+    setEditingPhaseId(null);
+    setBlockNotice(text.blockUpdated);
+  }
+
   const timerCard = (
     <div ref={timerCardRef} className="h-full min-w-0">
       <TimerCard
@@ -472,6 +494,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         repertoireSongs={repertoireSongs}
         onChangeRepertoireSong={changeCurrentSong}
         onChangeCatalogSong={changeCurrentCatalogSong}
+        onEditBlock={openBlockEditor}
       />
     </div>
   );
@@ -567,6 +590,21 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
 
   return (
     <>
+      {editingPhase && (
+        <PracticeBlockEditDialog
+          open
+          phase={editingPhase}
+          repertoireItems={repertoireItems}
+          licks={licks}
+          onSave={saveBlockEdit}
+          onClose={() => setEditingPhaseId(null)}
+        />
+      )}
+      <Toast
+        message={blockNotice ?? ""}
+        open={Boolean(blockNotice)}
+        onDismiss={() => setBlockNotice(null)}
+      />
       <PracticeCompletionDialog
         result={pendingResult}
         isVisible={isPracticeRoute}

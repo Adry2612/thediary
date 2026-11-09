@@ -142,3 +142,62 @@ test("keeps the specific guitar of the running practice", () => {
 
   useActivePracticeSessionStore.getState().clearActiveSession();
 });
+
+test("keeps edited block notes after reloading the active session", () => {
+  const storage = new Map();
+  const previousWindow = globalThis.window;
+  globalThis.window = {
+    localStorage: {
+      getItem: (key) => storage.get(key) ?? null,
+      setItem: (key, value) => storage.set(key, value),
+      removeItem: (key) => storage.delete(key),
+    },
+  };
+
+  try {
+    useActivePracticeSessionStore.getState().setActiveSession({
+      id: "practice-session-notes",
+      name: "Con notas",
+      phases: [
+        {
+          id: "a",
+          name: "Técnica",
+          durationMinutes: 5,
+          skill: "technique",
+        },
+        {
+          id: "b",
+          name: "Canción",
+          durationMinutes: 10,
+          skill: "repertoire",
+        },
+      ],
+    });
+
+    useActivePracticeSessionStore.getState().updatePhase("a", {
+      notes: "Mantener la muñeca relajada.",
+    });
+
+    assert.equal(
+      useActivePracticeSessionStore.getState().activeSession?.phases[0].notes,
+      "Mantener la muñeca relajada.",
+    );
+
+    useActivePracticeSessionStore.setState({
+      activeSession: null,
+      hasHydrated: false,
+    });
+    useActivePracticeSessionStore.getState().hydrateActiveSession();
+
+    const restored = useActivePracticeSessionStore.getState().activeSession;
+    assert.equal(restored?.phases[0].notes, "Mantener la muñeca relajada.");
+    assert.equal(restored?.phases[1].notes, undefined);
+  } finally {
+    useActivePracticeSessionStore.getState().clearActiveSession();
+    if (previousWindow === undefined) {
+      delete globalThis.window;
+    } else {
+      globalThis.window = previousWindow;
+    }
+  }
+});

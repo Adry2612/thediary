@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  getSkillSecondsFromPhases,
   shouldSignalBlockEnd,
   synchronizePracticeTimer,
 } from "../src/utils/practice-timer.ts";
@@ -221,4 +222,37 @@ test("does not signal again when resuming a block that is already in overtime", 
     shouldSignalBlockEnd(paused, resumed),
     false,
   );
+});
+
+test("attributes the whole block to the category it has when the practice ends", () => {
+  const finalPlan = [
+    {
+      phase: { id: "warmup", name: "Técnica", skill: "theory" },
+      durationMs: 1000,
+    },
+    { phase: { id: "song", name: "Repertorio", skill: "repertoire" }, durationMs: 1000 },
+  ];
+
+  assert.deepEqual(getSkillSecondsFromPhases(finalPlan, [60_000, 30_000]), {
+    technique: 0,
+    theory: 60,
+    repertoire: 30,
+    lick: 0,
+    improvisation: 0,
+  });
+});
+
+test("adds the milliseconds of blocks in the same category before flooring", () => {
+  const sameSkillPlan = [
+    { phase: { id: "a", name: "A", skill: "technique" }, durationMs: 1000 },
+    { phase: { id: "b", name: "B", skill: "technique" }, durationMs: 1000 },
+  ];
+
+  assert.deepEqual(getSkillSecondsFromPhases(sameSkillPlan, [500, 500]), {
+    technique: 1,
+    theory: 0,
+    repertoire: 0,
+    lick: 0,
+    improvisation: 0,
+  });
 });

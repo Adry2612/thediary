@@ -835,6 +835,16 @@ export const es: Dict = {
     invalidRepeat:
       'La sesión guardada tiene bloques sin vincular. Edítala y completa sus vínculos antes de repetirla.',
     currentBlock: 'Bloque actual',
+    editBlock: 'Editar bloque',
+    editBlockTitle: 'Editar el bloque actual',
+    editBlockDescription:
+      'Los cambios se aplican a esta práctica. El temporizador sigue corriendo.',
+    closeEditBlock: 'Cerrar el editor del bloque',
+    saveBlock: 'Guardar bloque',
+    blockUpdated: 'Bloque actualizado',
+    blockNotes: 'Notas del bloque',
+    blockNameRequired: 'Escribe un nombre para el bloque.',
+    invalidBlockDuration: 'Usa una duración entre 1 y 240 minutos.',
     category: 'Categoría',
     guitarType: 'Tipo de guitarra',
     guitar: 'Guitarra',

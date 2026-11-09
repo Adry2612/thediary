@@ -94,6 +94,21 @@ export function getPracticePlanDuration(
 }
 
 /**
+ * Decide si guardar una rutina actualiza una existente o crea una nueva.
+ * `editingTemplateId` solo está presente cuando la rutina ya existe; cargar
+ * una plantilla en un plan nuevo no la convierte en la rutina editada.
+ */
+export function getRoutineSaveTarget(
+  editingTemplateId: string | null | undefined,
+  newId: string,
+): { id: string; isUpdate: boolean } {
+  if (editingTemplateId) {
+    return { id: editingTemplateId, isUpdate: true };
+  }
+  return { id: newId, isUpdate: false };
+}
+
+/**
  * Firma estructural de un plan: cambia al añadir, quitar o redimensionar
  * bloques, pero no cuando solo cambia su contenido (canción, lick, material o
  * nombre). El temporizador usa esta firma para decidir cuándo reiniciarse.

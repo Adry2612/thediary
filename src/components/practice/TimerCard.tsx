@@ -10,7 +10,7 @@ import { ModalDialog } from "@/components/ui/ModalDialog";
 import { ToggleChip } from "@/components/ui/ToggleChip";
 import { ToggleGroup } from "@/components/ui/ToggleGroup";
 import { Toast } from "@/components/ui/Toast";
-import { SearchIcon, SettingsIcon } from "@/components/ui/icons";
+import { SearchIcon, SettingsIcon, EditIcon } from "@/components/ui/icons";
 import { SongPickerDialog } from "@/components/practice/SongPickerDialog";
 import { useDialogModal } from "@/hooks/useDialogModal";
 import {
@@ -50,6 +50,8 @@ type TimerCardProps = {
   repertoireSongs?: RepertoireItem[];
   onChangeRepertoireSong?: (songId: string) => void;
   onChangeCatalogSong?: (candidate: CatalogCandidate) => void;
+  /** Abre el editor del bloque en curso. */
+  onEditBlock?: () => void;
 };
 
 export function TimerCard({
@@ -69,6 +71,7 @@ export function TimerCard({
   repertoireSongs,
   onChangeRepertoireSong,
   onChangeCatalogSong,
+  onEditBlock,
 }: TimerCardProps) {
   const [isOptionsDialogOpen, setIsOptionsDialogOpen] = useState(false);
   const [isSongPickerOpen, setIsSongPickerOpen] = useState(false);
@@ -209,6 +212,7 @@ export function TimerCard({
     !isCompleted &&
     (Boolean(repertoireSongs?.length) || Boolean(onChangeCatalogSong)) &&
     Boolean(onChangeRepertoireSong || onChangeCatalogSong);
+  const canEditBlock = Boolean(currentPhase) && !isCompleted && Boolean(onEditBlock);
 
   return (
     <>
@@ -240,19 +244,30 @@ export function TimerCard({
             <h2 className="min-w-0 break-words text-center font-sans text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">
               {title ?? currentPhase?.name ?? timerText.endPractice}
             </h2>
-            {canChangeSong ? (
-              <button
-                type="button"
-                onClick={() => setIsSongPickerOpen(true)}
-                aria-label={practiceText.changeSong}
-                title={practiceText.changeSong}
-                className="ml-3 flex size-9 shrink-0 items-center justify-center justify-self-start rounded-md border border-line text-muted transition hover:border-white/20 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
-              >
-                <SearchIcon className="size-4" />
-              </button>
-            ) : (
-              <span aria-hidden="true" />
-            )}
+            <div className="ml-3 flex shrink-0 items-center justify-self-start gap-1.5">
+              {canChangeSong && (
+                <button
+                  type="button"
+                  onClick={() => setIsSongPickerOpen(true)}
+                  aria-label={practiceText.changeSong}
+                  title={practiceText.changeSong}
+                  className="flex size-9 items-center justify-center rounded-md border border-line text-muted transition hover:border-white/20 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
+                >
+                  <SearchIcon className="size-4" />
+                </button>
+              )}
+              {canEditBlock && (
+                <button
+                  type="button"
+                  onClick={onEditBlock}
+                  aria-label={practiceText.editBlock}
+                  title={practiceText.editBlock}
+                  className="flex size-9 items-center justify-center rounded-md border border-line text-muted transition hover:border-white/20 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60"
+                >
+                  <EditIcon className="size-4" />
+                </button>
+              )}
+            </div>
           </div>
           {currentPhase && artist?.trim() && (
             <p className="mt-2 w-full text-center text-sm text-muted">
