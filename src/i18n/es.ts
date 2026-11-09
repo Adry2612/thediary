@@ -288,7 +288,7 @@ export const es: Dict = {
     noPractice: 'aún no hay práctica registrada',
     practiceHours: 'Horas de práctica',
     historyTime: 'tiempo practicado en el periodo',
-    calendarNote: 'El calendario muestra los últimos 12 meses',
+    calendarNote: 'El calendario muestra todo',
     wellbeingTitle: 'Bienestar',
     wellbeingDescription:
       'Cómo empezabas tus prácticas en el periodo, frente al anterior.',
@@ -298,7 +298,7 @@ export const es: Dict = {
     wellbeingSample: 'Prácticas que lo respondieron',
     wellbeingNoData: 'Sin datos en el periodo',
     wellbeingNoDataDescription:
-      'Actívalo en Configuración y aparecerá tras tu próxima práctica.',
+      'Aparecerá tras tu próxima práctica.',
     wellbeingNoDataPeriod: 'Sin datos en este periodo',
     wellbeingNoComparison: 'Sin comparación con el periodo anterior',
     wellbeingTrendUp: 'Mejora',
@@ -678,7 +678,7 @@ export const es: Dict = {
     between25and49: 'Del 25% al 49% del objetivo',
     between50and99: 'Del 50% al 99% del objetivo',
     above100: '100% o más del objetivo',
-    yearDays: 'Días de práctica de los últimos 12 meses',
+    yearDays: 'Días de práctica de todo',
     monthDays: 'Días de práctica de',
     previousMonth: 'Mes anterior',
     nextMonth: 'Mes siguiente',

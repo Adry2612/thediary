@@ -286,7 +286,7 @@ export const en: Dict = {
     noPractice: 'no practice recorded yet',
     practiceHours: 'Practice hours',
     historyTime: 'time practiced in the period',
-    calendarNote: 'The calendar shows the last 12 months',
+    calendarNote: 'The calendar shows all of',
     wellbeingTitle: 'Wellbeing',
     wellbeingDescription:
       'How you started your practices in the period, compared with the previous one.',
@@ -296,7 +296,7 @@ export const en: Dict = {
     wellbeingSample: 'Practices that answered',
     wellbeingNoData: 'No data in the period',
     wellbeingNoDataDescription:
-      'Turn it on in Settings and it will appear after your next practice.',
+      'It will appear after your next practice.',
     wellbeingNoDataPeriod: 'No data in this period',
     wellbeingNoComparison: 'No comparison with the previous period',
     wellbeingTrendUp: 'Up',
@@ -672,7 +672,7 @@ export const en: Dict = {
     between25and49: '25% to 49% of goal',
     between50and99: '50% to 99% of goal',
     above100: '100% or more of goal',
-    yearDays: 'Practice days in the last 12 months',
+    yearDays: 'Practice days across',
     monthDays: 'Practice days across',
     previousMonth: 'Previous month',
     nextMonth: 'Next month',

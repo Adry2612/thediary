@@ -175,9 +175,13 @@ function MetricSummary({
 export function PracticeWellbeing({
   history,
   today,
+  moodEnabled,
+  focusEnabled,
 }: {
   history: SessionRecord[];
   today: Date;
+  moodEnabled: boolean;
+  focusEnabled: boolean;
 }) {
   const dashboard = useI18nSection("dashboard");
   const { locale } = useI18n();
@@ -193,10 +197,18 @@ export function PracticeWellbeing({
     [history, period, today],
   );
   const selected = selectedIndex === null ? null : series[selectedIndex];
-  const hasValues = series.some((bucket) => bucket.mood || bucket.focus);
+  const hasValues = series.some(
+    (bucket) =>
+      (moodEnabled && bucket.mood !== null) ||
+      (focusEnabled && bucket.focus !== null),
+  );
   const metrics: Array<{ key: MetricKey; label: string }> = [
-    { key: "mood", label: dashboard.wellbeingMood },
-    { key: "focus", label: dashboard.wellbeingFocus },
+    ...(moodEnabled ?
+      [{ key: "mood" as const, label: dashboard.wellbeingMood }]
+    : []),
+    ...(focusEnabled ?
+      [{ key: "focus" as const, label: dashboard.wellbeingFocus }]
+    : []),
   ];
   const periodOptions = [
     { value: "week" as const, label: dashboard.periodWeek ?? dashboard.period },
@@ -208,7 +220,9 @@ export function PracticeWellbeing({
     setSelectedIndex(null);
   }, [period]);
 
-  if (!hasPracticeWellbeingData(history)) return null;
+  if ((!moodEnabled && !focusEnabled) || !hasPracticeWellbeingData(history)) {
+    return null;
+  }
 
   const plotWidth = CHART.width - CHART.left - CHART.right;
   const plotHeight = CHART.height - CHART.top - CHART.bottom;

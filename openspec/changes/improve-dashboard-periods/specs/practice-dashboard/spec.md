@@ -46,26 +46,6 @@ The dashboard SHALL show the longest run of consecutive calendar days with at le
 - **WHEN** assistive technology reaches the longest streak card
 - **THEN** it announces the label and the number of days
 
-### Requirement: The annual calendar covers the last twelve months
-
-The annual calendar SHALL show the twelve calendar months ending with the current month, from the first day of the month eleven months before today's month through today, and SHALL NOT show days after today. Month labels SHALL identify each month even when the window crosses a year boundary, and the calendar note SHALL name the rolling range instead of a single calendar year.
-
-#### Scenario: A window crossing a year boundary
-- **WHEN** today is 9 November 2026
-- **THEN** the calendar covers December 2025 to November 2026 and labels both years
-
-#### Scenario: The current day
-- **WHEN** the calendar is shown
-- **THEN** today is the last selectable day and no future day is drawn
-
-#### Scenario: A day outside the window
-- **WHEN** the history contains a practice older than twelve months or dated after today
-- **THEN** that day is not part of the calendar
-
-#### Scenario: Day detail and preview are unchanged
-- **WHEN** the user consults a day inside the rolling window
-- **THEN** the existing hover, focus, touch, preview and day-detail behaviour works as before
-
 ### Requirement: The top weekly summary keeps the calendar week
 
 The weekly summary at the top of the dashboard SHALL keep describing the current Monday-to-Sunday calendar week, including days after today, and SHALL NOT follow any dashboard period selector.
@@ -211,7 +191,7 @@ The practice rhythm card SHALL show, for the selected rolling window ending toda
 
 ### Requirement: The dashboard charts mood and focus over time
 
-The dashboard SHALL chart mood and focus over time on the same one-to-five scale used to record them, SHALL offer a week, month and year period over the rolling windows ending today, and SHALL leave an interval without responses as a gap instead of drawing it as a zero.
+The dashboard SHALL show the wellbeing card only when mood or focus is enabled in Settings and at least one of the enabled metrics has recorded data. It SHALL chart and summarize only the enabled metrics over time on the same one-to-five scale used to record them, SHALL offer a week, month and year period over the rolling windows ending today, and SHALL leave an interval without responses as a gap instead of drawing it as a zero.
 
 #### Scenario: The week period
 - **WHEN** the user selects the week period
@@ -234,15 +214,19 @@ The dashboard SHALL chart mood and focus over time on the same one-to-five scale
 - **THEN** the point shows the average of those values for that interval
 
 #### Scenario: Only one metric has data
-- **WHEN** the selected period has mood values but no focus values
-- **THEN** the mood series is drawn and the focus series shows an empty state instead of a flat line at zero
+- **WHEN** mood is enabled and has values while focus is disabled or has no values in the period
+- **THEN** only the mood series is drawn and no zero is drawn for focus
 
 #### Scenario: No wellbeing data in the period
-- **WHEN** the selected period has no mood or focus values and the history has some elsewhere
+- **WHEN** the selected period has no values for the enabled metrics and the history has some elsewhere
 - **THEN** the card keeps its place and period control and shows an empty state
 
+#### Scenario: Wellbeing metrics are off
+- **WHEN** neither mood nor focus is enabled in Settings
+- **THEN** the dashboard does not show the wellbeing card even if the history has old values
+
 #### Scenario: No wellbeing data at all
-- **WHEN** the history has never recorded mood or focus
+- **WHEN** the enabled metrics have never recorded a value
 - **THEN** the dashboard does not show the wellbeing card
 
 ### Requirement: Period comparisons cover the preceding window of the same length

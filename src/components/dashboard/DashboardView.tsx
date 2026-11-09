@@ -30,13 +30,14 @@ import {
 } from '@/utils/practice-analytics';
 import { getComparisonSpans } from '@/utils/period-comparison';
 import { getLocalDateKey } from '@/utils/local-date';
-import { hasPracticeWellbeingData } from '@/utils/practice-metrics';
+import { normalizePracticeMetricValue } from '@/utils/practice-metrics';
 import {
-  getHeatmapData,
   getPracticeWeekDays,
   getSessionsForWeek,
+  getYearlyHeatmapData,
   parseDateKey,
 } from '@/utils/practice-calendar';
+import { usePracticeFeedbackPreference } from '@/hooks/usePracticeFeedbackPreference';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { useAppData } from '@/components/providers/AppDataProvider';
 import { useI18nSection } from '@/i18n/I18nProvider';
@@ -55,6 +56,8 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const persistenceError = usePracticeStore((state) => state.persistenceError);
   const today = useMemo(() => parseDateKey(todayKey), [todayKey]);
+  const todayYear = today.getFullYear();
+  const { isMoodEnabled, isFocusEnabled } = usePracticeFeedbackPreference();
 
   const [rhythmPeriod, setRhythmPeriod] =
     useState<PracticeChartPeriod>('week');
@@ -64,17 +67,13 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     () => getComparisonSpans(rhythmPeriod, today).current,
     [rhythmPeriod, today],
   );
-  const yearRange = useMemo(
-    () => getComparisonSpans('year', today).current,
-    [today],
-  );
   const balanceRange = useMemo(
     () => getComparisonSpans(balancePeriod, today).current,
     [balancePeriod, today],
   );
   const yearlyDays = useMemo(
-    () => getHeatmapData(yearRange.startDate, yearRange.endDate, history),
-    [history, yearRange],
+    () => getYearlyHeatmapData(todayYear, history),
+    [history, todayYear],
   );
   const weeklySessions = useMemo(
     () => getSessionsForWeek(history, today),
@@ -128,9 +127,20 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     () => getPracticeStatistics(history, rhythmRange),
     [history, rhythmRange],
   );
-  const hasWellbeing = useMemo(
-    () => hasPracticeWellbeingData(history),
-    [history],
+  /**
+   * El gráfico de bienestar solo aparece cuando alguno de sus interruptores
+   * está activo y hay datos de esa métrica; si no, la tarjeta no se muestra.
+   */
+  const showWellbeing = useMemo(
+    () =>
+      history.some(
+        (session) =>
+          (isMoodEnabled &&
+            normalizePracticeMetricValue(session.mood) !== null) ||
+          (isFocusEnabled &&
+            normalizePracticeMetricValue(session.focus) !== null),
+      ),
+    [history, isFocusEnabled, isMoodEnabled],
   );
   const mostPracticedSkill = practiceStatistics.mostPracticedSkill;
   const totalHours = new Intl.NumberFormat('es-ES', {
@@ -215,8 +225,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
           days={yearlyDays}
           history={history}
           todayKey={todayKey}
-          rangeStart={yearRange.startDate}
-          rangeEnd={yearRange.endDate}
+          year={todayYear}
           dailyGoalMinutes={practiceGoals.dailyMinutes}
         />
       </div>
@@ -254,9 +263,14 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         <TopPracticeContent rankings={contentRankings} />
       </div>
 
-      {hasWellbeing && (
+      {showWellbeing && (
         <div className='mt-5'>
-          <PracticeWellbeing history={history} today={today} />
+          <PracticeWellbeing
+            history={history}
+            today={today}
+            moodEnabled={isMoodEnabled}
+            focusEnabled={isFocusEnabled}
+          />
         </div>
       )}
 
@@ -271,7 +285,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
       </div>
 
       <p className='mt-8 text-center text-xs text-muted'>
-         {dashboard.calendarNote}.
+         {dashboard.calendarNote} {todayYear}.
       </p>
       {persistenceError && (
         <p
