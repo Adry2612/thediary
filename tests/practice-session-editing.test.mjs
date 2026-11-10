@@ -232,3 +232,34 @@ test("keeps a catalog song reference while editing a saved practice", () => {
   const updated = applySessionEdit(original, draft);
   assert.deepEqual(updated.phases[0].catalogSong, catalogSong);
 });
+
+test("keeps several parts and block notes through an edit", () => {
+  const original = session({
+    phases: [
+      {
+        id: 1,
+        name: "Blackbird",
+        skill: "repertoire",
+        elapsedSeconds: 900,
+        durationMinutes: 15,
+        repertoireItemId: "song-1",
+        repertoirePartIds: ["part-1", "part-2"],
+        notes: "Intro y estribillo",
+      },
+    ],
+  });
+  const draft = toEditableSession(original);
+
+  assert.deepEqual(draft.blocks[0].repertoirePartIds, ["part-1", "part-2"]);
+  draft.blocks[0] = {
+    ...draft.blocks[0],
+    notes: "Solo el estribillo",
+    repertoirePartIds: ["part-2"],
+  };
+
+  const updated = applySessionEdit(original, draft);
+
+  assert.equal(updated.phases[0].notes, "Solo el estribillo");
+  assert.equal(updated.phases[0].repertoirePartId, "part-2");
+  assert.equal(updated.phases[0].repertoirePartIds, undefined);
+});

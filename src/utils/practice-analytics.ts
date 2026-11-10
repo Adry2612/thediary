@@ -10,6 +10,7 @@ import {
 import { getComparisonSpans, sumSecondsInSpan } from "./period-comparison.ts";
 import { resolveTechniqueEntry } from "./catalogs/techniques.ts";
 import { resolveTheoryEntry } from "./catalogs/theory.ts";
+import { getRepertoirePartIds } from "./practice-parts.ts";
 
 export type PracticeChartPeriod = "week" | "month" | "year";
 export type PracticeTimeRange = {
@@ -770,16 +771,21 @@ export function getTempoContentIdentity(
     const item = repertoireItems.find(
       (candidate) => candidate.id === phase.repertoireItemId,
     );
-    const part = phase.repertoirePartId
-      ? item?.parts.find(
-          (candidate) => candidate.id === phase.repertoirePartId,
-        )
-      : undefined;
+    const partIds = getRepertoirePartIds(phase);
+    const partNames = partIds
+      .map((partId) => item?.parts.find((part) => part.id === partId)?.name)
+      .filter((name): name is string => Boolean(name));
     return {
-      key: phase.repertoirePartId
-        ? `song:${phase.repertoireItemId}:part:${phase.repertoirePartId}`
-        : `song:${phase.repertoireItemId}`,
-      label: part && item ? `${item.title} · ${part.name}` : (item?.title ?? phase.name),
+      key:
+        partIds.length === 1
+          ? `song:${phase.repertoireItemId}:part:${partIds[0]}`
+          : partIds.length > 1
+            ? `song:${phase.repertoireItemId}:parts:${partIds.join(",")}`
+            : `song:${phase.repertoireItemId}`,
+      label:
+        partNames.length > 0 && item
+          ? `${item.title} · ${partNames.join(", ")}`
+          : (item?.title ?? phase.name),
     };
   }
 

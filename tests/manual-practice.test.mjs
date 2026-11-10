@@ -10,7 +10,10 @@ import {
   manualPracticeBlocksFromDrafts,
   toLocalDateTimeInputValue,
 } from "../src/utils/manual-practice.ts";
-import { getRepertoireItemPracticeStats } from "../src/utils/repertoire-analytics.ts";
+import {
+  getRepertoireItemPracticeStats,
+  getRepertoirePracticeStats,
+} from "../src/utils/repertoire-analytics.ts";
 
 test("creates a historical session from its blocks, duration, skills, and notes", () => {
   const record = createManualPracticeRecord({
@@ -281,4 +284,71 @@ test("stores the song link in the saved phase and credits its time", () => {
   const stats = getRepertoireItemPracticeStats([record]).get("song-1");
   assert.equal(stats?.practiceSeconds, 1200);
   assert.equal(stats?.sessionCount, 1);
+});
+
+test("stores several practised parts and each block's notes", () => {
+  const block = {
+    ...createManualPracticeBlockDraft(),
+    name: "Blackbird",
+    skill: "repertoire",
+    durationMinutes: "30",
+    repertoireItemId: "song-1",
+    repertoirePartIds: ["part-1", "part-2"],
+    notes: "Intro y estribillo",
+  };
+  const record = createManualPracticeRecord({
+    title: "Práctica antigua",
+    startedAtLocal: "2026-10-07T18:30",
+    blocks: manualPracticeBlocksFromDrafts([block], [
+      { id: "song-1", title: "Blackbird" },
+    ]),
+    notes: "",
+  });
+
+  assert.deepEqual(record.phases[0].repertoirePartIds, ["part-1", "part-2"]);
+  assert.equal(record.phases[0].repertoirePartId, undefined);
+  assert.equal(record.phases[0].notes, "Intro y estribillo");
+
+  const stats = getRepertoirePracticeStats([record]).get("song-1");
+  assert.deepEqual(stats?.get("part-1"), {
+    practiceSeconds: 900,
+    sessionCount: 1,
+  });
+  assert.deepEqual(stats?.get("part-2"), {
+    practiceSeconds: 900,
+    sessionCount: 1,
+  });
+});
+
+test("stores a lick block and a catalogue song reference", () => {
+  const catalogSong = {
+    source: "itunes",
+    id: "catalog-1",
+    title: "Canción del catálogo",
+    artist: "Artista",
+  };
+  const lickBlock = {
+    ...createManualPracticeBlockDraft(),
+    name: "Frase",
+    skill: "lick",
+    durationMinutes: "10",
+    lickId: "lick-1",
+  };
+  const catalogBlock = {
+    ...createManualPracticeBlockDraft(),
+    name: "Canción del catálogo",
+    skill: "repertoire",
+    durationMinutes: "10",
+    catalogSong,
+  };
+  const record = createManualPracticeRecord({
+    title: "",
+    startedAtLocal: "2026-10-07T18:30",
+    blocks: manualPracticeBlocksFromDrafts([lickBlock, catalogBlock]),
+    notes: "",
+  });
+
+  assert.equal(record.phases[0].lickId, "lick-1");
+  assert.equal(record.phases[1].repertoireItemId, undefined);
+  assert.deepEqual(record.phases[1].catalogSong, catalogSong);
 });

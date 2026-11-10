@@ -27,6 +27,7 @@ export function normalizePracticePhaseLinks(
   if (next.skill !== "repertoire") {
     next.repertoireItemId = undefined;
     next.repertoirePartId = undefined;
+    delete next.repertoirePartIds;
     next.catalogSong = undefined;
   } else if (next.repertoireItemId) {
     // Una canción ya añadida al repertorio manda sobre la referencia temporal.

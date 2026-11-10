@@ -31,6 +31,7 @@ test("a song choice always writes the song title and clears the part", () => {
       name: "Otra canción",
       repertoireItemId: "song-2",
       repertoirePartId: undefined,
+      repertoirePartIds: undefined,
       catalogSong: undefined,
     },
   );
@@ -51,6 +52,7 @@ test("a catalog choice keeps a temporary song reference without a repertoire lin
     name: "Canción del catálogo",
     repertoireItemId: undefined,
     repertoirePartId: undefined,
+    repertoirePartIds: undefined,
     catalogSong: candidate,
   });
   assert.notEqual(getCatalogSongChanges(candidate).catalogSong, candidate);

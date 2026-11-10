@@ -13,6 +13,10 @@ import {
   type MetronomeBpmSample,
 } from "./metronome-bpm.ts";
 import { normalizePracticeMetricValue } from "./practice-metrics.ts";
+import {
+  getRepertoirePartIds,
+  withRepertoirePartIds,
+} from "./practice-parts.ts";
 
 interface CreatePracticeSessionRecordInput {
   id: string;
@@ -93,7 +97,7 @@ export function createPracticeSessionRecord({
       })),
       notes: phaseNotes[index]?.trim() || undefined,
       repertoireItemId: phases[index]?.repertoireItemId,
-      repertoirePartId: phases[index]?.repertoirePartId,
+      ...withRepertoirePartIds(getRepertoirePartIds(phases[index] ?? {})),
       ...(phases[index]?.catalogSong
         ? { catalogSong: { ...phases[index].catalogSong } }
         : {}),

@@ -872,6 +872,21 @@ export const es: Dict = {
     songPickerNoResults: 'No hay canciones que coincidan con esa búsqueda.',
     songPickerClose: 'Cerrar el buscador de canciones',
     songPickerCatalogSearch: 'Buscar en el catálogo',
+    blockNotes: 'Notas del bloque',
+    blockNotesPlaceholder: 'Qué trabajaste en este bloque…',
+    partsPracticed: 'Partes practicadas',
+    partsHint:
+      'Marca todas las partes que hayas trabajado en este bloque; el tiempo se reparte entre ellas.',
+    songWithoutParts: 'Esta canción todavía no tiene partes.',
+    clearSongLink: 'Quitar enlace',
+    lickPickerTitle: 'Buscar lick',
+    lickPickerDescription:
+      'Filtra tu biblioteca de licks por título o técnica.',
+    lickPickerSearch: 'Buscar lick',
+    lickPickerSearchPlaceholder: 'Título o técnica',
+    lickPickerEmpty: 'Todavía no hay licks en tu biblioteca.',
+    lickPickerNoResults: 'No hay licks que coincidan con esa búsqueda.',
+    lickPickerClose: 'Cerrar el buscador de licks',
     catalogAddTitle: 'Canciones fuera del repertorio',
     catalogAddDescription:
       'Las practicaste sin tenerlas en tu repertorio. Marca las que quieras añadir al guardar.',

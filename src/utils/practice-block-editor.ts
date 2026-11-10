@@ -79,12 +79,17 @@ export function getRepertoireSongChanges(
   song: Pick<RepertoireItem, "id" | "title">,
 ): Pick<
   PracticePhase,
-  "name" | "repertoireItemId" | "repertoirePartId" | "catalogSong"
+  | "name"
+  | "repertoireItemId"
+  | "repertoirePartId"
+  | "repertoirePartIds"
+  | "catalogSong"
 > {
   return {
     name: song.title,
     repertoireItemId: song.id,
     repertoirePartId: undefined,
+    repertoirePartIds: undefined,
     catalogSong: undefined,
   };
 }
@@ -98,12 +103,17 @@ export function getCatalogSongChanges(
   candidate: CatalogCandidate,
 ): Pick<
   PracticePhase,
-  "name" | "repertoireItemId" | "repertoirePartId" | "catalogSong"
+  | "name"
+  | "repertoireItemId"
+  | "repertoirePartId"
+  | "repertoirePartIds"
+  | "catalogSong"
 > {
   return {
     name: candidate.title,
     repertoireItemId: undefined,
     repertoirePartId: undefined,
+    repertoirePartIds: undefined,
     catalogSong: { ...candidate },
   };
 }
@@ -122,6 +132,7 @@ export function applySkillChange(
   if (skill !== "repertoire") {
     next.repertoireItemId = undefined;
     next.repertoirePartId = undefined;
+    delete next.repertoirePartIds;
     next.catalogSong = undefined;
   }
   if (skill !== "lick") {

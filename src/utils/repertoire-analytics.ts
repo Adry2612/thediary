@@ -1,4 +1,5 @@
 import type { RepertoireItem, SessionRecord } from "../types/practice.ts";
+import { getRepertoirePartIds } from "./practice-parts.ts";
 
 export type RepertoirePartPracticeStats = {
   practiceSeconds: number;
@@ -31,24 +32,27 @@ export function getRepertoirePracticeStats(
   for (const session of history) {
     const practicedParts = new Map<string, Set<string>>();
     for (const phase of session.phases ?? []) {
-      if (
-        phase.elapsedSeconds <= 0 ||
-        !phase.repertoireItemId ||
-        !phase.repertoirePartId
-      ) {
+      const partIds = getRepertoirePartIds(phase);
+      if (phase.elapsedSeconds <= 0 || !phase.repertoireItemId) {
         continue;
       }
 
       const itemStats = statsByItem.get(phase.repertoireItemId) ?? new Map();
-      const partStats = itemStats.get(phase.repertoirePartId) ?? {
-        practiceSeconds: 0,
-        sessionCount: 0,
-      };
-      partStats.practiceSeconds += phase.elapsedSeconds;
-      itemStats.set(phase.repertoirePartId, partStats);
+      // El tiempo del bloque se reparte a partes iguales entre las partes
+      // marcadas, para no contar la misma práctica dos veces en cada parte.
+      const secondsPerPart =
+        partIds.length > 0 ? phase.elapsedSeconds / partIds.length : 0;
+      for (const partId of partIds) {
+        const partStats = itemStats.get(partId) ?? {
+          practiceSeconds: 0,
+          sessionCount: 0,
+        };
+        partStats.practiceSeconds += secondsPerPart;
+        itemStats.set(partId, partStats);
+      }
       statsByItem.set(phase.repertoireItemId, itemStats);
       const itemParts = practicedParts.get(phase.repertoireItemId) ?? new Set();
-      itemParts.add(phase.repertoirePartId);
+      for (const partId of partIds) itemParts.add(partId);
       practicedParts.set(phase.repertoireItemId, itemParts);
     }
 

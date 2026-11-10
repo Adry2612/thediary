@@ -91,11 +91,23 @@ The system SHALL, when saving a practice that practised one or more catalog song
 
 ### Requirement: Saved practices can be edited
 
-The system SHALL let the user edit a saved practice session, including its title, notes, completion state, duration and its blocks, SHALL present every block's real time and the session duration as `mm:ss` or `h:mm:ss`, SHALL accept the same clock formats when typing, SHALL keep the reported totals consistent with the edited blocks, SHALL report an invalid time next to its field without losing the other edits, and SHALL NOT block a valid save because of a native number-step mismatch.
+The system SHALL let the user edit a saved practice session, including its title, notes, completion state, duration and its blocks, SHALL present every block's real time and the session duration as `mm:ss` or `h:mm:ss`, SHALL accept the same clock formats when typing, SHALL keep the reported totals consistent with the edited blocks, SHALL report an invalid time next to its field without losing the other edits, SHALL let the user pick each block's technique, theory topic, lick or song through the same searchable pickers as the practice plan, SHALL let the user edit each block's notes, and SHALL NOT block a valid save because of a native number-step mismatch.
 
 #### Scenario: User edits the blocks of a saved practice
 - **WHEN** the user changes a block's name, category, real time or planned time and saves
 - **THEN** the app stores the edited blocks and reports a total duration and a per-category split consistent with them
+
+#### Scenario: Choosing a block's link
+- **WHEN** the user edits a technique, theory, lick or repertoire block of a saved practice
+- **THEN** the block offers the same searchable picker as the practice plan for its category
+
+#### Scenario: Editing block notes
+- **WHEN** the user writes notes in a block of a saved practice and saves
+- **THEN** the app stores those notes with that block
+
+#### Scenario: Several parts of one song
+- **WHEN** the user marks several parts of the same song in a saved block and saves
+- **THEN** the block keeps every selected part and the repertoire splits that block's time between them
 
 #### Scenario: User removes every block
 - **WHEN** the user removes all the blocks of a saved practice and saves
@@ -267,7 +279,7 @@ The system SHALL offer Songsterr in the material menu, SHALL accept only HTTPS l
 
 ### Requirement: A repertoire block is linked to a song and named after it
 
-The system SHALL require every repertoire block of a practice plan to reference one song from the repertoire, SHALL take the block's name from that song's title, SHALL NOT allow the user to type a different block name, SHALL keep the song part optional, and SHALL remove the reference when the block changes to another category. The song SHALL be chosen through a searchable picker that offers only songs.
+The system SHALL require every repertoire block of a practice plan to reference one song from the repertoire, SHALL take the block's name from that song's title, SHALL NOT allow the user to type a different block name, SHALL keep the song part optional, SHALL let the block reference one or several parts of the same song, and SHALL remove the reference when the block changes to another category. The song SHALL be chosen through a searchable picker that offers only songs.
 
 #### Scenario: Choosing a song
 - **WHEN** the user selects a song for a repertoire block
@@ -288,6 +300,10 @@ The system SHALL require every repertoire block of a practice plan to reference 
 #### Scenario: The part is optional
 - **WHEN** the user links a song but chooses no part
 - **THEN** the block is valid and the practice counts its time for the song
+
+#### Scenario: Several parts in one block
+- **WHEN** the user marks more than one part of the chosen song in a repertoire block
+- **THEN** the block keeps them all, stays valid and the practice counts its time for each part
 
 #### Scenario: Only songs are offered
 - **WHEN** the user opens the song picker of a repertoire block
@@ -1180,7 +1196,7 @@ The system SHALL let the user record mood and focus with a one-to-five scale tha
 
 ### Requirement: A manually recorded practice can credit a repertoire song
 
-The system SHALL offer the repertoire song search on the blocks of a manually recorded practice that are of the repertoire category, SHALL let the user save the practice with or without a linked song, SHALL take the block's name from the chosen song, and SHALL count that block's time towards the linked song.
+The system SHALL offer the repertoire song search on the blocks of a manually recorded practice that are of the repertoire category, SHALL let the user save the practice with or without a linked song, SHALL take the block's name from the chosen song, SHALL let each block pick a technique, theory topic, lick or catalog song through the same searchable pickers as the practice plan, SHALL let each block keep its own notes, and SHALL count that block's time towards the linked song or catalog reference.
 
 #### Scenario: Opening the song search
 - **WHEN** the user registers a past practice and sets a block to the repertoire category
@@ -1197,6 +1213,22 @@ The system SHALL offer the repertoire song search on the blocks of a manually re
 #### Scenario: Crediting the song
 - **WHEN** a manual practice block is linked to a song
 - **THEN** the repertoire shown in the app counts that block's time and parts as practice of that song
+
+#### Scenario: Choosing a technique, theory topic or lick
+- **WHEN** the user registers a past practice and sets a block to technique, theory or lick
+- **THEN** the block offers the same searchable picker as the practice plan for that category
+
+#### Scenario: Searching the catalog
+- **WHEN** the user searches for a song that is not in the repertoire from a manual block
+- **THEN** the picker returns catalog matches and the block keeps the temporary reference
+
+#### Scenario: Block notes
+- **WHEN** the user writes notes in a manual block and saves
+- **THEN** the app stores those notes with that block
+
+#### Scenario: Several parts in a manual block
+- **WHEN** the user marks several parts of the same song in a manual block
+- **THEN** the block keeps them and the repertoire splits its time between them
 
 #### Scenario: Changing the category
 - **WHEN** the user changes a linked manual block to another category

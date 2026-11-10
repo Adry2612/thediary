@@ -67,6 +67,7 @@ export function applyRoutineLinkChanges(
         name: sessionPhase.name,
         repertoireItemId: sessionPhase.repertoireItemId,
         repertoirePartId: sessionPhase.repertoirePartId,
+        repertoirePartIds: sessionPhase.repertoirePartIds,
         catalogSong: sessionPhase.catalogSong,
         lickId: sessionPhase.lickId,
       };

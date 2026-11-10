@@ -121,6 +121,9 @@ export function createPracticePlanFromSession(
         resources: phase.resources?.map((resource) => ({ ...resource })),
         repertoireItemId: phase.repertoireItemId,
         repertoirePartId: phase.repertoirePartId,
+        ...(phase.repertoirePartIds
+          ? { repertoirePartIds: phase.repertoirePartIds }
+          : {}),
         lickId: phase.lickId,
       }),
     ),
