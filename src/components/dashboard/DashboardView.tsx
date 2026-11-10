@@ -260,6 +260,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
           history={history}
           todayKey={todayKey}
           year={todayYear}
+          currentYear={todayYear}
           weekStartsOn={weekStartsOn}
           dailyGoalMinutes={practiceGoals.dailyMinutes}
         />

@@ -32,6 +32,7 @@ type YearPracticeCalendarProps = {
   history: SessionRecord[];
   todayKey: string;
   year: number;
+  currentYear: number;
   dailyGoalMinutes: number;
   years?: number[];
   onYearChange?: (year: number) => void;
@@ -43,6 +44,7 @@ export function YearPracticeCalendar({
   history,
   todayKey,
   year,
+  currentYear,
   dailyGoalMinutes,
   years = [],
   onYearChange,
@@ -110,6 +112,7 @@ export function YearPracticeCalendar({
     label: new Intl.NumberFormat(locale, { useGrouping: false }).format(
       option,
     ),
+    description: option === currentYear ? calendar.currentYear : undefined,
   }));
 
   useLatestPracticeScroll(calendarScrollRef, cells, latestPracticeDateKey);
@@ -186,19 +189,23 @@ export function YearPracticeCalendar({
             {calendar.consistency}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-            {showYearSelector
-              ? calendar.title
-              : `${calendar.title} · ${yearLabel}`}
+            {showYearSelector && onYearChange ? (
+              <>
+                {calendar.title} ·{" "}
+                <SelectField
+                  variant="inline"
+                  value={String(year)}
+                  ariaLabel={calendar.yearAria}
+                  options={yearOptions}
+                  listboxWidth={168}
+                  truncateLabel
+                  onChange={(value) => onYearChange(Number(value))}
+                />
+              </>
+            ) : (
+              `${calendar.title} · ${yearLabel}`
+            )}
           </h2>
-          {showYearSelector && onYearChange && (
-            <SelectField
-              className="mt-2 w-28"
-              value={String(year)}
-              ariaLabel={calendar.yearAria}
-              options={yearOptions}
-              onChange={(value) => onYearChange(Number(value))}
-            />
-          )}
           <p className="mt-2 text-sm text-muted">
             {calendar.description} {dailyGoalMinutes} min. {calendar.selectDay}.
           </p>

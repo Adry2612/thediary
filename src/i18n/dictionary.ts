@@ -240,6 +240,7 @@ export type Dict = {
     above100: string;
     yearDays: string;
     yearAria: string;
+    currentYear: string;
     monthDays: string;
     previousMonth: string;
     nextMonth: string;

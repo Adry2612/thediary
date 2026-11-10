@@ -514,7 +514,15 @@ The system SHALL close the annual calendar's preview card after the pointer leav
 
 ### Requirement: Previous years open an annual view
 
-When the history contains more than one year, the annual calendar SHALL offer a year selector with the current year and every year that has practice. Choosing the current year SHALL keep the existing dashboard unchanged. Choosing a previous year SHALL show a read-only annual view for that calendar year: a summary of the year, its complete annual calendar, its monthly rhythm, skill and guitar balances, content ranking, wellbeing and metric cards, all computed only from that year's sessions. The annual view SHALL hide the rolling-period selectors, SHALL compare tempo with the previous year and SHALL offer a way back to the current year.
+When the history contains more than one year, the annual calendar SHALL offer a year selector inline with its title, opened from the year shown next to the title. The menu SHALL list the current year and every year that has practice, SHALL mark the current year with a “This year” note, and SHALL show a check on the selected year. Choosing the current year SHALL keep the existing dashboard unchanged. Choosing a previous year SHALL show a read-only annual view for that calendar year: a summary of the year, its complete annual calendar, its monthly rhythm, skill and guitar balances, content ranking, wellbeing and metric cards, all computed only from that year's sessions. The annual view SHALL hide the rolling-period selectors, SHALL compare tempo with the previous year and SHALL offer a way back to the current year.
+
+#### Scenario: The year menu lives in the calendar title
+- **WHEN** the history contains more than one year
+- **THEN** the annual calendar title shows the selected year with a small menu trigger, without adding a form field below the title
+
+#### Scenario: The current year is marked
+- **WHEN** the year menu is open
+- **THEN** the current year is listed with the “This year” note and the selected year carries the check
 
 #### Scenario: The current year keeps the existing dashboard
 - **WHEN** the selected year is the current year

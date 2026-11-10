@@ -176,6 +176,7 @@ export function YearDashboardView({
           history={history}
           todayKey={yearTodayKey}
           year={year}
+          currentYear={currentYear}
           years={years}
           weekStartsOn={weekStartsOn}
           onYearChange={onYearChange}

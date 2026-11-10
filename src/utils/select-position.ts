@@ -32,6 +32,7 @@ export type ListboxPlacement = {
 };
 
 export const LISTBOX_GAP = 4;
+const LISTBOX_MARGIN = 8;
 const ESTIMATED_OPTION_HEIGHT = 40;
 const ESTIMATED_LIST_PADDING = 8;
 const LISTBOX_MAX_HEIGHT = 240;
@@ -43,6 +44,8 @@ type GetListboxPlacementInput = {
   container: SelectScrollBox | null;
   viewport: { width: number; height: number };
   optionCount: number;
+  /** Ancho mínimo cuando el disparador es más estrecho que el menú. */
+  minWidth?: number;
 };
 
 export function getListboxPlacement({
@@ -50,6 +53,7 @@ export function getListboxPlacement({
   container,
   viewport,
   optionCount,
+  minWidth = 0,
 }: GetListboxPlacementInput): ListboxPlacement {
   const position = container ? "absolute" : "fixed";
 
@@ -86,12 +90,20 @@ export function getListboxPlacement({
   );
 
   const left = trigger.left - originLeft;
+  const width = Math.max(trigger.width, minWidth);
+  const clampedLeft =
+    position === "fixed"
+      ? Math.min(
+          Math.max(left, LISTBOX_MARGIN),
+          Math.max(LISTBOX_MARGIN, viewport.width - width - LISTBOX_MARGIN),
+        )
+      : left;
 
   if (opensUpward) {
     return {
       position,
-      left,
-      width: trigger.width,
+      left: clampedLeft,
+      width,
       // Distancia desde el borde inferior del padding box hasta el borde
       // inferior de la lista, para no depender del alto real de la lista.
       bottom:
@@ -102,8 +114,8 @@ export function getListboxPlacement({
 
   return {
     position,
-    left,
-    width: trigger.width,
+    left: clampedLeft,
+    width,
     top: trigger.bottom - originTop + LISTBOX_GAP,
     maxHeight,
   };

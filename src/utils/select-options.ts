@@ -6,6 +6,8 @@ export type SelectOption = {
   group?: string;
   /** Miniatura opcional que acompaña a la etiqueta. */
   image?: string;
+  /** Aclaración que solo se muestra en la lista, no en el disparador. */
+  description?: string;
 };
 
 export type SelectEntry =

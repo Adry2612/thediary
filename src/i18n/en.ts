@@ -694,6 +694,7 @@ export const en: Dict = {
     above100: '100% or more of goal',
     yearDays: 'Practice days across',
     yearAria: 'Calendar year',
+    currentYear: 'This year',
     monthDays: 'Practice days across',
     previousMonth: 'Previous month',
     nextMonth: 'Next month',

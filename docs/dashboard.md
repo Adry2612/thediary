@@ -19,7 +19,7 @@ El panel de evolución muestra la constancia, el tiempo y las habilidades de pr�
 - El ranking de canciones cuenta tanto las canciones enlazadas al repertorio como las referencias al catálogo que todavía no se han añadido.
 - El balance de habilidades y el balance de guitarras tienen cada uno su propio selector de periodo, ambos con 30 días por defecto: cambiar uno no altera el otro.
 - **Racha actual** y **racha más larga** son históricas: no cambian al cambiar el periodo. La racha más larga es el mejor tramo de días consecutivos de todo el historial.
-- El calendario anual muestra el año natural actual. Cuando el historial incluye años anteriores, el calendario ofrece un selector de año.
+- El calendario anual muestra el año natural actual. Cuando el historial incluye años anteriores, el año del título se convierte en un menú discreto con los años disponibles; el año actual aparece marcado como «Este año».
 - Al elegir un año anterior, el panel pasa a una **vista anual**: resumen del año, calendario completo, ritmo por meses, balances, ranking de contenido, bienestar y tarjetas calculados solo con las sesiones de ese año. Los selectores de periodo se ocultan porque la ventana es el año completo. El año actual conserva el panel de siempre.
 - La vista anual compara el tempo con el año anterior y permite volver al año actual desde la cabecera.
 - El gráfico de bienestar solo aparece cuando ánimo o foco están activados en Configuración y hay datos de esa métrica; si no, no se muestra.

@@ -700,6 +700,7 @@ export const es: Dict = {
     above100: '100% o más del objetivo',
     yearDays: 'Días de práctica de todo',
     yearAria: 'Año del calendario',
+    currentYear: 'Este año',
     monthDays: 'Días de práctica de',
     previousMonth: 'Mes anterior',
     nextMonth: 'Mes siguiente',
