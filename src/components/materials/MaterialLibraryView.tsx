@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { BackButton } from "@/components/ui/BackLink";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PageShell } from "@/components/ui/PageShell";
@@ -21,6 +23,8 @@ import type { PracticeResourceKind, StudyMaterial } from "@/types/practice";
 
 export function MaterialLibraryView() {
   const text = useI18nSection("materials");
+  const common = useI18nSection("common");
+  const router = useRouter();
   const materials = usePracticeStore((state) => state.studyMaterials);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const saveStudyMaterial = usePracticeStore(
@@ -62,7 +66,9 @@ export function MaterialLibraryView() {
 
   return (
     <PageShell>
+      <BackButton onClick={() => router.back()}>{common.back}</BackButton>
       <PageHeader
+        className="mt-6"
         title={text.title}
         description={text.description}
         actions={

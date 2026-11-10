@@ -15,7 +15,7 @@ export type Dict = {
     equipment: string;
     settings: string;
   };
-  common: { settings: string; openMenu: string; closeMenu: string };
+  common: { settings: string; openMenu: string; closeMenu: string; back: string };
   settings: {
     title: string;
     description: string;

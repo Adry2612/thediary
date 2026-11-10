@@ -18,7 +18,7 @@ export const en: Dict = {
     licks: 'Licks',
     settings: 'Settings',
   },
-  common: { settings: 'Settings', openMenu: 'Open navigation menu', closeMenu: 'Close navigation menu' },
+  common: { settings: 'Settings', openMenu: 'Open navigation menu', closeMenu: 'Close navigation menu', back: 'Back' },
   settings: {
     title: 'Settings',
     description: 'Manage your account, language, and practice data.',
