@@ -25,6 +25,7 @@ The system SHALL keep the weekly summary's hover summary open while the pointer 
 - **WHEN** the pointer enters a day without saved practice
 - **THEN** the summary shows that day's empty state and can still be entered
 
+
 ### Requirement: The day summary closes when the page moves
 
 The system SHALL close the weekly summary's floating day summary when the page scrolls or the viewport is resized, and SHALL NOT close it when the user scrolls the summary's own session list.
@@ -49,6 +50,7 @@ The system SHALL close the weekly summary's floating day summary when the page s
 - **WHEN** the user reaches a practice day with the keyboard
 - **THEN** the card opens and stays open while that day keeps the focus
 
+
 ### Requirement: Long practice durations are expressed in hours and minutes
 
 The system SHALL present practice durations of one hour or more in the time chart's summary as hours and minutes, SHALL present shorter durations in minutes, and SHALL keep the accessible name of each bar consistent with the visible value.
@@ -65,29 +67,30 @@ The system SHALL present practice durations of one hour or more in the time char
 - **WHEN** the user points at a bar whose practice time is 45 minutes
 - **THEN** the summary reads "45 min"
 
+
 ### Requirement: The skill balance counts every practice category
 
-The system SHALL include technique, theory, repertoire, lick and improvisation time in the skill balance of the selected period — the current week, the last 30 days or the current year — and SHALL NOT omit a category from the totals or percentages.
+The system SHALL include technique, theory, repertoire, lick and improvisation time in the skill balance of the selected rolling window — the seven days, the thirty days or the twelve months ending today — and SHALL NOT omit a category from the totals or percentages.
 
 #### Scenario: Lick time in the month
 - **WHEN** the selected period includes practice blocks classified as lick
 - **THEN** their minutes appear in the lick segment and count towards the period total
 
 #### Scenario: Most practiced area
-- **WHEN** lick is the category with the most accumulated time in the history
+- **WHEN** lick is the category with the most accumulated time in the selected period
 - **THEN** the dashboard reports lick as the most practiced area
 
 #### Scenario: Week period
 - **WHEN** the week period is selected
-- **THEN** the balance counts only practice from Monday to today
+- **THEN** the balance counts only practice from the seven days ending today
 
 #### Scenario: Year period
 - **WHEN** the year period is selected
-- **THEN** the balance counts practice from 1 January to today
+- **THEN** the balance counts practice from the first day of the month eleven months before today's month through today
 
 ### Requirement: The dashboard compares electric and acoustic practice time
 
-The system SHALL show a semicircular balance of the classified practice time of the selected period — the current week, the last 30 days or the current year — between electric and acoustic guitar, SHALL show each type's minutes and percentage, and SHALL report time without a recorded guitar type separately instead of assigning it to either type.
+The system SHALL show a semicircular balance of the classified practice time of the selected rolling window — the seven days, the thirty days or the twelve months ending today — between electric and acoustic guitar, SHALL show each type's minutes and percentage, and SHALL report time without a recorded guitar type separately instead of assigning it to either type.
 
 #### Scenario: Both types practised
 - **WHEN** the selected period has sessions recorded as electric and as acoustic
@@ -111,19 +114,23 @@ The system SHALL show a semicircular balance of the classified practice time of 
 
 #### Scenario: Week period
 - **WHEN** the week period is selected
-- **THEN** the balance counts only classified time from Monday to today
+- **THEN** the balance counts only classified time from the seven days ending today
 
 #### Scenario: Year period
 - **WHEN** the year period is selected
-- **THEN** the balance counts classified time from 1 January to today
+- **THEN** the balance counts classified time from the first day of the month eleven months before today's month through today
 
-### Requirement: The dashboard ranks the most practiced content
+### Requirement: The dashboard ranks the most practiced content of the period
 
-The system SHALL show the most practised song, technique and theory topic over the full history, grouped by block name for technique and theory, with their practised time and session count, and SHALL show an empty state for a ranking with no data.
+The system SHALL show the most practised song, technique and theory topic of the same rolling window as the practice-rhythm period, grouped by block name for technique and theory, with their practised time and session count, and SHALL show an empty state for a ranking with no data in that window.
 
 #### Scenario: A song practised through its blocks
-- **WHEN** blocks linked to a repertoire song have accumulated practice time
+- **WHEN** blocks linked to a repertoire song have accumulated practice time inside the selected period
 - **THEN** the song appears in the ranking with its current title, total time and session count
+
+#### Scenario: Practice outside the period
+- **WHEN** a song, technique or theory topic was practised only before the selected window
+- **THEN** it does not appear in the ranking
 
 #### Scenario: Technique blocks
 - **WHEN** several technique blocks share a name with differences in case or accents
@@ -137,8 +144,12 @@ The system SHALL show the most practised song, technique and theory topic over t
 - **WHEN** a practiced block references a song that is no longer in the repertoire
 - **THEN** the ranking uses the block name stored with the practice instead of dropping the time
 
+#### Scenario: Changing the rhythm period
+- **WHEN** the user changes the practice-rhythm period
+- **THEN** the rankings are recalculated for the same window
+
 #### Scenario: No data for a ranking
-- **WHEN** the history has no song, technique or theory practice
+- **WHEN** the selected period has no song, technique or theory practice
 - **THEN** that ranking shows an empty state instead of a zero-valued first position
 
 ### Requirement: Tempo progress compares like with like
@@ -173,6 +184,7 @@ The system SHALL compare the current rolling window (last 7 or last 30 days) wit
 - **WHEN** the user switches between week and month
 - **THEN** the card compares the corresponding rolling windows and updates its labels
 
+
 ### Requirement: Tempo progress only uses recorded metronome data
 
 The system SHALL compute tempo progress only from sessions that recorded BPM, SHALL use the session average only when a legacy session has a single block, SHALL exclude legacy multi-block sessions from per-content comparison, and SHALL state that the metric comes from sessions with the metronome.
@@ -193,6 +205,7 @@ The system SHALL compute tempo progress only from sessions that recorded BPM, SH
 - **WHEN** the tempo card is shown
 - **THEN** it states that the metric uses sessions practised with the metronome
 
+
 ### Requirement: The new dashboard charts are accessible
 
 The system SHALL give every new chart an accessible name, SHALL expose its values as text in addition to colour or arc length, and SHALL let every interactive element be reached and read with the keyboard.
@@ -204,6 +217,7 @@ The system SHALL give every new chart an accessible name, SHALL expose its value
 #### Scenario: Colour is not the only signal
 - **WHEN** a chart distinguishes categories by colour
 - **THEN** each category also has a text label and value
+
 
 ### Requirement: The skill balance shows its summary in a floating card
 
@@ -245,6 +259,7 @@ The system SHALL show a floating summary card for the skill under the pointer or
 - **WHEN** the card is visible and the user presses Escape
 - **THEN** the card disappears
 
+
 ### Requirement: A long streak is recognised with an animated flame
 
 When the current streak reaches 7 consecutive practice days, the system SHALL show a decorative animated flame beside the streak value together with a visible short message. Below 7 days the flame and the message MUST NOT appear. The flame MUST be hidden from assistive technology, and the animation MUST stop when the user prefers reduced motion.
@@ -265,6 +280,7 @@ When the current streak reaches 7 consecutive practice days, the system SHALL sh
 - **WHEN** a screen reader reads the streak card
 - **THEN** the flame is not announced and the message is read as text
 
+
 ### Requirement: The dashboard does not offer a quick-access suggested practice
 
 The dashboard SHALL NOT show the quick-access card that asks how much time the user has, SHALL NOT generate a suggested practice plan from a `minutes` value, and MUST keep the regular practice screen's default plan when that value is absent or ignored.
@@ -281,16 +297,17 @@ The dashboard SHALL NOT show the quick-access card that asks how much time the u
 - **WHEN** the user opens `/practice` without a time value
 - **THEN** the practice screen shows the same default plan as before
 
+
 ### Requirement: The practice rhythm card summarizes the selected period
 
-The practice rhythm card SHALL show, for the selected period, the period total, the number of sessions, the average time per session, the best day/week/month and how the total compares with the same elapsed span of the previous equivalent period, where the month period is the last 30 days.
+The practice rhythm card SHALL show, for the selected rolling window ending today, the period total, the number of sessions, the average time per session, the best day/week/month and how the total compares with the preceding window of the same length.
 
 #### Scenario: Period with practice
 - **WHEN** the selected period contains at least one practice session
-- **THEN** the card shows the period total, the session count, the average time per session, the name and time of the best day/week/month, and the change against the comparable previous span
+- **THEN** the card shows the period total, the session count, the average time per session, the name and time of the best day/week/month, and the change against the preceding window
 
 #### Scenario: Previous period without practice
-- **WHEN** the selected period contains practice but the comparable previous span does not
+- **WHEN** the selected period contains practice but the preceding window does not
 - **THEN** the comparison states that there is no previous data instead of showing a percentage
 
 #### Scenario: Changing the period
@@ -301,6 +318,10 @@ The practice rhythm card SHALL show, for the selected period, the period total, 
 - **WHEN** the selected period contains no practice
 - **THEN** the card keeps its layout, shows a zero total and no best unit, and keeps the existing empty-chart message
 
+#### Scenario: Mid-week
+- **WHEN** today is Wednesday and the week period is selected
+- **THEN** the chart shows the seven days ending today, starting on the previous Thursday
+
 #### Scenario: First day of a month
 - **WHEN** a new calendar month has just started and there was practice in the previous one
 - **THEN** the card shows the practice of the last 30 days and compares it with the 30 days before, instead of starting from zero
@@ -308,6 +329,10 @@ The practice rhythm card SHALL show, for the selected period, the period total, 
 #### Scenario: The month chart buckets
 - **WHEN** the month period is selected
 - **THEN** the chart groups the 30 days ending today into Monday-to-Sunday buckets, the first and last clipped to the window, and labels a bucket that crosses a month boundary with both months
+
+#### Scenario: The year chart buckets
+- **WHEN** the year period is selected
+- **THEN** the chart shows one bucket per calendar month of the twelve-month window, the first and last clipped to the window, and the last bucket ends today
 
 ### Requirement: The dashboard lays its insight cards in equal pairs
 
@@ -324,6 +349,7 @@ The system SHALL place the practice rhythm card and the skill balance in the sam
 #### Scenario: Period summary inside the narrower card
 - **WHEN** the rhythm card shares its row with the skill balance
 - **THEN** its period summary stays fully readable, with its figures arranged in two columns
+
 
 ### Requirement: The rhythm chart tooltip details each bucket
 
@@ -357,6 +383,7 @@ The system SHALL show, for each practised bucket of the practice rhythm chart, a
 - **WHEN** the user switches between week, month and year
 - **THEN** the card's best-unit comparison uses the matching day, week or month wording
 
+
 ### Requirement: The day summary names a practice once
 
 The system SHALL show the name of a session in the calendar's day summary and SHALL omit the block line when the session has exactly one block whose name matches the session name, so a practice started from a single repertoire song is not listed twice.
@@ -376,6 +403,7 @@ The system SHALL show the name of a session in the calendar's day summary and SH
 #### Scenario: Existing sessions
 - **WHEN** the summary renders a session saved before this rule
 - **THEN** the duplicate is hidden by the same rule without rewriting the stored session
+
 
 ### Requirement: The annual calendar's day summary can be opened with a tap
 
@@ -404,6 +432,7 @@ On a coarse pointer, the system SHALL open a day's summary on the first tap with
 #### Scenario: Mouse keeps its behaviour
 - **WHEN** the pointer hovers a day and then clicks it
 - **THEN** the summary opens on hover and the click opens the day detail, as before
+
 
 ### Requirement: The annual calendar previews a day with its full content
 
@@ -437,6 +466,7 @@ The system SHALL show the annual calendar's day summary in a floating card next 
 - **WHEN** the pointer or focus reaches a day without saved practice
 - **THEN** the card shows that day's empty state and still lets the surrounding days be used
 
+
 ### Requirement: The annual preview closes when the day is no longer consulted
 
 The system SHALL close the annual calendar's preview card after the pointer leaves the calendar, when the page scrolls, when the viewport is resized, when Escape is pressed, or when a touch user taps outside the calendar, and SHALL keep the touch two-tap rule: the first tap previews a day, the second tap on the same day opens its detail.
@@ -465,6 +495,7 @@ The system SHALL close the annual calendar's preview card after the pointer leav
 - **WHEN** the user taps outside the calendar while a preview is open
 - **THEN** the card closes and the armed day is cleared
 
+
 ### Requirement: The dashboard summarizes mood and focus
 
 When at least one practice in the selected period carries a value, the dashboard SHALL show the average mood and the average focus of that period together with their trend against the previous period, SHALL express the values on the same five-point scale used to capture them, and SHALL NOT show a chart or a zero for a metric with no data.
@@ -489,6 +520,7 @@ When at least one practice in the selected period carries a value, the dashboard
 - **WHEN** the user changes the dashboard period
 - **THEN** both summaries recompute for that period
 
+
 ### Requirement: A saved practice shows its mood and focus
 
 The day detail SHALL show the mood and focus recorded for each practice of the day with their emoji and their label, and SHALL omit them without leaving a gap when the practice has no value.
@@ -501,21 +533,22 @@ The day detail SHALL show the mood and focus recorded for each practice of the d
 - **WHEN** the practice has no mood or focus stored
 - **THEN** nothing is shown for those metrics and the practice details keep their layout
 
+
 ### Requirement: The dashboard charts mood and focus over time
 
-The dashboard SHALL chart mood and focus over time on the same one-to-five scale used to record them, SHALL offer a week, month and year period, and SHALL leave an interval without responses as a gap instead of drawing it as a zero.
+The dashboard SHALL show the wellbeing card only when mood or focus is enabled in Settings and at least one of the enabled metrics has recorded data. It SHALL chart and summarize only the enabled metrics over time on the same one-to-five scale used to record them, SHALL offer a week, month and year period over the rolling windows ending today, and SHALL leave an interval without responses as a gap instead of drawing it as a zero.
 
 #### Scenario: The week period
 - **WHEN** the user selects the week period
-- **THEN** the chart plots one point per day of the current week for each metric that has responses that day
+- **THEN** the chart plots one point per day of the seven days ending today for each metric that has responses that day
 
 #### Scenario: The month period
 - **WHEN** the user selects the month period
-- **THEN** the chart plots one value per calendar week of the current month, with the first and last weeks clipped to the month
+- **THEN** the chart plots one value per calendar week of the thirty days ending today, with the first and last weeks clipped to the window
 
 #### Scenario: The year period
 - **WHEN** the user selects the year period
-- **THEN** the chart plots one value per month of the current year
+- **THEN** the chart plots one value per calendar month of the twelve-month window ending with the current month
 
 #### Scenario: A day without responses
 - **WHEN** an interval has no session that answered a metric
@@ -526,15 +559,19 @@ The dashboard SHALL chart mood and focus over time on the same one-to-five scale
 - **THEN** the point shows the average of those values for that interval
 
 #### Scenario: Only one metric has data
-- **WHEN** the selected period has mood values but no focus values
-- **THEN** the mood series is drawn and the focus series shows an empty state instead of a flat line at zero
+- **WHEN** mood is enabled and has values while focus is disabled or has no values in the period
+- **THEN** only the mood series is drawn and no zero is drawn for focus
 
 #### Scenario: No wellbeing data in the period
-- **WHEN** the selected period has no mood or focus values and the history has some elsewhere
+- **WHEN** the selected period has no values for the enabled metrics and the history has some elsewhere
 - **THEN** the card keeps its place and period control and shows an empty state
 
+#### Scenario: Wellbeing metrics are off
+- **WHEN** neither mood nor focus is enabled in Settings
+- **THEN** the dashboard does not show the wellbeing card even if the history has old values
+
 #### Scenario: No wellbeing data at all
-- **WHEN** the history has never recorded mood or focus
+- **WHEN** the enabled metrics have never recorded a value
 - **THEN** the dashboard does not show the wellbeing card
 
 ### Requirement: The wellbeing chart summarizes its period
@@ -557,6 +594,7 @@ The wellbeing chart SHALL show, for the selected period, the average of each met
 - **WHEN** it is the month period and an answer is older than the 30-day window
 - **THEN** that answer does not count in the average or in the comparison
 
+
 ### Requirement: The wellbeing chart is readable without colour or emojis
 
 The wellbeing card SHALL identify mood and focus with text, SHALL distinguish their series by more than colour, SHALL expose each plotted value to assistive technology, and SHALL NOT use emoji characters.
@@ -577,6 +615,7 @@ The wellbeing card SHALL identify mood and focus with text, SHALL distinguish th
 - **WHEN** the wellbeing card and its detail are shown
 - **THEN** no emoji character appears in them
 
+
 ### Requirement: A saved practice shows its wellbeing without emojis
 
 The day detail SHALL show each stored mood and focus value with its textual label and its number on the one-to-five scale, and SHALL NOT show an emoji for it.
@@ -593,57 +632,74 @@ The day detail SHALL show each stored mood and focus value with its textual labe
 - **WHEN** the practice recorded neither metric
 - **THEN** nothing is shown for them and no empty block is left
 
-### Requirement: Period comparisons cover the same elapsed span
 
-The system SHALL compare the selected week, month or year with a comparable preceding span: the same elapsed days of the previous week, the 30 days before the selected 30-day month, or the same stretch of the previous year. The month period SHALL be the 30 days ending today, never the calendar month.
+### Requirement: Period comparisons cover the preceding window of the same length
+
+The system SHALL compare each selected rolling window with the immediately preceding window of the same length: the seven days before the selected week, the thirty days before the selected month, or the same twelve months one year earlier. The previous window SHALL end on the day before the current window starts.
+
+#### Scenario: Middle of a week
+- **WHEN** today is Tuesday 11 November 2026 and the week period is selected
+- **THEN** the current side covers 5 November to 11 November and the previous side covers 29 October to 4 November
 
 #### Scenario: Any day of the month
-- **WHEN** today is 15 November and the month period is selected
+- **WHEN** today is 15 November 2026 and the month period is selected
 - **THEN** the current side covers 17 October to 15 November and the previous side covers 17 September to 16 October
 
 #### Scenario: First day of a month
 - **WHEN** today is 1 November and the month period is selected
 - **THEN** the current side covers 3 October to 1 November, so practice from the end of October still counts
 
-#### Scenario: Middle of a week
-- **WHEN** today is a Wednesday and the week period is selected
-- **THEN** the current side covers Monday to Wednesday and the previous side covers Monday to Wednesday of the previous week
-
 #### Scenario: Middle of a year
-- **WHEN** today is 10 March and the year period is selected
-- **THEN** the previous side covers 1 January to 10 March of the previous year
+- **WHEN** today is 10 March 2026 and the year period is selected
+- **THEN** the current side covers 1 April 2025 to 10 March 2026 and the previous side covers 1 April 2024 to 10 March 2025
 
 #### Scenario: Leap day
-- **WHEN** today is 29 February and the year period is selected
-- **THEN** the previous side ends on 28 February of the previous year
+- **WHEN** today is 29 February 2028 and the year period is selected
+- **THEN** the previous side ends on 28 February 2027
 
 #### Scenario: Practice dated after today
-- **WHEN** the selected week or year includes days after today and one of them has practice
-- **THEN** that practice is left out of the comparison until its day arrives, while it still appears in the period total and in the chart
+- **WHEN** the history contains a practice dated after today
+- **THEN** it is excluded from both the current and the previous window
 
-### Requirement: The monthly figures cover the last 30 days
+### Requirement: The summary figures follow the selected period
 
-The system SHALL compute the month figures — the practice time, the skill balance, the guitar balance and the average BPM — over the 30 days ending today, SHALL word them as the last 30 days instead of this month, and SHALL NOT reset them on the first day of a calendar month.
+The system SHALL compute the dashboard metric cards — practice time, session count, average BPM, practice hours and most-practised area — over the same rolling window as the practice-rhythm period, SHALL update them when that period changes, and SHALL NOT use the full history. The current and longest streak cards SHALL remain historical.
+
+#### Scenario: Default period
+- **WHEN** the dashboard opens
+- **THEN** the metric cards cover the seven days ending today, the same window as the rhythm chart
+
+#### Scenario: Changing the rhythm period
+- **WHEN** the user selects the month or year period on the rhythm chart
+- **THEN** the metric cards are recalculated for that same window
 
 #### Scenario: First day of a calendar month
-- **WHEN** today is 1 November and there was practice in October
-- **THEN** the month figures include that October practice instead of showing zero
-
-#### Scenario: Labels name the window
-- **WHEN** the month figures are shown
-- **THEN** their labels refer to the last 30 days, and the month option of the period selector reads 30 days
+- **WHEN** today is 1 November and the rhythm period is month
+- **THEN** the figures include the practice from the end of October instead of showing zero
 
 #### Scenario: Rolling over a month boundary
-- **WHEN** the 30-day window crosses from one calendar month into the next
-- **THEN** practice from both calendar months is counted once each
+- **WHEN** the selected window crosses from one calendar month into the next
+- **THEN** the figures count practice from both calendar months once each
 
 #### Scenario: Old practice leaves the window
-- **WHEN** a practice is older than 30 days
-- **THEN** it does not count in the month figures, the month chart or the month comparison
+- **WHEN** a practice falls outside the selected window
+- **THEN** it does not count in the practice time, the session count, the average BPM, the hours or the most-practised area
+
+#### Scenario: Labels name the window
+- **WHEN** the metric cards are shown
+- **THEN** their labels and descriptions refer to the selected period instead of a fixed 30 days or the full history
+
+#### Scenario: Empty period
+- **WHEN** the selected period contains no practice
+- **THEN** the cards keep their layout and show zero or their empty value instead of history totals
+
+#### Scenario: Streaks are not windowed
+- **WHEN** the user changes the rhythm period
+- **THEN** the current streak and the longest streak keep their historical values
 
 ### Requirement: A comparison names the span it compares
 
-The system SHALL word every period comparison on the practice rhythm card and the wellbeing card so that it states which span it compares for the selected period, instead of a generic previous period.
+The system SHALL word every period comparison on the practice rhythm card and the wellbeing card so that it states which rolling window it compares for the selected period, instead of a generic previous period.
 
 #### Scenario: Month comparison
 - **WHEN** the month period is selected and a comparison is shown
@@ -651,11 +707,11 @@ The system SHALL word every period comparison on the practice rhythm card and th
 
 #### Scenario: Week comparison
 - **WHEN** the week period is selected and a comparison is shown
-- **THEN** the wording refers to the same days of the previous week
+- **THEN** the wording refers to the 7 days before the window
 
 #### Scenario: Year comparison
 - **WHEN** the year period is selected and a comparison is shown
-- **THEN** the wording refers to the same stretch of the previous year
+- **THEN** the wording refers to the same months one year earlier
 
 ### Requirement: The two balance cards share one period selector
 
@@ -689,6 +745,7 @@ The system SHALL show a period selector with the options week, 30 days and year 
 - **WHEN** the user changes the period from either card
 - **THEN** both cards keep their height and the content below them does not move
 
+
 ### Requirement: The rhythm chart uses the same period buttons
 
 The system SHALL replace the period dropdown of the practice rhythm chart with the same week, 30 days and year buttons used by the balances, SHALL keep the chart, its summary and its comparison in the selected period, and SHALL default to the week.
@@ -712,6 +769,7 @@ The system SHALL replace the period dropdown of the practice rhythm chart with t
 #### Scenario: Stable layout
 - **WHEN** the user changes the period
 - **THEN** the card keeps its height and the content below it does not move
+
 
 ### Requirement: The evolution charts animate on appearance and change
 
@@ -737,6 +795,7 @@ The system SHALL animate the practice rhythm bars, the skill-balance bars and ri
 - **WHEN** the selected period has no practice to draw
 - **THEN** the chart shows its empty state without an entrance animation
 
+
 ### Requirement: Chart motion does not replay or block reduced-motion users
 
 The system SHALL NOT replay the chart animation on hover, focus or an unrelated re-render, SHALL show the final state immediately when the user prefers reduced motion, and SHALL keep every value, label and accessible name available while the animation runs or when it is skipped.
@@ -756,3 +815,60 @@ The system SHALL NOT replay the chart animation on hover, focus or an unrelated 
 #### Scenario: The data is readable without motion
 - **WHEN** the animation is skipped or still running
 - **THEN** the chart's values, labels and accessible names are already available
+
+
+### Requirement: Dashboard periods are rolling windows ending today
+
+Every dashboard period SHALL be a rolling window that ends today. The week SHALL be the seven days ending today, the month SHALL be the thirty days ending today, and the year SHALL be the twelve calendar months ending with the current month. No dashboard window SHALL include days after today.
+
+#### Scenario: Middle of a week
+- **WHEN** today is Tuesday and the week period is selected
+- **THEN** the week starts on the previous Wednesday and ends today
+
+#### Scenario: Middle of a month
+- **WHEN** today is the 10th and the month period is selected
+- **THEN** the window starts thirty days before today and ends on the 10th
+
+#### Scenario: Middle of a year
+- **WHEN** today is 10 March 2026 and the year period is selected
+- **THEN** the window starts on 1 April 2025 and ends on 10 March 2026
+
+#### Scenario: Practice dated after today
+- **WHEN** the history contains a practice dated after today
+- **THEN** it does not appear in any dashboard window, chart or metric until its day arrives
+
+### Requirement: The dashboard shows the longest streak
+
+The dashboard SHALL show the longest run of consecutive calendar days with at least one practice in the full history, expressed in days, beside the current streak. The longest streak SHALL NOT follow any period selector and SHALL show zero when the history has no practice.
+
+#### Scenario: A historical record
+- **WHEN** the full history contains a run of fourteen consecutive practice days and the current streak is three
+- **THEN** the longest streak shows fourteen days while the current streak keeps showing three
+
+#### Scenario: The current streak is the record
+- **WHEN** the current run is the longest in the history
+- **THEN** both cards show the same number of days
+
+#### Scenario: No practice
+- **WHEN** the history has no practice
+- **THEN** the longest streak shows zero days
+
+#### Scenario: Changing the dashboard period
+- **WHEN** the user switches the week, month or year period
+- **THEN** the longest streak keeps reporting the full-history record
+
+#### Scenario: Reading the card
+- **WHEN** assistive technology reaches the longest streak card
+- **THEN** it announces the label and the number of days
+
+### Requirement: The top weekly summary keeps the calendar week
+
+The weekly summary at the top of the dashboard SHALL keep describing the current Monday-to-Sunday calendar week, including days after today, and SHALL NOT follow any dashboard period selector.
+
+#### Scenario: A mid-week visit
+- **WHEN** the dashboard opens on a Wednesday
+- **THEN** the top weekly summary still shows Monday to Sunday of the current week
+
+#### Scenario: Changing another card's period
+- **WHEN** the user changes the period of the rhythm chart or of a balance
+- **THEN** the top weekly summary does not change
