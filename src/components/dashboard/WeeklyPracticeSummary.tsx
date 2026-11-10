@@ -11,10 +11,12 @@ import {
   getPracticeIntensityLevel,
 } from "@/utils/practice-goals";
 import { useI18nSection } from "@/i18n/I18nProvider";
+import type { WeekStartsOn } from "@/types/display";
 
 type WeeklyPracticeSummaryProps = {
   sessions: SessionRecord[];
   days: PracticeWeekDay[];
+  weekStartsOn: WeekStartsOn;
   dailyGoalMinutes: number;
   weeklyGoalDays: number;
 };
@@ -22,6 +24,7 @@ type WeeklyPracticeSummaryProps = {
 export function WeeklyPracticeSummary({
   sessions,
   days,
+  weekStartsOn,
   dailyGoalMinutes,
   weeklyGoalDays,
 }: WeeklyPracticeSummaryProps) {
@@ -81,7 +84,9 @@ export function WeeklyPracticeSummary({
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-muted">
-             {dashboard.mondayToSunday}
+             {weekStartsOn === "sunday"
+             ? dashboard.sundayToSaturday
+             : dashboard.mondayToSunday}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
              {dashboard.weekly}

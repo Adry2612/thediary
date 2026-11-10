@@ -11,24 +11,45 @@ test("keeps valid preferences", () => {
     normalizeDisplayPreferences({
       techniqueNameLanguage: "original",
       tuningDisplay: "notes",
+      weekStartsOn: "sunday",
     }),
-    { techniqueNameLanguage: "original", tuningDisplay: "notes" },
+    {
+      techniqueNameLanguage: "original",
+      tuningDisplay: "notes",
+      weekStartsOn: "sunday",
+    },
   );
 });
 
 test("drops unknown values and falls back to the defaults", () => {
   assert.deepEqual(normalizeDisplayPreferences({ tuningDisplay: "chords" }), {
     tuningDisplay: "name",
+    weekStartsOn: "monday",
   });
   assert.deepEqual(
     normalizeDisplayPreferences({ techniqueNameLanguage: "fr" }),
-    { tuningDisplay: "name" },
+    { tuningDisplay: "name", weekStartsOn: "monday" },
   );
   assert.deepEqual(normalizeDisplayPreferences(null), DEFAULT_DISPLAY_PREFERENCES);
 });
 
 test("leaves the technique language absent for the automatic default", () => {
-  assert.deepEqual(normalizeDisplayPreferences({}), { tuningDisplay: "name" });
+  assert.deepEqual(normalizeDisplayPreferences({}), {
+    tuningDisplay: "name",
+    weekStartsOn: "monday",
+  });
+});
+
+test("defaults the week to Monday and accepts Sunday", () => {
+  assert.equal(normalizeDisplayPreferences({}).weekStartsOn, "monday");
+  assert.equal(
+    normalizeDisplayPreferences({ weekStartsOn: "sunday" }).weekStartsOn,
+    "sunday",
+  );
+  assert.equal(
+    normalizeDisplayPreferences({ weekStartsOn: "friday" }).weekStartsOn,
+    "monday",
+  );
 });
 
 test("follows the interface language when there is no explicit choice", () => {

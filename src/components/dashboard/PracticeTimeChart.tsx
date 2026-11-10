@@ -13,6 +13,7 @@ import { toDateKey } from "@/utils/practice-calendar";
 import type { PracticeChartPeriod, PracticeTimeBucket } from "@/utils/practice-analytics";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import type { SessionRecord } from "@/types/practice";
+import type { WeekStartsOn } from "@/types/display";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import type { ChartTooltip } from "@/types/dashboard";
 
@@ -32,22 +33,24 @@ export function PracticeTimeChart({
   today,
   period,
   onPeriodChange,
+  weekStartsOn,
 }: {
   history: SessionRecord[];
   today: Date;
   period: PracticeChartPeriod;
   onPeriodChange: (period: PracticeChartPeriod) => void;
+  weekStartsOn: WeekStartsOn;
 }) {
   const dashboard = useI18nSection("dashboard");
   const [tooltip, setTooltip] = useState<ChartTooltip | null>(null);
   const chartContainerRef = useRef<HTMLElement>(null);
   const buckets = useMemo(
-    () => getPracticeTimeBuckets(history, period, today),
-    [history, period, today],
+    () => getPracticeTimeBuckets(history, period, today, weekStartsOn),
+    [history, period, today, weekStartsOn],
   );
   const summary = useMemo(
-    () => getPracticeTimeSummary(history, period, today),
-    [history, period, today],
+    () => getPracticeTimeSummary(history, period, today, weekStartsOn),
+    [history, period, today, weekStartsOn],
   );
   const todayKey = useMemo(() => toDateKey(today), [today]);
   const maximumSeconds = Math.max(

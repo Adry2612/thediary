@@ -3,7 +3,8 @@ import type { DailyStats, SessionRecord } from "./practice";
 /**
  * Celda del calendario anual: un día con sus estadísticas y sus sesiones, o
  * `null` para los huecos de relleno antes del primer día del año y después del
- * último, que la rejilla necesita para empezar en lunes.
+ * último, que la rejilla necesita para empezar en el primer día de la semana
+ * configurado.
  */
 export type CalendarCell = {
   dateKey: string;

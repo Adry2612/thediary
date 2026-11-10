@@ -3,6 +3,7 @@ import type {
   PracticeMetricValue,
   SessionRecord,
 } from "../types/practice.ts";
+import type { WeekStartsOn } from "../types/display.ts";
 import {
   getPracticeChartRanges,
   type PracticeChartPeriod,
@@ -166,8 +167,9 @@ export function getPracticeWellbeingSeries(
   sessions: readonly SessionRecord[],
   period: PracticeChartPeriod,
   today = new Date(),
+  weekStartsOn: WeekStartsOn = "monday",
 ): PracticeWellbeingBucket[] {
-  return getPracticeChartRanges(period, today).map((range) => {
+  return getPracticeChartRanges(period, today, weekStartsOn).map((range) => {
     const inRange = sessions.filter((session) => {
       const dateKey = getSessionDateKey(session);
       return dateKey >= range.startDate && dateKey <= range.endDate;

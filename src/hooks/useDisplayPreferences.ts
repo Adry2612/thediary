@@ -13,6 +13,7 @@ import {
   type TechniqueNameLanguage,
   type TuningDisplay,
 } from "@/services/display-preferences";
+import type { WeekStartsOn } from "@/types/display";
 
 /**
  * Preferencias de presentación del dispositivo. Se releen al montar y cuando
@@ -63,6 +64,12 @@ export function useDisplayPreferences() {
     );
   }, []);
 
+  const setWeekStartsOn = useCallback((value: WeekStartsOn) => {
+    setPreference((current) =>
+      saveDisplayPreferences({ ...current, weekStartsOn: value }),
+    );
+  }, []);
+
   return {
     preference,
     /** Valor elegido en Configuración, sin resolver por el idioma. */
@@ -70,8 +77,10 @@ export function useDisplayPreferences() {
       preference.techniqueNameLanguage ?? (locale === "en" ? "original" : "es"),
     techniqueNameLanguage: resolveTechniqueNameLanguage(preference, locale),
     tuningDisplay: preference.tuningDisplay,
+    weekStartsOn: preference.weekStartsOn,
     setTechniqueNameLanguage,
     setTuningDisplay,
+    setWeekStartsOn,
     refresh,
   };
 }

@@ -15,6 +15,8 @@ import {
   PRACTICE_DAY_TARGET_SIZE,
   toDateKey,
 } from "@/utils/practice-calendar";
+import { getCalendarFirstWeekday, getWeekdayOrder } from "@/utils/week-start";
+import type { WeekStartsOn } from "@/types/display";
 import {
   getPracticeIntensityClass,
   PRACTICE_INTENSITY_CLASSES,
@@ -24,6 +26,7 @@ import { formatDateLabel } from "@/utils/format";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 
 type YearPracticeCalendarProps = {
+  weekStartsOn: WeekStartsOn;
   days: DailyStats[];
   history: SessionRecord[];
   todayKey: string;
@@ -32,6 +35,7 @@ type YearPracticeCalendarProps = {
 };
 
 export function YearPracticeCalendar({
+  weekStartsOn,
   days,
   history,
   todayKey,
@@ -72,8 +76,10 @@ export function YearPracticeCalendar({
     }
     return grouped;
   }, [history, year]);
-  const yearStart = new Date(year, 0, 1);
-  const firstWeekday = (yearStart.getDay() + 6) % 7;
+  const firstWeekday = getCalendarFirstWeekday(year, weekStartsOn);
+  const weekdayLabels = getWeekdayOrder(weekStartsOn).map(
+    (weekday) => weekdays.short[weekday],
+  );
   const weekCount = Math.ceil((firstWeekday + days.length) / 7);
   const hasYearPractice = days.some((day) => day.totalMinutes > 0);
   const monthMarkers = getMonthMarkers(year, weekCount, firstWeekday, locale);
@@ -219,7 +225,7 @@ export function YearPracticeCalendar({
               aria-hidden="true"
               className="grid grid-rows-7 gap-0 font-mono text-[10px] leading-5 text-muted"
             >
-              {weekdays.short.map((label, index) => (
+              {weekdayLabels.map((label, index) => (
                 <span key={index} className="h-5 w-6">
                   {label}
                 </span>

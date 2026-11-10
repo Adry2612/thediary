@@ -38,6 +38,7 @@ import {
   parseDateKey,
 } from '@/utils/practice-calendar';
 import { usePracticeFeedbackPreference } from '@/hooks/usePracticeFeedbackPreference';
+import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { useAppData } from '@/components/providers/AppDataProvider';
 import { useI18nSection } from '@/i18n/I18nProvider';
@@ -66,6 +67,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     useState<PracticeChartPeriod>('month');
   const [rankingPeriod, setRankingPeriod] =
     useState<PracticeChartPeriod>('month');
+  const { weekStartsOn } = useDisplayPreferences();
   const rhythmRange = useMemo(
     () => getComparisonSpans(rhythmPeriod, today).current,
     [rhythmPeriod, today],
@@ -87,12 +89,12 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     [history, todayYear],
   );
   const weeklySessions = useMemo(
-    () => getSessionsForWeek(history, today),
-    [history, today],
+    () => getSessionsForWeek(history, today, weekStartsOn),
+    [history, today, weekStartsOn],
   );
   const practiceWeekDays = useMemo(
-    () => getPracticeWeekDays(history, today),
-    [history, today],
+    () => getPracticeWeekDays(history, today, weekStartsOn),
+    [history, today, weekStartsOn],
   );
   const periodSessions = useMemo(
     () =>
@@ -226,6 +228,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         <WeeklyPracticeSummary
           sessions={weeklySessions}
           days={practiceWeekDays}
+          weekStartsOn={weekStartsOn}
           dailyGoalMinutes={practiceGoals.dailyMinutes}
           weeklyGoalDays={practiceGoals.weeklyDays}
         />
@@ -237,6 +240,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
           history={history}
           todayKey={todayKey}
           year={todayYear}
+          weekStartsOn={weekStartsOn}
           dailyGoalMinutes={practiceGoals.dailyMinutes}
         />
       </div>
@@ -246,6 +250,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
           history={history}
           today={today}
           period={rhythmPeriod}
+          weekStartsOn={weekStartsOn}
           onPeriodChange={setRhythmPeriod}
         />
         <SkillBalance
@@ -283,6 +288,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
           <PracticeWellbeing
             history={history}
             today={today}
+            weekStartsOn={weekStartsOn}
             moodEnabled={isMoodEnabled}
             focusEnabled={isFocusEnabled}
           />

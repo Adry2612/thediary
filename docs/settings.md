@@ -21,3 +21,10 @@ La preferencia se aplica a las insignias y editores de licks, a los títulos de 
 - Una afinación personalizada o desconocida se muestra tal como se guardó; la preferencia no inventa un nombre.
 - Cambiar la preferencia no modifica la afinación guardada de ninguna canción ni los objetivos del afinador.
 - La preferencia se aplica a los desplegables del formulario y la ficha de repertorio, a la nota de afinación del formulario y a las etiquetas de los presets del afinador. El catálogo de afinaciones vive en `src/utils/catalogs/tunings.ts`.
+
+### Primer día de la semana
+
+- **Lunes** (por defecto) o **Domingo**.
+- Afecta a las etiquetas y columnas del calendario anual, al resumen semanal, al orden de días del planificador de rutinas y a los intervalos semanales de los gráficos de tiempo y bienestar.
+- El periodo «semana» de los selectores sigue siendo una ventana móvil de 7 días que termina hoy; el ajuste solo cambia dónde empieza la semana natural.
+- La lógica compartida vive en `src/utils/week-start.ts`.

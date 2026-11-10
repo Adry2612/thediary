@@ -8,7 +8,7 @@ Defines the per-device presentation preferences for technique names and tuning l
 
 ### Requirement: Display preferences live in Settings
 
-The system SHALL offer two per-device preferences in Settings: technique names in Spanish or with their original name, and tunings by name or by per-string notes. It SHALL persist them locally, SHALL apply a change immediately without a reload, and SHALL keep them across reloads.
+The system SHALL offer three per-device preferences in Settings: technique names in Spanish or with their original name, tunings by name or by per-string notes, and the first day of the week as Monday or Sunday. It SHALL persist them locally, SHALL apply a change immediately without a reload, and SHALL keep them across reloads.
 
 #### Scenario: Choosing Spanish technique names
 - **WHEN** the user chooses Spanish for technique names
@@ -27,12 +27,32 @@ The system SHALL offer two per-device preferences in Settings: technique names i
 - **THEN** a known tuning is shown as its notes, such as `DADGBE` or `EADGBE`
 
 #### Scenario: Preferences survive a reload
-- **WHEN** the user reloads the app after changing either preference
-- **THEN** both choices are still applied
+- **WHEN** the user reloads the app after changing any preference
+- **THEN** every choice is still applied
 
 #### Scenario: Defaults without a stored preference
 - **WHEN** the user has never changed the preferences
-- **THEN** technique names follow the interface language and tunings are shown by name
+- **THEN** technique names follow the interface language, tunings are shown by name and the week starts on Monday
+
+### Requirement: The first day of the week is configurable
+
+The system SHALL let the user choose Monday or Sunday as the first day of the week and SHALL apply it to every calendar and weekly grouping: the annual practice calendar, the weekly practice summary, the weekly routine planner and the weekly intervals of the time and wellbeing charts. The rolling week period SHALL remain the seven days ending today.
+
+#### Scenario: Monday as the first day
+- **WHEN** the user chooses Monday
+- **THEN** the annual calendar starts its weekday labels with Monday, the weekly summary starts on Monday and the monthly chart groups its intervals from Monday to Sunday
+
+#### Scenario: Sunday as the first day
+- **WHEN** the user chooses Sunday
+- **THEN** the annual calendar starts its weekday labels with Sunday, the weekly summary starts on Sunday and the monthly chart groups its intervals from Sunday to Saturday
+
+#### Scenario: The preference does not move the rolling week
+- **WHEN** the user changes the first day of the week while the week period is selected
+- **THEN** the week still covers the seven days ending today
+
+#### Scenario: The routine planner follows the preference
+- **WHEN** the user chooses Sunday as the first day
+- **THEN** the weekly routine planner lists Sunday before Monday
 
 ### Requirement: Technique names follow the display preference
 

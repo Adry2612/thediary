@@ -30,6 +30,9 @@ export type Dict = {
     tuningDisplay: string;
     tuningDisplayName: string;
     tuningDisplayNotes: string;
+    weekStart: string;
+    weekStartMonday: string;
+    weekStartSunday: string;
     displayScope: string;
     spanish: string;
     english: string;
@@ -359,6 +362,7 @@ export type Dict = {
     skillAria: string;
     weekly: string;
     mondayToSunday: string;
+    sundayToSaturday: string;
     sessions: string;
     session: string;
     practiced: string;

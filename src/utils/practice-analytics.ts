@@ -7,10 +7,12 @@ import {
   type SessionRecord,
   type SkillDistribution,
 } from "../types/practice.ts";
+import type { WeekStartsOn } from "../types/display.ts";
 import { getComparisonSpans, sumSecondsInSpan } from "./period-comparison.ts";
 import { resolveTechniqueEntry } from "./catalogs/techniques.ts";
 import { resolveTheoryEntry } from "./catalogs/theory.ts";
 import { getRepertoirePartIds } from "./practice-parts.ts";
+import { getStartOfWeek } from "./week-start.ts";
 
 export type PracticeChartPeriod = "week" | "month" | "year";
 export type PracticeTimeRange = {
@@ -44,10 +46,8 @@ function addDays(date: Date, days: number) {
   return result;
 }
 
-function startOfWeek(date: Date) {
-  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
-  return monday;
+function startOfWeek(date: Date, weekStartsOn: WeekStartsOn) {
+  return getStartOfWeek(date, weekStartsOn);
 }
 
 function getSessionDateKey(session: SessionRecord) {
@@ -275,15 +275,18 @@ function formatShortDate(date: Date) {
     .replace(/\.$/, "");
 }
 
-/** Los 30 días que terminan hoy, agrupados en semanas de lunes a domingo. */
-function getMonthRanges(today: Date): PracticeChartRange[] {
+/** Los 30 días que terminan hoy, agrupados en semanas del inicio elegido. */
+function getMonthRanges(
+  today: Date,
+  weekStartsOn: WeekStartsOn,
+): PracticeChartRange[] {
   const span = getComparisonSpans("month", today).current;
   const windowStart = parseDateKey(span.startDate);
   const windowEnd = parseDateKey(span.endDate);
   const ranges: PracticeChartRange[] = [];
 
   for (
-    let weekStart = startOfWeek(windowStart);
+    let weekStart = startOfWeek(windowStart, weekStartsOn);
     weekStart <= windowEnd;
     weekStart = addDays(weekStart, 7)
   ) {
@@ -330,9 +333,10 @@ function getYearRanges(today: Date): PracticeChartRange[] {
 export function getPracticeChartRanges(
   period: PracticeChartPeriod,
   today = new Date(),
+  weekStartsOn: WeekStartsOn = "monday",
 ): PracticeChartRange[] {
   if (period === "week") return getWeekRanges(today);
-  if (period === "month") return getMonthRanges(today);
+  if (period === "month") return getMonthRanges(today, weekStartsOn);
   return getYearRanges(today);
 }
 
@@ -393,20 +397,26 @@ function buildPracticeTimeBuckets(
   period: PracticeChartPeriod,
   today: Date,
   dailySeconds: Map<string, number>,
+  weekStartsOn: WeekStartsOn,
 ): PracticeTimeBucket[] {
-  return rangesToBuckets(getPracticeChartRanges(period, today), dailySeconds);
+  return rangesToBuckets(
+    getPracticeChartRanges(period, today, weekStartsOn),
+    dailySeconds,
+  );
 }
 
 export function getPracticeTimeBuckets(
   history: SessionRecord[],
   period: PracticeChartPeriod,
   today = new Date(),
+  weekStartsOn: WeekStartsOn = "monday",
 ): PracticeTimeBucket[] {
   return addSessionCounts(
     buildPracticeTimeBuckets(
       period,
       today,
       getDailyPracticeSeconds(history),
+      weekStartsOn,
     ),
     history,
   );
@@ -432,10 +442,11 @@ export function getPracticeTimeSummary(
   history: SessionRecord[],
   period: PracticeChartPeriod,
   today = new Date(),
+  weekStartsOn: WeekStartsOn = "monday",
 ): PracticeTimeSummary {
   const dailySeconds = getDailyPracticeSeconds(history);
   const buckets = addSessionCounts(
-    buildPracticeTimeBuckets(period, today, dailySeconds),
+    buildPracticeTimeBuckets(period, today, dailySeconds, weekStartsOn),
     history,
   );
   const spans = getComparisonSpans(period, today);

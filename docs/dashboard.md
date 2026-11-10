@@ -9,7 +9,7 @@ El panel de evolución muestra la constancia, el tiempo y las habilidades de pr�
 - El **año** son los 12 meses naturales que terminan con el mes actual. El primer y el último mes se recortan a los días del rango.
 - Ningún periodo incluye días posteriores a hoy.
 - Cada comparación usa el tramo inmediatamente anterior de la misma longitud. La semana compara con los 7 días anteriores, el mes con los 30 anteriores y el año con los mismos meses un año antes.
-- El resumen semanal superior es la excepción: sigue mostrando la semana natural de lunes a domingo y no responde a los selectores de periodo.
+- El resumen semanal superior es la excepción: sigue mostrando la semana natural —de lunes a domingo por defecto, o de domingo a sábado si así se elige en Configuración— y no responde a los selectores de periodo.
 
 ## Tarjetas y rankings
 

@@ -9,3 +9,6 @@ export type CatalogNameLanguage = "es" | "original" | "original-es";
 
 /** Presentación de las afinaciones: nombre conocido o notas por cuerda. */
 export type TuningDisplay = "name" | "notes";
+
+/** Primer día de la semana con el que se pintan calendarios y resúmenes. */
+export type WeekStartsOn = "monday" | "sunday";

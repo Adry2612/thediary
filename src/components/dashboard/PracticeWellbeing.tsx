@@ -13,6 +13,7 @@ import {
 import type { Dict } from "@/i18n/dictionary";
 import type { PracticeChartPeriod } from "@/utils/practice-analytics";
 import type { SessionRecord } from "@/types/practice";
+import type { WeekStartsOn } from "@/types/display";
 
 const CHART = {
   width: 640,
@@ -173,11 +174,13 @@ function MetricSummary({
 }
 
 export function PracticeWellbeing({
+  weekStartsOn,
   history,
   today,
   moodEnabled,
   focusEnabled,
 }: {
+  weekStartsOn: WeekStartsOn;
   history: SessionRecord[];
   today: Date;
   moodEnabled: boolean;
@@ -189,8 +192,8 @@ export function PracticeWellbeing({
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const series = useMemo(
-    () => getPracticeWellbeingSeries(history, period, today),
-    [history, period, today],
+    () => getPracticeWellbeingSeries(history, period, today, weekStartsOn),
+    [history, period, today, weekStartsOn],
   );
   const summary = useMemo(
     () => getPracticeWellbeingSummary(history, period, today),

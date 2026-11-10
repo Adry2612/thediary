@@ -115,6 +115,44 @@ test("returns seven Monday-to-Sunday indicators with practiced days marked", () 
   );
 });
 
+test("returns the week from Sunday to Saturday when that is the preference", () => {
+  const history = [
+    createSession("previous", "2026-10-03T12:00:00.000Z"),
+    createSession("sunday", "2026-10-04T12:00:00.000Z"),
+    createSession("monday", "2026-10-05T12:00:00.000Z"),
+    createSession("saturday", "2026-10-10T12:00:00.000Z"),
+    createSession("next", "2026-10-11T12:00:00.000Z"),
+  ];
+
+  const sessions = getSessionsForWeek(
+    history,
+    new Date(2026, 9, 7, 12),
+    "sunday",
+  );
+  const days = getPracticeWeekDays(
+    history,
+    new Date(2026, 9, 7, 12),
+    "sunday",
+  );
+
+  assert.deepEqual(
+    sessions.map((session) => session.id),
+    ["saturday", "monday", "sunday"],
+  );
+  assert.deepEqual(
+    days.map((day) => [day.dateKey, day.hasPractice]),
+    [
+      ["2026-10-04", true],
+      ["2026-10-05", true],
+      ["2026-10-06", false],
+      ["2026-10-07", false],
+      ["2026-10-08", false],
+      ["2026-10-09", false],
+      ["2026-10-10", true],
+    ],
+  );
+});
+
 test("keys a local date and pads month and day", () => {
   assert.equal(toDateKey(new Date(2026, 0, 1)), "2026-01-01");
   assert.equal(toDateKey(new Date(2026, 11, 31)), "2026-12-31");

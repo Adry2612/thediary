@@ -153,6 +153,21 @@ export function SettingsView() {
                 }
               />
             </div>
+            <div className='text-xs text-muted'>
+              {settings.weekStart}
+              <SelectField
+                className='mt-1'
+                ariaLabel={settings.weekStart}
+                value={display.weekStartsOn}
+                options={[
+                  { value: 'monday', label: settings.weekStartMonday },
+                  { value: 'sunday', label: settings.weekStartSunday },
+                ]}
+                onChange={(value) =>
+                  display.setWeekStartsOn(value === 'sunday' ? 'sunday' : 'monday')
+                }
+              />
+            </div>
           </div>
           <p className='mt-3 text-xs text-muted'>{settings.displayScope}</p>
         </section>

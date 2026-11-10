@@ -879,11 +879,11 @@ The dashboard SHALL show the longest run of consecutive calendar days with at le
 
 ### Requirement: The top weekly summary keeps the calendar week
 
-The weekly summary at the top of the dashboard SHALL keep describing the current Monday-to-Sunday calendar week, including days after today, and SHALL NOT follow any dashboard period selector.
+The weekly summary at the top of the dashboard SHALL keep describing the current calendar week, from the configured first day of the week to the day before it and including days after today, and SHALL NOT follow any dashboard period selector.
 
 #### Scenario: A mid-week visit
 - **WHEN** the dashboard opens on a Wednesday
-- **THEN** the top weekly summary still shows Monday to Sunday of the current week
+- **THEN** the top weekly summary still shows the whole current calendar week, with Monday or Sunday as its first day according to Settings
 
 #### Scenario: Changing another card's period
 - **WHEN** the user changes the period of the rhythm chart or of a balance

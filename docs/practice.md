@@ -57,6 +57,7 @@ Guardar o actualizar una rutina confirma el resultado con un toast («Rutina gua
 ## Rutina por día
 
 - Las siete tarjetas de la planificación semanal comparten altura, relleno y ancho de selector en todos los tamaños de pantalla.
+- El orden de los días sigue el primer día de la semana elegido en Configuración: lunes por defecto o domingo.
 - Los días sin rutina asignada ocupan el mismo espacio que los días con rutina.
 - Un nombre de rutina largo se recorta dentro del selector sin ensanchar la tarjeta ni romper la cuadrícula.
 - En pantallas estrechas las tarjetas se reparten en menos columnas sin desbordamiento horizontal.
