@@ -122,7 +122,7 @@ The system SHALL show a semicircular balance of the classified practice time of 
 
 ### Requirement: The dashboard ranks the most practiced content of the period
 
-The system SHALL show the most practised song, technique and theory topic of the same rolling window as the practice-rhythm period, grouped by block name for technique and theory, with their practised time and session count, and SHALL show an empty state for a ranking with no data in that window.
+The system SHALL show the most practised song, technique and theory topic of a rolling window chosen by the ranking section itself, SHALL offer week, 30 days and year for that window, SHALL default to 30 days, SHALL group technique and theory by block name, SHALL show each entry's practised time and session count, SHALL count songs linked to the repertoire and catalog songs not yet added to it, and SHALL show an empty state for a ranking with no data in that window.
 
 #### Scenario: A song practised through its blocks
 - **WHEN** blocks linked to a repertoire song have accumulated practice time inside the selected period
@@ -144,9 +144,25 @@ The system SHALL show the most practised song, technique and theory topic of the
 - **WHEN** a practiced block references a song that is no longer in the repertoire
 - **THEN** the ranking uses the block name stored with the practice instead of dropping the time
 
-#### Scenario: Changing the rhythm period
-- **WHEN** the user changes the practice-rhythm period
-- **THEN** the rankings are recalculated for the same window
+#### Scenario: Changing the ranking period
+- **WHEN** the user changes the period of the ranking section
+- **THEN** the rankings are recalculated for that window and the rhythm chart keeps its own period
+
+#### Scenario: Default period
+- **WHEN** the dashboard opens
+- **THEN** the rankings cover the thirty days ending today
+
+#### Scenario: Independent from the rhythm chart
+- **WHEN** the user changes the rhythm chart period
+- **THEN** the rankings keep their own period and do not change
+
+#### Scenario: Accessible period control
+- **WHEN** assistive technology reaches the ranking period control
+- **THEN** it finds a named group whose buttons expose which period is selected
+
+#### Scenario: A catalog song
+- **WHEN** a practised block references a catalog song that is not in the repertoire yet
+- **THEN** the song appears in the song ranking with its catalog title and practised time
 
 #### Scenario: No data for a ranking
 - **WHEN** the selected period has no song, technique or theory practice
@@ -713,33 +729,33 @@ The system SHALL word every period comparison on the practice rhythm card and th
 - **WHEN** the year period is selected and a comparison is shown
 - **THEN** the wording refers to the same months one year earlier
 
-### Requirement: The two balance cards share one period selector
+### Requirement: Each balance card has its own period selector
 
-The system SHALL show a period selector with the options week, 30 days and year on the skill balance card and on the guitar balance card, SHALL use the same selected period in both cards, SHALL default to 30 days, and SHALL recompute both balances when the period changes from either card.
+The system SHALL show a period selector with the options week, 30 days and year on the skill balance card and on the guitar balance card, SHALL let each card choose its own period, SHALL default both to 30 days, and SHALL recompute only the balance of the card whose period changed.
 
 #### Scenario: Default period
 - **WHEN** the dashboard opens
 - **THEN** both balance cards show the 30-day period selected
 
-#### Scenario: Changing the period from one card
+#### Scenario: Changing the skill period
 - **WHEN** the user selects year on the skill balance card
-- **THEN** the skill balance and the guitar balance both switch to the year window and the guitar card shows year as selected
+- **THEN** the skill balance switches to the year window and the guitar balance keeps its own period and selection
 
-#### Scenario: Changing the period from the other card
+#### Scenario: Changing the guitar period
 - **WHEN** the user selects week on the guitar balance card
-- **THEN** both balances switch to the week window
+- **THEN** the guitar balance switches to the week window and the skill balance keeps its own period and selection
 
 #### Scenario: Accessible name and state
 - **WHEN** assistive technology reaches the selector
-- **THEN** it finds a named group whose buttons expose which period is selected
+- **THEN** it finds a named group that names its own balance and whose buttons expose which period is selected
 
 #### Scenario: Narrow viewport
 - **WHEN** the dashboard is shown on a phone
 - **THEN** the selector wraps inside its card without horizontal overflow and every option stays reachable
 
 #### Scenario: Empty period
-- **WHEN** the selected period has no classified practice
-- **THEN** both cards keep their layout and show their empty state for that period
+- **WHEN** a balance's selected period has no classified practice
+- **THEN** that card keeps its layout and shows its empty state for that period
 
 #### Scenario: Stable layout
 - **WHEN** the user changes the period from either card

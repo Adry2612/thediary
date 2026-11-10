@@ -348,7 +348,8 @@ export type Dict = {
     periodMonth?: string;
     periodYear?: string;
     periodAria: string;
-    balancePeriodAria: string;
+    skillBalancePeriodAria: string;
+    guitarBalancePeriodAria: string;
     inPeriod: string;
     chartAria: string;
     emptyChart: string;
@@ -384,7 +385,8 @@ export type Dict = {
     guitarEmpty: string;
     guitarEmptyHint: string;
     topContent: string;
-    topContentDescription: string;
+    topContentEyebrow: string;
+    rankingPeriodAria: string;
     topSong: string;
     topTechnique: string;
     topTheory: string;

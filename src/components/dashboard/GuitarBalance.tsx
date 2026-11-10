@@ -64,7 +64,7 @@ export function GuitarBalance({
         <PeriodSelector
           period={period}
           onChange={onPeriodChange}
-          ariaLabel={dashboard.balancePeriodAria}
+          ariaLabel={dashboard.guitarBalancePeriodAria}
         />
       </div>
 

@@ -100,7 +100,7 @@ export function SkillBalance({
         <PeriodSelector
           period={period}
           onChange={onPeriodChange}
-          ariaLabel={dashboard.balancePeriodAria}
+          ariaLabel={dashboard.skillBalancePeriodAria}
         />
       </div>
 

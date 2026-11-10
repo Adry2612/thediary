@@ -61,15 +61,26 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
 
   const [rhythmPeriod, setRhythmPeriod] =
     useState<PracticeChartPeriod>('week');
-  const [balancePeriod, setBalancePeriod] =
+  const [skillPeriod, setSkillPeriod] = useState<PracticeChartPeriod>('month');
+  const [guitarPeriod, setGuitarPeriod] =
+    useState<PracticeChartPeriod>('month');
+  const [rankingPeriod, setRankingPeriod] =
     useState<PracticeChartPeriod>('month');
   const rhythmRange = useMemo(
     () => getComparisonSpans(rhythmPeriod, today).current,
     [rhythmPeriod, today],
   );
-  const balanceRange = useMemo(
-    () => getComparisonSpans(balancePeriod, today).current,
-    [balancePeriod, today],
+  const skillRange = useMemo(
+    () => getComparisonSpans(skillPeriod, today).current,
+    [skillPeriod, today],
+  );
+  const guitarRange = useMemo(
+    () => getComparisonSpans(guitarPeriod, today).current,
+    [guitarPeriod, today],
+  );
+  const rankingRange = useMemo(
+    () => getComparisonSpans(rankingPeriod, today).current,
+    [rankingPeriod, today],
   );
   const yearlyDays = useMemo(
     () => getYearlyHeatmapData(todayYear, history),
@@ -94,8 +105,8 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     [history, rhythmRange],
   );
   const skillDistribution = useMemo(
-    () => getSkillDistribution(history, balanceRange),
-    [balanceRange, history],
+    () => getSkillDistribution(history, skillRange),
+    [history, skillRange],
   );
   const totalMinutes = Math.round(
     periodSessions.reduce(
@@ -116,12 +127,12 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
       )
     : 0;
   const guitarBalance = useMemo(
-    () => getGuitarBalance(history, balanceRange),
-    [balanceRange, history],
+    () => getGuitarBalance(history, guitarRange),
+    [guitarRange, history],
   );
   const contentRankings = useMemo(
-    () => getPracticeContentRankings(history, repertoireItems, rhythmRange),
-    [history, repertoireItems, rhythmRange],
+    () => getPracticeContentRankings(history, repertoireItems, rankingRange),
+    [history, repertoireItems, rankingRange],
   );
   const practiceStatistics = useMemo(
     () => getPracticeStatistics(history, rhythmRange),
@@ -239,16 +250,16 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         />
         <SkillBalance
           distribution={skillDistribution}
-          period={balancePeriod}
-          onPeriodChange={setBalancePeriod}
+          period={skillPeriod}
+          onPeriodChange={setSkillPeriod}
         />
       </div>
 
       <div className='mt-5 grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2'>
         <GuitarBalance
           balance={guitarBalance}
-          period={balancePeriod}
-          onPeriodChange={setBalancePeriod}
+          period={guitarPeriod}
+          onPeriodChange={setGuitarPeriod}
         />
         <div className='min-w-0'>
           <TempoProgress
@@ -260,7 +271,11 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
       </div>
 
       <div className='mt-5'>
-        <TopPracticeContent rankings={contentRankings} />
+        <TopPracticeContent
+          rankings={contentRankings}
+          period={rankingPeriod}
+          onPeriodChange={setRankingPeriod}
+        />
       </div>
 
       {showWellbeing && (

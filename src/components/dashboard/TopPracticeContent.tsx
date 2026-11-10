@@ -4,12 +4,14 @@ import {
   getBarPercentage,
 } from "@/utils/dashboard-data";
 import type {
+  PracticeChartPeriod,
   PracticeContentRank,
   PracticeContentRankings,
 } from "@/utils/practice-analytics";
 import { getTechniqueName } from "@/utils/catalogs/techniques";
 import { getTheoryName } from "@/utils/catalogs/theory";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
+import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 function ContentColumn({
@@ -74,8 +76,12 @@ function ContentColumn({
 
 export function TopPracticeContent({
   rankings,
+  period,
+  onPeriodChange,
 }: {
   rankings: PracticeContentRankings;
+  period: PracticeChartPeriod;
+  onPeriodChange: (period: PracticeChartPeriod) => void;
 }) {
   const dashboard = useI18nSection("dashboard");
   const { techniqueNameLanguage } = useDisplayPreferences();
@@ -88,12 +94,17 @@ export function TopPracticeContent({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.12em] text-muted">
-            {dashboard.topContentDescription}
+            {dashboard.topContentEyebrow}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
             {dashboard.topContent}
           </h2>
         </div>
+        <PeriodSelector
+          period={period}
+          onChange={onPeriodChange}
+          ariaLabel={dashboard.rankingPeriodAria}
+        />
       </div>
       <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
         <ContentColumn

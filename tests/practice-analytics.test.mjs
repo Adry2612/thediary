@@ -1047,3 +1047,39 @@ test("uses 30-day windows for the month period", () => {
     0,
   );
 });
+
+test("ranks catalog songs that are not in the repertoire yet", () => {
+  const catalogSong = {
+    source: "itunes",
+    id: "catalog-1",
+    title: "Canción del catálogo",
+    artist: "Artista",
+  };
+  const history = [
+    createSession("inside", "2026-10-05T12:00:00.000Z", {
+      phases: [
+        {
+          id: "phase-1",
+          name: "Canción del catálogo",
+          skill: "repertoire",
+          elapsedSeconds: 900,
+          catalogSong,
+        },
+      ],
+    }),
+  ];
+
+  const rankings = getPracticeContentRankings(history, [], {
+    startDate: "2026-10-01",
+    endDate: "2026-10-07",
+  });
+
+  assert.deepEqual(rankings.songs, [
+    {
+      key: "catalog:itunes:catalog-1",
+      label: "Canción del catálogo",
+      seconds: 900,
+      sessionCount: 1,
+    },
+  ]);
+});

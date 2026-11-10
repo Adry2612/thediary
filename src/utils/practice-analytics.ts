@@ -672,6 +672,19 @@ export function getPracticeContentRankings(
         continue;
       }
 
+      // Una canción del catálogo todavía no está en el repertorio, pero el
+      // bloque la practicó igual y debe aparecer en el ranking de canciones.
+      if (phase.skill === "repertoire" && phase.catalogSong) {
+        addLessonTime(
+          songs,
+          `catalog:${phase.catalogSong.source}:${phase.catalogSong.id}`,
+          phase.catalogSong.title,
+          phase.elapsedSeconds,
+          session.id,
+        );
+        continue;
+      }
+
       const name = phase.name.trim();
       if (!name) continue;
       if (phase.skill === "technique") {

@@ -15,7 +15,9 @@ El panel de evolución muestra la constancia, el tiempo y las habilidades de pr�
 
 - Las tarjetas de tiempo, sesiones, BPM medio, horas y apartado más practicado usan el mismo periodo que el gráfico de ritmo.
 - Al cambiar el periodo del ritmo, esas tarjetas se recalculan con la nueva ventana.
-- El ranking de canción, técnica y teoría también usa la ventana del ritmo.
+- El ranking de canción, técnica y teoría tiene su **propio selector** de periodo (semana, 30 días o año), independiente del ritmo, y arranca en **30 días**. Cambiar el ritmo no lo mueve.
+- El ranking de canciones cuenta tanto las canciones enlazadas al repertorio como las referencias al catálogo que todavía no se han añadido.
+- El balance de habilidades y el balance de guitarras tienen cada uno su propio selector de periodo, ambos con 30 días por defecto: cambiar uno no altera el otro.
 - **Racha actual** y **racha más larga** son históricas: no cambian al cambiar el periodo. La racha más larga es el mejor tramo de días consecutivos de todo el historial.
 - El calendario anual sigue mostrando el año natural actual.
 - El gráfico de bienestar solo aparece cuando ánimo o foco están activados en Configuración y hay datos de esa métrica; si no, no se muestra.
