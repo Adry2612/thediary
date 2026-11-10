@@ -13,6 +13,7 @@ import { StreakFlame } from '@/components/dashboard/StreakFlame';
 import { TempoProgress } from '@/components/dashboard/TempoProgress';
 import { TopPracticeContent } from '@/components/dashboard/TopPracticeContent';
 import { WeeklyPracticeSummary } from '@/components/dashboard/WeeklyPracticeSummary';
+import { YearDashboardView } from '@/components/dashboard/YearDashboardView';
 import { YearPracticeCalendar } from '@/components/dashboard/YearPracticeCalendar';
 import {
   formatPracticeDuration,
@@ -37,6 +38,7 @@ import {
   getYearlyHeatmapData,
   parseDateKey,
 } from '@/utils/practice-calendar';
+import { getPracticeYears } from '@/utils/practice-year';
 import { usePracticeFeedbackPreference } from '@/hooks/usePracticeFeedbackPreference';
 import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
 import { usePracticeStore } from '@/stores/usePracticeStore';
@@ -58,6 +60,11 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
   const persistenceError = usePracticeStore((state) => state.persistenceError);
   const today = useMemo(() => parseDateKey(todayKey), [todayKey]);
   const todayYear = today.getFullYear();
+  const [selectedYear, setSelectedYear] = useState(todayYear);
+  const years = useMemo(
+    () => getPracticeYears(history, todayYear),
+    [history, todayYear],
+  );
   const { isMoodEnabled, isFocusEnabled } = usePracticeFeedbackPreference();
 
   const [rhythmPeriod, setRhythmPeriod] =
@@ -216,6 +223,17 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     return <DashboardSkeleton />;
   }
 
+  if (selectedYear !== todayYear) {
+    return (
+      <YearDashboardView
+        year={selectedYear}
+        years={years}
+        currentYear={todayYear}
+        onYearChange={setSelectedYear}
+      />
+    );
+  }
+
   return (
     <PageShell>
       <PageHeader
@@ -236,6 +254,8 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
 
       <div className='mt-5'>
         <YearPracticeCalendar
+          years={years}
+          onYearChange={setSelectedYear}
           days={yearlyDays}
           history={history}
           todayKey={todayKey}

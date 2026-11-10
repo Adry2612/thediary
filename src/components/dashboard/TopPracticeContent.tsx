@@ -77,10 +77,12 @@ function ContentColumn({
 export function TopPracticeContent({
   rankings,
   period,
+  showPeriodSelector = true,
   onPeriodChange,
 }: {
   rankings: PracticeContentRankings;
   period: PracticeChartPeriod;
+  showPeriodSelector?: boolean;
   onPeriodChange: (period: PracticeChartPeriod) => void;
 }) {
   const dashboard = useI18nSection("dashboard");
@@ -100,11 +102,13 @@ export function TopPracticeContent({
             {dashboard.topContent}
           </h2>
         </div>
-        <PeriodSelector
-          period={period}
-          onChange={onPeriodChange}
-          ariaLabel={dashboard.rankingPeriodAria}
-        />
+        {showPeriodSelector && (
+          <PeriodSelector
+            period={period}
+            onChange={onPeriodChange}
+            ariaLabel={dashboard.rankingPeriodAria}
+          />
+        )}
       </div>
       <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
         <ContentColumn

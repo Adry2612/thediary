@@ -512,6 +512,31 @@ The system SHALL close the annual calendar's preview card after the pointer leav
 - **THEN** the card closes and the armed day is cleared
 
 
+### Requirement: Previous years open an annual view
+
+When the history contains more than one year, the annual calendar SHALL offer a year selector with the current year and every year that has practice. Choosing the current year SHALL keep the existing dashboard unchanged. Choosing a previous year SHALL show a read-only annual view for that calendar year: a summary of the year, its complete annual calendar, its monthly rhythm, skill and guitar balances, content ranking, wellbeing and metric cards, all computed only from that year's sessions. The annual view SHALL hide the rolling-period selectors, SHALL compare tempo with the previous year and SHALL offer a way back to the current year.
+
+#### Scenario: The current year keeps the existing dashboard
+- **WHEN** the selected year is the current year
+- **THEN** the dashboard shows the same rolling-period cards and selectors as before
+
+#### Scenario: Opening a previous year
+- **WHEN** the user chooses a previous year in the annual calendar
+- **THEN** the dashboard shows that year's summary, calendar and charts, and every figure counts only sessions from that year
+
+#### Scenario: Period selectors in the annual view
+- **WHEN** a previous year is shown
+- **THEN** the period selectors are hidden and the charts use the whole calendar year
+
+#### Scenario: Returning to the current year
+- **WHEN** the user chooses the current year again or uses the back-to-current-year action
+- **THEN** the dashboard returns to its rolling-period view
+
+#### Scenario: A single year of history
+- **WHEN** all practice belongs to the current year
+- **THEN** the annual calendar does not show a year selector
+
+
 ### Requirement: The dashboard summarizes mood and focus
 
 When at least one practice in the selected period carries a value, the dashboard SHALL show the average mood and the average focus of that period together with their trend against the previous period, SHALL express the values on the same five-point scale used to capture them, and SHALL NOT show a chart or a zero for a metric with no data.

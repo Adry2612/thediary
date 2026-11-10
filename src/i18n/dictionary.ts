@@ -239,6 +239,7 @@ export type Dict = {
     between50and99: string;
     above100: string;
     yearDays: string;
+    yearAria: string;
     monthDays: string;
     previousMonth: string;
     nextMonth: string;
@@ -346,6 +347,19 @@ export type Dict = {
     weekTime: string;
     monthTimeChart: string;
     yearTime: string;
+    yearViewDescription: string;
+    yearBackToCurrent: string;
+    yearSummaryEyebrow: string;
+    yearSummaryTitle: string;
+    yearSummaryDescription: string;
+    yearDaysPracticed: string;
+    yearDaysPracticedDescription: string;
+    yearBestMonth: string;
+    yearAverageSession: string;
+    yearMonthsPracticed: string;
+    yearLongestStreak: string;
+    yearLongestStreakDescription: string;
+    day: string;
     period: string;
     periodWeek?: string;
     periodMonth?: string;
@@ -420,6 +434,7 @@ export type Dict = {
     tempoDescription: string;
     tempoWeek: string;
     tempoMonth: string;
+    tempoYear: string;
     tempoAria: string;
     tempoCompared: string;
     tempoSmallSample: string;

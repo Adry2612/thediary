@@ -902,6 +902,19 @@ test("compares each content over consecutive rolling windows", () => {
   );
 });
 
+test("the year window covers the calendar year and compares with the previous one", () => {
+  const history = [
+    tempoSession("previous", new Date(2025, 11, 31, 12).toISOString(), 60, 1800),
+    tempoSession("current", new Date(2026, 11, 31, 12).toISOString(), 90, 1800),
+    tempoSession("outside", new Date(2027, 0, 1, 12).toISOString(), 200, 1800),
+  ];
+
+  const trend = getTempoTrend(history, "year", new Date(2026, 11, 31, 12));
+
+  assert.equal(trend.comparedCount, 1);
+  assert.equal(trend.deltaBpm, 30);
+});
+
 test("excludes a content practised in only one of the windows", () => {
   const history = [
     tempoSession("current", new Date(2026, 9, 20, 12).toISOString(), 90),

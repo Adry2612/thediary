@@ -728,11 +728,12 @@ export function getPracticeContentRankings(
   };
 }
 
-export type PracticeTempoPeriod = "week" | "month";
+export type PracticeTempoPeriod = "week" | "month" | "year";
 
 const TEMPO_WINDOW_DAYS: Record<PracticeTempoPeriod, number> = {
   week: 7,
   month: 30,
+  year: 365,
 };
 
 /** Mínimo practicado por contenido en cada ventana para poder compararlo. */
@@ -921,9 +922,18 @@ export function getTempoTrend(
 ): TempoTrend {
   const days = TEMPO_WINDOW_DAYS[period];
   const todayStart = getLocalDayStart(today);
-  const currentStart = addDays(todayStart, -(days - 1));
-  const previousStart = addDays(todayStart, -(days * 2 - 1));
-  const previousEnd = addDays(currentStart, -1);
+  const currentStart =
+    period === "year"
+      ? new Date(today.getFullYear(), 0, 1)
+      : addDays(todayStart, -(days - 1));
+  const previousStart =
+    period === "year"
+      ? new Date(today.getFullYear() - 1, 0, 1)
+      : addDays(todayStart, -(days * 2 - 1));
+  const previousEnd =
+    period === "year"
+      ? new Date(today.getFullYear() - 1, 11, 31)
+      : addDays(currentStart, -1);
 
   const currentContents = new Map<string, TempoContentWindow>();
   const previousContents = new Map<string, TempoContentWindow>();

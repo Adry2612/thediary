@@ -179,16 +179,20 @@ export function PracticeWellbeing({
   today,
   moodEnabled,
   focusEnabled,
+  initialPeriod = "month",
+  showPeriodSelector = true,
 }: {
   weekStartsOn: WeekStartsOn;
   history: SessionRecord[];
   today: Date;
   moodEnabled: boolean;
   focusEnabled: boolean;
+  initialPeriod?: PracticeChartPeriod;
+  showPeriodSelector?: boolean;
 }) {
   const dashboard = useI18nSection("dashboard");
   const { locale } = useI18n();
-  const [period, setPeriod] = useState<PracticeChartPeriod>("month");
+  const [period, setPeriod] = useState<PracticeChartPeriod>(initialPeriod);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const series = useMemo(
@@ -263,18 +267,20 @@ export function PracticeWellbeing({
             {dashboard.wellbeingTitle}
           </h2>
         </div>
-        <div className="min-w-32 text-xs text-muted">
-          {dashboard.period}
-          <SelectField
-            className="mt-1"
-            value={period}
-            ariaLabel={dashboard.wellbeingPeriodAria}
-            onChange={(selectedPeriod) =>
-              setPeriod(selectedPeriod as PracticeChartPeriod)
-            }
-            options={periodOptions}
-          />
-        </div>
+        {showPeriodSelector && (
+          <div className="min-w-32 text-xs text-muted">
+            {dashboard.period}
+            <SelectField
+              className="mt-1"
+              value={period}
+              ariaLabel={dashboard.wellbeingPeriodAria}
+              onChange={(selectedPeriod) =>
+                setPeriod(selectedPeriod as PracticeChartPeriod)
+              }
+              options={periodOptions}
+            />
+          </div>
+        )}
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">

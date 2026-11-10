@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { PracticeDayTooltip } from "@/components/dashboard/PracticeDayTooltip";
+import { SelectField } from "@/components/ui/SelectField";
 import { usePracticeDayTooltip } from "@/hooks/usePracticeDayTooltip";
 import { useLatestPracticeScroll } from "@/hooks/useLatestPracticeScroll";
 import type { DailyStats, SessionRecord } from "@/types/practice";
@@ -32,6 +33,8 @@ type YearPracticeCalendarProps = {
   todayKey: string;
   year: number;
   dailyGoalMinutes: number;
+  years?: number[];
+  onYearChange?: (year: number) => void;
 };
 
 export function YearPracticeCalendar({
@@ -41,6 +44,8 @@ export function YearPracticeCalendar({
   todayKey,
   year,
   dailyGoalMinutes,
+  years = [],
+  onYearChange,
 }: YearPracticeCalendarProps) {
   const router = useRouter();
   const { locale } = useI18n();
@@ -99,6 +104,13 @@ export function YearPracticeCalendar({
   const yearLabel = new Intl.NumberFormat(locale, {
     useGrouping: false,
   }).format(year);
+  const showYearSelector = years.length > 1 && Boolean(onYearChange);
+  const yearOptions = years.map((option) => ({
+    value: String(option),
+    label: new Intl.NumberFormat(locale, { useGrouping: false }).format(
+      option,
+    ),
+  }));
 
   useLatestPracticeScroll(calendarScrollRef, cells, latestPracticeDateKey);
 
@@ -174,8 +186,19 @@ export function YearPracticeCalendar({
             {calendar.consistency}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-            {calendar.title} · {yearLabel}
+            {showYearSelector
+              ? calendar.title
+              : `${calendar.title} · ${yearLabel}`}
           </h2>
+          {showYearSelector && onYearChange && (
+            <SelectField
+              className="mt-2 w-28"
+              value={String(year)}
+              ariaLabel={calendar.yearAria}
+              options={yearOptions}
+              onChange={(value) => onYearChange(Number(value))}
+            />
+          )}
           <p className="mt-2 text-sm text-muted">
             {calendar.description} {dailyGoalMinutes} min. {calendar.selectDay}.
           </p>

@@ -29,12 +29,14 @@ const gapFormatter = new Intl.NumberFormat("es-ES", {
 });
 
 export function PracticeTimeChart({
+  showPeriodSelector = true,
   history,
   today,
   period,
   onPeriodChange,
   weekStartsOn,
 }: {
+  showPeriodSelector?: boolean;
   history: SessionRecord[];
   today: Date;
   period: PracticeChartPeriod;
@@ -157,13 +159,14 @@ export function PracticeTimeChart({
               : period === "month" ? dashboard.monthTimeChart : dashboard.yearTime}
           </p>
         </div>
-        <PeriodSelector
-          period={period}
-          onChange={onPeriodChange}
-          ariaLabel={dashboard.periodAria}
-        />
+        {showPeriodSelector && (
+          <PeriodSelector
+            period={period}
+            onChange={onPeriodChange}
+            ariaLabel={dashboard.periodAria}
+          />
+        )}
       </div>
-
       <div className="mt-6 flex items-baseline gap-2">
         <span className="font-mono text-2xl leading-tight font-medium tabular-nums tracking-normal text-zinc-100 sm:text-3xl">
           {formatTotal(totalSeconds)}

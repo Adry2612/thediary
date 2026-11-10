@@ -27,10 +27,12 @@ import { useI18nSection } from "@/i18n/I18nProvider";
 export function SkillBalance({
   distribution,
   period,
+  showPeriodSelector = true,
   onPeriodChange,
 }: {
   distribution: SkillDistribution;
   period: PracticeChartPeriod;
+  showPeriodSelector?: boolean;
   onPeriodChange: (period: PracticeChartPeriod) => void;
 }) {
   const dashboard = useI18nSection("dashboard");
@@ -97,11 +99,13 @@ export function SkillBalance({
             {dashboard.skillBalance}
           </h2>
         </div>
-        <PeriodSelector
-          period={period}
-          onChange={onPeriodChange}
-          ariaLabel={dashboard.skillBalancePeriodAria}
-        />
+        {showPeriodSelector && (
+          <PeriodSelector
+            period={period}
+            onChange={onPeriodChange}
+            ariaLabel={dashboard.skillBalancePeriodAria}
+          />
+        )}
       </div>
 
       <div className="mt-8 flex flex-1 items-center justify-center">

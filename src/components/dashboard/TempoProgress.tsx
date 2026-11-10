@@ -15,19 +15,29 @@ export function TempoProgress({
   history,
   today,
   repertoireItems,
+  periods = ["week", "month"],
+  initialPeriod,
 }: {
   history: SessionRecord[];
   today: Date;
   repertoireItems: RepertoireItem[];
+  periods?: PracticeTempoPeriod[];
+  initialPeriod?: PracticeTempoPeriod;
 }) {
   const dashboard = useI18nSection("dashboard");
-  const [period, setPeriod] = useState<PracticeTempoPeriod>("week");
+  const [period, setPeriod] = useState<PracticeTempoPeriod>(
+    initialPeriod ?? periods[0] ?? "week",
+  );
   const trend = useMemo(
     () => getTempoTrend(history, period, today, repertoireItems),
     [history, period, repertoireItems, today],
   );
   const periodLabel =
-    period === "week" ? dashboard.tempoWeek : dashboard.tempoMonth;
+    period === "week"
+      ? dashboard.tempoWeek
+      : period === "month"
+        ? dashboard.tempoMonth
+        : dashboard.tempoYear;
   const deltaTone =
     trend.deltaBpm > 0
       ? "text-accent-green-fg"
@@ -49,22 +59,24 @@ export function TempoProgress({
             {dashboard.tempoProgress}
           </h2>
         </div>
-        <ToggleGroup aria-label={dashboard.tempoAria} layout="row" className="gap-1.5">
-          <ToggleChip
-            size="sm"
-            selected={period === "week"}
-            onClick={() => setPeriod("week")}
-          >
-            {dashboard.tempoWeek}
-          </ToggleChip>
-          <ToggleChip
-            size="sm"
-            selected={period === "month"}
-            onClick={() => setPeriod("month")}
-          >
-            {dashboard.tempoMonth}
-          </ToggleChip>
-        </ToggleGroup>
+        {periods.length > 1 && (
+          <ToggleGroup aria-label={dashboard.tempoAria} layout="row" className="gap-1.5">
+            {periods.map((option) => (
+              <ToggleChip
+                key={option}
+                size="sm"
+                selected={period === option}
+                onClick={() => setPeriod(option)}
+              >
+                {option === "week"
+                  ? dashboard.tempoWeek
+                  : option === "month"
+                    ? dashboard.tempoMonth
+                    : dashboard.tempoYear}
+              </ToggleChip>
+            ))}
+          </ToggleGroup>
+        )}
       </div>
 
       {trend.comparedCount > 0 ? (
