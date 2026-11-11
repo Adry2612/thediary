@@ -14,10 +14,12 @@ const ACOUSTIC_COLOR = "#7f9f83";
 export function GuitarBalance({
   balance,
   period,
+  showPeriodSelector = true,
   onPeriodChange,
 }: {
   balance: GuitarBalanceValue;
   period: PracticeChartPeriod;
+  showPeriodSelector?: boolean;
   onPeriodChange: (period: PracticeChartPeriod) => void;
 }) {
   const dashboard = useI18nSection("dashboard");
@@ -61,11 +63,13 @@ export function GuitarBalance({
             {dashboard.guitarBalance}
           </h2>
         </div>
-        <PeriodSelector
-          period={period}
-          onChange={onPeriodChange}
-          ariaLabel={dashboard.balancePeriodAria}
-        />
+        {showPeriodSelector && (
+          <PeriodSelector
+            period={period}
+            onChange={onPeriodChange}
+            ariaLabel={dashboard.guitarBalancePeriodAria}
+          />
+        )}
       </div>
 
       <div className="mt-6 flex flex-1 flex-col items-center justify-center">

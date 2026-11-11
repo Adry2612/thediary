@@ -27,11 +27,15 @@ The system SHALL let the user choose, when creating or editing an item, one of t
 
 ### Requirement: The practice time of an item is the time practiced on it
 
-The system SHALL count, for each item, the time of every completed practice phase linked to that item, whether or not the phase also names one of its parts, SHALL show that time on the item, SHALL add it to the library total, SHALL order the library by it, and SHALL link the item when a practice is started directly from it.
+The system SHALL count, for each item, the time of every completed practice phase linked to that item, whether or not the phase also names one of its parts, SHALL split a phase's time equally between the parts it names, SHALL show that time on the item, SHALL add it to the library total, SHALL order the library by it, and SHALL link the item when a practice is started directly from it.
 
 #### Scenario: A phase linked to the item and to a part counts
 - **WHEN** a completed phase names an item and one of its parts
 - **THEN** its time counts for that item and for that part
+
+#### Scenario: A phase linked to several parts
+- **WHEN** a completed phase names an item and several of its parts
+- **THEN** the item counts the phase once and each part counts an equal share of its time
 
 #### Scenario: A phase linked only to the item counts
 - **WHEN** a completed phase names an item but no part

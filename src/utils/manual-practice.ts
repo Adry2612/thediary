@@ -5,6 +5,8 @@ import {
   type SessionRecord,
 } from "../types/practice.ts";
 import { createId } from "./create-id.ts";
+import { getRepertoirePartIds, withRepertoirePartIds } from "./practice-parts.ts";
+import type { CatalogCandidate } from "../types/catalog.ts";
 
 export type ManualPracticeInput = {
   title: string;
@@ -13,8 +15,12 @@ export type ManualPracticeInput = {
     name: string;
     durationMinutes: number;
     skill: PracticeSkill;
+    notes?: string;
     repertoireItemId?: string;
     repertoirePartId?: string;
+    repertoirePartIds?: string[];
+    catalogSong?: CatalogCandidate;
+    lickId?: string;
   }[];
   notes: string;
   guitarType?: GuitarType;
@@ -37,9 +43,14 @@ export type ManualPracticeBlockDraft = {
   name: string;
   durationMinutes: string;
   skill: PracticeSkill;
+  notes: string;
   /** Canción del repertorio a la que acredita el tiempo, si el usuario la enlaza. */
   repertoireItemId?: string;
   repertoirePartId?: string;
+  repertoirePartIds?: string[];
+  /** Canción del catálogo elegida antes de añadirla al repertorio. */
+  catalogSong?: CatalogCandidate;
+  lickId?: string;
 };
 
 /** Bloque nuevo, con los valores con los que abre el formulario. */
@@ -49,6 +60,7 @@ export function createManualPracticeBlockDraft(): ManualPracticeBlockDraft {
     name: "",
     durationMinutes: "30",
     skill: "technique",
+    notes: "",
   };
 }
 
@@ -63,6 +75,8 @@ export function linkManualPracticeSong(
     name: song.title,
     repertoireItemId: song.id,
     repertoirePartId: partId || undefined,
+    repertoirePartIds: undefined,
+    catalogSong: undefined,
   };
 }
 
@@ -74,11 +88,40 @@ export function changeManualPracticeSongPart(
   return { ...block, repertoirePartId: partId || undefined };
 }
 
+/** Guarda varias partes marcadas en el mismo bloque. */
+export function changeManualPracticeSongParts(
+  block: ManualPracticeBlockDraft,
+  partIds: readonly string[],
+): ManualPracticeBlockDraft {
+  return { ...block, ...withRepertoirePartIds(partIds) };
+}
+
+/** Enlaza el bloque con una canción del catálogo que aún no está en el repertorio. */
+export function linkManualPracticeCatalogSong(
+  block: ManualPracticeBlockDraft,
+  candidate: CatalogCandidate,
+): ManualPracticeBlockDraft {
+  return {
+    ...block,
+    name: candidate.title,
+    repertoireItemId: undefined,
+    repertoirePartId: undefined,
+    repertoirePartIds: undefined,
+    catalogSong: { ...candidate },
+  };
+}
+
 /** Quita el enlace y deja el nombre editable otra vez. */
 export function clearManualPracticeSong(
   block: ManualPracticeBlockDraft,
 ): ManualPracticeBlockDraft {
-  const { repertoireItemId, repertoirePartId, ...rest } = block;
+  const {
+    repertoireItemId,
+    repertoirePartId,
+    repertoirePartIds,
+    catalogSong,
+    ...rest
+  } = block;
   return rest;
 }
 
@@ -117,22 +160,38 @@ export function manualPracticeBlocksFromDrafts(
   const songsById = new Map(songs.map((song) => [song.id, song]));
 
   return blocks.map(
-    ({ name, durationMinutes, skill, repertoireItemId, repertoirePartId }) => {
+    ({
+      name,
+      durationMinutes,
+      skill,
+      notes,
+      repertoireItemId,
+      repertoirePartId,
+      repertoirePartIds,
+      catalogSong,
+      lickId,
+    }) => {
       const song = repertoireItemId ? songsById.get(repertoireItemId) : undefined;
       const keepLink = Boolean(repertoireItemId && (songs.length === 0 || song));
+      const parts = withRepertoirePartIds(
+        getRepertoirePartIds({ repertoirePartId, repertoirePartIds }),
+      );
 
       return {
         name: song?.title ?? name,
         durationMinutes: Number(durationMinutes),
         skill,
+        ...(notes?.trim() ? { notes: notes.trim() } : {}),
         ...(keepLink
           ? {
               repertoireItemId,
-              ...(repertoirePartId
-                ? { repertoirePartId }
-                : {}),
+              ...parts,
             }
           : {}),
+        ...(skill === "repertoire" && !keepLink && catalogSong
+          ? { catalogSong: { ...catalogSong } }
+          : {}),
+        ...(skill === "lick" && lickId ? { lickId } : {}),
       };
     },
   );
@@ -188,11 +247,23 @@ export function createManualPracticeRecord(
       skill: block.skill,
       durationMinutes: block.durationMinutes,
       elapsedSeconds,
+      ...(block.notes ? { notes: block.notes } : {}),
       ...(block.repertoireItemId
         ? { repertoireItemId: block.repertoireItemId }
         : {}),
-      ...(block.repertoireItemId && block.repertoirePartId
-        ? { repertoirePartId: block.repertoirePartId }
+      ...(block.repertoireItemId
+        ? withRepertoirePartIds(
+            getRepertoirePartIds({
+              repertoirePartId: block.repertoirePartId,
+              repertoirePartIds: block.repertoirePartIds,
+            }),
+          )
+        : {}),
+      ...(block.skill === "repertoire" && !block.repertoireItemId && block.catalogSong
+        ? { catalogSong: { ...block.catalogSong } }
+        : {}),
+      ...(block.skill === "lick" && block.lickId
+        ? { lickId: block.lickId }
         : {}),
     };
   });

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { PracticeDayTooltip } from "@/components/dashboard/PracticeDayTooltip";
+import { SelectField } from "@/components/ui/SelectField";
 import { usePracticeDayTooltip } from "@/hooks/usePracticeDayTooltip";
 import { useLatestPracticeScroll } from "@/hooks/useLatestPracticeScroll";
 import type { DailyStats, SessionRecord } from "@/types/practice";
@@ -15,6 +16,8 @@ import {
   PRACTICE_DAY_TARGET_SIZE,
   toDateKey,
 } from "@/utils/practice-calendar";
+import { getCalendarFirstWeekday, getWeekdayOrder } from "@/utils/week-start";
+import type { WeekStartsOn } from "@/types/display";
 import {
   getPracticeIntensityClass,
   PRACTICE_INTENSITY_CLASSES,
@@ -24,19 +27,27 @@ import { formatDateLabel } from "@/utils/format";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 
 type YearPracticeCalendarProps = {
+  weekStartsOn: WeekStartsOn;
   days: DailyStats[];
   history: SessionRecord[];
   todayKey: string;
   year: number;
+  currentYear: number;
   dailyGoalMinutes: number;
+  years?: number[];
+  onYearChange?: (year: number) => void;
 };
 
 export function YearPracticeCalendar({
+  weekStartsOn,
   days,
   history,
   todayKey,
   year,
+  currentYear,
   dailyGoalMinutes,
+  years = [],
+  onYearChange,
 }: YearPracticeCalendarProps) {
   const router = useRouter();
   const { locale } = useI18n();
@@ -72,8 +83,10 @@ export function YearPracticeCalendar({
     }
     return grouped;
   }, [history, year]);
-  const yearStart = new Date(year, 0, 1);
-  const firstWeekday = (yearStart.getDay() + 6) % 7;
+  const firstWeekday = getCalendarFirstWeekday(year, weekStartsOn);
+  const weekdayLabels = getWeekdayOrder(weekStartsOn).map(
+    (weekday) => weekdays.short[weekday],
+  );
   const weekCount = Math.ceil((firstWeekday + days.length) / 7);
   const hasYearPractice = days.some((day) => day.totalMinutes > 0);
   const monthMarkers = getMonthMarkers(year, weekCount, firstWeekday, locale);
@@ -93,6 +106,14 @@ export function YearPracticeCalendar({
   const yearLabel = new Intl.NumberFormat(locale, {
     useGrouping: false,
   }).format(year);
+  const showYearSelector = years.length > 1 && Boolean(onYearChange);
+  const yearOptions = years.map((option) => ({
+    value: String(option),
+    label: new Intl.NumberFormat(locale, { useGrouping: false }).format(
+      option,
+    ),
+    description: option === currentYear ? calendar.currentYear : undefined,
+  }));
 
   useLatestPracticeScroll(calendarScrollRef, cells, latestPracticeDateKey);
 
@@ -168,7 +189,22 @@ export function YearPracticeCalendar({
             {calendar.consistency}
           </p>
           <h2 className="mt-2 font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 sm:text-xl sm:leading-8">
-            {calendar.title} · {yearLabel}
+            {showYearSelector && onYearChange ? (
+              <>
+                {calendar.title} ·{" "}
+                <SelectField
+                  variant="inline"
+                  value={String(year)}
+                  ariaLabel={calendar.yearAria}
+                  options={yearOptions}
+                  listboxWidth={168}
+                  truncateLabel
+                  onChange={(value) => onYearChange(Number(value))}
+                />
+              </>
+            ) : (
+              `${calendar.title} · ${yearLabel}`
+            )}
           </h2>
           <p className="mt-2 text-sm text-muted">
             {calendar.description} {dailyGoalMinutes} min. {calendar.selectDay}.
@@ -219,7 +255,7 @@ export function YearPracticeCalendar({
               aria-hidden="true"
               className="grid grid-rows-7 gap-0 font-mono text-[10px] leading-5 text-muted"
             >
-              {weekdays.short.map((label, index) => (
+              {weekdayLabels.map((label, index) => (
                 <span key={index} className="h-5 w-6">
                   {label}
                 </span>

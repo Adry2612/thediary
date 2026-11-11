@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
+import { BackButton } from '@/components/ui/BackLink';
 import { TextField } from '@/components/ui/Field';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
@@ -12,7 +14,9 @@ import { useI18nSection } from '@/i18n/I18nProvider';
 
 export function AccountView() {
   const account = useI18nSection('account');
+  const common = useI18nSection('common');
   const view = useAccountView(account);
+  const router = useRouter();
 
   if (!view.isReady) {
     return <AccountSkeleton />;
@@ -20,7 +24,8 @@ export function AccountView() {
 
   return (
     <PageShell>
-      <PageHeader title={account.title} align='center' />
+      <BackButton onClick={() => router.back()}>{common.back}</BackButton>
+      <PageHeader className='mt-6' title={account.title} align='center' />
 
       <div className='mx-auto max-w-xl'>
         {view.configurationError && (

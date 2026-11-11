@@ -7,9 +7,9 @@ import { PracticePlanBuilder } from '@/components/practice/PracticePlanBuilder';
 import { PracticePlanTable } from '@/components/practice/PracticePlanTable';
 import { SavedPracticeRoutines } from '@/components/practice/SavedPracticeRoutines';
 import { Button } from '@/components/ui/Button';
+import { BackButton } from '@/components/ui/BackLink';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
-import { ArrowLeftIcon } from '@/components/ui/icons';
 import {
   createQuickPracticePlan,
   createQuickRepertoirePlan,
@@ -246,6 +246,21 @@ export function PracticeWorkspace({
       bottom={activePlan ? 'flush' : 'default'}
       className='flex flex-col gap-6'
     >
+      {!activePlan && (isBuilding || (flow.step === 'review' && reviewedPlan)) ? (
+        <BackButton
+          onClick={
+            isBuilding
+              ? closeBuilder
+              : () => setFlow((current) => backToPracticeChoice(current))
+          }
+        >
+          {isBuilding
+            ? flow.step === 'review'
+              ? text.backToReview
+              : text.backToRoutines
+            : text.backToRoutines}
+        </BackButton>
+      ) : null}
       <PageHeader
         bottomSpacing='none'
         title={title}
@@ -299,14 +314,6 @@ export function PracticeWorkspace({
 
           {isBuilding ? (
             <>
-              <button
-                type='button'
-                onClick={closeBuilder}
-                className='inline-flex items-center gap-1.5 self-start text-sm text-muted underline underline-offset-4 hover:text-ink'
-              >
-                <ArrowLeftIcon className='size-4 shrink-0' />
-                {flow.step === 'review' ? text.backToReview : text.backToRoutines}
-              </button>
               <PracticePlanBuilder
                 initialName={reviewedPlan?.name ?? text.yourPractice}
                 initialPhases={builderPhases}
@@ -318,15 +325,6 @@ export function PracticeWorkspace({
             </>
           ) : flow.step === 'review' && reviewedPlan ? (
             <>
-              <button
-                type='button'
-                onClick={() => setFlow((current) => backToPracticeChoice(current))}
-                className='inline-flex items-center gap-1.5 self-start text-sm text-muted underline underline-offset-4 hover:text-ink'
-              >
-                <ArrowLeftIcon className='size-4 shrink-0' />
-                {text.backToRoutines}
-              </button>
-
               <section className='flex flex-col gap-4'>
                 <div className='flex flex-wrap items-baseline justify-between gap-3'>
                   <h2 className='font-sans text-lg leading-7 font-semibold tracking-tight sm:text-xl sm:leading-8'>

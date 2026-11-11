@@ -1,9 +1,11 @@
 import type { CalendarCell } from "../types/dashboard.ts";
+import type { WeekStartsOn } from "../types/display.ts";
 import type {
   DailyStats,
   PracticeSkill,
   SessionRecord,
 } from "../types/practice.ts";
+import { getStartOfWeek } from "./week-start.ts";
 
 const PRACTICE_SKILLS: PracticeSkill[] = [
   "technique",
@@ -101,14 +103,9 @@ export function getYearlyHeatmapData(
 export function getSessionsForWeek(
   history: SessionRecord[],
   today = new Date(),
+  weekStartsOn: WeekStartsOn = "monday",
 ): SessionRecord[] {
-  const weekStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-  const daysSinceMonday = (weekStart.getDay() + 6) % 7;
-  weekStart.setDate(weekStart.getDate() - daysSinceMonday);
+  const weekStart = getStartOfWeek(today, weekStartsOn);
   const weekStartKey = toDateKey(weekStart);
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 7);
@@ -129,9 +126,10 @@ export function getSessionsForWeek(
 export function getPracticeWeekDays(
   history: SessionRecord[],
   today = new Date(),
+  weekStartsOn: WeekStartsOn = "monday",
 ): PracticeWeekDay[] {
   const sessionsByDate = new Map<string, SessionRecord[]>();
-  for (const session of getSessionsForWeek(history, today)) {
+  for (const session of getSessionsForWeek(history, today, weekStartsOn)) {
     const dateKey = toDateKey(new Date(session.startedAt));
     sessionsByDate.set(dateKey, [
       ...(sessionsByDate.get(dateKey) ?? []),
@@ -139,12 +137,7 @@ export function getPracticeWeekDays(
     ]);
   }
 
-  const weekStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+  const weekStart = getStartOfWeek(today, weekStartsOn);
 
   return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);

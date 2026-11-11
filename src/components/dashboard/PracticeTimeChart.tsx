@@ -13,6 +13,7 @@ import { toDateKey } from "@/utils/practice-calendar";
 import type { PracticeChartPeriod, PracticeTimeBucket } from "@/utils/practice-analytics";
 import { PeriodSelector } from "@/components/dashboard/PeriodSelector";
 import type { SessionRecord } from "@/types/practice";
+import type { WeekStartsOn } from "@/types/display";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import type { ChartTooltip } from "@/types/dashboard";
 
@@ -28,23 +29,30 @@ const gapFormatter = new Intl.NumberFormat("es-ES", {
 });
 
 export function PracticeTimeChart({
+  showPeriodSelector = true,
   history,
   today,
+  period,
+  onPeriodChange,
+  weekStartsOn,
 }: {
+  showPeriodSelector?: boolean;
   history: SessionRecord[];
   today: Date;
+  period: PracticeChartPeriod;
+  onPeriodChange: (period: PracticeChartPeriod) => void;
+  weekStartsOn: WeekStartsOn;
 }) {
-  const [period, setPeriod] = useState<PracticeChartPeriod>("week");
   const dashboard = useI18nSection("dashboard");
   const [tooltip, setTooltip] = useState<ChartTooltip | null>(null);
   const chartContainerRef = useRef<HTMLElement>(null);
   const buckets = useMemo(
-    () => getPracticeTimeBuckets(history, period, today),
-    [history, period, today],
+    () => getPracticeTimeBuckets(history, period, today, weekStartsOn),
+    [history, period, today, weekStartsOn],
   );
   const summary = useMemo(
-    () => getPracticeTimeSummary(history, period, today),
-    [history, period, today],
+    () => getPracticeTimeSummary(history, period, today, weekStartsOn),
+    [history, period, today, weekStartsOn],
   );
   const todayKey = useMemo(() => toDateKey(today), [today]);
   const maximumSeconds = Math.max(
@@ -151,13 +159,14 @@ export function PracticeTimeChart({
               : period === "month" ? dashboard.monthTimeChart : dashboard.yearTime}
           </p>
         </div>
-        <PeriodSelector
-          period={period}
-          onChange={setPeriod}
-          ariaLabel={dashboard.periodAria}
-        />
+        {showPeriodSelector && (
+          <PeriodSelector
+            period={period}
+            onChange={onPeriodChange}
+            ariaLabel={dashboard.periodAria}
+          />
+        )}
       </div>
-
       <div className="mt-6 flex items-baseline gap-2">
         <span className="font-mono text-2xl leading-tight font-medium tabular-nums tracking-normal text-zinc-100 sm:text-3xl">
           {formatTotal(totalSeconds)}

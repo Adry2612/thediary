@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   applySkillChange,
+  getCatalogSongChanges,
   getLickOptions,
   getRepertoirePartOptions,
   getRepertoireSongChanges,
@@ -30,8 +31,31 @@ test("a song choice always writes the song title and clears the part", () => {
       name: "Otra canción",
       repertoireItemId: "song-2",
       repertoirePartId: undefined,
+      repertoirePartIds: undefined,
+      catalogSong: undefined,
     },
   );
+});
+
+test("a catalog choice keeps a temporary song reference without a repertoire link", () => {
+  const candidate = {
+    source: "itunes",
+    id: "catalog-1",
+    title: "Canción del catálogo",
+    artist: "Artista",
+    album: "Álbum",
+    releaseYear: 2001,
+    coverUrl: "https://example.com/cover.jpg",
+  };
+
+  assert.deepEqual(getCatalogSongChanges(candidate), {
+    name: "Canción del catálogo",
+    repertoireItemId: undefined,
+    repertoirePartId: undefined,
+    repertoirePartIds: undefined,
+    catalogSong: candidate,
+  });
+  assert.notEqual(getCatalogSongChanges(candidate).catalogSong, candidate);
 });
 
 test("offers the parts of the chosen song and no part by default", () => {
@@ -91,6 +115,7 @@ test("changing the category clears links that no longer apply", () => {
     lickId: "lick-1",
     repertoireItemId: undefined,
     repertoirePartId: undefined,
+    catalogSong: undefined,
   });
 
   assert.deepEqual(applySkillChange(phase, "technique"), {
@@ -101,6 +126,7 @@ test("changing the category clears links that no longer apply", () => {
     lickId: undefined,
     repertoireItemId: undefined,
     repertoirePartId: undefined,
+    catalogSong: undefined,
   });
 });
 

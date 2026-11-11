@@ -32,21 +32,21 @@ test("the 30-day window crosses month boundaries", () => {
   });
 });
 
-test("mid week compares Monday to the same weekday of the previous week", () => {
+test("mid week looks back seven days and compares the previous seven", () => {
   const spans = getComparisonSpans("week", new Date(2026, 10, 11));
 
   assert.deepEqual(spans, {
-    current: { startDate: "2026-11-09", endDate: "2026-11-11" },
-    previous: { startDate: "2026-11-02", endDate: "2026-11-04" },
+    current: { startDate: "2026-11-05", endDate: "2026-11-11" },
+    previous: { startDate: "2026-10-29", endDate: "2026-11-04" },
   });
 });
 
-test("mid year compares January to the same day of the previous year", () => {
+test("mid year compares the twelve-month window with the same months a year earlier", () => {
   const spans = getComparisonSpans("year", new Date(2026, 2, 10));
 
   assert.deepEqual(spans, {
-    current: { startDate: "2026-01-01", endDate: "2026-03-10" },
-    previous: { startDate: "2025-01-01", endDate: "2025-03-10" },
+    current: { startDate: "2025-04-01", endDate: "2026-03-10" },
+    previous: { startDate: "2024-04-01", endDate: "2025-03-10" },
   });
 });
 
@@ -54,7 +54,7 @@ test("the leap day is compared with the last day of February", () => {
   const spans = getComparisonSpans("year", new Date(2028, 1, 29));
 
   assert.deepEqual(spans.previous, {
-    startDate: "2027-01-01",
+    startDate: "2026-03-01",
     endDate: "2027-02-28",
   });
 });

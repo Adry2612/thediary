@@ -15,7 +15,7 @@ export type Dict = {
     equipment: string;
     settings: string;
   };
-  common: { settings: string; openMenu: string; closeMenu: string };
+  common: { settings: string; openMenu: string; closeMenu: string; back: string };
   settings: {
     title: string;
     description: string;
@@ -30,6 +30,9 @@ export type Dict = {
     tuningDisplay: string;
     tuningDisplayName: string;
     tuningDisplayNotes: string;
+    weekStart: string;
+    weekStartMonday: string;
+    weekStartSunday: string;
     displayScope: string;
     spanish: string;
     english: string;
@@ -236,6 +239,9 @@ export type Dict = {
     between50and99: string;
     above100: string;
     yearDays: string;
+    yearAria: string;
+    currentYear: string;
+    monthDays: string;
     previousMonth: string;
     nextMonth: string;
     selectDay: string;
@@ -300,6 +306,9 @@ export type Dict = {
     streak: string;
     daysPracticed: string;
     streakOnFire: string;
+    longestStreak: string;
+    longestStreakDescription: string;
+    longestStreakRecord: string;
     monthTime: string;
     recordedTime: string;
     averageBpm: string;
@@ -307,11 +316,13 @@ export type Dict = {
     noBpm: string;
     recordedSessions: string;
     completedPractices: string;
+    completedPracticesTotal: string;
     mostPracticed: string;
     accumulated: string;
     noPractice: string;
     practiceHours: string;
     historyTime: string;
+    historyTimeTotal: string;
     calendarNote: string;
     wellbeingTitle: string;
     wellbeingDescription: string;
@@ -339,12 +350,26 @@ export type Dict = {
     weekTime: string;
     monthTimeChart: string;
     yearTime: string;
+    yearViewDescription: string;
+    yearBackToCurrent: string;
+    yearSummaryEyebrow: string;
+    yearSummaryTitle: string;
+    yearSummaryDescription: string;
+    yearDaysPracticed: string;
+    yearDaysPracticedDescription: string;
+    yearBestMonth: string;
+    yearAverageSession: string;
+    yearMonthsPracticed: string;
+    yearLongestStreak: string;
+    yearLongestStreakDescription: string;
+    day: string;
     period: string;
     periodWeek?: string;
     periodMonth?: string;
     periodYear?: string;
     periodAria: string;
-    balancePeriodAria: string;
+    skillBalancePeriodAria: string;
+    guitarBalancePeriodAria: string;
     inPeriod: string;
     chartAria: string;
     emptyChart: string;
@@ -354,6 +379,7 @@ export type Dict = {
     skillAria: string;
     weekly: string;
     mondayToSunday: string;
+    sundayToSaturday: string;
     sessions: string;
     session: string;
     practiced: string;
@@ -380,7 +406,8 @@ export type Dict = {
     guitarEmpty: string;
     guitarEmptyHint: string;
     topContent: string;
-    topContentDescription: string;
+    topContentEyebrow: string;
+    rankingPeriodAria: string;
     topSong: string;
     topTechnique: string;
     topTheory: string;
@@ -410,6 +437,7 @@ export type Dict = {
     tempoDescription: string;
     tempoWeek: string;
     tempoMonth: string;
+    tempoYear: string;
     tempoAria: string;
     tempoCompared: string;
     tempoSmallSample: string;

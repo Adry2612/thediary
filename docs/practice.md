@@ -9,7 +9,33 @@ El editor de una práctica guardada vive en `/dashboard/practice/[date]`, en el 
 - Un campo vacío de un bloque vale cero. Un texto inválido se marca junto al campo y el resto de cambios se conserva; no aparece el error nativo del navegador por el `step` de un `input[type=number]`.
 - El total de la cabecera de bloques se deriva de los segundos editados y se muestra también como reloj.
 - El tiempo planificado sigue siendo un número entero de minutos.
-- Al guardar, la práctica conserva sus vínculos de repertorio, lick, material, BPM medio y tipo de guitarra.
+- Al guardar, la práctica conserva sus vínculos de repertorio (o la canción del catálogo pendiente), lick, material, BPM medio y tipo de guitarra.
+- Cada bloque elige su técnica, tema de teoría, lick o canción con el mismo buscador que la planificación: no se escribe el nombre a mano salvo en los bloques de improvisación.
+- Cada bloque tiene sus propias notas, además de las notas de la sesión. Se editan y se guardan con el bloque.
+
+## Varias partes de una canción en un bloque
+
+Un bloque de repertorio puede marcar varias partes de la misma canción. Las partes se eligen como etiquetas bajo el buscador de canción y se puede desmarcar cualquiera.
+
+- El bloque sigue siendo uno solo: no hace falta duplicarlo para practicar introducción y estribillo en la misma sesión.
+- Para las estadísticas por parte, el tiempo del bloque se reparte a partes iguales entre las partes marcadas. El tiempo de la canción se cuenta una sola vez.
+- Los datos antiguos guardan una sola parte en `repertoirePartId`; los nuevos guardan varias en `repertoirePartIds`. Ambos formatos se leen igual y una parte sola se sigue guardando en el campo antiguo.
+
+## Registrar una práctica anterior
+
+El formulario de práctica anterior usa los mismos campos de bloque que el editor de una práctica guardada: buscador de canción con catálogo, buscador de técnica y teoría, buscador de lick, varias partes por bloque y notas por bloque.
+
+- El buscador de canción ofrece también el catálogo externo; si la canción no está en el repertorio, el bloque guarda una referencia temporal con título y artista.
+- La duración de cada bloque es un número entero de minutos entre 1 y 240.
+- Las notas y los vínculos se guardan con el bloque al crear la sesión.
+
+## Canciones del catálogo en una práctica
+
+Los bloques de repertorio pueden buscar tanto en el repertorio guardado como en el catálogo externo, tanto al preparar la rutina como al editar una práctica guardada o cambiar la canción durante la sesión.
+
+- Elegir una canción del catálogo guarda una referencia temporal con título y artista; no la añade al repertorio todavía.
+- Al terminar la práctica, si algún bloque practicado usaba una canción del catálogo, el resumen ofrece añadirla al repertorio. Se puede desmarcar.
+- Las canciones aceptadas se crean con los metadatos del catálogo y el bloque guardado queda vinculado al nuevo elemento. Si la canción ya se añadió mientras tanto, se reutiliza sin duplicarla.
 
 ## Formatos de tiempo compartidos
 
@@ -31,6 +57,7 @@ Guardar o actualizar una rutina confirma el resultado con un toast («Rutina gua
 ## Rutina por día
 
 - Las siete tarjetas de la planificación semanal comparten altura, relleno y ancho de selector en todos los tamaños de pantalla.
+- El orden de los días sigue el primer día de la semana elegido en Configuración: lunes por defecto o domingo.
 - Los días sin rutina asignada ocupan el mismo espacio que los días con rutina.
 - Un nombre de rutina largo se recorta dentro del selector sin ensanchar la tarjeta ni romper la cuadrícula.
 - En pantallas estrechas las tarjetas se reparten en menos columnas sin desbordamiento horizontal.

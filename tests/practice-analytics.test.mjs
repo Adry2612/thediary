@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   getGuitarBalance,
   getGuitarBalanceShares,
+  getLongestStreak,
   getMonthlyHeatmapData,
   getPracticeContentRankings,
   getPracticeStatistics,
@@ -36,7 +37,7 @@ function createSession(id, startedAt, overrides = {}) {
   };
 }
 
-test("groups week practice by each day from Monday through Sunday", () => {
+test("groups the seven days ending today by each day", () => {
   const history = [
     createSession("tuesday-a", "2026-10-06T12:00:00.000Z"),
     createSession("tuesday-b", "2026-10-06T17:00:00.000Z", {
@@ -52,10 +53,11 @@ test("groups week practice by each day from Monday through Sunday", () => {
   );
 
   assert.equal(buckets.length, 7);
-  assert.equal(buckets[1].totalSeconds, 2700);
-  assert.equal(buckets[1].sessionCount, 2);
-  assert.equal(buckets[0].sessionCount, 0);
-  assert.equal(buckets.reduce((sum, bucket) => sum + bucket.totalSeconds, 0), 2700);
+  assert.equal(buckets[0].startDate, "2026-10-01");
+  assert.equal(buckets[5].totalSeconds, 2700);
+  assert.equal(buckets[5].sessionCount, 2);
+  assert.equal(buckets[1].sessionCount, 0);
+  assert.equal(buckets.reduce((sum, bucket) => sum + bucket.totalSeconds, 0), 4500);
 });
 
 test("groups the last 30 days into Monday-to-Sunday week buckets", () => {
@@ -82,7 +84,7 @@ test("groups the last 30 days into Monday-to-Sunday week buckets", () => {
   assert.equal(buckets[4].totalSeconds, 0);
 });
 
-test("groups year practice by month and summarizes total time and strongest skill", () => {
+test("groups the twelve-month window by month and summarizes total time and strongest skill", () => {
   const history = [
     createSession("january", "2026-01-12T12:00:00.000Z", {
       durationSeconds: 2400,
@@ -102,11 +104,12 @@ test("groups year practice by month and summarizes total time and strongest skil
   const statistics = getPracticeStatistics(history);
 
   assert.equal(buckets.length, 12);
-  assert.equal(buckets[0].totalSeconds, 2400);
-  assert.equal(buckets[0].sessionCount, 1);
-  assert.equal(buckets[9].totalSeconds, 1200);
-  assert.equal(buckets[9].sessionCount, 1);
-  assert.equal(buckets[1].sessionCount, 0);
+  assert.equal(buckets[0].startDate, "2025-11-01");
+  assert.equal(buckets[2].totalSeconds, 2400);
+  assert.equal(buckets[2].sessionCount, 1);
+  assert.equal(buckets[11].totalSeconds, 1200);
+  assert.equal(buckets[11].sessionCount, 1);
+  assert.equal(buckets[3].sessionCount, 0);
   assert.deepEqual(statistics, {
     sessionCount: 2,
     totalSeconds: 3600,
@@ -229,6 +232,112 @@ test("recognises a streak only from seven consecutive days", () => {
   assert.equal(isStreakOnFire(6), false);
   assert.equal(isStreakOnFire(7), true);
   assert.equal(isStreakOnFire(30), true);
+});
+
+test("finds the longest consecutive run across the full history", () => {
+  const history = Array.from({ length: 14 }, (_, index) =>
+    createSession(
+      `record-${index}`,
+      new Date(2025, 11, 20 + index, 12).toISOString(),
+    ),
+  );
+  history.push(
+    createSession("current-1", "2026-03-01T12:00:00.000Z"),
+    createSession("current-2", "2026-03-02T12:00:00.000Z"),
+    createSession("current-3", "2026-03-03T12:00:00.000Z"),
+  );
+
+  assert.equal(getLongestStreak(history), 14);
+});
+
+test("returns zero for an empty history and one for a single day", () => {
+  assert.equal(getLongestStreak([]), 0);
+  assert.equal(
+    getLongestStreak([
+      createSession("only", "2026-03-01T12:00:00.000Z"),
+    ]),
+    1,
+  );
+});
+
+test("keeps the best run when two runs tie", () => {
+  const history = [
+    createSession("first-1", "2026-01-01T12:00:00.000Z"),
+    createSession("first-2", "2026-01-02T12:00:00.000Z"),
+    createSession("first-3", "2026-01-03T12:00:00.000Z"),
+    createSession("second-1", "2026-02-01T12:00:00.000Z"),
+    createSession("second-2", "2026-02-02T12:00:00.000Z"),
+    createSession("second-3", "2026-02-03T12:00:00.000Z"),
+  ];
+
+  assert.equal(getLongestStreak(history), 3);
+});
+
+test("filters statistics to the requested rolling window", () => {
+  const history = [
+    createSession("inside-a", "2026-10-02T12:00:00.000Z", {
+      durationSeconds: 600,
+      skillSeconds: { ...emptySkills, theory: 600 },
+    }),
+    createSession("inside-b", "2026-10-06T12:00:00.000Z", {
+      durationSeconds: 900,
+      skillSeconds: { ...emptySkills, repertoire: 900 },
+    }),
+    createSession("outside", "2026-09-20T12:00:00.000Z", {
+      durationSeconds: 3600,
+      skillSeconds: { ...emptySkills, technique: 3600 },
+    }),
+  ];
+
+  assert.deepEqual(
+    getPracticeStatistics(history, {
+      startDate: "2026-10-01",
+      endDate: "2026-10-07",
+    }),
+    {
+      sessionCount: 2,
+      totalSeconds: 1500,
+      mostPracticedSkill: "repertoire",
+      mostPracticedSeconds: 900,
+    },
+  );
+});
+
+test("filters the content rankings to the requested rolling window", () => {
+  const history = [
+    createSession("inside", "2026-10-05T12:00:00.000Z", {
+      phases: [
+        {
+          id: "phase-1",
+          name: "Canción",
+          skill: "repertoire",
+          elapsedSeconds: 600,
+          repertoireItemId: "song-1",
+        },
+      ],
+    }),
+    createSession("outside", "2026-09-05T12:00:00.000Z", {
+      phases: [
+        {
+          id: "phase-2",
+          name: "Otra",
+          skill: "repertoire",
+          elapsedSeconds: 3600,
+          repertoireItemId: "song-1",
+        },
+      ],
+    }),
+  ];
+
+  const rankings = getPracticeContentRankings(
+    history,
+    [{ id: "song-1", kind: "song", title: "Canción", parts: [] }],
+    { startDate: "2026-10-01", endDate: "2026-10-07" },
+  );
+
+  assert.deepEqual(rankings.songs, [
+    { key: "song:song-1", label: "Canción", seconds: 600, sessionCount: 1 },
+  ]);
 });
 
 function phase(overrides) {
@@ -495,7 +604,7 @@ test("returns empty rankings when there is no phase data", () => {
   assert.deepEqual(rankings, { songs: [], techniques: [], theory: [] });
 });
 
-test("summarizes a week and compares the same days of the previous week", () => {
+test("summarizes the seven days ending today and compares the previous seven", () => {
   const today = new Date(2026, 9, 7, 12);
   const history = [
     createSession("monday", new Date(2026, 9, 5, 12).toISOString(), {
@@ -516,12 +625,12 @@ test("summarizes a week and compares the same days of the previous week", () => 
   ];
 
   assert.deepEqual(getPracticeTimeSummary(history, "week", today), {
-    totalSeconds: 4500,
-    sessionCount: 3,
-    averageSessionSeconds: 1500,
-    bestBucket: { label: "mar 6", totalSeconds: 2700 },
+    totalSeconds: 8100,
+    sessionCount: 4,
+    averageSessionSeconds: 2025,
+    bestBucket: { label: "dom 4", totalSeconds: 3600 },
     previousTotalSeconds: 1800,
-    changeRatio: 1.5,
+    changeRatio: 3.5,
   });
 });
 
@@ -611,7 +720,7 @@ test("reports no comparison when the previous 30 days have no practice", () => {
   assert.equal(summary.changeRatio, null);
 });
 
-test("a practice dated after today counts in the week total but not in the comparison", () => {
+test("a practice dated after today is excluded from the week", () => {
   const today = new Date(2026, 9, 7, 12);
   const history = [
     createSession("previous", new Date(2026, 8, 29, 12).toISOString(), {
@@ -627,12 +736,12 @@ test("a practice dated after today counts in the week total but not in the compa
 
   const summary = getPracticeTimeSummary(history, "week", today);
 
-  assert.equal(summary.totalSeconds, 1800);
+  assert.equal(summary.totalSeconds, 600);
   assert.equal(summary.previousTotalSeconds, 300);
   assert.equal(summary.changeRatio, 1);
 });
 
-test("summarizes a year against the same stretch of the previous year", () => {
+test("summarizes the twelve-month window against the same months one year earlier", () => {
   const today = new Date(2026, 9, 7, 12);
   const history = [
     createSession("january", new Date(2026, 0, 12, 12).toISOString(), {
@@ -646,7 +755,7 @@ test("summarizes a year against the same stretch of the previous year", () => {
     }),
     createSession(
       "last-year-late",
-      new Date(2025, 11, 20, 12).toISOString(),
+      new Date(2024, 11, 20, 12).toISOString(),
       { durationSeconds: 900 },
     ),
   ];
@@ -657,8 +766,8 @@ test("summarizes a year against the same stretch of the previous year", () => {
   assert.equal(summary.sessionCount, 2);
   assert.equal(summary.averageSessionSeconds, 3000);
   assert.deepEqual(summary.bestBucket, { label: "oct", totalSeconds: 3600 });
-  assert.equal(summary.previousTotalSeconds, 1800);
-  assert.equal(summary.changeRatio, (6000 - 1800) / 1800);
+  assert.equal(summary.previousTotalSeconds, 2700);
+  assert.equal(summary.changeRatio, (6000 - 2700) / 2700);
 });
 
 test("reports no comparison when the previous period is empty", () => {
@@ -791,6 +900,19 @@ test("compares each content over consecutive rolling windows", () => {
       { label: "Escalas", deltaBpm: 2 },
     ],
   );
+});
+
+test("the year window covers the calendar year and compares with the previous one", () => {
+  const history = [
+    tempoSession("previous", new Date(2025, 11, 31, 12).toISOString(), 60, 1800),
+    tempoSession("current", new Date(2026, 11, 31, 12).toISOString(), 90, 1800),
+    tempoSession("outside", new Date(2027, 0, 1, 12).toISOString(), 200, 1800),
+  ];
+
+  const trend = getTempoTrend(history, "year", new Date(2026, 11, 31, 12));
+
+  assert.equal(trend.comparedCount, 1);
+  assert.equal(trend.deltaBpm, 30);
 });
 
 test("excludes a content practised in only one of the windows", () => {
@@ -937,4 +1059,40 @@ test("uses 30-day windows for the month period", () => {
     getTempoTrend(outside, "month", tempoToday).comparedCount,
     0,
   );
+});
+
+test("ranks catalog songs that are not in the repertoire yet", () => {
+  const catalogSong = {
+    source: "itunes",
+    id: "catalog-1",
+    title: "Canción del catálogo",
+    artist: "Artista",
+  };
+  const history = [
+    createSession("inside", "2026-10-05T12:00:00.000Z", {
+      phases: [
+        {
+          id: "phase-1",
+          name: "Canción del catálogo",
+          skill: "repertoire",
+          elapsedSeconds: 900,
+          catalogSong,
+        },
+      ],
+    }),
+  ];
+
+  const rankings = getPracticeContentRankings(history, [], {
+    startDate: "2026-10-01",
+    endDate: "2026-10-07",
+  });
+
+  assert.deepEqual(rankings.songs, [
+    {
+      key: "catalog:itunes:catalog-1",
+      label: "Canción del catálogo",
+      seconds: 900,
+      sessionCount: 1,
+    },
+  ]);
 });

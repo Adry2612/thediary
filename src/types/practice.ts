@@ -1,4 +1,4 @@
-import type { CatalogSource } from "./catalog.ts";
+import type { CatalogCandidate, CatalogSource } from "./catalog.ts";
 import type { TabScore } from "./tab-score.ts";
 
 export const PRACTICE_SKILLS = [
@@ -223,6 +223,10 @@ export interface PracticePhase {
   resources?: PracticeResource[];
   repertoireItemId?: string;
   repertoirePartId?: string;
+  /** Varias partes de la misma canción; `repertoirePartId` cubre el caso de una. */
+  repertoirePartIds?: string[];
+  /** Canción del catálogo elegida antes de añadirla al repertorio. */
+  catalogSong?: CatalogCandidate;
   /** Lick de la biblioteca que se practica en este bloque. */
   lickId?: string;
 }
@@ -269,6 +273,10 @@ export interface SessionPhaseRecord {
   notes?: string;
   repertoireItemId?: string;
   repertoirePartId?: string;
+  /** Varias partes de la misma canción; `repertoirePartId` cubre el caso de una. */
+  repertoirePartIds?: string[];
+  /** Canción del catálogo que todavía no está en el repertorio. */
+  catalogSong?: CatalogCandidate;
   lickId?: string;
 }
 

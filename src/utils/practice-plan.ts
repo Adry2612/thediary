@@ -27,6 +27,11 @@ export function normalizePracticePhaseLinks(
   if (next.skill !== "repertoire") {
     next.repertoireItemId = undefined;
     next.repertoirePartId = undefined;
+    delete next.repertoirePartIds;
+    next.catalogSong = undefined;
+  } else if (next.repertoireItemId) {
+    // Una canción ya añadida al repertorio manda sobre la referencia temporal.
+    next.catalogSong = undefined;
   }
   if (next.skill !== "lick") {
     next.lickId = undefined;
@@ -46,6 +51,9 @@ export function clonePracticePhases(
       resources: (normalized.resources ?? []).map((resource) => ({
         ...resource,
       })),
+      ...(normalized.catalogSong
+        ? { catalogSong: { ...normalized.catalogSong } }
+        : {}),
     };
   });
 }

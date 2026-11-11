@@ -104,6 +104,20 @@ test("a select outside a dialog keeps viewport coordinates", () => {
   assert.equal(placement.maxHeight, 128);
 });
 
+test("a narrow trigger can widen the list without leaving the viewport", () => {
+  const placement = getListboxPlacement({
+    trigger: { left: 202, top: 230, bottom: 258, right: 270, width: 68 },
+    container: null,
+    viewport: { width: 320, height: 800 },
+    optionCount: 3,
+    minWidth: 168,
+  });
+
+  assert.equal(placement.width, 168);
+  assert.equal(placement.left, 144);
+  assert.ok(placement.left + placement.width <= 320);
+});
+
 test("a 375 px screen keeps the list inside the dialog", () => {
   const placement = getListboxPlacement({
     trigger: createTrigger({ left: 40, top: 300, bottom: 348, width: 303 }),

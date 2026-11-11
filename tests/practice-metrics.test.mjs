@@ -205,8 +205,9 @@ test("the year series has twelve monthly buckets", () => {
   );
 
   assert.equal(series.length, 12);
-  assert.deepEqual(series[9].mood, { average: 5, count: 1 });
-  assert.equal(series[8].mood, null);
+  assert.equal(series[0].startDate, "2025-11-01");
+  assert.deepEqual(series[11].mood, { average: 5, count: 1 });
+  assert.equal(series[10].mood, null);
 });
 
 test("the wellbeing summary compares the period with the previous one", () => {

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { TextField, TextArea } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { TrashIcon } from "@/components/ui/icons";
+import { PracticeBlockLinkFields } from "@/components/practice/PracticeBlockLinkFields";
+import { PracticeBlockNotesField } from "@/components/practice/PracticeBlockNotesField";
 import { PRACTICE_SKILL_LABELS } from "@/utils/dashboard-data";
 import {
   applySessionEdit,
@@ -59,9 +61,14 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
     createEditorState(session),
   );
   const guitars = usePracticeStore((state) => state.guitars);
+  const repertoireItems = usePracticeStore((state) => state.repertoireItems);
+  const licks = usePracticeStore((state) => state.licks);
   const practiceText = useI18nSection("practice");
   const [error, setError] = useState<string | null>(null);
   const { draft, clocks, fieldErrors } = state;
+  const repertoireSongs = repertoireItems.filter(
+    (item) => item.kind === "song",
+  );
 
   const derivedSeconds = draft.blocks.reduce(
     (total, block) => total + block.actualSeconds,
@@ -162,6 +169,7 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
             plannedMinutes: null,
             actualSeconds: 0,
             notes: "",
+            repertoirePartIds: [],
           },
         ],
       },
@@ -353,17 +361,13 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
                   </button>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <label className="block text-xs text-muted">
-                    Nombre del bloque
-                    <TextField
-                      value={block.name}
-                      maxLength={80}
-                      onChange={(event) =>
-                        updateBlock(block.id, { name: event.target.value })
-                      }
-                      className="mt-1"
-                    />
-                  </label>
+                  <PracticeBlockLinkFields
+                    index={index}
+                    value={block}
+                    songs={repertoireSongs}
+                    licks={licks}
+                    onChange={(changes) => updateBlock(block.id, changes)}
+                  />
                   <div className="block text-xs text-muted">
                     Categoría
                     <SelectField
@@ -374,6 +378,15 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
                       onChange={(value) =>
                         updateBlock(block.id, {
                           skill: value as EditableSessionBlock["skill"],
+                          ...(value === "repertoire"
+                            ? {}
+                            : {
+                                repertoireItemId: undefined,
+                                repertoirePartId: undefined,
+                                repertoirePartIds: undefined,
+                                catalogSong: undefined,
+                              }),
+                          ...(value === "lick" ? {} : { lickId: undefined }),
                         })
                       }
                     />
@@ -423,6 +436,11 @@ export function SessionEditor({ session, onSave, onCancel }: SessionEditorProps)
                     />
                   </label>
                 </div>
+                <PracticeBlockNotesField
+                  value={block.notes}
+                  ariaLabelSuffix={`Bloque ${index + 1}`}
+                  onChange={(notes) => updateBlock(block.id, { notes })}
+                />
               </li>
             ))}
           </ul>

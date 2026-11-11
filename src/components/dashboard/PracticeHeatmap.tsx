@@ -9,6 +9,8 @@ import {
 } from "@/utils/dashboard-data";
 import { useI18n, useI18nSection } from "@/i18n/I18nProvider";
 import { formatDateLabel } from "@/utils/format";
+import { getWeekStartOffset, getWeekdayOrder } from "@/utils/week-start";
+import type { WeekStartsOn } from "@/types/display";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 
 type PracticeHeatmapProps = {
@@ -16,6 +18,7 @@ type PracticeHeatmapProps = {
   month: Date;
   todayKey: string;
   selectedDate: string;
+  weekStartsOn: WeekStartsOn;
   canGoForward: boolean;
   onSelectDate: (dateKey: string) => void;
   onChangeMonth: (offset: -1 | 1) => void;
@@ -34,6 +37,7 @@ export function PracticeHeatmap({
   month,
   todayKey,
   selectedDate,
+  weekStartsOn,
   canGoForward,
   onSelectDate,
   onChangeMonth,
@@ -44,7 +48,13 @@ export function PracticeHeatmap({
   const year = month.getFullYear();
   const monthIndex = month.getMonth();
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-  const firstDayOffset = (new Date(year, monthIndex, 1).getDay() + 6) % 7;
+  const firstDayOffset = getWeekStartOffset(
+    new Date(year, monthIndex, 1),
+    weekStartsOn,
+  );
+  const weekdayLabels = getWeekdayOrder(weekStartsOn).map(
+    (weekday) => weekdays.short[weekday],
+  );
   const weekCount = Math.ceil((firstDayOffset + daysInMonth) / 7);
   const practiceByDate = new Map(days.map((day) => [day.dateKey, day]));
   const hasMonthPractice = days.some((day) => day.minutes > 0);
@@ -105,7 +115,7 @@ export function PracticeHeatmap({
       <div className="mt-8 overflow-x-auto pb-2">
         <div className="flex w-full min-w-[360px] justify-center gap-3">
           <div className="grid grid-rows-7 gap-1 pt-0.5 text-[10px] leading-4 text-muted">
-             {weekdays.short.map((label, index) => (
+             {weekdayLabels.map((label, index) => (
               <span key={index} className="h-4 w-3">
                 {label}
               </span>
@@ -113,7 +123,7 @@ export function PracticeHeatmap({
           </div>
           <div
             role="group"
-             aria-label={`${calendar.yearDays} ${monthLabel}`}
+             aria-label={`${calendar.monthDays} ${monthLabel}`}
             className="grid grid-flow-col grid-rows-7 gap-1"
             style={{
               gridTemplateColumns: `repeat(${weekCount}, minmax(0, 1fr))`,

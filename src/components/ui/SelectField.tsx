@@ -53,6 +53,10 @@ type SelectFieldProps = {
   disabled?: boolean;
   /** Recorta el valor a una línea en vez de dejar que envuelva. */
   truncateLabel?: boolean;
+  /** `inline` integra el disparador en un título, sin caja de formulario. */
+  variant?: "field" | "inline";
+  /** Ancho mínimo de la lista cuando el disparador es estrecho. */
+  listboxWidth?: number;
 };
 
 export function SelectField({
@@ -63,6 +67,8 @@ export function SelectField({
   className = "",
   disabled = false,
   truncateLabel = false,
+  variant = "field",
+  listboxWidth,
 }: SelectFieldProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -84,6 +90,10 @@ export function SelectField({
   const visibleValue = selectedOption?.label?.trim();
   const accessibleName =
     visibleValue ? `${ariaLabel}: ${visibleValue}` : ariaLabel;
+  const isInline = variant === "inline";
+  const triggerClassName = isInline
+    ? "inline-flex items-center gap-1.5 text-left font-sans text-lg leading-7 font-semibold tracking-tight text-zinc-100 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/60 disabled:cursor-not-allowed disabled:opacity-50 sm:text-xl sm:leading-8"
+    : "flex min-h-12 h-auto w-full items-center justify-between gap-3 border border-line bg-canvas px-4 py-3 text-left font-mono text-sm leading-tight text-ink transition hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg disabled:cursor-not-allowed disabled:opacity-50";
 
   useEffect(() => {
     if (!isOpen) return;
@@ -129,35 +139,35 @@ export function SelectField({
 
     if (triggerBounds) {
       const dialogBounds = dialog?.getBoundingClientRect();
-      setListboxStyle(
-        getListboxPlacement({
-          trigger: {
-            left: triggerBounds.left,
-            top: triggerBounds.top,
-            right: triggerBounds.right,
-            bottom: triggerBounds.bottom,
-            width: triggerBounds.width,
-          },
-          container:
-            dialog && dialogBounds
-              ? {
-                  left: dialogBounds.left,
-                  top: dialogBounds.top,
-                  right: dialogBounds.right,
-                  bottom: dialogBounds.bottom,
-                  width: dialogBounds.width,
-                  clientLeft: dialog.clientLeft,
-                  clientTop: dialog.clientTop,
-                  clientWidth: dialog.clientWidth,
-                  clientHeight: dialog.clientHeight,
-                  scrollLeft: dialog.scrollLeft,
-                  scrollTop: dialog.scrollTop,
-                }
-              : null,
-          viewport: { width: window.innerWidth, height: window.innerHeight },
-          optionCount: options.length,
-        }),
-      );
+      const placement = getListboxPlacement({
+        trigger: {
+          left: triggerBounds.left,
+          top: triggerBounds.top,
+          right: triggerBounds.right,
+          bottom: triggerBounds.bottom,
+          width: triggerBounds.width,
+        },
+        container:
+          dialog && dialogBounds
+            ? {
+                left: dialogBounds.left,
+                top: dialogBounds.top,
+                right: dialogBounds.right,
+                bottom: dialogBounds.bottom,
+                width: dialogBounds.width,
+                clientLeft: dialog.clientLeft,
+                clientTop: dialog.clientTop,
+                clientWidth: dialog.clientWidth,
+                clientHeight: dialog.clientHeight,
+                scrollLeft: dialog.scrollLeft,
+                scrollTop: dialog.scrollTop,
+              }
+            : null,
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        optionCount: options.length,
+        minWidth: listboxWidth,
+      });
+      setListboxStyle(placement);
     }
 
     const startingIndex =
@@ -228,7 +238,10 @@ export function SelectField({
   }
 
   return (
-    <div ref={rootRef} className={`relative min-w-0 ${className}`}>
+    <div
+      ref={rootRef}
+      className={`relative min-w-0 ${isInline ? "inline-flex" : ""} ${className}`}
+    >
       <button
         ref={triggerRef}
         type="button"
@@ -244,7 +257,7 @@ export function SelectField({
             openListbox(event.key === "ArrowDown" ? 1 : -1);
           }
         }}
-        className="flex min-h-12 h-auto w-full items-center justify-between gap-3 border border-line bg-canvas px-4 py-3 text-left font-mono text-sm leading-tight text-ink transition hover:border-white/20 focus-visible:border-accent-green-fg/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-green-bg disabled:cursor-not-allowed disabled:opacity-50"
+        className={triggerClassName}
       >
         <span className="flex min-w-0 items-center gap-2">
           <SelectThumb
@@ -253,7 +266,7 @@ export function SelectField({
           />
           <span
             className={
-              truncateLabel
+              truncateLabel || isInline
                 ? "min-w-0 truncate whitespace-nowrap"
                 : "min-w-0 whitespace-normal break-words"
             }
@@ -324,6 +337,11 @@ export function SelectField({
                   />
                   <span className="whitespace-normal break-words">
                     {entry.option.label}
+                    {entry.option.description ? (
+                      <span className="ml-2 text-xs text-muted">
+                        {entry.option.description}
+                      </span>
+                    ) : null}
                   </span>
                 </span>
                 {entry.option.value === value && (

@@ -8,6 +8,7 @@ import type {
 import type { CatalogNameLanguage } from "../types/display.ts";
 import { getTechniqueName } from "./catalogs/techniques.ts";
 import { getTheoryName } from "./catalogs/theory.ts";
+import { getRepertoirePartIds } from "./practice-parts.ts";
 
 /** Elemento de repertorio al que apunta un bloque, si todavía existe. */
 export function getLinkedRepertoireItem(
@@ -27,33 +28,36 @@ export function getLinkedRepertoireItem(
 export function getLinkedRepertoireLabel(
   phase: Pick<
     SessionPhaseRecord,
-    "repertoireItemId" | "repertoirePartId"
+    "repertoireItemId" | "repertoirePartId" | "repertoirePartIds"
   >,
   repertoireItems: RepertoireItem[],
 ): string | null {
   const item = getLinkedRepertoireItem(phase, repertoireItems);
   if (!item) return null;
 
-  const part = phase.repertoirePartId
-    ? item.parts.find((candidate) => candidate.id === phase.repertoirePartId)
-    : undefined;
+  const partNames = getRepertoirePartIds(phase)
+    .map((partId) => item.parts.find((part) => part.id === partId)?.name)
+    .filter((name): name is string => Boolean(name));
 
-  return part ? `${item.title} · ${part.name}` : item.title;
+  return partNames.length > 0
+    ? `${item.title} · ${partNames.join(", ")}`
+    : item.title;
 }
 
-/** Nombre de la parte guardada, solo si la canción y la parte existen. */
+/** Nombres de las partes guardadas, solo las que todavía existen en la canción. */
 export function getLinkedRepertoirePartName(
   phase: Pick<
     SessionPhaseRecord,
-    "repertoireItemId" | "repertoirePartId"
+    "repertoireItemId" | "repertoirePartId" | "repertoirePartIds"
   >,
   repertoireItems: RepertoireItem[],
 ): string | null {
   const item = getLinkedRepertoireItem(phase, repertoireItems);
-  if (!item || !phase.repertoirePartId) return null;
-  return (
-    item.parts.find((part) => part.id === phase.repertoirePartId)?.name ?? null
-  );
+  if (!item || getRepertoirePartIds(phase).length === 0) return null;
+  const names = getRepertoirePartIds(phase)
+    .map((partId) => item.parts.find((part) => part.id === partId)?.name)
+    .filter((name): name is string => Boolean(name));
+  return names.length > 0 ? names.join(", ") : null;
 }
 
 /**

@@ -1,4 +1,7 @@
-import type { CatalogNameLanguage } from "../types/display.ts";
+import type {
+  CatalogNameLanguage,
+  WeekStartsOn,
+} from "../types/display.ts";
 
 export type TechniqueNameLanguage = "es" | "original";
 export type TuningDisplay = "name" | "notes";
@@ -7,6 +10,7 @@ export interface DisplayPreferences {
   /** Sin valor: se sigue el idioma de la interfaz. */
   techniqueNameLanguage?: TechniqueNameLanguage;
   tuningDisplay: TuningDisplay;
+  weekStartsOn: WeekStartsOn;
 }
 
 export const DISPLAY_PREFERENCES_KEY = "thediary.display-preferences";
@@ -15,6 +19,7 @@ export const DISPLAY_PREFERENCES_EVENT = "thediary:display-preferences";
 
 export const DEFAULT_DISPLAY_PREFERENCES: DisplayPreferences = {
   tuningDisplay: "name",
+  weekStartsOn: "monday",
 };
 
 const TECHNIQUE_LANGUAGES: readonly TechniqueNameLanguage[] = [
@@ -22,6 +27,7 @@ const TECHNIQUE_LANGUAGES: readonly TechniqueNameLanguage[] = [
   "original",
 ];
 const TUNING_DISPLAYS: readonly TuningDisplay[] = ["name", "notes"];
+const WEEK_STARTS_ON: readonly WeekStartsOn[] = ["monday", "sunday"];
 
 /** Solo los valores admitidos cuentan; el resto vuelve al valor por defecto. */
 export function normalizeDisplayPreferences(
@@ -40,10 +46,16 @@ export function normalizeDisplayPreferences(
   )
     ? (candidate.tuningDisplay as TuningDisplay)
     : DEFAULT_DISPLAY_PREFERENCES.tuningDisplay;
+  const weekStartsOn = WEEK_STARTS_ON.includes(
+    candidate.weekStartsOn as WeekStartsOn,
+  )
+    ? (candidate.weekStartsOn as WeekStartsOn)
+    : DEFAULT_DISPLAY_PREFERENCES.weekStartsOn;
 
   return {
     ...(techniqueNameLanguage ? { techniqueNameLanguage } : {}),
     tuningDisplay,
+    weekStartsOn,
   };
 }
 

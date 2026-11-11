@@ -13,15 +13,13 @@ import { useGuitarPreference } from "@/hooks/useGuitarPreference";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import {
   changeManualPracticeSkill,
-  changeManualPracticeSongPart,
-  clearManualPracticeSong,
   createManualPracticeBlockDraft,
-  linkManualPracticeSong,
   manualPracticeBlocksFromDrafts,
   toLocalDateTimeInputValue,
   type ManualPracticeBlockDraft,
 } from "@/utils/manual-practice";
-import { SongPickerDialog } from "@/components/practice/SongPickerDialog";
+import { PracticeBlockLinkFields } from "@/components/practice/PracticeBlockLinkFields";
+import { PracticeBlockNotesField } from "@/components/practice/PracticeBlockNotesField";
 import { useDialogMotion } from "@/hooks/useDialogMotion";
 
 export function ManualPracticeEntry() {
@@ -35,9 +33,9 @@ export function ManualPracticeEntry() {
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const guitars = usePracticeStore((state) => state.guitars);
+  const licks = usePracticeStore((state) => state.licks);
   const songs = repertoireItems.filter((item) => item.kind === "song");
   const [title, setTitle] = useState("");
-  const [songPickerBlockId, setSongPickerBlockId] = useState<string | null>(null);
   const [startedAtLocal, setStartedAtLocal] = useState(() =>
     toLocalDateTimeInputValue(new Date()),
   );
@@ -80,40 +78,6 @@ export function ManualPracticeEntry() {
     setBlocks((current) =>
       current.map((block) =>
         block.id === blockId ? changeManualPracticeSkill(block, skill) : block,
-      ),
-    );
-  }
-
-  function chooseSong(songId: string) {
-    const song = songs.find((candidate) => candidate.id === songId);
-    if (!song || !songPickerBlockId) {
-      setSongPickerBlockId(null);
-      return;
-    }
-    setBlocks((current) =>
-      current.map((block) =>
-        block.id === songPickerBlockId
-          ? linkManualPracticeSong(block, song)
-          : block,
-      ),
-    );
-    setSongPickerBlockId(null);
-  }
-
-  function changeBlockPart(blockId: string, partId?: string) {
-    setBlocks((current) =>
-      current.map((block) =>
-        block.id === blockId
-          ? changeManualPracticeSongPart(block, partId)
-          : block,
-      ),
-    );
-  }
-
-  function clearBlockSong(blockId: string) {
-    setBlocks((current) =>
-      current.map((block) =>
-        block.id === blockId ? clearManualPracticeSong(block) : block,
       ),
     );
   }
@@ -237,22 +201,17 @@ export function ManualPracticeEntry() {
                 </p>
               </div>
               <div className="space-y-3">
-                {blocks.map((block, index) => {
-                  const linkedSong = songs.find(
-                    (song) => song.id === block.repertoireItemId,
-                  );
-
-                  return (
+                {blocks.map((block, index) => (
                   <fieldset
                     key={block.id}
                     className="border border-line bg-canvas/60 p-4"
                   >
                     <legend className="sr-only">
-                       {manual.block} {index + 1} de práctica
+                      {manual.block} {index + 1} de práctica
                     </legend>
                     <div className="mb-3 flex items-center justify-between">
                       <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
-                         {manual.block} {String(index + 1).padStart(2, "0")}
+                        {manual.block} {String(index + 1).padStart(2, "0")}
                       </p>
                       <button
                         type="button"
@@ -265,26 +224,19 @@ export function ManualPracticeEntry() {
                         aria-label={`Quitar bloque ${index + 1}`}
                         className="text-xs text-muted underline underline-offset-4 transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                         {manual.remove}
+                        {manual.remove}
                       </button>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="block text-sm text-ink sm:col-span-2">
-                         {manual.blockName}
-                        <TextField
-                          className="mt-2"
-                          value={block.name}
-                          onChange={(event) =>
-                            updateBlock(block.id, { name: event.target.value })
-                          }
-                           placeholder={manual.technique}
-                          maxLength={100}
-                          disabled={Boolean(block.repertoireItemId)}
-                          required
-                        />
-                      </label>
+                      <PracticeBlockLinkFields
+                        index={index}
+                        value={block}
+                        songs={songs}
+                        licks={licks}
+                        onChange={(changes) => updateBlock(block.id, changes)}
+                      />
                       <label className="block text-sm text-ink">
-                         {manual.duration}
+                        {manual.duration}
                         <TextField
                           className="mt-2"
                           type="number"
@@ -301,7 +253,7 @@ export function ManualPracticeEntry() {
                         />
                       </label>
                       <div className="block text-sm text-ink">
-                         {manual.practiceType}
+                        {manual.practiceType}
                         <SelectField
                           className="mt-2"
                           value={block.skill}
@@ -313,80 +265,21 @@ export function ManualPracticeEntry() {
                               changeBlockSkill(block.id, selectedSkill);
                             }
                           }}
-                           ariaLabel={`${manual.practiceType} ${manual.block} ${index + 1}`}
-                           options={PRACTICE_SKILLS.map((skill) => ({ value: skill, label: skills[skill] }))}
+                          ariaLabel={`${manual.practiceType} ${manual.block} ${index + 1}`}
+                          options={PRACTICE_SKILLS.map((skill) => ({
+                            value: skill,
+                            label: skills[skill],
+                          }))}
                         />
                       </div>
                     </div>
-                    {block.skill === "repertoire" && (
-                      <div className="mt-3 rounded-md border border-line bg-canvas/50 p-3">
-                        {linkedSong ? (
-                          <>
-                            <p className="text-sm font-medium text-ink">
-                              {linkedSong.title}
-                            </p>
-                            <p className="mt-1 text-xs text-muted">
-                              {manual.songCredits}
-                            </p>
-                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                              <div className="block text-sm text-ink">
-                                {manual.part}
-                                <SelectField
-                                  className="mt-2"
-                                  ariaLabel={`${manual.part} ${linkedSong.title}`}
-                                  value={block.repertoirePartId ?? "whole"}
-                                  onChange={(value) =>
-                                    changeBlockPart(
-                                      block.id,
-                                      value === "whole" ? undefined : value,
-                                    )
-                                  }
-                                  options={[
-                                    { value: "whole", label: manual.noPart },
-                                    ...linkedSong.parts.map((part) => ({
-                                      value: part.id,
-                                      label: part.name,
-                                    })),
-                                  ]}
-                                />
-                              </div>
-                              <div className="flex flex-wrap items-end gap-3">
-                                <Button
-                                  type="button"
-                                  className="h-11 px-4"
-                                  onClick={() => setSongPickerBlockId(block.id)}
-                                >
-                                  {manual.changeSong}
-                                </Button>
-                                <button
-                                  type="button"
-                                  onClick={() => clearBlockSong(block.id)}
-                                  className="min-h-11 text-xs text-muted underline underline-offset-4 transition hover:text-ink"
-                                >
-                                  {manual.clearSong}
-                                </button>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <p className="text-xs text-muted">
-                              {manual.song}
-                            </p>
-                            <Button
-                              type="button"
-                              className="h-11 px-4"
-                              onClick={() => setSongPickerBlockId(block.id)}
-                            >
-                              {manual.searchSong}
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <PracticeBlockNotesField
+                      value={block.notes}
+                      ariaLabelSuffix={`${manual.block} ${index + 1}`}
+                      onChange={(notes) => updateBlock(block.id, { notes })}
+                    />
                   </fieldset>
-                  );
-                })}
+                ))}
               </div>
               <Button
                 type="button"
@@ -426,16 +319,7 @@ export function ManualPracticeEntry() {
             </Button>
           </div>
         </form>
-        <SongPickerDialog
-          open={songPickerBlockId !== null}
-          songs={songs}
-          selectedSongId={
-            blocks.find((block) => block.id === songPickerBlockId)
-              ?.repertoireItemId
-          }
-          onSelect={(song) => chooseSong(song.id)}
-          onClose={() => setSongPickerBlockId(null)}
-        />
+
       </dialog>
     </>
   );

@@ -22,6 +22,7 @@ import { playPracticeSound } from "@/services/practice-sound";
 import { normalizeTargetMinutes } from "@/utils/practice-target";
 import type { PracticeTimerController } from "@/hooks/usePracticeTimer";
 import type { RepertoireItem } from "@/types/practice";
+import type { CatalogCandidate } from "@/types/catalog";
 import { formatClockInput, formatOvertimeInput } from "@/utils/clock-time";
 import { getTimerAction } from "@/utils/format";
 import { useI18nSection } from "@/i18n/I18nProvider";
@@ -48,6 +49,7 @@ type TimerCardProps = {
   /** Canciones disponibles para cambiar el bloque de repertorio en curso. */
   repertoireSongs?: RepertoireItem[];
   onChangeRepertoireSong?: (songId: string) => void;
+  onChangeCatalogSong?: (candidate: CatalogCandidate) => void;
 };
 
 export function TimerCard({
@@ -66,6 +68,7 @@ export function TimerCard({
   title,
   repertoireSongs,
   onChangeRepertoireSong,
+  onChangeCatalogSong,
 }: TimerCardProps) {
   const [isOptionsDialogOpen, setIsOptionsDialogOpen] = useState(false);
   const [isSongPickerOpen, setIsSongPickerOpen] = useState(false);
@@ -204,8 +207,8 @@ export function TimerCard({
   const canChangeSong =
     currentPhase?.skill === "repertoire" &&
     !isCompleted &&
-    Boolean(repertoireSongs?.length) &&
-    Boolean(onChangeRepertoireSong);
+    (Boolean(repertoireSongs?.length) || Boolean(onChangeCatalogSong)) &&
+    Boolean(onChangeRepertoireSong || onChangeCatalogSong);
 
   return (
     <>
@@ -503,6 +506,7 @@ export function TimerCard({
         songs={repertoireSongs ?? []}
         selectedSongId={currentPhase?.repertoireItemId}
         onSelect={(song) => onChangeRepertoireSong?.(song.id)}
+        onSelectCatalog={onChangeCatalogSong}
         onClose={() => setIsSongPickerOpen(false)}
       />
     </>

@@ -8,6 +8,7 @@ import { WeeklyRoutinePlanner } from '@/components/dashboard/WeeklyRoutinePlanne
 import { PracticeGoalsCard } from '@/components/dashboard/PracticeGoalsCard';
 import { StringsReminder } from '@/components/home/StringsReminder';
 import { usePracticeStore } from '@/stores/usePracticeStore';
+import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
 import { parseDateKey } from '@/utils/practice-calendar';
 import type { WeekdayIndex } from '@/utils/weekly-routine-schedule';
 import { useI18nSection } from '@/i18n/I18nProvider';
@@ -29,6 +30,7 @@ export function HomeView({ todayKey }: { todayKey: string }) {
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const today = useMemo(() => parseDateKey(todayKey), [todayKey]);
   const todayWeekday = today.getDay() as WeekdayIndex;
+  const { weekStartsOn } = useDisplayPreferences();
   const todaysRoutine = templates.find(
     (template) => template.id === weeklySchedule[todayWeekday],
   );
@@ -60,6 +62,7 @@ export function HomeView({ todayKey }: { todayKey: string }) {
         <WeeklyRoutinePlanner
           routines={templates}
           schedule={weeklySchedule}
+          weekStartsOn={weekStartsOn}
           hasHydrated={hasHydrated}
           onScheduleChange={setRoutineForWeekday}
         />

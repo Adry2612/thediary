@@ -310,3 +310,29 @@ test("orders artists with equal time by name", () => {
     ["Metallica", "Opeth"],
   );
 });
+
+test("splits a multi-part block's time between its parts", () => {
+  const history = [
+    createSession("session-1", [
+      {
+        id: "phase-1",
+        name: "Canción",
+        skill: "repertoire",
+        elapsedSeconds: 600,
+        repertoireItemId: "song-1",
+        repertoirePartIds: ["part-1", "part-2"],
+      },
+    ]),
+  ];
+
+  const stats = getRepertoirePracticeStats(history);
+
+  assert.deepEqual(stats.get("song-1")?.get("part-1"), {
+    practiceSeconds: 300,
+    sessionCount: 1,
+  });
+  assert.deepEqual(stats.get("song-1")?.get("part-2"), {
+    practiceSeconds: 300,
+    sessionCount: 1,
+  });
+});

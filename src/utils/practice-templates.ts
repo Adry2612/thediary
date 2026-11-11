@@ -13,6 +13,7 @@ export type PracticePlanPhase = {
   skill: string;
   repertoireItemId?: string;
   repertoirePartId?: string;
+  repertoirePartIds?: string[];
   lickId?: string;
 };
 
@@ -53,10 +54,17 @@ export function validatePracticeTemplate(
         (item) => item.id === phase.repertoireItemId,
       );
       if (libraries.repertoireItems && !song) return "phase";
+      const partIds = phase.repertoirePartIds?.length
+        ? phase.repertoirePartIds
+        : phase.repertoirePartId
+          ? [phase.repertoirePartId]
+          : [];
       if (
-        phase.repertoirePartId &&
+        partIds.length > 0 &&
         song?.parts &&
-        !song.parts.some((part) => part.id === phase.repertoirePartId)
+        partIds.some(
+          (partId) => !song.parts?.some((part) => part.id === partId),
+        )
       ) {
         return "phase";
       }

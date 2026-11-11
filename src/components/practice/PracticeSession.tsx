@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { PracticeCompletionDialog } from "@/components/practice/PracticeCompletionDialog";
@@ -36,6 +36,9 @@ import {
   getSessionStatus,
 } from "@/utils/practice-session-status";
 import { createPracticeSessionRecord } from "@/utils/practice-session-record";
+import { collectPracticedCatalogSongs } from "@/utils/practice-catalog-songs";
+import { createRepertoireItem } from "@/utils/repertoire-item";
+import { createId } from "@/utils/create-id";
 import { targetMinutesToSeconds } from "@/utils/practice-target";
 import { getPhaseMaterials } from "@/utils/practice-materials";
 import { normalizeRepertoirePhaseNames } from "@/utils/practice-plan";
@@ -43,7 +46,10 @@ import {
   getPracticeBlockDisplayTitle,
   getPracticeBlockTitle,
 } from "@/utils/practice-session-details";
-import { getRepertoireSongChanges } from "@/utils/practice-block-editor";
+import {
+  getCatalogSongChanges,
+  getRepertoireSongChanges,
+} from "@/utils/practice-block-editor";
 import {
   applyRoutineLinkChanges,
   hasPracticeLinkChanges,
@@ -59,7 +65,9 @@ import { usePracticeStore } from "@/stores/usePracticeStore";
 import type {
   PracticeMetricValue,
   PracticeTimerResult,
+  RepertoireItem,
 } from "@/types/practice";
+import type { CatalogCandidate } from "@/types/catalog";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 export function PracticeSession({ session }: { session: ActivePracticeSession }) {
@@ -84,6 +92,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const completionHandledRef = useRef(false);
   const addSession = usePracticeStore((state) => state.addSession);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
+  const saveRepertoireItem = usePracticeStore(
+    (state) => state.saveRepertoireItem,
+  );
   const licks = usePracticeStore((state) => state.licks);
   const templates = usePracticeStore((state) => state.templates);
   const saveTemplate = usePracticeStore((state) => state.saveTemplate);
@@ -96,6 +107,16 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
   const routineHasChanges = sourceTemplate
     ? hasPracticeLinkChanges(phases, sourceTemplate.phases)
     : false;
+  const pendingCatalogSongs = useMemo(
+    () =>
+      pendingResult
+        ? collectPracticedCatalogSongs(
+            phases,
+            pendingResult.phases.map((phase) => phase.elapsedSeconds),
+          )
+        : [],
+    [pendingResult, phases],
+  );
   const clearActiveSession = useActivePracticeSessionStore(
     (state) => state.clearActiveSession,
   );
@@ -251,15 +272,62 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     phaseNotes: Record<number, string>,
     updateRoutine = false,
     metrics: { mood?: PracticeMetricValue; focus?: PracticeMetricValue } = {},
+    catalogSongsToAdd: CatalogCandidate[] = [],
   ) {
     if (!pendingResult || sessionSavedRef.current) return;
 
     sessionSavedRef.current = true;
-    const phasesForRecord = phases.map((phase) => ({
-      ...phase,
-      name: getPracticeBlockTitle(phase, repertoireItems),
-      resources: getPhaseMaterials(phase, repertoireItems),
-    }));
+    const addedSongs = catalogSongsToAdd.map((candidate) => {
+      const existing = repertoireItems.find(
+        (item) =>
+          item.catalogSource === candidate.source &&
+          item.catalogId === candidate.id,
+      );
+      if (existing) return { candidate, item: existing };
+
+      const item = createRepertoireItem({
+        id: createId(),
+        initialPartId: createId(),
+        kind: "song",
+        title: candidate.title,
+        artist: candidate.artist,
+        album: candidate.album,
+        releaseYear: candidate.releaseYear,
+        coverUrl: candidate.coverUrl,
+        catalogSource: candidate.source,
+        catalogId: candidate.id,
+        updatedAt: new Date().toISOString(),
+      });
+      saveRepertoireItem(item);
+      return { candidate, item };
+    });
+    const phasesForRecord = phases.map((phase) => {
+      const added = phase.catalogSong
+        ? addedSongs.find(
+            ({ candidate }) =>
+              candidate.source === phase.catalogSong?.source &&
+              candidate.id === phase.catalogSong?.id,
+          )
+        : undefined;
+      if (added) {
+        return {
+          ...phase,
+          name: added.item.title,
+          repertoireItemId: added.item.id,
+          repertoirePartId: undefined,
+          catalogSong: undefined,
+          resources: getPhaseMaterials(phase, [
+            ...repertoireItems,
+            added.item,
+          ]),
+        };
+      }
+      return {
+        ...phase,
+        name: getPracticeBlockTitle(phase, repertoireItems),
+        resources: getPhaseMaterials(phase, repertoireItems),
+      };
+    });
     addSession(
       createPracticeSessionRecord({
         id: sessionId,
@@ -292,7 +360,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         saveTemplate(
           applyRoutineLinkChanges(
             routine,
-            phases,
+            phasesForRecord,
             new Date().toISOString(),
           ),
         );
@@ -375,6 +443,11 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
     updatePhase(currentPhase.id, getRepertoireSongChanges(nextSong));
   }
 
+  function changeCurrentCatalogSong(candidate: CatalogCandidate) {
+    if (!currentPhase) return;
+    updatePhase(currentPhase.id, getCatalogSongChanges(candidate));
+  }
+
   const timerCard = (
     <div ref={timerCardRef} className="h-full min-w-0">
       <TimerCard
@@ -398,6 +471,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
           : undefined)}
         repertoireSongs={repertoireSongs}
         onChangeRepertoireSong={changeCurrentSong}
+        onChangeCatalogSong={changeCurrentCatalogSong}
       />
     </div>
   );
@@ -498,6 +572,7 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
         isVisible={isPracticeRoute}
         routineName={sourceTemplate?.name}
         canUpdateRoutine={routineHasChanges}
+        catalogSongs={pendingCatalogSongs}
         onSave={saveCompletedSession}
         onDiscard={discardSession}
       />

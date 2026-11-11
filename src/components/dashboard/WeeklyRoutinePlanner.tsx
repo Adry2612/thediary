@@ -2,24 +2,25 @@
 
 import Link from "next/link";
 import { SelectField } from "@/components/ui/SelectField";
-import {
-  WEEKDAY_INDEXES,
-} from "@/utils/weekly-routine-schedule";
+import { getWeekdayOrder } from "@/utils/week-start";
 import type {
   WeekdayIndex,
   WeeklyRoutineSchedule,
 } from "@/utils/weekly-routine-schedule";
 import type { PracticeTemplate } from "@/types/practice";
+import type { WeekStartsOn } from "@/types/display";
 import { useI18nSection } from "@/i18n/I18nProvider";
 
 export function WeeklyRoutinePlanner({
   routines,
   schedule,
+  weekStartsOn,
   hasHydrated,
   onScheduleChange,
 }: {
   routines: PracticeTemplate[];
   schedule: WeeklyRoutineSchedule;
+  weekStartsOn: WeekStartsOn;
   hasHydrated: boolean;
   onScheduleChange: (
     weekday: WeekdayIndex,
@@ -32,6 +33,7 @@ export function WeeklyRoutinePlanner({
     value: routine.id,
     label: routine.name,
   }));
+  const weekdayOrder = getWeekdayOrder(weekStartsOn) as WeekdayIndex[];
 
   return (
     <section className="enter rounded-xl border border-zinc-800 bg-zinc-900 p-6 sm:p-8">
@@ -64,7 +66,7 @@ export function WeeklyRoutinePlanner({
         </p>
       ) : (
         <div className="mt-5 grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {WEEKDAY_INDEXES.map((weekday) => {
+          {weekdayOrder.map((weekday) => {
             const assignedRoutineId = schedule[weekday];
             const hasUnavailableRoutine =
               assignedRoutineId !== null &&

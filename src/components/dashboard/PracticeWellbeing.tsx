@@ -13,6 +13,7 @@ import {
 import type { Dict } from "@/i18n/dictionary";
 import type { PracticeChartPeriod } from "@/utils/practice-analytics";
 import type { SessionRecord } from "@/types/practice";
+import type { WeekStartsOn } from "@/types/display";
 
 const CHART = {
   width: 640,
@@ -173,30 +174,48 @@ function MetricSummary({
 }
 
 export function PracticeWellbeing({
+  weekStartsOn,
   history,
   today,
+  moodEnabled,
+  focusEnabled,
+  initialPeriod = "month",
+  showPeriodSelector = true,
 }: {
+  weekStartsOn: WeekStartsOn;
   history: SessionRecord[];
   today: Date;
+  moodEnabled: boolean;
+  focusEnabled: boolean;
+  initialPeriod?: PracticeChartPeriod;
+  showPeriodSelector?: boolean;
 }) {
   const dashboard = useI18nSection("dashboard");
   const { locale } = useI18n();
-  const [period, setPeriod] = useState<PracticeChartPeriod>("month");
+  const [period, setPeriod] = useState<PracticeChartPeriod>(initialPeriod);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const series = useMemo(
-    () => getPracticeWellbeingSeries(history, period, today),
-    [history, period, today],
+    () => getPracticeWellbeingSeries(history, period, today, weekStartsOn),
+    [history, period, today, weekStartsOn],
   );
   const summary = useMemo(
     () => getPracticeWellbeingSummary(history, period, today),
     [history, period, today],
   );
   const selected = selectedIndex === null ? null : series[selectedIndex];
-  const hasValues = series.some((bucket) => bucket.mood || bucket.focus);
+  const hasValues = series.some(
+    (bucket) =>
+      (moodEnabled && bucket.mood !== null) ||
+      (focusEnabled && bucket.focus !== null),
+  );
   const metrics: Array<{ key: MetricKey; label: string }> = [
-    { key: "mood", label: dashboard.wellbeingMood },
-    { key: "focus", label: dashboard.wellbeingFocus },
+    ...(moodEnabled ?
+      [{ key: "mood" as const, label: dashboard.wellbeingMood }]
+    : []),
+    ...(focusEnabled ?
+      [{ key: "focus" as const, label: dashboard.wellbeingFocus }]
+    : []),
   ];
   const periodOptions = [
     { value: "week" as const, label: dashboard.periodWeek ?? dashboard.period },
@@ -208,7 +227,9 @@ export function PracticeWellbeing({
     setSelectedIndex(null);
   }, [period]);
 
-  if (!hasPracticeWellbeingData(history)) return null;
+  if ((!moodEnabled && !focusEnabled) || !hasPracticeWellbeingData(history)) {
+    return null;
+  }
 
   const plotWidth = CHART.width - CHART.left - CHART.right;
   const plotHeight = CHART.height - CHART.top - CHART.bottom;
@@ -246,18 +267,20 @@ export function PracticeWellbeing({
             {dashboard.wellbeingTitle}
           </h2>
         </div>
-        <div className="min-w-32 text-xs text-muted">
-          {dashboard.period}
-          <SelectField
-            className="mt-1"
-            value={period}
-            ariaLabel={dashboard.wellbeingPeriodAria}
-            onChange={(selectedPeriod) =>
-              setPeriod(selectedPeriod as PracticeChartPeriod)
-            }
-            options={periodOptions}
-          />
-        </div>
+        {showPeriodSelector && (
+          <div className="min-w-32 text-xs text-muted">
+            {dashboard.period}
+            <SelectField
+              className="mt-1"
+              value={period}
+              ariaLabel={dashboard.wellbeingPeriodAria}
+              onChange={(selectedPeriod) =>
+                setPeriod(selectedPeriod as PracticeChartPeriod)
+              }
+              options={periodOptions}
+            />
+          </div>
+        )}
       </div>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">

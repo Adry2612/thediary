@@ -7,9 +7,12 @@ import {
   type SessionRecord,
   type SkillDistribution,
 } from "../types/practice.ts";
+import type { WeekStartsOn } from "../types/display.ts";
 import { getComparisonSpans, sumSecondsInSpan } from "./period-comparison.ts";
 import { resolveTechniqueEntry } from "./catalogs/techniques.ts";
 import { resolveTheoryEntry } from "./catalogs/theory.ts";
+import { getRepertoirePartIds } from "./practice-parts.ts";
+import { getStartOfWeek } from "./week-start.ts";
 
 export type PracticeChartPeriod = "week" | "month" | "year";
 export type PracticeTimeRange = {
@@ -43,10 +46,8 @@ function addDays(date: Date, days: number) {
   return result;
 }
 
-function startOfWeek(date: Date) {
-  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
-  return monday;
+function startOfWeek(date: Date, weekStartsOn: WeekStartsOn) {
+  return getStartOfWeek(date, weekStartsOn);
 }
 
 function getSessionDateKey(session: SessionRecord) {
@@ -74,6 +75,27 @@ export function getStreakCount(
   }
 
   return streak;
+}
+
+/** Mejor racha de días consecutivos con práctica de todo el historial. */
+export function getLongestStreak(history: SessionRecord[]): number {
+  const dateKeys = [...new Set(history.map(getSessionDateKey))].sort();
+  if (dateKeys.length === 0) return 0;
+
+  let best = 1;
+  let current = 1;
+  for (let index = 1; index < dateKeys.length; index += 1) {
+    const previous = new Date(`${dateKeys[index - 1]}T00:00:00`);
+    previous.setDate(previous.getDate() + 1);
+    if (toDateKey(previous) === dateKeys[index]) {
+      current += 1;
+    } else {
+      current = 1;
+    }
+    best = Math.max(best, current);
+  }
+
+  return best;
 }
 
 /** Días seguidos a partir de los que la racha se reconoce en el panel. */
@@ -227,10 +249,16 @@ function createRange(
   };
 }
 
+function parseDateKey(dateKey: string): Date {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function getWeekRanges(today: Date): PracticeChartRange[] {
-  const monday = startOfWeek(today);
+  const span = getComparisonSpans("week", today).current;
+  const start = parseDateKey(span.startDate);
   return Array.from({ length: 7 }, (_, index) => {
-    const date = addDays(monday, index);
+    const date = addDays(start, index);
     const label = new Intl.DateTimeFormat("es-ES", {
       weekday: "short",
     }).format(date);
@@ -247,18 +275,18 @@ function formatShortDate(date: Date) {
     .replace(/\.$/, "");
 }
 
-/** Los 30 días que terminan hoy, agrupados en semanas de lunes a domingo. */
-function getMonthRanges(today: Date): PracticeChartRange[] {
-  const windowEnd = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-  const windowStart = addDays(windowEnd, -29);
+/** Los 30 días que terminan hoy, agrupados en semanas del inicio elegido. */
+function getMonthRanges(
+  today: Date,
+  weekStartsOn: WeekStartsOn,
+): PracticeChartRange[] {
+  const span = getComparisonSpans("month", today).current;
+  const windowStart = parseDateKey(span.startDate);
+  const windowEnd = parseDateKey(span.endDate);
   const ranges: PracticeChartRange[] = [];
 
   for (
-    let weekStart = startOfWeek(windowStart);
+    let weekStart = startOfWeek(windowStart, weekStartsOn);
     weekStart <= windowEnd;
     weekStart = addDays(weekStart, 7)
   ) {
@@ -275,27 +303,40 @@ function getMonthRanges(today: Date): PracticeChartRange[] {
   return ranges;
 }
 
+/** Los 12 meses naturales que terminan con el mes actual, recortados a hoy. */
 function getYearRanges(today: Date): PracticeChartRange[] {
-  return Array.from({ length: 12 }, (_, monthIndex) => {
-    const monthStart = new Date(today.getFullYear(), monthIndex, 1);
-    const monthEnd = new Date(today.getFullYear(), monthIndex + 1, 0);
+  const span = getComparisonSpans("year", today).current;
+  const windowStart = parseDateKey(span.startDate);
+  const windowEnd = parseDateKey(span.endDate);
+  const ranges: PracticeChartRange[] = [];
+  let cursor = new Date(windowStart.getFullYear(), windowStart.getMonth(), 1);
+
+  while (cursor <= windowEnd) {
+    const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+    const rangeStart = monthStart < windowStart ? windowStart : monthStart;
+    const rangeEnd = monthEnd > windowEnd ? windowEnd : monthEnd;
     const label = new Intl.DateTimeFormat("es-ES", {
       month: "short",
     })
       .format(monthStart)
       .replace(/\.$/, "");
 
-    return createRange(label, monthStart, monthEnd);
-  });
+    ranges.push(createRange(label, rangeStart, rangeEnd));
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+  }
+
+  return ranges;
 }
 
 /** Rangos de los intervalos que comparten los gráficos del panel. */
 export function getPracticeChartRanges(
   period: PracticeChartPeriod,
   today = new Date(),
+  weekStartsOn: WeekStartsOn = "monday",
 ): PracticeChartRange[] {
   if (period === "week") return getWeekRanges(today);
-  if (period === "month") return getMonthRanges(today);
+  if (period === "month") return getMonthRanges(today, weekStartsOn);
   return getYearRanges(today);
 }
 
@@ -356,20 +397,26 @@ function buildPracticeTimeBuckets(
   period: PracticeChartPeriod,
   today: Date,
   dailySeconds: Map<string, number>,
+  weekStartsOn: WeekStartsOn,
 ): PracticeTimeBucket[] {
-  return rangesToBuckets(getPracticeChartRanges(period, today), dailySeconds);
+  return rangesToBuckets(
+    getPracticeChartRanges(period, today, weekStartsOn),
+    dailySeconds,
+  );
 }
 
 export function getPracticeTimeBuckets(
   history: SessionRecord[],
   period: PracticeChartPeriod,
   today = new Date(),
+  weekStartsOn: WeekStartsOn = "monday",
 ): PracticeTimeBucket[] {
   return addSessionCounts(
     buildPracticeTimeBuckets(
       period,
       today,
       getDailyPracticeSeconds(history),
+      weekStartsOn,
     ),
     history,
   );
@@ -395,10 +442,11 @@ export function getPracticeTimeSummary(
   history: SessionRecord[],
   period: PracticeChartPeriod,
   today = new Date(),
+  weekStartsOn: WeekStartsOn = "monday",
 ): PracticeTimeSummary {
   const dailySeconds = getDailyPracticeSeconds(history);
   const buckets = addSessionCounts(
-    buildPracticeTimeBuckets(period, today, dailySeconds),
+    buildPracticeTimeBuckets(period, today, dailySeconds, weekStartsOn),
     history,
   );
   const spans = getComparisonSpans(period, today);
@@ -436,11 +484,20 @@ export function getPracticeTimeSummary(
 
 export function getPracticeStatistics(
   history: SessionRecord[],
+  timeRange?: PracticeTimeRange,
 ): PracticeStatistics {
+  const sessions = timeRange
+    ? history.filter((session) => {
+        const sessionDate = getSessionDateKey(session);
+        return (
+          sessionDate >= timeRange.startDate && sessionDate <= timeRange.endDate
+        );
+      })
+    : history;
   const skillSeconds = Object.fromEntries(
     PRACTICE_SKILLS.map((skill) => [
       skill,
-      history.reduce(
+      sessions.reduce(
         (total, session) => total + session.skillSeconds[skill],
         0,
       ),
@@ -456,8 +513,8 @@ export function getPracticeStatistics(
   }
 
   return {
-    sessionCount: history.length,
-    totalSeconds: history.reduce(
+    sessionCount: sessions.length,
+    totalSeconds: sessions.reduce(
       (total, session) => total + session.durationSeconds,
       0,
     ),
@@ -596,13 +653,22 @@ function toContentRanks(
 export function getPracticeContentRankings(
   history: SessionRecord[],
   repertoireItems: RepertoireItem[] = [],
+  timeRange?: PracticeTimeRange,
 ): PracticeContentRankings {
   const itemsById = new Map(repertoireItems.map((item) => [item.id, item]));
   const songs = new Map<string, RankAccumulator>();
   const techniques = new Map<string, RankAccumulator>();
   const theory = new Map<string, RankAccumulator>();
+  const sessions = timeRange
+    ? history.filter((session) => {
+        const sessionDate = getSessionDateKey(session);
+        return (
+          sessionDate >= timeRange.startDate && sessionDate <= timeRange.endDate
+        );
+      })
+    : history;
 
-  for (const session of history) {
+  for (const session of sessions) {
     for (const phase of session.phases ?? []) {
       if (phase.elapsedSeconds <= 0) continue;
 
@@ -612,6 +678,19 @@ export function getPracticeContentRankings(
           songs,
           `song:${phase.repertoireItemId}`,
           item?.title ?? phase.name,
+          phase.elapsedSeconds,
+          session.id,
+        );
+        continue;
+      }
+
+      // Una canción del catálogo todavía no está en el repertorio, pero el
+      // bloque la practicó igual y debe aparecer en el ranking de canciones.
+      if (phase.skill === "repertoire" && phase.catalogSong) {
+        addLessonTime(
+          songs,
+          `catalog:${phase.catalogSong.source}:${phase.catalogSong.id}`,
+          phase.catalogSong.title,
           phase.elapsedSeconds,
           session.id,
         );
@@ -649,11 +728,12 @@ export function getPracticeContentRankings(
   };
 }
 
-export type PracticeTempoPeriod = "week" | "month";
+export type PracticeTempoPeriod = "week" | "month" | "year";
 
 const TEMPO_WINDOW_DAYS: Record<PracticeTempoPeriod, number> = {
   week: 7,
   month: 30,
+  year: 365,
 };
 
 /** Mínimo practicado por contenido en cada ventana para poder compararlo. */
@@ -703,16 +783,21 @@ export function getTempoContentIdentity(
     const item = repertoireItems.find(
       (candidate) => candidate.id === phase.repertoireItemId,
     );
-    const part = phase.repertoirePartId
-      ? item?.parts.find(
-          (candidate) => candidate.id === phase.repertoirePartId,
-        )
-      : undefined;
+    const partIds = getRepertoirePartIds(phase);
+    const partNames = partIds
+      .map((partId) => item?.parts.find((part) => part.id === partId)?.name)
+      .filter((name): name is string => Boolean(name));
     return {
-      key: phase.repertoirePartId
-        ? `song:${phase.repertoireItemId}:part:${phase.repertoirePartId}`
-        : `song:${phase.repertoireItemId}`,
-      label: part && item ? `${item.title} · ${part.name}` : (item?.title ?? phase.name),
+      key:
+        partIds.length === 1
+          ? `song:${phase.repertoireItemId}:part:${partIds[0]}`
+          : partIds.length > 1
+            ? `song:${phase.repertoireItemId}:parts:${partIds.join(",")}`
+            : `song:${phase.repertoireItemId}`,
+      label:
+        partNames.length > 0 && item
+          ? `${item.title} · ${partNames.join(", ")}`
+          : (item?.title ?? phase.name),
     };
   }
 
@@ -837,9 +922,18 @@ export function getTempoTrend(
 ): TempoTrend {
   const days = TEMPO_WINDOW_DAYS[period];
   const todayStart = getLocalDayStart(today);
-  const currentStart = addDays(todayStart, -(days - 1));
-  const previousStart = addDays(todayStart, -(days * 2 - 1));
-  const previousEnd = addDays(currentStart, -1);
+  const currentStart =
+    period === "year"
+      ? new Date(today.getFullYear(), 0, 1)
+      : addDays(todayStart, -(days - 1));
+  const previousStart =
+    period === "year"
+      ? new Date(today.getFullYear() - 1, 0, 1)
+      : addDays(todayStart, -(days * 2 - 1));
+  const previousEnd =
+    period === "year"
+      ? new Date(today.getFullYear() - 1, 11, 31)
+      : addDays(currentStart, -1);
 
   const currentContents = new Map<string, TempoContentWindow>();
   const previousContents = new Map<string, TempoContentWindow>();
