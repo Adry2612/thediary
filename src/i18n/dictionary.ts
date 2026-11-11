@@ -316,11 +316,13 @@ export type Dict = {
     noBpm: string;
     recordedSessions: string;
     completedPractices: string;
+    completedPracticesTotal: string;
     mostPracticed: string;
     accumulated: string;
     noPractice: string;
     practiceHours: string;
     historyTime: string;
+    historyTimeTotal: string;
     calendarNote: string;
     wellbeingTitle: string;
     wellbeingDescription: string;

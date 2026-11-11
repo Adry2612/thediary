@@ -284,11 +284,13 @@ export const en: Dict = {
     noBpm: 'no BPM recorded in the period',
     recordedSessions: 'Recorded sessions',
     completedPractices: 'practices recorded in the period',
+    completedPracticesTotal: 'practices recorded in total',
     mostPracticed: 'Most practiced area',
     accumulated: 'accumulated',
     noPractice: 'no practice recorded yet',
     practiceHours: 'Practice hours',
     historyTime: 'time practiced in the period',
+    historyTimeTotal: 'total time in your history',
     calendarNote: 'The calendar shows all of',
     wellbeingTitle: 'Wellbeing',
     wellbeingDescription:

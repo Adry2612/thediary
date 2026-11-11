@@ -710,37 +710,37 @@ The system SHALL compare each selected rolling window with the immediately prece
 - **WHEN** the history contains a practice dated after today
 - **THEN** it is excluded from both the current and the previous window
 
-### Requirement: The summary figures follow the selected period
+### Requirement: The summary figures follow their own window
 
-The system SHALL compute the dashboard metric cards — practice time, session count, average BPM, practice hours and most-practised area — over the same rolling window as the practice-rhythm period, SHALL update them when that period changes, and SHALL NOT use the full history. The current and longest streak cards SHALL remain historical.
+The system SHALL compute practice time, average BPM and most-practised area over the same rolling window as the practice-rhythm period and SHALL update them when that period changes. The recorded sessions and practice hours cards SHALL show the totals of the full history, SHALL NOT change with the rhythm period, and SHALL be labelled as historical totals. The current and longest streak cards SHALL remain historical.
 
 #### Scenario: Default period
 - **WHEN** the dashboard opens
-- **THEN** the metric cards cover the seven days ending today, the same window as the rhythm chart
+- **THEN** practice time, average BPM and most-practised area cover the seven days ending today, while recorded sessions and practice hours show the full history totals
 
 #### Scenario: Changing the rhythm period
 - **WHEN** the user selects the month or year period on the rhythm chart
-- **THEN** the metric cards are recalculated for that same window
+- **THEN** practice time, average BPM and most-practised area are recalculated for that same window, and the recorded sessions and practice hours totals stay the same
 
 #### Scenario: First day of a calendar month
 - **WHEN** today is 1 November and the rhythm period is month
-- **THEN** the figures include the practice from the end of October instead of showing zero
+- **THEN** the windowed figures include the practice from the end of October instead of showing zero
 
 #### Scenario: Rolling over a month boundary
 - **WHEN** the selected window crosses from one calendar month into the next
-- **THEN** the figures count practice from both calendar months once each
+- **THEN** the windowed figures count practice from both calendar months once each
 
 #### Scenario: Old practice leaves the window
 - **WHEN** a practice falls outside the selected window
-- **THEN** it does not count in the practice time, the session count, the average BPM, the hours or the most-practised area
+- **THEN** it stops counting in the practice time, the average BPM and the most-practised area, but keeps counting in the recorded sessions and the practice hours
 
 #### Scenario: Labels name the window
 - **WHEN** the metric cards are shown
-- **THEN** their labels and descriptions refer to the selected period instead of a fixed 30 days or the full history
+- **THEN** the windowed cards refer to the selected period and the recorded sessions and practice hours cards state that they cover the full history
 
 #### Scenario: Empty period
 - **WHEN** the selected period contains no practice
-- **THEN** the cards keep their layout and show zero or their empty value instead of history totals
+- **THEN** the windowed cards keep their layout and show zero or their empty value, while the recorded sessions and practice hours keep their historical totals
 
 #### Scenario: Streaks are not windowed
 - **WHEN** the user changes the rhythm period

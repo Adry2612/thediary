@@ -13,8 +13,9 @@ El panel de evolución muestra la constancia, el tiempo y las habilidades de pr�
 
 ## Tarjetas y rankings
 
-- Las tarjetas de tiempo, sesiones, BPM medio, horas y apartado más practicado usan el mismo periodo que el gráfico de ritmo.
+- Las tarjetas de tiempo, BPM medio y apartado más practicado usan el mismo periodo que el gráfico de ritmo.
 - Al cambiar el periodo del ritmo, esas tarjetas se recalculan con la nueva ventana.
+- **Sesiones registradas** y **horas de práctica** son totales del historial: no cambian al cambiar el periodo y sus descripciones lo indican.
 - El ranking de canción, técnica y teoría tiene su **propio selector** de periodo (semana, 30 días o año), independiente del ritmo, y arranca en **30 días**. Cambiar el ritmo no lo mueve.
 - El ranking de canciones cuenta tanto las canciones enlazadas al repertorio como las referencias al catálogo que todavía no se han añadido.
 - El balance de habilidades y el balance de guitarras tienen cada uno su propio selector de periodo, ambos con 30 días por defecto: cambiar uno no altera el otro.

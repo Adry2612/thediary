@@ -43,7 +43,7 @@ import { usePracticeFeedbackPreference } from '@/hooks/usePracticeFeedbackPrefer
 import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
 import { usePracticeStore } from '@/stores/usePracticeStore';
 import { useAppData } from '@/components/providers/AppDataProvider';
-import { useI18nSection } from '@/i18n/I18nProvider';
+import { useI18n, useI18nSection } from '@/i18n/I18nProvider';
 import { DashboardSkeleton } from '@/components/ui/Skeletons';
 
 type DashboardViewProps = {
@@ -52,6 +52,7 @@ type DashboardViewProps = {
 
 export function DashboardView({ todayKey }: DashboardViewProps) {
   const dashboard = useI18nSection('dashboard');
+  const { locale } = useI18n();
   const { user } = useAppData();
   const history = usePracticeStore((state) => state.history);
   const repertoireItems = usePracticeStore((state) => state.repertoireItems);
@@ -148,6 +149,14 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     [history, rhythmRange],
   );
   /**
+   * Las sesiones registradas y las horas de práctica son totales del
+   * historial: no se mueven con el periodo del ritmo.
+   */
+  const historyStatistics = useMemo(
+    () => getPracticeStatistics(history),
+    [history],
+  );
+  /**
    * El gráfico de bienestar solo aparece cuando alguno de sus interruptores
    * está activo y hay datos de esa métrica; si no, la tarjeta no se muestra.
    */
@@ -163,9 +172,9 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     [history, isFocusEnabled, isMoodEnabled],
   );
   const mostPracticedSkill = practiceStatistics.mostPracticedSkill;
-  const totalHours = new Intl.NumberFormat('es-ES', {
+  const totalHours = new Intl.NumberFormat(locale, {
     maximumFractionDigits: 1,
-  }).format(practiceStatistics.totalSeconds / 3600);
+  }).format(historyStatistics.totalSeconds / 3600);
   const streak = getStreakCount(history, today);
   const longestStreak = getLongestStreak(history);
   const metricCards = [
@@ -200,8 +209,8 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     },
     {
       label: dashboard.recordedSessions,
-      value: String(practiceStatistics.sessionCount),
-      description: dashboard.completedPractices,
+      value: String(historyStatistics.sessionCount),
+      description: dashboard.completedPracticesTotal,
     },
     {
       label: dashboard.mostPracticed,
@@ -215,7 +224,7 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     {
       label: dashboard.practiceHours,
       value: `${totalHours} h`,
-      description: dashboard.historyTime,
+      description: dashboard.historyTimeTotal,
     },
   ];
 
