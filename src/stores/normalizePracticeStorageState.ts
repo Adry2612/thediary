@@ -1,12 +1,15 @@
 import type { PracticeGoals } from "@/utils/practice-goals";
-import { normalizeRepertoireDifficulty } from "../utils/repertoire-item.ts";
-import type { RepertoireItem } from "@/types/practice";
+import {
+  normalizeRepertoireDifficulty,
+  normalizeRepertoireItemResources,
+} from "../utils/repertoire-item.ts";
+import type { PracticeTemplate, RepertoireItem } from "@/types/practice";
 import type { WeeklyRoutineSchedule } from "@/utils/weekly-routine-schedule";
 import type { PersistedPracticeState } from "@/types/practice-storage";
 import { migrateRepertoireLicks } from "../utils/licks/migration.ts";
 import { normalizeLicks } from "../utils/licks/normalize.ts";
 import { normalizeSessionRecord } from "../utils/practice-session-record.ts";
-import { isTabScoreLike } from "../utils/tab-score/model.ts";
+import { normalizePracticePhaseResources } from "../utils/practice-resources.ts";
 import {
   migrateLegacyEquipmentEntries,
   normalizeGuitarEntries,
@@ -28,29 +31,31 @@ type LegacyEquipmentKeys = {
 };
 
 /**
- * Conserva el elemento tal cual salvo por la dificultad: si el valor guardado
- * no es una de las admitidas se descarta, y el elemento sigue cargando.
+ * Conserva el elemento salvo por la dificultad, los materiales retirados y los
+ * campos de tablatura antiguos: si un valor guardado no es válido se descarta,
+ * y el elemento sigue cargando.
  */
 function normalizeStoredRepertoireItem(item: RepertoireItem): RepertoireItem {
   if (!item || typeof item !== "object") return item;
   const difficulty = normalizeRepertoireDifficulty(item.difficulty);
-  const hasValidScore = isTabScoreLike(item.score);
-  if (
-    difficulty === item.difficulty &&
-    (item.score === undefined || hasValidScore)
-  ) {
-    return item;
-  }
-  const {
-    difficulty: _discarded,
-    score: _discardedScore,
-    ...rest
-  } = item;
+  const cleaned = normalizeRepertoireItemResources(item);
+  const { difficulty: _discarded, ...rest } = cleaned;
   return {
     ...rest,
     ...(difficulty ? { difficulty } : {}),
-    ...(hasValidScore ? { score: item.score } : {}),
   };
+}
+
+function normalizeStoredTemplates(value: unknown): PracticeTemplate[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((template) => ({
+    ...template,
+    ...(Array.isArray(template?.phases)
+      ? {
+          phases: template.phases.map(normalizePracticePhaseResources),
+        }
+      : {}),
+  }));
 }
 
 /**
@@ -90,7 +95,7 @@ export function normalizePracticeStorageState({
     history: Array.isArray(state?.history)
       ? state.history.map(normalizeSessionRecord)
       : [],
-    templates: Array.isArray(state?.templates) ? state.templates : [],
+    templates: normalizeStoredTemplates(state?.templates),
     repertoireItems: migration.repertoireItems,
     licks: migration.licks,
     customChords: Array.isArray(state?.customChords) ? state.customChords : [],

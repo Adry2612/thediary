@@ -48,7 +48,7 @@ test("preserves valid collections and normalizes optional persisted settings", (
   const licks = [{
     id: "lick-1",
     title: "Frase",
-    tabContent: "",
+    tabContent: "e|---|",
     techniques: [],
     bpmHistory: [],
     createdAt: "2000-01-01T00:00:00.000Z",
@@ -86,7 +86,6 @@ test("preserves valid collections and normalizes optional persisted settings", (
         {
           id: "lick-1",
           title: "Frase",
-          tabContent: "",
           techniques: [],
           bpmHistory: [],
           createdAt: "2000-01-01T00:00:00.000Z",

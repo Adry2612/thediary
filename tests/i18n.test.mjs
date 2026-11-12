@@ -10,20 +10,8 @@ test("uses the same translation structure in Spanish and English", () => {
   assert.deepEqual(Object.keys(translations.es.settings), Object.keys(translations.en.settings));
   assert.deepEqual(Object.keys(translations.es.account), Object.keys(translations.en.account));
   assert.deepEqual(
-    Object.keys(translations.es.tabScore).sort(),
-    Object.keys(translations.en.tabScore).sort(),
-  );
-  assert.deepEqual(
-    Object.keys(translations.es.tabPalette).sort(),
-    Object.keys(translations.en.tabPalette).sort(),
-  );
-  assert.deepEqual(
-    Object.keys(translations.es.tabPlayback).sort(),
-    Object.keys(translations.en.tabPlayback).sort(),
-  );
-  assert.deepEqual(
-    Object.keys(translations.es.tabTutorial).sort(),
-    Object.keys(translations.en.tabTutorial).sort(),
+    Object.keys(translations.es.materials).sort(),
+    Object.keys(translations.en.materials).sort(),
   );
 });
 

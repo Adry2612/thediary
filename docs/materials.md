@@ -1,17 +1,18 @@
 # Material de estudio
 
 La biblioteca guarda cada recurso una sola vez para reutilizarlo en cualquier
-práctica o canción. Vive en `/materials` y se abre desde **Herramientas** y
-desde el menú **+** del panel de material de una práctica o de una ficha del
-repertorio.
+práctica, canción o lick. Vive en `/materials` y se abre desde **Herramientas** y
+desde el menú **+** del panel de material de una práctica, de una ficha del
+repertorio o de un lick.
 
 ## La pantalla
 
 - **Añadir material** abre un formulario con nombre, tipo, fuente y notas. El
   nombre es obligatorio; las notas son opcionales.
-- **Tipos**: TAB, Guitar Pro, PDF, imagen, YouTube, Spotify, Songsterr y enlace
-  genérico. Una TAB se escribe o se sube como `.txt`; Guitar Pro, PDF e imagen
-  se suben como archivo; los enlaces se pegan como URL HTTPS.
+- **Tipos**: Guitar Pro, PDF, imagen, YouTube, Spotify, Songsterr y enlace
+  genérico. Guitar Pro, PDF e imagen se suben como archivo; los enlaces se pegan
+  como URL HTTPS. Las tablaturas en texto pegado o `.txt` ya no existen: una
+  tablatura es siempre un archivo Guitar Pro.
 - **Buscar** filtra por título y notas sin distinguir mayúsculas ni acentos.
   **Tipo de material** filtra por el tipo guardado. Sin coincidencias se muestra
   un estado propio, distinto de la biblioteca vacía.
@@ -30,6 +31,7 @@ repertorio.
   las prácticas ya guardadas, y quitar un adjunto no borra la entrada.
 - El bloque sigue mostrando solo su propio material y el de la canción
   vinculada; adjuntar desde la biblioteca no mezcla materiales de otros bloques.
+- Un lick tiene su propio panel de material y también puede usar la biblioteca.
 
 ## Archivos y persistencia
 

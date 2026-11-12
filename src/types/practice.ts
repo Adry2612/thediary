@@ -1,5 +1,4 @@
 import type { CatalogCandidate, CatalogSource } from "./catalog.ts";
-import type { TabScore } from "./tab-score.ts";
 
 export const PRACTICE_SKILLS = [
   "technique",
@@ -25,7 +24,6 @@ export const PRACTICE_RESOURCE_KINDS = [
   "image",
   "youtube",
   "spotify",
-  "tab",
   "link",
 ] as const;
 
@@ -38,7 +36,6 @@ export interface PracticeResource {
   url?: string;
   assetId?: string;
   fileName?: string;
-  text?: string;
 }
 
 /**
@@ -53,7 +50,6 @@ export interface StudyMaterial {
   url?: string;
   assetId?: string;
   fileName?: string;
-  text?: string;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -99,72 +95,6 @@ export interface UserChord {
   shape: ChordShape;
 }
 
-/** Tipo de ligado: martillo (hammer-on) o tirón (pull-off). */
-export type TabLegato = "hammer" | "pull";
-
-/** Sentido del deslizamiento: ascendente, descendente o de posición. */
-export type TabSlide = "up" | "down" | "position";
-
-/** Vibrado: suave o amplio. */
-export type TabVibrato = "slight" | "wide";
-
-/** Armónico: natural, artificial, pinch o pulsado (tap). */
-export type TabHarmonic = "natural" | "artificial" | "pinch" | "tap";
-
-/** Bend de la nota, en semitonos, con liberación y prebend opcionales. */
-export interface TabBend {
-  /** Semitonos del bend: 0.25, 0.5, 1, 1.5 o 2. */
-  semitones: number;
-  /** El bend se libera al final. */
-  release?: boolean;
-  /** El bend arranca antes de que suene la nota. */
-  prebend?: boolean;
-}
-
-export interface RepertoireTabNote {
-  /** 0 = cuerda más grave, 5 = más aguda. */
-  string: number;
-  fret: number;
-  /** Columna rítmica dentro de la tablatura. */
-  column: number;
-  /** Ligado desde la nota anterior de la misma cuerda. */
-  legato?: TabLegato;
-  /** Deslizamiento desde la nota anterior de la misma cuerda. */
-  slide?: TabSlide;
-  /** Bend aplicado a la nota. */
-  bend?: TabBend;
-  /** Vibrado aplicado a la nota. */
-  vibrato?: TabVibrato;
-  /** Apagado con la palma (palm mute). */
-  palmMute?: boolean;
-  /** Dejar sonar. */
-  letRing?: boolean;
-  /** Nota pulsada con la mano derecha (tapping). */
-  tapping?: boolean;
-  /** Armónico. */
-  harmonic?: TabHarmonic;
-  /** Nota muerta sin altura (la "x"). */
-  dead?: boolean;
-  /** Trémolo picking. */
-  tremoloPicking?: boolean;
-  /** Trino. */
-  trill?: boolean;
-  /** Slap. */
-  slap?: boolean;
-  /** Pop. */
-  pop?: boolean;
-}
-
-
-export interface RepertoireTab {
-  /** Afinación en notación de cuerdas, p. ej. "EADGBE". */
-  tuning: string;
-  measures: number;
-  /** Columnas por compás (resolución rítmica). */
-  subdivision: number;
-  notes: RepertoireTabNote[];
-}
-
 export interface RepertoirePart {
   id: string;
   name: string;
@@ -208,10 +138,6 @@ export interface RepertoireItem {
   isFutureLearn?: boolean;
   /** Letra de la canción con los acordes asignados. */
   chordChart?: RepertoireChordChart;
-  /** Tablatura creada con el editor visual. */
-  tab?: RepertoireTab;
-  /** Tablatura como partitura; manda sobre `tab` cuando existe. */
-  score?: TabScore;
 }
 
 export interface PracticePhase {

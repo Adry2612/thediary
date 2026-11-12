@@ -17,6 +17,7 @@ import {
   getRepertoirePartIds,
   withRepertoirePartIds,
 } from "./practice-parts.ts";
+import { normalizePracticePhaseResources } from "./practice-resources.ts";
 
 interface CreatePracticeSessionRecordInput {
   id: string;
@@ -138,11 +139,12 @@ function normalizeSessionPhase(
   phase: SessionPhaseRecord,
 ): SessionPhaseRecord {
   const { averageBpm: storedBpm, ...rest } = phase;
+  const cleaned = normalizePracticePhaseResources(rest);
   return typeof storedBpm === "number" &&
     Number.isFinite(storedBpm) &&
     storedBpm > 0
-    ? { ...rest, averageBpm: Math.round(storedBpm) }
-    : rest;
+    ? { ...cleaned, averageBpm: Math.round(storedBpm) }
+    : cleaned;
 }
 
 /** Rellena las categorías que falten en una sesión cargada de datos antiguos. */

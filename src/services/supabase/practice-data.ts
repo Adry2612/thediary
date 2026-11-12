@@ -13,6 +13,8 @@ import type { SessionRecord, PracticeTemplate, RepertoireItem, UserChord } from 
 import { migrateRepertoireLicks } from "../../utils/licks/migration.ts";
 import { normalizeLicks } from "../../utils/licks/normalize.ts";
 import { normalizeSessionRecord } from "../../utils/practice-session-record.ts";
+import { normalizePracticePhaseResources } from "../../utils/practice-resources.ts";
+import { normalizeRepertoireItemResources } from "../../utils/repertoire-item.ts";
 import { normalizeStudyMaterials } from "../../utils/study-materials.ts";
 import {
   migrateLegacyEquipmentEntries,
@@ -84,9 +86,20 @@ export function normalizePracticeData(value: unknown): PersistedPracticeState {
       ? (state.history as SessionRecord[]).map(normalizeSessionRecord)
       : [],
     templates: Array.isArray(state.templates)
-      ? (state.templates as PracticeTemplate[])
+      ? (state.templates as PracticeTemplate[]).map((template) => ({
+          ...template,
+          ...(Array.isArray(template.phases)
+            ? {
+                phases: template.phases.map(
+                  normalizePracticePhaseResources,
+                ),
+              }
+            : {}),
+        }))
       : [],
-    repertoireItems: migration.repertoireItems,
+    repertoireItems: migration.repertoireItems.map(
+      normalizeRepertoireItemResources,
+    ),
     licks: migration.licks,
     customChords: Array.isArray(state.customChords)
       ? (state.customChords as UserChord[])

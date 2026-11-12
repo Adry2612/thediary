@@ -20,35 +20,49 @@ test("keeps a valid lick", () => {
   assert.equal(lick.practiceCount, 2);
 });
 
-test("normalizes a structured tab and keeps legacy text as fallback", () => {
+test("keeps the lick's Guitar Pro material and drops invalid resources", () => {
   const lick = normalizeLick({
     ...base,
-    tab: {
-      tuning: "EADGBE",
-      measures: 1,
-      subdivision: 4,
-      notes: [
-        { string: 0, column: 0, fret: 5 },
-        { string: 9, column: 0, fret: 99 },
-      ],
-    },
+    resources: [
+      {
+        id: "material-1",
+        title: "Riff.gp",
+        kind: "guitarpro",
+        assetId: "asset-1",
+        fileName: "Riff.gp",
+      },
+      {
+        id: "old-tab",
+        title: "TAB antigua",
+        kind: "tab",
+        text: "e|---|",
+      },
+    ],
   });
 
   assert.ok(lick);
-  assert.equal(lick.tab?.tuning, "EADGBE");
-  assert.deepEqual(lick.tab?.notes, [{ string: 0, column: 0, fret: 5 }]);
-  assert.equal(lick.tabContent, "e|---|");
+  assert.deepEqual(lick.resources, [
+    {
+      id: "material-1",
+      title: "Riff.gp",
+      kind: "guitarpro",
+      assetId: "asset-1",
+      fileName: "Riff.gp",
+    },
+  ]);
 });
 
-test("drops a malformed structured tab without losing the legacy text", () => {
+test("discards the retired tablature fields", () => {
   const lick = normalizeLick({
     ...base,
-    tab: { notes: null },
+    tab: { tuning: "EADGBE", measures: 1, subdivision: 4, notes: [] },
+    score: { version: 2, tuning: "EADGBE", tempo: 90, bars: [] },
   });
 
   assert.ok(lick);
-  assert.equal(lick.tab, undefined);
-  assert.equal(lick.tabContent, "e|---|");
+  assert.equal("tab" in lick, false);
+  assert.equal("score" in lick, false);
+  assert.equal("tabContent" in lick, false);
 });
 
 test("keeps a valid reference video and drops a broken one", () => {

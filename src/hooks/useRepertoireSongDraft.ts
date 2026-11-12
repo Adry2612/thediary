@@ -2,8 +2,6 @@
 
 import { useCallback, useState } from "react";
 import { emptyChordChart } from "@/utils/repertoire-chord-chart";
-import { createEmptyScore } from "@/utils/tab-score/model";
-import type { TabScore } from "@/types/tab-score";
 import type { CatalogCandidate, CatalogSource } from "@/types/catalog";
 import type {
   GuitarType,
@@ -13,7 +11,7 @@ import type {
 
 /**
  * Lo que el usuario lleva escrito en el formulario de canción nueva: los
- * campos, los recursos adjuntos, el cifrado y la tablatura.
+ * campos, los recursos adjuntos y el cifrado.
  */
 export function useRepertoireSongDraft() {
   const [title, setTitle] = useState("");
@@ -35,7 +33,7 @@ export function useRepertoireSongDraft() {
   const [isFutureLearn, setIsFutureLearn] = useState(false);
   const [resources, setResources] = useState<PracticeResource[]>([]);
   const [chordChart, setChordChart] = useState(() => emptyChordChart());
-  const [score, setScore] = useState<TabScore>(() => createEmptyScore());
+
 
   const finalTuning = tuning === "Otra..." ? customTuning.trim() : tuning.trim();
 
@@ -89,8 +87,6 @@ export function useRepertoireSongDraft() {
     setResources,
     chordChart,
     setChordChart,
-    score,
-    setScore,
     finalTuning,
   };
 }

@@ -72,11 +72,9 @@ export function PracticeMaterials({
       {attachment.activeType && (
         <AttachMaterialForm
           type={attachment.activeType}
-          tabMode={attachment.tabMode}
           draft={attachment.draft}
           error={attachment.error}
           isSaving={attachment.isSaving}
-          onTabModeChange={attachment.setTabMode}
           onDraftChange={attachment.updateDraft}
           onSubmit={attachment.submit}
           onFileSelect={attachment.submitFile}
@@ -85,8 +83,8 @@ export function PracticeMaterials({
       )}
       {resources.length === 0 && (
         <p className='text-sm text-muted'>
-          Aún no hay material. Usa el botón + para adjuntar una TAB, un PDF, una
-          imagen o un enlace de Songsterr, YouTube o Spotify.
+          Aún no hay material. Usa el botón + para adjuntar un archivo Guitar
+          Pro, un PDF, una imagen o un enlace de Songsterr, YouTube o Spotify.
         </p>
       )}
       {resources.length > 0 && (

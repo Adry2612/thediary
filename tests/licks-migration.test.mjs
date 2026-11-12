@@ -18,12 +18,15 @@ function legacyLick(overrides = {}) {
     title: "Pentatónica en Mi menor",
     parts: [],
     updatedAt: "2026-01-02T03:04:05.000Z",
-    tab: {
-      tuning: "EADGBE",
-      measures: 1,
-      subdivision: 4,
-      notes: [{ string: 0, column: 0, fret: 5 }],
-    },
+    resources: [
+      {
+        id: "material-1",
+        title: "Pentatónica.gp",
+        kind: "guitarpro",
+        assetId: "asset-1",
+        fileName: "Pentatónica.gp",
+      },
+    ],
     ...overrides,
   };
 }
@@ -40,12 +43,10 @@ test("migrates a repertoire lick and removes it from the repertoire", () => {
   const lick = result.licks[0];
   assert.equal(lick.id, "legacy-lick");
   assert.equal(lick.title, "Pentatónica en Mi menor");
-  assert.equal(lick.tab?.tuning, "EADGBE");
-  assert.deepEqual(lick.tab?.notes, [{ string: 0, column: 0, fret: 5 }]);
-  assert.equal(lick.tabContent, undefined);
   assert.equal(lick.key, undefined);
   assert.deepEqual(lick.techniques, []);
   assert.deepEqual(lick.bpmHistory, []);
+  assert.deepEqual(lick.resources, legacyLick().resources);
   assert.equal(lick.practiceCount, 0);
   assert.equal(lick.createdAt, "2026-01-02T03:04:05.000Z");
 });
@@ -75,7 +76,6 @@ test("an existing lick with the same id wins and the source is removed", () => {
   const existing = {
     id: "legacy-lick",
     title: "Ya migrado",
-    tabContent: "texto",
     techniques: [],
     bpmHistory: [],
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -89,13 +89,21 @@ test("an existing lick with the same id wins and the source is removed", () => {
   assert.equal(result.repertoireItems.length, 0);
 });
 
-test("a lick that cannot be converted stays in the repertoire", () => {
-  const broken = legacyLick({ tab: { notes: null } });
+test("discards the old tablature fields during migration", () => {
+  const result = migrateRepertoireLicks(
+    [
+      legacyLick({
+        tab: { tuning: "EADGBE", measures: 1, subdivision: 4, notes: [] },
+        score: { version: 2, tuning: "EADGBE", tempo: 90, bars: [] },
+      }),
+    ],
+    [],
+  );
 
-  const result = migrateRepertoireLicks([broken], []);
-
-  assert.equal(result.repertoireItems.length, 1);
-  assert.equal(result.licks.length, 0);
+  const [lick] = result.licks;
+  assert.equal("tab" in lick, false);
+  assert.equal("score" in lick, false);
+  assert.equal("tabContent" in lick, false);
 });
 
 test("the storage normalization runs the migration", () => {

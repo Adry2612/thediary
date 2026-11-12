@@ -12,7 +12,7 @@ import {
 import { RESOURCE_LABELS } from "@/utils/practice-resources";
 import type { PracticeResource } from "@/types/practice";
 
-/** El visor que corresponde a un material: enlace incrustado, archivo o TAB. */
+/** El visor que corresponde a un material: enlace incrustado o archivo. */
 export function ResourcePreview({
   resource,
   userId,
@@ -47,14 +47,6 @@ export function ResourcePreview({
           Abrir {RESOURCE_LABELS.songsterr} en otra pestaña
         </a>
       </div>
-    );
-  }
-
-  if (resource.kind === "tab" && !resource.assetId) {
-    return (
-      <pre className="max-h-[32rem] overflow-auto bg-canvas p-4 font-mono text-xs leading-relaxed text-ink sm:text-sm">
-        {resource.text}
-      </pre>
     );
   }
 

@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LickBpmChart } from "@/components/licks/LickBpmChart";
 import { LickBpmPanel } from "@/components/licks/LickBpmPanel";
+import { LickMaterials } from "@/components/licks/LickMaterials";
 import { LickReferenceVideo } from "@/components/licks/LickReferenceVideo";
-import { LickTab } from "@/components/licks/LickTab";
 import { TechniqueBadges } from "@/components/licks/TechniqueBadges";
 import { BackLink } from "@/components/ui/BackLink";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -124,15 +124,11 @@ export default function LickDetailPage({ params }: Props) {
 
       <section className="mt-8">
         <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">
-          {text.tabTitle}
+          {text.materialsLabel}
         </h2>
-        <LickTab
-          score={lick.score}
-          tab={lick.tab}
-          content={lick.tabContent}
-          emptyLabel={text.tabEmpty}
-          ariaLabel={`${text.tabTitle}: ${title}`}
-          playback
+        <LickMaterials
+          resources={lick.resources}
+          emptyLabel={text.materialsEmpty}
           className="mt-3"
         />
       </section>

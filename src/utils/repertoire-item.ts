@@ -1,8 +1,8 @@
 import type { RepertoireItem, RepertoireItemKind, GuitarType, RepertoireDifficulty } from "../types/practice.ts";
 import type { CatalogSource } from "../types/catalog.ts";
-import type { TabScore } from "../types/tab-score.ts";
 import { normalizeCatalogMetadata } from "./repertoire-catalog.ts";
 import { getCommonTuningValues } from "./catalogs/tunings.ts";
+import { normalizePracticeResources } from "./practice-resources.ts";
 
 /**
  * Afinaciones que ofrecen los formularios de repertorio. La última opción no es
@@ -33,6 +33,26 @@ export function normalizeRepertoireDifficulty(
   return isRepertoireDifficulty(value) ? value : undefined;
 }
 
+/**
+ * Descarta los campos de tablatura retirados y los materiales que ya no son
+ * válidos, sin tocar el resto de la ficha.
+ */
+export function normalizeRepertoireItemResources(
+  item: RepertoireItem,
+): RepertoireItem {
+  const {
+    resources: storedResources,
+    score: _discardedScore,
+    tab: _discardedTab,
+    ...rest
+  } = item as RepertoireItem & { score?: unknown; tab?: unknown };
+  const resources = normalizePracticeResources(storedResources);
+  return {
+    ...rest,
+    ...(resources.length > 0 ? { resources } : {}),
+  };
+}
+
 interface CreateRepertoireItemInput {
   id: string;
   initialPartId: string;
@@ -54,8 +74,6 @@ interface CreateRepertoireItemInput {
   catalogId?: string;
   isFutureLearn?: boolean;
   chordChart?: RepertoireItem["chordChart"];
-  tab?: RepertoireItem["tab"];
-  score?: TabScore;
   updatedAt: string;
 }
 
@@ -80,8 +98,6 @@ export function createRepertoireItem({
   catalogId,
   isFutureLearn,
   chordChart,
-  tab,
-  score,
   updatedAt,
 }: CreateRepertoireItemInput): RepertoireItem {
   const catalogMetadata = normalizeCatalogMetadata({
@@ -120,7 +136,5 @@ export function createRepertoireItem({
     ...catalogMetadata,
     ...(isFutureLearn ? { isFutureLearn: true } : {}),
     ...(chordChart ? { chordChart } : {}),
-    ...(tab ? { tab } : {}),
-    ...(score ? { score } : {}),
   };
 }
