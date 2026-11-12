@@ -16,7 +16,7 @@ export type AttachmentOption = {
   hint: string;
   heading: string;
   /** Cómo se introduce el material en el formulario. */
-  input: "text-or-file" | "file" | "url";
+  input: "file" | "url";
   resourceKind: PracticeResourceKind;
   defaultTitle: string;
   /** Extensiones o MIME que acepta el selector de archivos. */
@@ -36,18 +36,17 @@ export type AttachmentOption = {
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 export const ATTACHMENT_OPTIONS: Record<AttachmentType, AttachmentOption> = {
-  tab: {
-    label: "TAB",
-    hint: "Texto o archivo",
-    heading: "Añadir TAB",
-    input: "text-or-file",
-    resourceKind: "tab",
-    defaultTitle: "Tablatura",
-    accept: ".gp,.gpx,.gp3,.gp4,.gp5,.txt,text/plain",
-    fileHint: "Guitar Pro (.gp, .gpx, .gp3–.gp5) o texto (.txt)",
+  guitarpro: {
+    label: "Guitar Pro",
+    hint: "Archivo de tablatura",
+    heading: "Añadir Guitar Pro",
+    input: "file",
+    resourceKind: "guitarpro",
+    defaultTitle: "Tablatura Guitar Pro",
+    accept: ".gp,.gpx,.gp3,.gp4,.gp5",
+    fileHint: "Archivo Guitar Pro (.gp, .gpx, .gp3–.gp5)",
     fileKinds: ["guitarpro"],
-    fileError:
-      "Sube un archivo Guitar Pro (.gp, .gpx, .gp3–.gp5) o de texto (.txt).",
+    fileError: "Sube un archivo Guitar Pro (.gp, .gpx, .gp3–.gp5).",
   },
   pdf: {
     label: "PDF",

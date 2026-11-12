@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { LickTab } from "@/components/licks/LickTab";
 import { TechniqueBadges } from "@/components/licks/TechniqueBadges";
 import { EditIcon, TrashIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { getLickProgress } from "@/utils/licks/progress";
+import { RESOURCE_LABELS } from "@/utils/practice-resources";
 import {
   getLastPracticedLabel,
   getLickTitle,
@@ -84,19 +84,23 @@ export function LickCard({
         </div>
       ) : null}
 
-      <div className="mt-4 min-h-0 min-w-0 flex-1">
-        <LickTab
-          score={lick.score}
-          tab={lick.tab}
-          content={lick.tabContent}
-          emptyLabel={text.tabEmpty}
-          ariaLabel={`${text.tabTitle}: ${title}`}
-          maxLines={6}
-          maxBars={1}
-          variant="compact"
-          className="mx-auto max-h-80 w-[86%]"
-        />
-      </div>
+      {lick.resources?.length ? (
+        <div className="mt-4 min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-[0.08em] text-muted">
+            {text.materialsLabel}
+          </p>
+          <ul className="mt-1 space-y-1">
+            {lick.resources.slice(0, 3).map((resource) => (
+              <li key={resource.id} className="truncate text-xs text-muted">
+                {resource.title}
+                <span className="ml-2 text-[10px] uppercase tracking-[0.08em]">
+                  {RESOURCE_LABELS[resource.kind]}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
         <div className="min-w-0">

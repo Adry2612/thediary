@@ -240,7 +240,7 @@ Object.assign(es.repertoire, {
   catalogCoverPlaceholder: 'https://…',
   catalogPreviewTitle: 'Revisar datos del catálogo',
   catalogPreviewDescription:
-    'Revisa los cambios antes de aplicarlos. La afinación, el capo, las partes, el cifrado y la tablatura no se tocan.',
+    'Revisa los cambios antes de aplicarlos. La afinación, el capo, las partes y el cifrado no se tocan.',
   catalogPreviewCurrent: 'Actual',
   catalogPreviewNew: 'Nuevo',
   catalogPreviewTitleField: 'Título',

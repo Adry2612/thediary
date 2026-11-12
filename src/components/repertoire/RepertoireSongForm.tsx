@@ -7,8 +7,6 @@ import { TextField } from '@/components/ui/Field';
 import { SelectField } from '@/components/ui/SelectField';
 import { ChordChartEditor } from '@/components/repertoire/ChordChartEditor';
 import { CatalogSearchDialog } from '@/components/repertoire/CatalogSearchDialog';
-import { TabScoreEditor } from '@/components/tab-score/TabScoreEditor';
-import { isTabEditorEnabled } from '@/utils/feature-flags';
 import { createRepertoireItem, REPERTOIRE_DIFFICULTIES } from '@/utils/repertoire-item';
 import { getDifficultyLabel } from '@/utils/difficulty-labels';
 import { normalizeChordChart } from '@/utils/repertoire-chord-chart';
@@ -81,8 +79,6 @@ export function RepertoireSongForm({
     setResources,
     chordChart,
     setChordChart,
-    score,
-    setScore,
     finalTuning,
   } = useRepertoireSongDraft();
   const [isSaving, setIsSaving] = useState(false);
@@ -140,10 +136,6 @@ export function RepertoireSongForm({
           resources: resources.length > 0 ? resources : undefined,
           chordChart:
             normalizedChart.lines.length > 0 ? normalizedChart : undefined,
-          score: {
-            ...score,
-            tuning: finalTuning || score.tuning,
-          },
           updatedAt: new Date().toISOString(),
         }),
       );
@@ -363,13 +355,6 @@ export function RepertoireSongForm({
       </p>
 
       <ChordChartEditor value={chordChart} onChange={setChordChart} />
-      {isTabEditorEnabled ? (
-        <TabScoreEditor
-          initialScore={score}
-          label={text.tabTitle}
-          onChange={setScore}
-        />
-      ) : null}
 
       <Button
         type='submit'

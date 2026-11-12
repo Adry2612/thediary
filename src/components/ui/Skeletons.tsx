@@ -64,8 +64,18 @@ export function DashboardSkeleton() {
         <Skeleton className='h-72 rounded-xl' />
         <Skeleton className='h-72 rounded-xl' />
       </div>
-      <div className='mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-        {Array.from({ length: 6 }, (_, index) => (
+      <div className='mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2'>
+        <Skeleton className='h-64 rounded-xl' />
+        <Skeleton className='h-64 rounded-xl' />
+      </div>
+      <Skeleton className='mt-5 h-48 w-full rounded-xl' />
+      <div className='mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        {Array.from({ length: 4 }, (_, index) => (
+          <SkeletonCard key={index} />
+        ))}
+      </div>
+      <div className='mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'>
+        {Array.from({ length: 3 }, (_, index) => (
           <SkeletonCard key={index} />
         ))}
       </div>

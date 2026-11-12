@@ -20,18 +20,13 @@ import {
 import type {
   AttachmentDraft,
   AttachmentType,
-  TabInputMode,
 } from "@/types/practice-attachment";
 import type { PracticeResource } from "@/types/practice";
 
-const EMPTY_DRAFT: AttachmentDraft = { title: "", url: "", text: "" };
+const EMPTY_DRAFT: AttachmentDraft = { title: "", url: "" };
 
 function createId() {
   return createIdentifier();
-}
-
-function isTextFile(file: File): boolean {
-  return file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt");
 }
 
 export function usePracticeAttachment(
@@ -39,14 +34,12 @@ export function usePracticeAttachment(
 ) {
   const { user, isReady } = useAppData();
   const [activeType, setActiveType] = useState<AttachmentType | null>(null);
-  const [tabMode, setTabMode] = useState<TabInputMode>("text");
   const [draft, setDraft] = useState<AttachmentDraft>(EMPTY_DRAFT);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   function open(type: AttachmentType) {
     setActiveType(type);
-    setTabMode("text");
     setDraft(EMPTY_DRAFT);
     setError(null);
   }
@@ -68,12 +61,6 @@ export function usePracticeAttachment(
       ATTACHMENT_OPTIONS[type].defaultTitle;
     onAttach({ ...resource, id: createId(), title });
     close();
-  }
-
-  function submitTabText() {
-    const text = draft.text.trim();
-    if (!text) return setError("Escribe o pega la tablatura.");
-    attach("tab", { kind: "tab", text });
   }
 
   function submitYoutube() {
@@ -104,7 +91,6 @@ export function usePracticeAttachment(
     if (activeType === "songsterr") return submitSongsterr();
     if (activeType === "youtube") return submitYoutube();
     if (activeType === "spotify") return submitSpotify();
-    if (activeType === "tab" && tabMode === "text") return submitTabText();
   }
 
   async function saveFileAsset(file: File, kind: StoredFileKind) {
@@ -129,15 +115,10 @@ export function usePracticeAttachment(
   async function submitFile(file: File | undefined) {
     if (!file || !activeType) return;
     const option = ATTACHMENT_OPTIONS[activeType];
-    const isTabText = activeType === "tab" && isTextFile(file);
     const kind = getPracticeFileKind(file.name, file.type);
     const isAllowed = kind !== null && option.fileKinds.includes(kind);
-    if (!isTabText && !isAllowed) return setError(option.fileError);
-    if (
-      !isTabText &&
-      option.maxBytes !== undefined &&
-      file.size > option.maxBytes
-    ) {
+    if (!isAllowed) return setError(option.fileError);
+    if (option.maxBytes !== undefined && file.size > option.maxBytes) {
       return setError(option.sizeError ?? "El archivo es demasiado grande.");
     }
     if (!isReady) {
@@ -147,10 +128,6 @@ export function usePracticeAttachment(
     setIsSaving(true);
     setError(null);
     try {
-      if (isTabText) {
-        attach("tab", { kind: "tab", text: await file.text(), fileName: file.name });
-        return;
-      }
       const assetId = await saveFileAsset(file, kind!);
       attach(activeType, { kind: kind!, fileName: file.name, assetId });
     } catch (saveError) {
@@ -166,8 +143,6 @@ export function usePracticeAttachment(
 
   return {
     activeType,
-    tabMode,
-    setTabMode,
     draft,
     updateDraft,
     error,

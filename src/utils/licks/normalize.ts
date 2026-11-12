@@ -1,10 +1,8 @@
 import type { BpmLogEntry, GuitarLick } from "../../types/lick.ts";
-import type { RepertoireTab } from "../../types/practice.ts";
 import { normalizeMusicalKey } from "./keys.ts";
 import { normalizeReferenceVideo } from "./reference-video.ts";
 import { normalizeTechniques } from "./techniques.ts";
-import { normalizeTab } from "../repertoire-tab.ts";
-import { isTabScoreLike } from "../tab-score/model.ts";
+import { normalizePracticeResources } from "../practice-resources.ts";
 import { MAX_BPM, MIN_BPM } from "../metronome-tempo.ts";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -46,11 +44,6 @@ function normalizeBpmEntry(
   return { id, bpm, date, ...(notes ? { notes } : {}) };
 }
 
-function normalizeStoredTab(value: unknown): RepertoireTab | undefined {
-  if (!isRecord(value) || !Array.isArray(value.notes)) return undefined;
-  return normalizeTab(value as unknown as RepertoireTab);
-}
-
 function normalizeHistory(value: unknown): BpmLogEntry[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -85,19 +78,14 @@ export function normalizeLick(value: unknown): GuitarLick | null {
   const key = normalizeMusicalKey(value.key);
   const techniques = normalizeTechniques(value.techniques);
   const targetBpm = normalizeLickBpm(value.targetBpm);
-  const tab = normalizeStoredTab(value.tab);
-  const score = isTabScoreLike(value.score) ? value.score : undefined;
+  const resources = normalizePracticeResources(value.resources);
   const referenceVideo = normalizeReferenceVideo(value.referenceVideo);
-  const tabContent =
-    typeof value.tabContent === "string" ? value.tabContent : undefined;
 
   return {
     id: value.id,
     title: typeof value.title === "string" ? value.title : "",
-    ...(tab ? { tab } : {}),
-    ...(score ? { score } : {}),
+    ...(resources.length > 0 ? { resources } : {}),
     ...(referenceVideo ? { referenceVideo } : {}),
-    ...(tabContent !== undefined ? { tabContent } : {}),
     ...(key ? { key } : {}),
     techniques,
     ...(associatedSongId ? { associatedSongId } : {}),

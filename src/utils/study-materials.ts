@@ -11,12 +11,10 @@ export { isHttpsUrl };
 const TITLE_MAX_LENGTH = 120;
 const NOTES_MAX_LENGTH = 500;
 const URL_MAX_LENGTH = 500;
-const TEXT_MAX_LENGTH = 120_000;
 const FILE_NAME_MAX_LENGTH = 200;
 
 /** Los tipos que la biblioteca puede crear desde su formulario. */
 export const STUDY_MATERIAL_KINDS: readonly PracticeResourceKind[] = [
-  "tab",
   "guitarpro",
   "pdf",
   "image",
@@ -39,14 +37,12 @@ const FILE_KINDS = new Set<PracticeResourceKind>([
   "image",
 ]);
 
-export type StudyMaterialSourceMode = "text" | "file" | "url";
+export type StudyMaterialSourceMode = "file" | "url";
 
 export function getStudyMaterialSourceMode(
   kind: PracticeResourceKind,
 ): StudyMaterialSourceMode {
-  if (kind === "tab") return "text";
-  if (URL_KINDS.has(kind)) return "url";
-  return "file";
+  return URL_KINDS.has(kind) ? "url" : "file";
 }
 
 export function isStudyMaterialFileKind(kind: PracticeResourceKind): boolean {
@@ -107,7 +103,6 @@ export function normalizeStudyMaterials(value: unknown): StudyMaterial[] {
     const url = normalizeText(candidate.url, URL_MAX_LENGTH);
     const assetId = normalizeText(candidate.assetId, 120);
     const fileName = normalizeText(candidate.fileName, FILE_NAME_MAX_LENGTH);
-    const text = normalizeLongText(candidate.text, TEXT_MAX_LENGTH);
     const notes = normalizeLongText(candidate.notes, NOTES_MAX_LENGTH);
 
     materials.push({
@@ -117,7 +112,6 @@ export function normalizeStudyMaterials(value: unknown): StudyMaterial[] {
       ...(url ? { url } : {}),
       ...(assetId ? { assetId } : {}),
       ...(fileName ? { fileName } : {}),
-      ...(text ? { text } : {}),
       ...(notes ? { notes } : {}),
       createdAt: normalizeTimestamp(candidate.createdAt),
       updatedAt: normalizeTimestamp(candidate.updatedAt),
@@ -182,6 +176,5 @@ export function studyMaterialToResource(
   if (material.url !== undefined) resource.url = material.url;
   if (material.assetId !== undefined) resource.assetId = material.assetId;
   if (material.fileName !== undefined) resource.fileName = material.fileName;
-  if (material.text !== undefined) resource.text = material.text;
   return resource;
 }

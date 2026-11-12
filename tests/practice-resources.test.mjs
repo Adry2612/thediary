@@ -26,7 +26,6 @@ test("keeps the labels the lists were showing", () => {
     guitarpro: "Guitar Pro",
     youtube: "YouTube",
     spotify: "Spotify",
-    tab: "TAB",
     link: "Enlace",
   });
 });

@@ -1,28 +1,32 @@
 # Licks
 
-Un lick es una idea corta —una frase, un ejercicio o un fragmento de una canción— con su propia tablatura, tempo y técnicas. Vive en `/licks`, se edita a pantalla completa en `/licks/new` y `/licks/[id]/edit`, y se lee en `/licks/[id]`.
+Un lick es una idea corta —una frase, un ejercicio o un fragmento de una canción— con su propio material de estudio, tempo y técnicas. Vive en `/licks`, se edita a pantalla completa en `/licks/new` y `/licks/[id]/edit`, y se lee en `/licks/[id]`.
+
+La tablatura ya no se dibuja dentro del lick: se adjunta como material, igual que en una práctica o una canción. El editor de partitura antiguo se retiró y los datos de texto que guardaba se descartan al normalizar el estado.
+
+## Material de estudio
+
+- Cada lick puede llevar uno o varios recursos: archivos Guitar Pro (`.gp`, `.gpx`, `.gp3`–`.gp5`), PDF, imagen, Songsterr, YouTube, Spotify o un enlace HTTPS.
+- El editor reutiliza `PracticeResourceEditor`: permite subir un archivo, pegar un enlace o elegir una entrada de la biblioteca de materiales.
+- Al adjuntar desde la biblioteca se guarda una copia con su propio identificador; editar o borrar la entrada original no cambia el lick.
+- La ficha y la práctica muestran `LickMaterials`, con una lista de recursos y el visor que corresponde a cada uno (`ResourcePreview`).
+- Las tarjetas de la biblioteca resumen hasta tres materiales del lick.
+- Un recurso con un tipo retirado o sin identidad se descarta al cargar; el resto del lick se conserva.
 
 ## Guardar sin terminar la ficha
 
 El editor tiene dos guardados:
 
 - **Guardar lick** valida el título y el BPM objetivo, guarda todo y vuelve a la ficha.
-- **Guardar tablatura** guarda la partitura y los campos que ya sean válidos, sin exigir BPM, canción ni técnicas, y **se queda en el editor**.
+- **Guardar borrador** guarda el material y los campos que ya sean válidos, sin exigir BPM, canción ni técnicas, y **se queda en el editor**.
 
-Si el título está vacío, el borrador se guarda como «Sin título» (`licks.untitled`) y aparece en la biblioteca como un lick normal. El primer guardado de un lick nuevo fija su id; los siguientes actualizan el mismo registro, y el «Guardar lick» final completa la ficha. Un BPM vacío o fuera de 40–240 no bloquea el guardado de la tablatura: se ignora y se conserva el que ya tuviera el lick.
+Si el título está vacío, el borrador se guarda como «Sin título» (`licks.untitled`) y aparece en la biblioteca como un lick normal. El primer guardado de un lick nuevo fija su id; los siguientes actualizan el mismo registro, y el «Guardar lick» final completa la ficha. Un BPM vacío o fuera de 40–240 no bloquea el borrador: se ignora y se conserva el que ya tuviera el lick.
 
-El aviso «Tablatura guardada» se anuncia con `role="status"` y desaparece en cuanto se toca cualquier campo.
+El aviso «Borrador guardado» se anuncia con `role="status"` y desaparece en cuanto se toca cualquier campo.
 
 ## Tonalidad
 
-La tonalidad es opcional. Se detecta con el estimador de Krumhansl-Schmuckler a partir de las alturas de la partitura visual que se está editando:
-
-- usa la afinación de la partitura (`tuningToMidi`), también con afinaciones alternativas de 4 a 8 cuerdas;
-- ignora las notas muertas;
-- pondera más la primera y la última nota de la frase;
-- necesita al menos tres notas y tres clases distintas; si no, no adivina.
-
-Mientras el campo está en automático, la tonalidad detectada se copia al campo según se escribe. Elegir una tonalidad a mano (incluida «Sin tonalidad») desactiva el automático; **Usar esta tonalidad** lo vuelve a activar. La detección no se guarda hasta que se guarda el lick.
+La tonalidad es opcional y se elige a mano entre las doce raíces mayores y menores. El editor ya no la deduce de la tablatura porque no hay una partitura editable; el campo se guarda tal cual y se muestra en la ficha y en las tarjetas.
 
 ## Técnicas
 
@@ -55,7 +59,7 @@ En la ficha, `LickReferenceVideo` carga la IFrame Player API una sola vez y crea
 
 ## Datos y pruebas
 
-- El modelo no sube de versión: el vídeo y la tonalidad son opcionales y la normalización tolera datos antiguos.
+- El modelo no sube de versión: el material, el vídeo y la tonalidad son opcionales y la normalización tolera datos antiguos.
 - `tests/licks-reference-video.test.mjs` cubre tiempos, validación, normalización y URLs.
-- `tests/licks-key-detection.test.mjs` cubre la detección desde la rejilla y desde la partitura, afinaciones alternativas, notas muertas y mínimos.
-- `tests/licks-normalize.test.mjs` comprueba que un clip inválido se descarta sin perder el lick.
+- `tests/licks-normalize.test.mjs` comprueba que el material inválido y los campos de tablatura retirados se descartan sin perder el lick.
+- `tests/licks-migration.test.mjs` cubre el traslado de licks antiguos desde el repertorio y la retirada de su tablatura.

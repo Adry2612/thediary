@@ -76,6 +76,51 @@ export function getCalendarYearRange(year: number): PracticeTimeRange {
   };
 }
 
+export type PracticeDayCounts = {
+  /** Días únicos con práctica en todo el historial. */
+  total: number;
+  /** Días únicos con práctica en el año natural indicado. */
+  currentYear: number;
+  /** Días únicos con práctica anteriores al año natural indicado. */
+  previousYears: number;
+  /** Días que tiene el año natural indicado. */
+  daysInYear: number;
+};
+
+/**
+ * Cuenta días únicos de práctica, no sesiones. Un día con varias sesiones suma
+ * una sola vez. El desglose separa el año natural actual de los anteriores.
+ */
+export function getPracticeDayCounts(
+  history: SessionRecord[],
+  currentYear: number,
+): PracticeDayCounts {
+  const dateKeys = new Set<string>();
+
+  for (const session of history) {
+    const startedAt = Date.parse(session.startedAt);
+    if (!Number.isFinite(startedAt)) continue;
+    dateKeys.add(toDateKey(new Date(startedAt)));
+  }
+
+  const prefix = `${currentYear}-`;
+  let currentYearCount = 0;
+  for (const dateKey of dateKeys) {
+    if (dateKey.startsWith(prefix)) currentYearCount += 1;
+  }
+
+  const daysInYear =
+    (Date.UTC(currentYear + 1, 0, 1) - Date.UTC(currentYear, 0, 1)) /
+    86_400_000;
+
+  return {
+    total: dateKeys.size,
+    currentYear: currentYearCount,
+    previousYears: dateKeys.size - currentYearCount,
+    daysInYear,
+  };
+}
+
 /** Años con práctica, del más reciente al más antiguo, con el actual siempre. */
 export function getPracticeYears(
   history: SessionRecord[],

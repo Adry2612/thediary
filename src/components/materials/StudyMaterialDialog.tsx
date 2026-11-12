@@ -33,7 +33,6 @@ const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 const IMAGE_ACCEPT =
   "image/jpeg,image/png,image/webp,image/avif,image/gif,.jpg,.jpeg,.png,.webp,.avif,.gif";
 const GUITAR_PRO_ACCEPT = ".gp,.gpx,.gp3,.gp4,.gp5";
-const TAB_FILE_ACCEPT = ".txt,text/plain";
 
 const URL_PLACEHOLDERS: Partial<Record<PracticeResourceKind, string>> = {
   youtube: "https://www.youtube.com/watch?v=…",
@@ -56,16 +55,11 @@ type MaterialChanges = {
   url?: string;
   assetId?: string;
   fileName?: string;
-  text?: string;
 };
-
-function isTextFile(file: File): boolean {
-  return file.type === "text/plain" || file.name.toLowerCase().endsWith(".txt");
-}
 
 function sourceLabel(
   kind: PracticeResourceKind,
-  text: { urlField: string; tabText: string; chooseFile: string },
+  text: { urlField: string; chooseFile: string },
 ): string {
   if (
     kind === "youtube" ||
@@ -75,7 +69,6 @@ function sourceLabel(
   ) {
     return text.urlField;
   }
-  if (kind === "tab") return text.tabText;
   return text.chooseFile;
 }
 
@@ -89,13 +82,11 @@ export function StudyMaterialDialog({ material, onSave, onClose }: Props) {
   );
 
   const [title, setTitle] = useState(material?.title ?? "");
-  const [kind, setKind] = useState<PracticeResourceKind>(material?.kind ?? "tab");
+  const [kind, setKind] = useState<PracticeResourceKind>(
+    material?.kind ?? "guitarpro",
+  );
   const [notes, setNotes] = useState(material?.notes ?? "");
   const [url, setUrl] = useState(material?.url ?? "");
-  const [tabText, setTabText] = useState(
-    material?.kind === "tab" ? (material.text ?? "") : "",
-  );
-  const [tabMode, setTabMode] = useState<"text" | "file">("text");
   const [file, setFile] = useState<File | null>(null);
   const [assetId, setAssetId] = useState(material?.assetId);
   const [fileName, setFileName] = useState(material?.fileName);
@@ -103,7 +94,6 @@ export function StudyMaterialDialog({ material, onSave, onClose }: Props) {
   const [isSaving, setIsSaving] = useState(false);
 
   const mode = getStudyMaterialSourceMode(kind);
-  const isTab = kind === "tab";
   const isFileKind = isStudyMaterialFileKind(kind);
   const isUrlKind = mode === "url";
 
@@ -111,8 +101,6 @@ export function StudyMaterialDialog({ material, onSave, onClose }: Props) {
     if (next === kind) return;
     setKind(next);
     setUrl("");
-    setTabText("");
-    setTabMode("text");
     setFile(null);
     setAssetId(undefined);
     setFileName(undefined);
@@ -122,15 +110,13 @@ export function StudyMaterialDialog({ material, onSave, onClose }: Props) {
   function acceptForFileKind(): string {
     if (kind === "image") return IMAGE_ACCEPT;
     if (kind === "guitarpro") return GUITAR_PRO_ACCEPT;
-    if (kind === "pdf") return ".pdf,application/pdf";
-    return TAB_FILE_ACCEPT;
+    return ".pdf,application/pdf";
   }
 
   function fileKindError(): string | null {
     if (kind === "pdf") return text.pdfFileError;
     if (kind === "image") return text.imageFileError;
-    if (kind === "guitarpro") return text.guitarProFileError;
-    return text.tabFileError;
+    return text.guitarProFileError;
   }
 
   async function saveMaterial() {
@@ -166,24 +152,8 @@ export function StudyMaterialDialog({ material, onSave, onClose }: Props) {
         } else {
           changes.url = value;
         }
-        changes.text = undefined;
         changes.assetId = undefined;
         changes.fileName = undefined;
-      } else if (isTab) {
-        let value = tabText;
-        let nextFileName: string | undefined;
-
-        if (tabMode === "file" && file) {
-          if (!isTextFile(file)) return setError(text.tabFileError);
-          value = await file.text();
-          nextFileName = file.name;
-        }
-
-        if (!value.trim()) return setError(text.textRequired);
-        changes.text = value;
-        changes.fileName = nextFileName;
-        changes.assetId = undefined;
-        changes.url = undefined;
       } else if (isFileKind) {
         if (file) {
           const detected = getPracticeFileKind(file.name, file.type);
@@ -220,7 +190,6 @@ export function StudyMaterialDialog({ material, onSave, onClose }: Props) {
           changes.assetId = nextAssetId;
           changes.fileName = file.name;
           changes.url = undefined;
-          changes.text = undefined;
           onSave(
             material
               ? { ...material, ...changes }
@@ -238,7 +207,6 @@ export function StudyMaterialDialog({ material, onSave, onClose }: Props) {
         changes.assetId = assetId;
         changes.fileName = fileName;
         changes.url = undefined;
-        changes.text = undefined;
       }
 
       onSave(
@@ -306,35 +274,6 @@ export function StudyMaterialDialog({ material, onSave, onClose }: Props) {
             />
           </label>
 
-          {isTab && (
-            <div
-              role="group"
-              aria-label={text.source}
-              className="grid grid-cols-2 gap-1 rounded-md border border-line p-1 sm:w-fit"
-            >
-              {(
-                [
-                  { mode: "text" as const, label: text.tabTextMode },
-                  { mode: "file" as const, label: text.tabFileMode },
-                ]
-              ).map((option) => (
-                <button
-                  key={option.mode}
-                  type="button"
-                  aria-pressed={tabMode === option.mode}
-                  onClick={() => setTabMode(option.mode)}
-                  className={`min-h-10 rounded px-4 text-sm transition ${
-                    tabMode === option.mode
-                      ? "bg-white/10 text-ink"
-                      : "text-muted hover:text-ink"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          )}
-
           <div>
             <p className="text-xs text-muted">
               {sourceLabel(kind, text)}
@@ -350,18 +289,7 @@ export function StudyMaterialDialog({ material, onSave, onClose }: Props) {
               />
             )}
 
-            {isTab && tabMode === "text" && (
-              <TextArea
-                value={tabText}
-                onChange={(event) => setTabText(event.target.value)}
-                placeholder={text.tabTextPlaceholder}
-                aria-label={text.tabText}
-                spellCheck={false}
-                className="mt-1 min-h-40 font-mono text-xs sm:text-sm"
-              />
-            )}
-
-            {((isTab && tabMode === "file") || isFileKind) && (
+            {isFileKind && (
               <div className="mt-1 space-y-2">
                 <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-line px-4 py-5 text-center text-sm transition hover:bg-white/5 focus-within:outline focus-within:outline-2 focus-within:outline-ink/60">
                   <span className="font-medium">
@@ -370,9 +298,7 @@ export function StudyMaterialDialog({ material, onSave, onClose }: Props) {
                   <span className="text-xs text-muted">{text.fileHint}</span>
                   <input
                     type="file"
-                    accept={
-                      isTab && tabMode === "file" ? TAB_FILE_ACCEPT : acceptForFileKind()
-                    }
+                    accept={acceptForFileKind()}
                     disabled={isSaving}
                     className="sr-only"
                     onChange={(event) => {

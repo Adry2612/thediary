@@ -1,7 +1,7 @@
 # licks-library Specification
 
 ## Purpose
-Gives the user a library for the technical fragments they want to drill — riffs, phrases and exercises — with plain-text tablature, a fixed musical vocabulary and a per-lick record of speed progress, kept apart from the songs they are learning.
+Gives the user a library for the technical fragments they want to drill — riffs, phrases and exercises — with study material attached as files or links, a fixed musical vocabulary and a per-lick record of speed progress, kept apart from the songs they are learning.
 
 ## Requirements
 
@@ -19,27 +19,27 @@ The system SHALL keep licks in their own collection, list them on a dedicated Li
 
 #### Scenario: Starting a new lick
 - **WHEN** the user activates the action to add a lick
-- **THEN** the editor opens with empty tablature, no key, no techniques and no BPM history
+- **THEN** the editor opens with no material, no key, no techniques and no BPM history
 
-### Requirement: A lick's tablature is a score, with plain text kept as a fallback
+### Requirement: A lick carries study material
 
-The system SHALL store the tablature of a lick as a score, SHALL show a lick that has no score but has plain-text tablature with that text exactly as typed in a monospaced typeface, and SHALL keep long text lines readable by scrolling horizontally instead of collapsing the spacing.
+The system SHALL let the user attach one or more study resources to a lick — Guitar Pro files, PDFs, images, Songsterr, YouTube, Spotify or HTTPS links —, SHALL reuse the shared material editor and library, and SHALL show each resource with the viewer that corresponds to its type.
 
-#### Scenario: A lick with a score
-- **WHEN** a lick has a score
-- **THEN** the app shows the score and not the plain text
+#### Scenario: Attaching a Guitar Pro file
+- **WHEN** the user attaches a `.gp` file to a lick and saves
+- **THEN** the lick lists the file and its page renders the tablature with the Guitar Pro viewer
 
-#### Scenario: Alignment is preserved
-- **WHEN** a lick has only plain-text tablature that uses spaces to align the strings
-- **THEN** the app shows the same characters in the same columns when the lick is reopened
+#### Scenario: Reusing saved material
+- **WHEN** the user chooses an entry from the material library
+- **THEN** the lick stores an independent copy and keeps working if the library entry is edited or deleted
 
-#### Scenario: Empty tablature is valid
-- **WHEN** the user saves a lick with a title but no tablature
-- **THEN** the lick is saved and the editor shows its empty tablature area
+#### Scenario: No material is valid
+- **WHEN** the user saves a lick with a title but no material
+- **THEN** the lick is saved and its page shows the empty-material message
 
-#### Scenario: Long lines do not reflow
-- **WHEN** a plain-text tablature line is wider than the available space
-- **THEN** the app keeps the line on one row and lets the user scroll it
+#### Scenario: A retired resource
+- **WHEN** stored data contains a text TAB or an unknown resource kind
+- **THEN** the app drops that resource and keeps the lick and its valid material
 
 ### Requirement: A lick carries a key from the fixed catalogue
 
@@ -171,11 +171,11 @@ The system SHALL persist licks with the rest of the user's practice data in the 
 
 ### Requirement: Repertoire licks migrate once into the new library
 
-The system SHALL, when it loads practice data that still contains licks in the repertoire, convert each one into a lick with the same title and a plain-text tablature built from its stored tablature, leave its key, techniques and BPM history empty, remove it from the repertoire, and SHALL perform the migration only once even if the app is reloaded or the migration is interrupted.
+The system SHALL, when it loads practice data that still contains licks in the repertoire, convert each one into a lick with the same title and its valid study material, discard any tablature fields stored by the retired tab editor, leave its key, techniques and BPM history empty, remove it from the repertoire, and SHALL perform the migration only once even if the app is reloaded or the migration is interrupted.
 
 #### Scenario: An existing repertoire lick is migrated
 - **WHEN** the app loads data with a repertoire item of kind lick
-- **THEN** the licks library contains a lick with that title and its tablature as text, and the repertoire no longer lists the item
+- **THEN** the licks library contains a lick with that title and its valid material, and the repertoire no longer lists the item
 
 #### Scenario: Missing classification is not invented
 - **WHEN** a migrated lick has no key, techniques or BPM history
@@ -185,9 +185,9 @@ The system SHALL, when it loads practice data that still contains licks in the r
 - **WHEN** the app loads data after the migration has run
 - **THEN** no duplicate licks are created and no licks return to the repertoire
 
-#### Scenario: A lick without tablature
-- **WHEN** a repertoire lick has no stored tablature
-- **THEN** the app migrates it with empty tablature and keeps its title
+#### Scenario: A lick without material
+- **WHEN** a repertoire lick has no stored material
+- **THEN** the app migrates it without material and keeps its title
 
 ### Requirement: A lick is edited on its own screen
 
@@ -195,7 +195,7 @@ The system SHALL open the lick editor as a full page at `/licks/new` when creati
 
 #### Scenario: Editing an existing lick
 - **WHEN** the user chooses to edit a lick
-- **THEN** the app navigates to that lick's edit page and the tablature uses the full width of the content column
+- **THEN** the app navigates to that lick's edit page and the material panel uses the full width of the content column
 
 #### Scenario: Creating a lick
 - **WHEN** the user chooses to create a lick
@@ -205,69 +205,33 @@ The system SHALL open the lick editor as a full page at `/licks/new` when creati
 - **WHEN** the user cancels the editor
 - **THEN** the app returns to the lick or to the licks list without saving
 
-### Requirement: A tab can be saved without finishing the lick
+### Requirement: A draft can be saved without finishing the lick
 
-The system SHALL offer a **Save tab** action inside the tab editor that persists the current score and the fields that are already valid, SHALL use the provisional title “Sin título” when the title is empty, SHALL keep the user in the editor after saving, and SHALL update the same lick on the next save. Saving the whole lick SHALL keep validating the title and the target BPM as before.
+The system SHALL offer a **Save draft** action inside the editor that persists the current material and the fields that are already valid, SHALL use the provisional title “Sin título” when the title is empty, SHALL keep the user in the editor after saving, and SHALL update the same lick on the next save. Saving the whole lick SHALL keep validating the title and the target BPM as before.
 
 #### Scenario: Saving an unfinished new lick
-- **WHEN** the user writes a tab in a new lick, leaves the title empty and presses Save tab
-- **THEN** a lick titled “Sin título” is stored and listed in the library, the editor stays open and the tab is kept
+- **WHEN** the user attaches material in a new lick, leaves the title empty and presses Save draft
+- **THEN** a lick titled “Sin título” is stored and listed in the library, the editor stays open and the material is kept
 
 #### Scenario: Continuing after a draft save
-- **WHEN** the user edits the tab again and presses Save tab a second time
+- **WHEN** the user edits the material again and presses Save draft a second time
 - **THEN** the same lick is updated, not a second one
 
 #### Scenario: Finishing the lick
 - **WHEN** the user writes a title and presses Save lick after a draft save
 - **THEN** the same lick is updated with the title and the full form, and the user returns to the lick page
 
-#### Scenario: Invalid optional fields do not block the tab
-- **WHEN** the target BPM is empty or out of range and the user presses Save tab
-- **THEN** the tab is saved and the invalid BPM is not stored
+#### Scenario: Invalid optional fields do not block the draft
+- **WHEN** the target BPM is empty or out of range and the user presses Save draft
+- **THEN** the draft is saved and the invalid BPM is not stored
 
-#### Scenario: Saving an existing lick's tab
-- **WHEN** the user edits the tab of an existing lick and presses Save tab
-- **THEN** the score is updated and the editor stays open
+#### Scenario: Saving an existing lick's material
+- **WHEN** the user edits the material of an existing lick and presses Save draft
+- **THEN** the material is updated and the editor stays open
 
 #### Scenario: Feedback after saving
-- **WHEN** a tab save finishes
-- **THEN** the editor announces “Tablatura guardada” without moving the focus out of the editor
-
-### Requirement: The key is detected from the visual score
-
-The system SHALL estimate the key from the notes, strings and tuning of the score being edited, SHALL ignore dead notes, SHALL require at least three notes and three different pitch classes, and SHALL NOT guess when there are not enough notes.
-
-#### Scenario: Detecting from a visual tab
-- **WHEN** the user writes a phrase with enough notes in the visual tab
-- **THEN** the editor shows the detected key even if the lick has no legacy grid tab
-
-#### Scenario: A tuning other than standard
-- **WHEN** the tab uses an alternative tuning
-- **THEN** the detection uses the pitches of that tuning
-
-#### Scenario: Not enough notes
-- **WHEN** the tab has one or two notes or fewer than three pitch classes
-- **THEN** no key is shown as detected
-
-### Requirement: The detected key is applied while the field is automatic
-
-The system SHALL apply the detected key to the key field while the field is automatic, SHALL stop applying it when the user chooses a key by hand, and SHALL let the user return to automatic with “Usar esta tonalidad”.
-
-#### Scenario: Writing with the key in automatic
-- **WHEN** the user keeps writing notes and the detected key changes
-- **THEN** the key field follows the detected key
-
-#### Scenario: Choosing a key by hand
-- **WHEN** the user selects a key in the field
-- **THEN** the field keeps that key even if the detected key changes
-
-#### Scenario: Returning to automatic
-- **WHEN** the user presses “Usar esta tonalidad”
-- **THEN** the field shows the detected key and follows it again
-
-#### Scenario: Removing the key
-- **WHEN** the user chooses “Sin tonalidad”
-- **THEN** the field stays empty until the user returns to automatic
+- **WHEN** a draft save finishes
+- **THEN** the editor announces “Borrador guardado” without moving the focus out of the editor
 
 ### Requirement: A lick can carry a YouTube reference clip
 

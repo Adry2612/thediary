@@ -183,11 +183,11 @@ The system SHALL store album, release year, artwork and the catalog source and i
 
 #### Scenario: Practice data is not affected
 - **WHEN** the album, the release year or the artwork of an item changes
-- **THEN** its tuning, capo, parts, chord chart and tablature stay as they were
+- **THEN** its tuning, capo, parts, chord chart and study material stay as they were
 
 ### Requirement: An existing song can be completed from the catalog
 
-The system SHALL offer the catalog lookup from a named edit action on an existing song: a pencil icon in the song card header, in both the repertoire list and the song detail, that identifies itself as editing the song's data on hover and focus and opens the lookup in its own dialog, pre-filled with that song's title and artist and searched as soon as it opens. It SHALL show a preview of the candidate's title, artist, album, release year and artwork before changing the song, SHALL on confirmation update those fields when the candidate provides them and set the catalog source and identifier, and SHALL NOT change its tuning, capo, parts, chord chart, tablature or study material.
+The system SHALL offer the catalog lookup from a named edit action on an existing song: a pencil icon in the song card header, in both the repertoire list and the song detail, that identifies itself as editing the song's data on hover and focus and opens the lookup in its own dialog, pre-filled with that song's title and artist and searched as soon as it opens. It SHALL show a preview of the candidate's title, artist, album, release year and artwork before changing the song, SHALL on confirmation update those fields when the candidate provides them and set the catalog source and identifier, and SHALL NOT change its tuning, capo, parts, chord chart or study material.
 
 #### Scenario: Filling the gaps
 - **WHEN** the user searches from a song that has no album, no release year and no artwork, picks a candidate and confirms the preview

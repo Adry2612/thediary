@@ -92,7 +92,7 @@ test("filters by title and notes without accents or case", () => {
 test("sorts by most recently updated and filters by kind", () => {
   const materials = [
     material({ id: "old", kind: "pdf", updatedAt: "2026-10-01T00:00:00.000Z" }),
-    material({ id: "new", kind: "tab", updatedAt: "2026-11-03T00:00:00.000Z" }),
+    material({ id: "new", kind: "guitarpro", updatedAt: "2026-11-03T00:00:00.000Z" }),
     material({ id: "mid", kind: "pdf", updatedAt: "2026-11-02T00:00:00.000Z" }),
   ];
 
@@ -132,7 +132,6 @@ test("converts a material into an independent practice resource", () => {
     assetId: undefined,
     fileName: undefined,
     url: "https://www.youtube.com/watch?v=abc123def45",
-    text: undefined,
   });
   const resource = studyMaterialToResource(source, "copy-1");
 
@@ -147,7 +146,7 @@ test("converts a material into an independent practice resource", () => {
   assert.equal("notes" in resource, false);
 });
 
-test("copies the file and text fields it needs", () => {
+test("copies the file fields it needs", () => {
   assert.deepEqual(
     studyMaterialToResource(
       material({ kind: "pdf", id: "m2", title: "Método" }),
@@ -163,22 +162,20 @@ test("copies the file and text fields it needs", () => {
   );
   assert.deepEqual(
     studyMaterialToResource(
-      material({ kind: "tab", id: "m3", title: "Riff", text: "e|--0--|" }),
+      material({ kind: "guitarpro", id: "m3", title: "Riff" }),
       "copy-3",
     ),
     {
       id: "copy-3",
       title: "Riff",
-      kind: "tab",
+      kind: "guitarpro",
       assetId: "asset-1",
       fileName: "escala.pdf",
-      text: "e|--0--|",
     },
   );
 });
 
 test("classifies each kind by its source input", () => {
-  assert.equal(getStudyMaterialSourceMode("tab"), "text");
   assert.equal(getStudyMaterialSourceMode("youtube"), "url");
   assert.equal(getStudyMaterialSourceMode("spotify"), "url");
   assert.equal(getStudyMaterialSourceMode("songsterr"), "url");

@@ -1,5 +1,5 @@
 export const ATTACHMENT_TYPES = [
-  "tab",
+  "guitarpro",
   "pdf",
   "image",
   "songsterr",
@@ -9,10 +9,7 @@ export const ATTACHMENT_TYPES = [
 
 export type AttachmentType = (typeof ATTACHMENT_TYPES)[number];
 
-export type TabInputMode = "text" | "file";
-
 export interface AttachmentDraft {
   title: string;
   url: string;
-  text: string;
 }

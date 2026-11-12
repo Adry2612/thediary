@@ -16,12 +16,18 @@ interface Props {
     phaseId: PracticePhase['id'],
     changes: Partial<PracticePhase>,
   ) => void;
+  title?: string;
+  description?: string;
+  removeLabel?: string;
 }
 
 export function PracticeResourceEditor({
   phaseId,
   resources,
   onChange,
+  title,
+  description,
+  removeLabel,
 }: Props) {
   const text = useI18nSection('practice');
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
@@ -41,8 +47,12 @@ export function PracticeResourceEditor({
     <div className='rounded-lg border border-line bg-canvas/30 p-4 sm:p-5'>
       <div className='flex items-center justify-between gap-4'>
         <div>
-          <p className='text-xs uppercase  text-muted'>{text.materials}</p>
-          <p className='mt-1 text-sm text-muted'>{text.setupDescription}</p>
+          <p className='text-xs uppercase  text-muted'>
+            {title ?? text.materials}
+          </p>
+          <p className='mt-1 text-sm text-muted'>
+            {description ?? text.setupDescription}
+          </p>
         </div>
         <AttachMaterialMenu
           onSelect={attachment.open}
@@ -66,10 +76,10 @@ export function PracticeResourceEditor({
               <button
                 type='button'
                 onClick={() => removeResource(resource.id)}
-                aria-label={`${text.removeBlock} ${resource.title}`}
+                aria-label={`${removeLabel ?? text.removeBlock} ${resource.title}`}
                 className='shrink-0 text-xs text-muted hover:text-ink'
               >
-                {text.removeBlock}
+                {removeLabel ?? text.removeBlock}
               </button>
             </li>
           ))}
@@ -80,11 +90,9 @@ export function PracticeResourceEditor({
         <div className='mt-4'>
           <AttachMaterialForm
             type={attachment.activeType}
-            tabMode={attachment.tabMode}
             draft={attachment.draft}
             error={attachment.error}
             isSaving={attachment.isSaving}
-            onTabModeChange={attachment.setTabMode}
             onDraftChange={attachment.updateDraft}
             onSubmit={attachment.submit}
             onFileSelect={attachment.submitFile}

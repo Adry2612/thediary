@@ -14,7 +14,7 @@ import {
   StopIcon,
 } from "@/components/ui/icons";
 import { PracticeMaterials } from "@/components/practice/PracticeMaterials";
-import { LickTab } from "@/components/licks/LickTab";
+import { LickMaterials } from "@/components/licks/LickMaterials";
 import { Card } from "@/components/ui/Card";
 import { TimerCard } from "@/components/practice/TimerCard";
 import { UpcomingBlocks } from "@/components/practice/UpcomingBlocks";
@@ -502,12 +502,9 @@ export function PracticeSession({ session }: { session: ActivePracticeSession })
           {text.lickTechniques}: {currentLickTechniques.join(' · ')}
         </p>
       )}
-      <LickTab
-        score={currentLick.score}
-        tab={currentLick.tab}
-        content={currentLick.tabContent}
-        emptyLabel={text.lickTabEmpty}
-        ariaLabel={text.lickTabAria}
+      <LickMaterials
+        resources={currentLick.resources}
+        emptyLabel={text.lickMaterialsEmpty}
         className='mt-4'
       />
     </Card>

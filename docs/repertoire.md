@@ -1,6 +1,6 @@
 # Repertorio
 
-El repertorio guarda canciones y sus partes. Cada canción puede llevar afinación, capo, tipo de guitarra, dificultad, material, cifrado, tablatura y datos de catálogo (álbum, año y carátula).
+El repertorio guarda canciones y sus partes. Cada canción puede llevar afinación, capo, tipo de guitarra, dificultad, material, cifrado y datos de catálogo (álbum, año y carátula).
 
 ## Buscar datos de catálogo
 
@@ -10,7 +10,7 @@ El repertorio guarda canciones y sus partes. Cada canción puede llevar afinaci�
 - Solo se guarda al confirmar **Aplicar cambios**. Si se cancela o se cierra la vista previa, la canción queda exactamente como estaba.
 - Al aplicar, el título y el artista se toman del candidato y los campos opcionales solo se actualizan si el candidato los trae. Un álbum, año o carátula que el candidato no proporcione no se vacía.
 - El título sigue siendo editable después de aplicar, así que se puede renombrar la canción (por ejemplo, para añadir «(acústico)») sin perder el resto de datos del catálogo.
-- La afinación, el capo, las partes, el cifrado, la tablatura y el material de estudio nunca se tocan desde el buscador.
+- La afinación, el capo, las partes, el cifrado y el material de estudio nunca se tocan desde el buscador.
 - La creación de una canción nueva sigue aplicando el candidato directamente al formulario, porque todavía es un borrador editable.
 
 ## Afinaciones
