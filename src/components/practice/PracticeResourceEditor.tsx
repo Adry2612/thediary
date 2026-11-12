@@ -19,6 +19,8 @@ interface Props {
   title?: string;
   description?: string;
   removeLabel?: string;
+  /** Avisa del recurso recién añadido, antes de que el padre lo persista. */
+  onResourceAdded?: (resource: PracticeResource) => void;
 }
 
 export function PracticeResourceEditor({
@@ -28,11 +30,13 @@ export function PracticeResourceEditor({
   title,
   description,
   removeLabel,
+  onResourceAdded,
 }: Props) {
   const text = useI18nSection('practice');
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   function addResource(resource: PracticeResource) {
     onChange(phaseId, { resources: [...resources, resource] });
+    onResourceAdded?.(resource);
   }
 
   function removeResource(resourceId: string) {

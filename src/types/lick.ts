@@ -84,6 +84,8 @@ export interface GuitarLick {
   referenceVideo?: LickReferenceVideo;
   /** Opcional: una idea rápida o un lick migrado puede no tenerla. */
   key?: MusicalKey;
+  /** Origen de la tonalidad; ausente en los licks antiguos. */
+  keySource?: "auto" | "manual";
   techniques: TechniqueId[];
   /** Canción del repertorio a la que pertenece el lick, si tiene una. */
   associatedSongId?: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { BackLink } from "@/components/ui/BackLink";
 import { Button } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -9,7 +9,9 @@ import { PageShell } from "@/components/ui/PageShell";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/Field";
 import { PracticeResourceEditor } from "@/components/practice/PracticeResourceEditor";
+import { useAppData } from "@/components/providers/AppDataProvider";
 import { useI18nSection } from "@/i18n/I18nProvider";
+import { detectGuitarProKey } from "@/services/lick-key-detection";
 import { createId } from "@/utils/create-id";
 import { normalizeMusicalKey, MUSICAL_KEYS } from "@/utils/licks/keys";
 import {
@@ -46,11 +48,21 @@ export function LickEditor({
 }) {
   const text = useI18nSection("licks");
   const { techniqueNameLanguage } = useDisplayPreferences();
+  const { user } = useAppData();
   const [title, setTitle] = useState(lick?.title ?? "");
   const [resources, setResources] = useState<PracticeResource[]>(
     lick?.resources ?? [],
   );
   const [key, setKey] = useState(lick?.key ?? "");
+  const [keySource, setKeySource] = useState<GuitarLick["keySource"]>(
+    lick?.keySource,
+  );
+  const [isDetectingKey, setIsDetectingKey] = useState(false);
+  const [detectKeyMessage, setDetectKeyMessage] = useState<string | null>(null);
+  const detectingKeyRef = useRef(false);
+  const guitarProResources = resources.filter(
+    (resource) => resource.kind === "guitarpro" && resource.assetId,
+  );
   const [techniques, setTechniques] = useState<TechniqueId[]>(
     lick?.techniques ?? [],
   );
@@ -97,6 +109,46 @@ export function LickEditor({
     );
   }
 
+  async function detectKey(resource?: PracticeResource) {
+    const candidates = resource ? [resource] : guitarProResources;
+    if (candidates.length === 0 || detectingKeyRef.current) return;
+
+    detectingKeyRef.current = true;
+    setIsDetectingKey(true);
+    setDetectKeyMessage(null);
+    let hadError = false;
+    try {
+      for (const candidate of candidates) {
+        if (!candidate.assetId) continue;
+        try {
+          const detected = await detectGuitarProKey(
+            candidate.assetId,
+            user?.id,
+          );
+          if (!detected) continue;
+          setKey(detected);
+          setKeySource("auto");
+          setDetectKeyMessage(text.detectKeySuccess);
+          return;
+        } catch {
+          hadError = true;
+        }
+      }
+      setDetectKeyMessage(
+        hadError ? text.detectKeyError : text.detectKeyNotFound,
+      );
+    } finally {
+      detectingKeyRef.current = false;
+      setIsDetectingKey(false);
+    }
+  }
+
+  function handleResourceAdded(resource: PracticeResource) {
+    if (resource.kind !== "guitarpro" || !resource.assetId) return;
+    if (key.trim()) return;
+    void detectKey(resource);
+  }
+
   function buildLick({ strict }: { strict: boolean }): GuitarLick | null {
     const trimmedTitle = title.trim();
     if (!trimmedTitle && strict) {
@@ -141,6 +193,7 @@ export function LickEditor({
       title: trimmedTitle || text.untitled,
       ...(resources.length > 0 ? { resources } : {}),
       ...(normalizedKey ? { key: normalizedKey } : {}),
+      ...(normalizedKey && keySource ? { keySource } : {}),
       ...(reference.value ? { referenceVideo: reference.value } : {}),
       techniques: normalizeTechniques(techniques),
       ...(associatedSongId ? { associatedSongId } : {}),
@@ -224,6 +277,7 @@ export function LickEditor({
               variant="ghost"
               size="field"
               onClick={saveDraft}
+              disabled={isDetectingKey}
             >
               {text.saveDraft}
             </Button>
@@ -237,6 +291,7 @@ export function LickEditor({
             onChange={(_, changes) =>
               setResources(changes.resources ?? [])
             }
+            onResourceAdded={handleResourceAdded}
           />
         </section>
 
@@ -292,7 +347,11 @@ export function LickEditor({
                 className="mt-1"
                 value={key}
                 ariaLabel={text.keyLabel}
-                onChange={setKey}
+                onChange={(next) => {
+                  setKey(next);
+                  setKeySource(next ? "manual" : undefined);
+                  setDetectKeyMessage(null);
+                }}
                 options={[
                   { value: "", label: text.keyNone },
                   ...MUSICAL_KEYS.map((option) => ({
@@ -301,6 +360,40 @@ export function LickEditor({
                   })),
                 ]}
               />
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="field"
+                  onClick={() => void detectKey()}
+                  disabled={guitarProResources.length === 0 || isDetectingKey}
+                >
+                  {isDetectingKey ? text.detectingKey : text.detectKey}
+                </Button>
+                {keySource === "auto" ? (
+                  <span className="rounded-md border border-amber-300/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200">
+                    {text.keyAutoBadge}
+                  </span>
+                ) : null}
+              </div>
+              {keySource === "auto" ? (
+                <p className="mt-1 text-[11px] text-amber-200/90">
+                  {text.keyAutoHint}
+                </p>
+              ) : null}
+              {guitarProResources.length === 0 ? (
+                <p className="mt-1 text-[11px] text-muted">
+                  {text.detectKeyNoGuitarPro}
+                </p>
+              ) : null}
+              {detectKeyMessage ? (
+                <p
+                  role="status"
+                  className="mt-1 text-[11px] text-muted"
+                >
+                  {detectKeyMessage}
+                </p>
+              ) : null}
             </div>
 
             <div className="block text-xs text-muted">
@@ -384,7 +477,11 @@ export function LickEditor({
           <Button type="button" variant="ghost" onClick={onCancel}>
             {text.cancel}
           </Button>
-          <Button type="submit" variant="primary">
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isDetectingKey}
+          >
             {text.save}
           </Button>
         </div>

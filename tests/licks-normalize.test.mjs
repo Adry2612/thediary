@@ -65,6 +65,36 @@ test("discards the retired tablature fields", () => {
   assert.equal("tabContent" in lick, false);
 });
 
+test("keeps a valid automatic key source and drops it without a key", () => {
+  const automatic = normalizeLick({
+    ...base,
+    key: "Em",
+    keySource: "auto",
+  });
+  assert.equal(automatic?.key, "Em");
+  assert.equal(automatic?.keySource, "auto");
+
+  const manual = normalizeLick({
+    ...base,
+    key: "C",
+    keySource: "manual",
+  });
+  assert.equal(manual?.keySource, "manual");
+
+  const withoutKey = normalizeLick({
+    ...base,
+    keySource: "auto",
+  });
+  assert.equal(withoutKey?.keySource, undefined);
+
+  const invalidSource = normalizeLick({
+    ...base,
+    key: "Em",
+    keySource: "guessed",
+  });
+  assert.equal(invalidSource?.keySource, undefined);
+});
+
 test("keeps a valid reference video and drops a broken one", () => {
   const valid = normalizeLick({
     ...base,

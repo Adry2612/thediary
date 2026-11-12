@@ -1135,6 +1135,7 @@ export const es: Dict = {
     removeMaterial: 'Quitar',
     materialsEmpty:
       'Todavía no hay material. Añade un archivo Guitar Pro, un PDF o una imagen.',
+    noMaterialPreview: 'Sin material',
     titleLabel: 'Título',
     titlePlaceholder: 'Frase en La menor',
     referenceVideoTitle: 'Vídeo de referencia',
@@ -1153,6 +1154,16 @@ export const es: Dict = {
       'El final debe ser un tiempo válido y posterior al inicio.',
     keyLabel: 'Tonalidad',
     keyNone: 'Sin tonalidad',
+    keyAutoBadge: 'Automática',
+    keyAutoHint: 'Detectada automáticamente; puede no ser correcta.',
+    detectKey: 'Detectar tonalidad',
+    detectingKey: 'Detectando…',
+    detectKeyNoGuitarPro:
+      'Añade un archivo Guitar Pro para detectar la tonalidad.',
+    detectKeySuccess: 'Tonalidad detectada automáticamente.',
+    detectKeyNotFound:
+      'No se pudo detectar la tonalidad. Elígela manualmente.',
+    detectKeyError: 'No se pudo leer el archivo Guitar Pro.',
     techniquesLabel: 'Técnicas',
     techniquesHint: 'Puedes elegir varias.',
     songLabel: 'Canción',

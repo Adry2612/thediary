@@ -37,6 +37,14 @@ The system SHALL let the user attach one or more study resources to a lick — G
 - **WHEN** the user saves a lick with a title but no material
 - **THEN** the lick is saved and its page shows the empty-material message
 
+#### Scenario: Library card preview
+- **WHEN** the licks library lists a lick with material
+- **THEN** its card shows a clipped preview of the selected resource, with tabs to switch between multiple resources
+
+#### Scenario: Library card without material
+- **WHEN** a lick has no material
+- **THEN** its card shows the empty-material placeholder
+
 #### Scenario: A retired resource
 - **WHEN** stored data contains a text TAB or an unknown resource kind
 - **THEN** the app drops that resource and keeps the lick and its valid material
@@ -56,6 +64,34 @@ The system SHALL let the user classify a lick with one musical key from a fixed 
 #### Scenario: An unknown stored key
 - **WHEN** a stored lick has a key the catalogue does not contain
 - **THEN** the app loads the lick without a key and keeps the rest of its content
+
+### Requirement: A lick's key can be detected from a Guitar Pro tab
+
+The system SHALL detect a lick's key from its Guitar Pro material, SHALL fill it automatically when the key is empty, SHALL offer an explicit detection action for previously added tabs, SHALL mark the result as automatic with a warning that it may be incorrect, and SHALL treat a manually chosen key as manual.
+
+#### Scenario: Adding a Guitar Pro tab to a lick without a key
+- **WHEN** the user attaches a Guitar Pro file to a lick that has no key
+- **THEN** the editor detects the key, fills the field and marks it as automatic
+
+#### Scenario: Detecting the key of an existing tab
+- **WHEN** the user presses the detection action on a lick that already has a Guitar Pro file
+- **THEN** the editor analyzes the file and replaces the key with the detected one, marked as automatic
+
+#### Scenario: Automatic key warning
+- **WHEN** a key comes from automatic detection
+- **THEN** the editor, the lick page and the cards mark it as automatic and state that it may not be correct
+
+#### Scenario: Manual override
+- **WHEN** the user chooses a key by hand after an automatic detection
+- **THEN** the key is marked as manual and the automatic warning disappears
+
+#### Scenario: Not enough notes
+- **WHEN** the Guitar Pro file has fewer than three pitched notes or fewer than three pitch classes
+- **THEN** no key is detected and the editor tells the user to choose one manually
+
+#### Scenario: No Guitar Pro material
+- **WHEN** a lick has no Guitar Pro file
+- **THEN** the detection action is unavailable and the editor explains that a Guitar Pro file is needed
 
 ### Requirement: Techniques come from a closed global catalogue
 

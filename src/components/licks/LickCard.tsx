@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { LickMaterialPreview } from "@/components/licks/LickMaterialPreview";
 import { TechniqueBadges } from "@/components/licks/TechniqueBadges";
 import { EditIcon, TrashIcon } from "@/components/ui/icons";
 import { useI18nSection } from "@/i18n/I18nProvider";
 import { getLickProgress } from "@/utils/licks/progress";
-import { RESOURCE_LABELS } from "@/utils/practice-resources";
 import {
   getLastPracticedLabel,
   getLickTitle,
@@ -37,6 +37,14 @@ export function LickCard({
             <span className="rounded-md border border-line px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
               {lick.key ?? text.noKey}
             </span>
+            {lick.keySource === "auto" ? (
+              <span
+                className="rounded-md border border-amber-300/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200"
+                title={text.keyAutoHint}
+              >
+                {text.keyAutoBadge}
+              </span>
+            ) : null}
             {song ? (
               <Link
                 href={`/repertoire/${song.id}`}
@@ -84,23 +92,9 @@ export function LickCard({
         </div>
       ) : null}
 
-      {lick.resources?.length ? (
-        <div className="mt-4 min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-[0.08em] text-muted">
-            {text.materialsLabel}
-          </p>
-          <ul className="mt-1 space-y-1">
-            {lick.resources.slice(0, 3).map((resource) => (
-              <li key={resource.id} className="truncate text-xs text-muted">
-                {resource.title}
-                <span className="ml-2 text-[10px] uppercase tracking-[0.08em]">
-                  {RESOURCE_LABELS[resource.kind]}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <LickMaterialPreview resources={lick.resources} />
+
+      <div className="flex-1" aria-hidden="true" />
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
         <div className="min-w-0">

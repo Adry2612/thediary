@@ -76,6 +76,10 @@ export function normalizeLick(value: unknown): GuitarLick | null {
       ? Math.floor(value.practiceCount)
       : 0;
   const key = normalizeMusicalKey(value.key);
+  const keySource =
+    key && (value.keySource === "auto" || value.keySource === "manual")
+      ? value.keySource
+      : undefined;
   const techniques = normalizeTechniques(value.techniques);
   const targetBpm = normalizeLickBpm(value.targetBpm);
   const resources = normalizePracticeResources(value.resources);
@@ -87,6 +91,7 @@ export function normalizeLick(value: unknown): GuitarLick | null {
     ...(resources.length > 0 ? { resources } : {}),
     ...(referenceVideo ? { referenceVideo } : {}),
     ...(key ? { key } : {}),
+    ...(keySource ? { keySource } : {}),
     techniques,
     ...(associatedSongId ? { associatedSongId } : {}),
     ...(targetBpm !== undefined ? { targetBpm } : {}),
