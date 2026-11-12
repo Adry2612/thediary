@@ -11,9 +11,12 @@ import type { PracticeResource } from "@/types/practice";
 export function GuitarProViewer({
   resource,
   userId,
+  compact = false,
 }: {
   resource: PracticeResource;
   userId?: string;
+  /** Versión recortada para las tarjetas de la biblioteca. */
+  compact?: boolean;
 }) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,9 +73,23 @@ export function GuitarProViewer({
   }, [container, resource.assetId, userId]);
 
   return (
-    <div className="min-h-64 overflow-auto bg-white p-4 text-zinc-900">
-      {isLoading && <p className="text-sm text-muted">Cargando tablatura…</p>}
-      {error && <p className="text-sm text-red-800">{error}</p>}
+    <div
+      className={
+        compact
+          ? "h-full overflow-hidden bg-white p-2 text-zinc-900"
+          : "min-h-64 overflow-auto bg-white p-4 text-zinc-900"
+      }
+    >
+      {isLoading && (
+        <p className={compact ? "text-xs text-muted" : "text-sm text-muted"}>
+          Cargando tablatura…
+        </p>
+      )}
+      {error && (
+        <p className={compact ? "text-xs text-red-800" : "text-sm text-red-800"}>
+          {error}
+        </p>
+      )}
       <div ref={setContainer} />
     </div>
   );

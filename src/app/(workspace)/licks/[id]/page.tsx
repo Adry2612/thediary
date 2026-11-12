@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo } from "react";
+import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LickBpmChart } from "@/components/licks/LickBpmChart";
@@ -34,6 +34,9 @@ export default function LickDetailPage({ params }: Props) {
   const hasHydrated = usePracticeStore((state) => state.hasHydrated);
   const deleteLick = usePracticeStore((state) => state.deleteLick);
   const today = useMemo(() => new Date(), []);
+  const [selectedMaterialId, setSelectedMaterialId] = useState<
+    string | undefined
+  >();
   const lick = licks.find((candidate) => candidate.id === id);
 
   if (!hasHydrated) {
@@ -56,6 +59,58 @@ export default function LickDetailPage({ params }: Props) {
   const title = getLickTitle(text, lick);
   const song = findLinkedSong(items, lick.associatedSongId);
   const lastPractised = getLastPracticedLabel(text, lick.lastPracticedAt, today);
+  const hasMaterial = Boolean(lick.resources?.length);
+  const hasVideo = Boolean(lick.referenceVideo);
+  const hasBoth = hasMaterial && hasVideo;
+  const materialSection = (
+    <section className="mt-8 min-w-0">
+      <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">
+        {text.materialsLabel}
+      </h2>
+      <LickMaterials
+        resources={lick.resources}
+        emptyLabel={text.materialsEmpty}
+        className="mt-3"
+      />
+    </section>
+  );
+  const videoSection = lick.referenceVideo ? (
+    <section className="mt-8 min-w-0">
+      <LickReferenceVideo video={lick.referenceVideo} />
+    </section>
+  ) : null;
+  const splitMedia =
+    hasBoth && lick.referenceVideo ? (
+      <div className="mt-8">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(18rem,1fr)]">
+          <div className="min-w-0">
+            <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">
+              {text.materialsLabel}
+            </h2>
+            <LickMaterials
+              resources={lick.resources}
+              layout="stacked"
+              part="selector"
+              selectedId={selectedMaterialId}
+              onSelect={setSelectedMaterialId}
+              className="mt-3"
+            />
+          </div>
+          <div className="hidden lg:block" aria-hidden="true" />
+        </div>
+        <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(18rem,1fr)]">
+          <LickMaterials
+            resources={lick.resources}
+            part="preview"
+            selectedId={selectedMaterialId}
+            className="min-w-0"
+          />
+          <section className="min-w-0">
+            <LickReferenceVideo video={lick.referenceVideo} />
+          </section>
+        </div>
+      </div>
+    ) : null;
 
   return (
     <PageShell>
@@ -70,8 +125,18 @@ export default function LickDetailPage({ params }: Props) {
               <span className="rounded-md border border-line px-2 py-1 font-mono text-xs uppercase tracking-[0.12em] text-muted">
                 {lick.key ?? text.noKey}
               </span>
+              {lick.keySource === "auto" ? (
+                <span className="rounded-md border border-amber-300/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-200">
+                  {text.keyAutoBadge}
+                </span>
+              ) : null}
               <TechniqueBadges techniques={lick.techniques} />
             </div>
+            {lick.keySource === "auto" ? (
+              <p className="mt-2 text-xs text-amber-200/90">
+                {text.keyAutoHint}
+              </p>
+            ) : null}
             <p className="mt-3 text-sm text-muted">
               {text.lastPracticed}: {lastPractised} · {text.practiceCount}:{" "}
               {lick.practiceCount}
@@ -116,22 +181,12 @@ export default function LickDetailPage({ params }: Props) {
         }
       />
 
-      {lick.referenceVideo ? (
-        <section className="mt-8">
-          <LickReferenceVideo video={lick.referenceVideo} />
-        </section>
-      ) : null}
-
-      <section className="mt-8">
-        <h2 className="font-sans text-lg font-semibold tracking-tight text-ink">
-          {text.materialsLabel}
-        </h2>
-        <LickMaterials
-          resources={lick.resources}
-          emptyLabel={text.materialsEmpty}
-          className="mt-3"
-        />
-      </section>
+      {splitMedia ?? (
+        <>
+          {videoSection}
+          {materialSection}
+        </>
+      )}
 
       <div className="mt-6">
         <LickBpmChart lick={lick} />
