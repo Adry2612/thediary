@@ -4,12 +4,14 @@ import { useMemo, useState } from 'react';
 import { GuitarBalance } from '@/components/dashboard/GuitarBalance';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ManualPracticeEntry } from '@/components/dashboard/ManualPracticeEntry';
+import { PeriodSelector } from '@/components/dashboard/PeriodSelector';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageShell } from '@/components/ui/PageShell';
 import { PracticeTimeChart } from '@/components/dashboard/PracticeTimeChart';
 import { PracticeWellbeing } from '@/components/dashboard/PracticeWellbeing';
 import { SkillBalance } from '@/components/dashboard/SkillBalance';
 import { StreakFlame } from '@/components/dashboard/StreakFlame';
+import { StreakRecord } from '@/components/dashboard/StreakRecord';
 import { TempoProgress } from '@/components/dashboard/TempoProgress';
 import { TopPracticeContent } from '@/components/dashboard/TopPracticeContent';
 import { WeeklyPracticeSummary } from '@/components/dashboard/WeeklyPracticeSummary';
@@ -38,7 +40,8 @@ import {
   getYearlyHeatmapData,
   parseDateKey,
 } from '@/utils/practice-calendar';
-import { getPracticeYears } from '@/utils/practice-year';
+import { getPracticeDayCounts, getPracticeYears } from '@/utils/practice-year';
+import { interpolate } from '@/utils/interpolate';
 import { usePracticeFeedbackPreference } from '@/hooks/usePracticeFeedbackPreference';
 import { useDisplayPreferences } from '@/hooks/useDisplayPreferences';
 import { usePracticeStore } from '@/stores/usePracticeStore';
@@ -70,15 +73,17 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
 
   const [rhythmPeriod, setRhythmPeriod] =
     useState<PracticeChartPeriod>('week');
+  const [summaryPeriod, setSummaryPeriod] =
+    useState<PracticeChartPeriod>('month');
   const [skillPeriod, setSkillPeriod] = useState<PracticeChartPeriod>('month');
   const [guitarPeriod, setGuitarPeriod] =
     useState<PracticeChartPeriod>('month');
   const [rankingPeriod, setRankingPeriod] =
     useState<PracticeChartPeriod>('month');
   const { weekStartsOn } = useDisplayPreferences();
-  const rhythmRange = useMemo(
-    () => getComparisonSpans(rhythmPeriod, today).current,
-    [rhythmPeriod, today],
+  const summaryRange = useMemo(
+    () => getComparisonSpans(summaryPeriod, today).current,
+    [summaryPeriod, today],
   );
   const skillRange = useMemo(
     () => getComparisonSpans(skillPeriod, today).current,
@@ -104,27 +109,27 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     () => getPracticeWeekDays(history, today, weekStartsOn),
     [history, today, weekStartsOn],
   );
-  const periodSessions = useMemo(
+  const summarySessions = useMemo(
     () =>
       history.filter((session) => {
         const dateKey = getLocalDateKey(new Date(session.startedAt));
         return (
-          dateKey >= rhythmRange.startDate && dateKey <= rhythmRange.endDate
+          dateKey >= summaryRange.startDate && dateKey <= summaryRange.endDate
         );
       }),
-    [history, rhythmRange],
+    [history, summaryRange],
   );
   const skillDistribution = useMemo(
     () => getSkillDistribution(history, skillRange),
     [history, skillRange],
   );
   const totalMinutes = Math.round(
-    periodSessions.reduce(
+    summarySessions.reduce(
       (total, session) => total + session.durationSeconds,
       0,
     ) / 60,
   );
-  const sessionsWithBpm = periodSessions.filter(
+  const sessionsWithBpm = summarySessions.filter(
     (session) => session.averageBpm > 0,
   );
   const averageBpm =
@@ -144,9 +149,9 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
     () => getPracticeContentRankings(history, repertoireItems, rankingRange),
     [history, repertoireItems, rankingRange],
   );
-  const practiceStatistics = useMemo(
-    () => getPracticeStatistics(history, rhythmRange),
-    [history, rhythmRange],
+  const summaryStatistics = useMemo(
+    () => getPracticeStatistics(history, summaryRange),
+    [history, summaryRange],
   );
   /**
    * Las sesiones registradas y las horas de práctica son totales del
@@ -171,29 +176,56 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
       ),
     [history, isFocusEnabled, isMoodEnabled],
   );
-  const mostPracticedSkill = practiceStatistics.mostPracticedSkill;
+  const mostPracticedSkill = summaryStatistics.mostPracticedSkill;
+  const practiceDayCounts = useMemo(
+    () => getPracticeDayCounts(history, todayYear),
+    [history, todayYear],
+  );
   const totalHours = new Intl.NumberFormat(locale, {
     maximumFractionDigits: 1,
   }).format(historyStatistics.totalSeconds / 3600);
   const streak = getStreakCount(history, today);
   const longestStreak = getLongestStreak(history);
-  const metricCards = [
+  const isCurrentStreakRecord = streak > 0 && streak === longestStreak;
+  const dayUnit = (count: number) =>
+    count === 1 ? dashboard.day : dashboard.days;
+  const practiceDaysDescription =
+    practiceDayCounts.total === 0
+      ? dashboard.noPractice
+      : interpolate(dashboard.practiceDaysBreakdown, {
+          currentYear: practiceDayCounts.currentYear,
+          previousYears: practiceDayCounts.previousYears,
+        });
+  const historyCards = [
+    {
+      label: dashboard.practiceDays,
+      value: `${practiceDayCounts.total} ${dayUnit(practiceDayCounts.total)}`,
+      description: practiceDaysDescription,
+    },
     {
       label: dashboard.streak,
-      value: `${streak} ${dashboard.days}`,
-      description: dashboard.daysPracticed,
-      highlight: isStreakOnFire(streak) ? <StreakFlame /> : undefined,
+      value: `${streak} ${dayUnit(streak)}`,
+      description: isCurrentStreakRecord
+        ? dashboard.streakRecord
+        : `${dashboard.longestStreak}: ${longestStreak} ${dayUnit(longestStreak)}`,
+      highlight: isCurrentStreakRecord ? (
+        <StreakRecord />
+      ) : isStreakOnFire(streak) ? (
+        <StreakFlame />
+      ) : undefined,
     },
     {
-      label: dashboard.longestStreak,
-      value: `${longestStreak} ${dashboard.days}`,
-      description: dashboard.longestStreakDescription,
-      highlight: (
-        <p className='mt-2 text-xs uppercase tracking-[0.08em] text-muted'>
-          {dashboard.longestStreakRecord}
-        </p>
-      ),
+      label: dashboard.recordedSessions,
+      value: String(historyStatistics.sessionCount),
+      description: dashboard.sessionsHistoryDescription,
     },
+    {
+      label: dashboard.practiceHours,
+      value: `${totalHours} h`,
+      description: dashboard.historyTimeTotal,
+    },
+  ];
+  const periodCards = [
     {
       label: dashboard.monthTime,
       value: formatPracticeDuration(Math.round(totalMinutes)),
@@ -203,28 +235,16 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
       label: dashboard.averageBpm,
       value: averageBpm ? `${averageBpm} bpm` : '—',
       description:
-        averageBpm ?
-          dashboard.averageTempo
-        : dashboard.noBpm,
-    },
-    {
-      label: dashboard.recordedSessions,
-      value: String(historyStatistics.sessionCount),
-      description: dashboard.completedPracticesTotal,
+        averageBpm ? dashboard.averageTempo : dashboard.noBpm,
     },
     {
       label: dashboard.mostPracticed,
       value:
         mostPracticedSkill ? PRACTICE_SKILL_LABELS[mostPracticedSkill] : '—',
       description:
-        mostPracticedSkill ?
-          `${formatPracticeDuration(practiceStatistics.mostPracticedSeconds / 60)} ${dashboard.accumulated}`
-        : dashboard.noPractice,
-    },
-    {
-      label: dashboard.practiceHours,
-      value: `${totalHours} h`,
-      description: dashboard.historyTimeTotal,
+        mostPracticedSkill
+          ? `${formatPracticeDuration(summaryStatistics.mostPracticedSeconds / 60)} ${dashboard.accumulated}`
+          : dashboard.noPractice,
     },
   ];
 
@@ -325,15 +345,52 @@ export function DashboardView({ todayKey }: DashboardViewProps) {
         </div>
       )}
 
-      <div className='mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4'>
-        {metricCards.map((metric, index) => (
-          <MetricCard
-            key={metric.label}
-            {...metric}
-            index={index}
+      <section className='mt-8'>
+        <div className='flex flex-wrap items-end justify-between gap-4'>
+          <div className='max-w-2xl'>
+            <h2 className='font-sans text-lg font-semibold tracking-tight text-zinc-100 sm:text-xl'>
+              {dashboard.summaryPeriod}
+            </h2>
+            <p className='mt-1 text-sm text-muted'>
+              {dashboard.summaryPeriodDescription}
+            </p>
+          </div>
+          <PeriodSelector
+            period={summaryPeriod}
+            onChange={setSummaryPeriod}
+            ariaLabel={dashboard.summaryPeriodAria}
           />
-        ))}
-      </div>
+        </div>
+        <div className='mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3'>
+          {periodCards.map((metric, index) => (
+            <MetricCard
+              key={metric.label}
+              {...metric}
+              index={index}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className='mt-8'>
+        <div className='max-w-2xl'>
+          <h2 className='font-sans text-lg font-semibold tracking-tight text-zinc-100 sm:text-xl'>
+            {dashboard.summaryHistory}
+          </h2>
+          <p className='mt-1 text-sm text-muted'>
+            {dashboard.summaryHistoryDescription}
+          </p>
+        </div>
+        <div className='mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4'>
+          {historyCards.map((metric, index) => (
+            <MetricCard
+              key={metric.label}
+              {...metric}
+              index={index}
+            />
+          ))}
+        </div>
+      </section>
 
       <p className='mt-8 text-center text-xs text-muted'>
          {dashboard.calendarNote} {todayYear}.

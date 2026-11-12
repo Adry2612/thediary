@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   getCalendarYearRange,
+  getPracticeDayCounts,
   getPracticeYears,
   getPracticeYearSummary,
 } from "../src/utils/practice-year.ts";
@@ -35,6 +36,33 @@ test("builds a full calendar-year range", () => {
   assert.deepEqual(getCalendarYearRange(2025), {
     startDate: "2025-01-01",
     endDate: "2025-12-31",
+  });
+});
+
+test("counts unique practice days and splits the current year from previous ones", () => {
+  const history = [
+    session("a", new Date(2025, 0, 1, 12)),
+    session("b", new Date(2025, 0, 1, 18)),
+    session("c", new Date(2025, 0, 2, 12)),
+    session("d", new Date(2026, 0, 1, 12)),
+    session("e", new Date(2026, 0, 1, 20)),
+    session("f", new Date(2026, 5, 10, 12)),
+  ];
+
+  assert.deepEqual(getPracticeDayCounts(history, 2026), {
+    total: 4,
+    currentYear: 2,
+    previousYears: 2,
+    daysInYear: 365,
+  });
+});
+
+test("counts no practice days for an empty history", () => {
+  assert.deepEqual(getPracticeDayCounts([], 2024), {
+    total: 0,
+    currentYear: 0,
+    previousYears: 0,
+    daysInYear: 366,
   });
 });
 

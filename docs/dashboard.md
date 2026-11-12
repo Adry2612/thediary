@@ -13,15 +13,21 @@ El panel de evolución muestra la constancia, el tiempo y las habilidades de pr�
 
 ## Tarjetas y rankings
 
-- Las tarjetas de tiempo, BPM medio y apartado más practicado usan el mismo periodo que el gráfico de ritmo.
-- Al cambiar el periodo del ritmo, esas tarjetas se recalculan con la nueva ventana.
-- **Sesiones registradas** y **horas de práctica** son totales del historial: no cambian al cambiar el periodo y sus descripciones lo indican.
-- El ranking de canción, técnica y teoría tiene su **propio selector** de periodo (semana, 30 días o año), independiente del ritmo, y arranca en **30 días**. Cambiar el ritmo no lo mueve.
-- El ranking de canciones cuenta tanto las canciones enlazadas al repertorio como las referencias al catálogo que todavía no se han añadido.
-- El balance de habilidades y el balance de guitarras tienen cada uno su propio selector de periodo, ambos con 30 días por defecto: cambiar uno no altera el otro.
-- **Racha actual** y **racha más larga** son históricas: no cambian al cambiar el periodo. La racha más larga es el mejor tramo de días consecutivos de todo el historial.
+El resumen final se divide en dos grupos con títulos propios, con el periodo arriba y el histórico debajo:
+
+- **En el periodo** reúne tiempo practicado, BPM medio y apartado más practicado. Tiene su **propio selector** (semana, 30 días o año), independiente del gráfico de ritmo, y arranca en **30 días**. Al cambiarlo solo se recalculan esas tres tarjetas.
+- **Resumen histórico** reúne los totales de todo el historial: días practicados, racha, sesiones registradas y horas de práctica. No cambia al mover ningún periodo.
+  - **Días practicados** cuenta días únicos, no sesiones: varias sesiones el mismo día suman una. Debajo muestra cuántos son del año natural actual y cuántos de años anteriores.
+  - **Racha actual** muestra el tramo consecutivo que sigue vivo. Si es la mejor racha del historial, la tarjeta lo dice y muestra una medalla en lugar del récord anterior; si no, debajo aparece la mejor racha como referencia.
+  - **Horas de práctica totales** deja claro que suma todo el historial, no el periodo.
+
+El ranking de canción, técnica y teoría tiene su **propio selector** de periodo (semana, 30 días o año), independiente del ritmo, y arranca en **30 días**. Cambiar el ritmo no lo mueve.
+
+El ranking de canciones cuenta tanto las canciones enlazadas al repertorio como las referencias al catálogo que todavía no se han añadido.
+
+El balance de habilidades y el balance de guitarras tienen cada uno su propio selector de periodo, ambos con 30 días por defecto: cambiar uno no altera el otro.
 - El calendario anual muestra el año natural actual. Cuando el historial incluye años anteriores, el año del título se convierte en un menú discreto con los años disponibles; el año actual aparece marcado como «Este año».
-- Al elegir un año anterior, el panel pasa a una **vista anual**: resumen del año, calendario completo, ritmo por meses, balances, ranking de contenido, bienestar y tarjetas calculados solo con las sesiones de ese año. Los selectores de periodo se ocultan porque la ventana es el año completo. El año actual conserva el panel de siempre.
+- Al elegir un año anterior, el panel pasa a una **vista anual**: resumen del año, calendario completo, ritmo por meses, balances, ranking de contenido, bienestar y un cierre compacto con BPM medio y apartado más practicado, calculados solo con las sesiones de ese año. El cierre no repite las sesiones, el tiempo, los días practicados ni la mejor racha que ya muestra el resumen anual. Los selectores de periodo se ocultan porque la ventana es el año completo. El año actual conserva el panel de siempre.
 - La vista anual compara el tempo con el año anterior y permite volver al año actual desde la cabecera.
 - El gráfico de bienestar solo aparece cuando ánimo o foco están activados en Configuración y hay datos de esa métrica; si no, no se muestra.
 

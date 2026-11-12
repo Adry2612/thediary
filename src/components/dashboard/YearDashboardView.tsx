@@ -94,25 +94,7 @@ export function YearDashboardView({
       (isMoodEnabled && normalizePracticeMetricValue(session.mood) !== null) ||
       (isFocusEnabled && normalizePracticeMetricValue(session.focus) !== null),
   );
-  const totalHours = new Intl.NumberFormat(locale, {
-    maximumFractionDigits: 1,
-  }).format(summary.totalSeconds / 3600);
-  const metricCards = [
-    {
-      label: dashboard.monthTime,
-      value: formatPracticeDuration(summary.totalSeconds / 60),
-      description: dashboard.recordedTime,
-    },
-    {
-      label: dashboard.recordedSessions,
-      value: String(summary.sessionCount),
-      description: dashboard.completedPractices,
-    },
-    {
-      label: dashboard.yearDaysPracticed,
-      value: `${summary.practicedDays} / ${summary.daysInYear}`,
-      description: dashboard.yearDaysPracticedDescription,
-    },
+  const yearCards = [
     {
       label: dashboard.averageBpm,
       value: summary.averageBpm ? `${summary.averageBpm} bpm` : '—',
@@ -130,18 +112,6 @@ export function YearDashboardView({
         summary.mostPracticedSkill ?
           `${formatPracticeDuration(summary.mostPracticedSeconds / 60)} ${dashboard.accumulated}`
         : dashboard.noPractice,
-    },
-    {
-      label: dashboard.practiceHours,
-      value: `${totalHours} h`,
-      description: dashboard.historyTime,
-    },
-    {
-      label: dashboard.yearLongestStreak,
-      value: `${summary.longestStreakDays} ${
-        summary.longestStreakDays === 1 ? dashboard.day : dashboard.days
-      }`,
-      description: dashboard.yearLongestStreakDescription,
     },
   ];
 
@@ -242,11 +212,16 @@ export function YearDashboardView({
         </div>
       )}
 
-      <div className='mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4'>
-        {metricCards.map((metric, index) => (
-          <MetricCard key={metric.label} {...metric} index={index} />
-        ))}
-      </div>
+      <section className='mt-8'>
+        <h2 className='font-sans text-lg font-semibold tracking-tight text-zinc-100 sm:text-xl'>
+          {dashboard.summaryYear}
+        </h2>
+        <div className='mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5'>
+          {yearCards.map((metric, index) => (
+            <MetricCard key={metric.label} {...metric} index={index} />
+          ))}
+        </div>
+      </section>
 
       <p className='mt-8 text-center text-xs text-muted'>
         {dashboard.calendarNote} {yearLabel}.

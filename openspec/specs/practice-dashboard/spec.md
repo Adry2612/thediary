@@ -514,7 +514,7 @@ The system SHALL close the annual calendar's preview card after the pointer leav
 
 ### Requirement: Previous years open an annual view
 
-When the history contains more than one year, the annual calendar SHALL offer a year selector inline with its title, opened from the year shown next to the title. The menu SHALL list the current year and every year that has practice, SHALL mark the current year with a “This year” note, and SHALL show a check on the selected year. Choosing the current year SHALL keep the existing dashboard unchanged. Choosing a previous year SHALL show a read-only annual view for that calendar year: a summary of the year, its complete annual calendar, its monthly rhythm, skill and guitar balances, content ranking, wellbeing and metric cards, all computed only from that year's sessions. The annual view SHALL hide the rolling-period selectors, SHALL compare tempo with the previous year and SHALL offer a way back to the current year.
+When the history contains more than one year, the annual calendar SHALL offer a year selector inline with its title, opened from the year shown next to the title. The menu SHALL list the current year and every year that has practice, SHALL mark the current year with a “This year” note, and SHALL show a check on the selected year. Choosing the current year SHALL keep the existing dashboard unchanged. Choosing a previous year SHALL show a read-only annual view for that calendar year: a summary of the year, its complete annual calendar, its monthly rhythm, skill and guitar balances, content ranking, wellbeing and a compact closing section with average BPM and most-practised area, all computed only from that year's sessions. The closing section SHALL NOT repeat the session count, total time, practice days or longest streak already shown in the annual summary. The annual view SHALL hide the rolling-period selectors, SHALL compare tempo with the previous year and SHALL offer a way back to the current year.
 
 #### Scenario: The year menu lives in the calendar title
 - **WHEN** the history contains more than one year
@@ -710,41 +710,41 @@ The system SHALL compare each selected rolling window with the immediately prece
 - **WHEN** the history contains a practice dated after today
 - **THEN** it is excluded from both the current and the previous window
 
-### Requirement: The summary figures follow their own window
+### Requirement: The summary is split into historical and period groups
 
-The system SHALL compute practice time, average BPM and most-practised area over the same rolling window as the practice-rhythm period and SHALL update them when that period changes. The recorded sessions and practice hours cards SHALL show the totals of the full history, SHALL NOT change with the rhythm period, and SHALL be labelled as historical totals. The current and longest streak cards SHALL remain historical.
+The system SHALL show the dashboard summary in two labelled groups, with the period group above the historical group. The historical group SHALL contain the total practice days with a breakdown of the current calendar year and previous years, the current streak together with the longest streak, the recorded sessions and the practice hours, all computed from the full history. The period group SHALL contain practice time, average BPM and most-practised area, SHALL have its own week, 30-day and year selector, and SHALL default to 30 days. Changing the summary period SHALL NOT change the rhythm chart or the historical group.
 
-#### Scenario: Default period
+#### Scenario: Default groups
 - **WHEN** the dashboard opens
-- **THEN** practice time, average BPM and most-practised area cover the seven days ending today, while recorded sessions and practice hours show the full history totals
+- **THEN** the historical group shows all-time totals and the period group covers the 30 days ending today
 
-#### Scenario: Changing the rhythm period
-- **WHEN** the user selects the month or year period on the rhythm chart
-- **THEN** practice time, average BPM and most-practised area are recalculated for that same window, and the recorded sessions and practice hours totals stay the same
+#### Scenario: Total practice days
+- **WHEN** the history contains practice on several days, including repeated sessions on the same day
+- **THEN** the practice-days card counts each day once and shows how many fall in the current calendar year and how many in previous years
 
-#### Scenario: First day of a calendar month
-- **WHEN** today is 1 November and the rhythm period is month
-- **THEN** the windowed figures include the practice from the end of October instead of showing zero
+#### Scenario: Changing the summary period
+- **WHEN** the user selects 30 days or a year on the summary selector
+- **THEN** practice time, average BPM and most-practised area are recalculated for that window, and the historical group and the rhythm chart stay unchanged
 
-#### Scenario: Rolling over a month boundary
-- **WHEN** the selected window crosses from one calendar month into the next
-- **THEN** the windowed figures count practice from both calendar months once each
+#### Scenario: Old practice leaves the period
+- **WHEN** a practice falls outside the selected summary window
+- **THEN** it stops counting in the practice time, the average BPM and the most-practised area, but keeps counting in the practice days, recorded sessions and practice hours
 
-#### Scenario: Old practice leaves the window
-- **WHEN** a practice falls outside the selected window
-- **THEN** it stops counting in the practice time, the average BPM and the most-practised area, but keeps counting in the recorded sessions and the practice hours
+#### Scenario: Streaks are historical
+- **WHEN** the user changes the summary period
+- **THEN** the current streak, the longest streak and the practice-day totals keep their historical values
 
-#### Scenario: Labels name the window
-- **WHEN** the metric cards are shown
-- **THEN** the windowed cards refer to the selected period and the recorded sessions and practice hours cards state that they cover the full history
+#### Scenario: The summary marks a record streak
+- **WHEN** the current streak is greater than zero and equals the longest streak in the history
+- **THEN** the streak card says the current streak is the longest and shows a medal instead of the previous record
+
+#### Scenario: Total practice hours are explicit
+- **WHEN** the historical group is shown
+- **THEN** the practice-hours card is labelled as total practice hours and states that it sums the full history
 
 #### Scenario: Empty period
-- **WHEN** the selected period contains no practice
-- **THEN** the windowed cards keep their layout and show zero or their empty value, while the recorded sessions and practice hours keep their historical totals
-
-#### Scenario: Streaks are not windowed
-- **WHEN** the user changes the rhythm period
-- **THEN** the current streak and the longest streak keep their historical values
+- **WHEN** the selected summary period contains no practice
+- **THEN** the period cards keep their layout and show zero or their empty value, while the historical group keeps its totals
 
 ### Requirement: A comparison names the span it compares
 
@@ -888,27 +888,27 @@ Every dashboard period SHALL be a rolling window that ends today. The week SHALL
 
 ### Requirement: The dashboard shows the longest streak
 
-The dashboard SHALL show the longest run of consecutive calendar days with at least one practice in the full history, expressed in days, beside the current streak. The longest streak SHALL NOT follow any period selector and SHALL show zero when the history has no practice.
+The dashboard SHALL show the current streak and the longest run of consecutive calendar days with at least one practice in the full history in the same historical card. When the current streak is not the record, the card SHALL show the longest streak as supporting text. When the current streak is the record, the card SHALL say that the current streak is the longest and SHALL show a medal instead of the previous record. The longest streak SHALL NOT follow any period selector and SHALL show zero when the history has no practice.
 
 #### Scenario: A historical record
 - **WHEN** the full history contains a run of fourteen consecutive practice days and the current streak is three
-- **THEN** the longest streak shows fourteen days while the current streak keeps showing three
+- **THEN** the card shows three days and the longest streak as fourteen days
 
 #### Scenario: The current streak is the record
 - **WHEN** the current run is the longest in the history
-- **THEN** both cards show the same number of days
+- **THEN** the card says the current streak is the longest and shows a medal
 
 #### Scenario: No practice
 - **WHEN** the history has no practice
-- **THEN** the longest streak shows zero days
+- **THEN** the current streak and the longest streak show zero days
 
 #### Scenario: Changing the dashboard period
 - **WHEN** the user switches the week, month or year period
 - **THEN** the longest streak keeps reporting the full-history record
 
 #### Scenario: Reading the card
-- **WHEN** assistive technology reaches the longest streak card
-- **THEN** it announces the label and the number of days
+- **WHEN** assistive technology reaches the streak card
+- **THEN** it announces the current streak, the supporting text and the number of days
 
 ### Requirement: The top weekly summary keeps the calendar week
 
